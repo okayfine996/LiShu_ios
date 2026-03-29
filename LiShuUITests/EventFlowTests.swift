@@ -67,4 +67,24 @@ final class EventFlowTests: BaseUITestCase {
             }
         }
     }
+
+    @MainActor
+    func testFestivalCardCanOpenPrefilledAddEvent() throws {
+        let homeTab = app.tabBars.buttons[TabLabels.home]
+        XCTAssertTrue(homeTab.waitForExistence(timeout: 5))
+        homeTab.tap()
+
+        let festivalCard = app.buttons.matching(
+            NSPredicate(format: "identifier BEGINSWITH %@", "home.festivalCard.")
+        ).firstMatch
+        XCTAssertTrue(festivalCard.waitForExistence(timeout: 5), "Festival card should appear on home")
+        festivalCard.tap()
+
+        let nameField = app.textFields["event.add.nameField"]
+        XCTAssertTrue(nameField.waitForExistence(timeout: 5), "Add event sheet should open from festival card")
+
+        let value = nameField.value as? String
+        XCTAssertNotNil(value)
+        XCTAssertFalse((value ?? "").isEmpty, "Festival event name should be prefilled")
+    }
 }

@@ -20,6 +20,7 @@ struct HomeViewModelTests {
         #expect(vm.yearlyExpense == 0)
         #expect(vm.contactCount == 0)
         #expect(vm.recordCount == 0)
+        #expect(vm.upcomingFestivals.count == 3)
     }
 
     @Test func testLoadWithRecords() throws {
@@ -99,5 +100,31 @@ struct HomeViewModelTests {
 
         #expect(vm.upcomingEvents.allSatisfy { $0.date >= Calendar.current.startOfDay(for: Date()) })
         #expect(vm.upcomingEvents.contains { $0.name == "未来" })
+    }
+
+    @Test func testUpcomingFestivalsAreLoadedInChronologicalOrder() throws {
+        let db = try TestDB()
+        let referenceDate = TestDateFactory.date(year: 2026, month: 1, day: 1)
+        let calendarService = FestivalCalendarService(
+            calendar: TestDateFactory.gregorianCalendar,
+            chineseCalendar: TestDateFactory.chineseCalendar,
+            now: { referenceDate }
+        )
+        let reminderService = FestivalReminderService(
+            calendarService: calendarService,
+            calendar: TestDateFactory.gregorianCalendar,
+            now: { referenceDate }
+        )
+        let vm = HomeViewModel(
+            festivalCalendarService: calendarService,
+            festivalReminderService: reminderService
+        )
+
+        vm.load(context: db.context)
+
+        #expect(vm.upcomingFestivals.count == 3)
+        #expect(vm.upcomingFestivals[0].definition.id == "lunar-new-years-eve")
+        #expect(vm.upcomingFestivals[1].definition.id == "spring-festival")
+        #expect(vm.upcomingFestivals[0].date <= vm.upcomingFestivals[1].date)
     }
 }

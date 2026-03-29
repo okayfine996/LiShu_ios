@@ -1020,8 +1020,10 @@
     "Corner Radius: 20pt" : {
 
     },
+    "DEBUG: 清除购买状态" : {
+
+    },
     "debug.clearAllData" : {
-      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1032,7 +1034,6 @@
       }
     },
     "debug.generateSampleData" : {
-      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1043,7 +1044,6 @@
       }
     },
     "debug.notification.clearAll" : {
-      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1054,7 +1054,6 @@
       }
     },
     "debug.notification.pending" : {
-      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1065,7 +1064,6 @@
       }
     },
     "debug.notification.sent" : {
-      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1076,7 +1074,6 @@
       }
     },
     "debug.notification.test.all" : {
-      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1087,7 +1084,6 @@
       }
     },
     "debug.notification.test.birthday" : {
-      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1098,7 +1094,6 @@
       }
     },
     "debug.notification.test.event" : {
-      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1108,8 +1103,17 @@
         }
       }
     },
+    "debug.notification.test.festival" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "测试节日提醒"
+          }
+        }
+      }
+    },
     "debug.notification.test.returnGift" : {
-      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1837,6 +1841,76 @@
         }
       }
     },
+    "festival.doubleNinthFestival" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重阳节"
+          }
+        }
+      }
+    },
+    "festival.dragonBoatFestival" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "端午节"
+          }
+        }
+      }
+    },
+    "festival.lanternFestival" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "元宵节"
+          }
+        }
+      }
+    },
+    "festival.lunarNewYearsEve" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "除夕"
+          }
+        }
+      }
+    },
+    "festival.midAutumnFestival" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "中秋节"
+          }
+        }
+      }
+    },
+    "festival.qixiFestival" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "七夕节"
+          }
+        }
+      }
+    },
+    "festival.springFestival" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "春节"
+          }
+        }
+      }
+    },
     "FORM ELEMENTS" : {
 
     },
@@ -1859,6 +1933,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "支出"
+          }
+        }
+      }
+    },
+    "home.festival.daysRemaining" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%d天后"
+          }
+        }
+      }
+    },
+    "home.festivals" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "传统节日"
           }
         }
       }
@@ -2111,6 +2205,46 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "事件提醒"
+          }
+        }
+      }
+    },
+    "notification.festival.body.contacts" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@即将到来，别忘了问候%2$@"
+          }
+        }
+      }
+    },
+    "notification.festival.body.generic" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@即将到来，别忘了提前安排节日问候"
+          }
+        }
+      }
+    },
+    "notification.festival.moreContacts" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "等 %d 人"
+          }
+        }
+      }
+    },
+    "notification.festival.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "节日提醒"
           }
         }
       }
@@ -4971,7 +5105,17 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "事件提醒"
+            "value" : "事件与节日提醒"
+          }
+        }
+      }
+    },
+    "settings.notification.eventHint" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "开启后会同时接收普通事件提醒和传统节日提醒"
           }
         }
       }

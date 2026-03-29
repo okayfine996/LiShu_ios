@@ -9,9 +9,11 @@ struct AddEventView: View {
     @State private var selectedCoverItem: PhotosPickerItem?
 
     var eventID: PersistentIdentifier?
+    var prefill: FestivalEventPrefill?
 
-    init(eventID: PersistentIdentifier? = nil) {
+    init(eventID: PersistentIdentifier? = nil, prefill: FestivalEventPrefill? = nil) {
         self.eventID = eventID
+        self.prefill = prefill
     }
 
     var body: some View {
@@ -40,6 +42,8 @@ struct AddEventView: View {
                 if let event = modelContext.model(for: eventID) as? Event {
                     viewModel.configure(with: event)
                 }
+            } else if let prefill {
+                viewModel.apply(prefill: prefill)
             }
         }
         .onChange(of: selectedCoverItem) { _, newItem in
@@ -109,6 +113,7 @@ struct AddEventView: View {
 
             TextField(String(localized: "event.add.namePlaceholder"), text: $viewModel.name)
                 .textFieldStyle(StandardTextFieldStyle())
+                .accessibilityIdentifier("event.add.nameField")
         }
     }
 
@@ -218,6 +223,7 @@ struct AddEventView: View {
             .buttonStyle(PrimaryButtonStyle())
             .disabled(!viewModel.isValid)
             .opacity(viewModel.isValid ? 1.0 : 0.6)
+            .accessibilityIdentifier("event.add.saveButton")
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
@@ -241,6 +247,28 @@ struct AddEventView: View {
         ) {
             NavigationStack {
                 AddEventView()
+            }
+            .modelContainer(container)
+        } else {
+            Text("Preview unavailable")
+        }
+    }
+}
+
+#Preview("Festival Prefill") {
+    Group {
+        if let container = try? ModelContainer(
+            for: Contact.self, Record.self, Event.self,
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+        ) {
+            NavigationStack {
+                AddEventView(
+                    prefill: FestivalEventPrefill(
+                        name: String(localized: "festival.midAutumnFestival"),
+                        eventType: .festival,
+                        date: Calendar.current.date(byAdding: .day, value: 12, to: .now) ?? .now
+                    )
+                )
             }
             .modelContainer(container)
         } else {

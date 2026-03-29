@@ -10,6 +10,7 @@ class AddEventViewModel {
     var location: String = ""
     var note: String = ""
     var coverImageData: Data?
+    private(set) var hasAppliedPrefill = false
 
     var isValid: Bool {
         !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -23,6 +24,14 @@ class AddEventViewModel {
         location = event.location
         note = event.note
         coverImageData = event.coverImage
+    }
+
+    func apply(prefill: FestivalEventPrefill) {
+        guard editingEvent == nil, !hasAppliedPrefill else { return }
+        name = prefill.name
+        eventType = prefill.eventType
+        date = prefill.date
+        hasAppliedPrefill = true
     }
 
     func save(context: ModelContext) -> Bool {

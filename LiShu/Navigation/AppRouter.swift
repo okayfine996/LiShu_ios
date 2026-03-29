@@ -35,6 +35,7 @@ enum SheetRoute: Identifiable, Equatable {
     case addRecord(direction: RecordDirection?, contactID: PersistentIdentifier?)
     case addContact
     case addEvent
+    case addFestivalEvent(FestivalEventPrefill)
     case editContact(PersistentIdentifier)
     case editEvent(PersistentIdentifier)
     case editRecord(PersistentIdentifier)
@@ -47,6 +48,7 @@ enum SheetRoute: Identifiable, Equatable {
         case .addRecord: return "addRecord"
         case .addContact: return "addContact"
         case .addEvent: return "addEvent"
+        case .addFestivalEvent(let prefill): return "addFestivalEvent-\(prefill.name)-\(prefill.date.timeIntervalSince1970)"
         case .editContact(let id): return "editContact-\(id)"
         case .editEvent(let id): return "editEvent-\(id)"
         case .editRecord(let id): return "editRecord-\(id)"

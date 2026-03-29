@@ -10,6 +10,7 @@ struct HomeView: View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 20) {
                 summarySection
+                festivalSection
                 upcomingSection
                 recentRecordsSection
             }
@@ -132,6 +133,29 @@ struct HomeView: View {
     }
 
     // MARK: - Upcoming Events Section
+
+    @ViewBuilder
+    private var festivalSection: some View {
+        if !viewModel.upcomingFestivals.isEmpty {
+            VStack(spacing: 12) {
+                sectionHeader(title: String(localized: "home.festivals"))
+
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 12) {
+                        ForEach(viewModel.upcomingFestivals) { occurrence in
+                            Button {
+                                sheetRoute = .addFestivalEvent(viewModel.festivalPrefill(for: occurrence))
+                            } label: {
+                                FestivalReminderCard(occurrence: occurrence)
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityIdentifier("home.festivalCard.\(occurrence.definition.id)")
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     private var upcomingSection: some View {
         VStack(spacing: 12) {
@@ -387,6 +411,10 @@ struct HomeView: View {
         case .addEvent:
             NavigationStack {
                 AddEventView()
+            }
+        case .addFestivalEvent(let prefill):
+            NavigationStack {
+                AddEventView(prefill: prefill)
             }
         case .editContact(let contactID):
             NavigationStack {

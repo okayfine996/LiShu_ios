@@ -48,3 +48,21 @@ struct SampleData {
         }
     }
 }
+
+enum TestDateFactory {
+    static var gregorianCalendar: Calendar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(secondsFromGMT: 0) ?? .current
+        return calendar
+    }
+
+    static var chineseCalendar: Calendar {
+        var calendar = Calendar(identifier: .chinese)
+        calendar.timeZone = TimeZone(secondsFromGMT: 0) ?? .current
+        return calendar
+    }
+
+    static func date(year: Int, month: Int, day: Int) -> Date {
+        gregorianCalendar.date(from: DateComponents(year: year, month: month, day: day)) ?? .now
+    }
+}

@@ -4,13 +4,21 @@
 # Xcode
 build/
 DerivedData/
+.build/
+Packages/
+*.swiftpm/
 *.xcuserdata
 *.xcworkspace/xcuserdata/
 
 # macOS
 .DS_Store
+Thumbs.db
 *.swp
 *~
+
+# Editors
+.idea/
+.vscode/
 
 # Claude Code
 .claude/

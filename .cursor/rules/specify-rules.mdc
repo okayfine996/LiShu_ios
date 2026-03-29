@@ -1,0 +1,35 @@
+---
+description: Project Development Guidelines
+globs: ["**/*"]
+alwaysApply: true
+---
+
+# LiShu Development Guidelines
+
+Auto-generated from all feature plans. Last updated: 2026-03-29
+
+## Active Technologies
+
+- Swift 6 / iOS 18+ + SwiftUI, SwiftData, UserNotifications, Foundation Calendar APIs (001-festival-reminders)
+
+## Project Structure
+
+```text
+src/
+tests/
+```
+
+## Commands
+
+# Add commands for Swift 6 / iOS 18+
+
+## Code Style
+
+Swift 6 / iOS 18+: Follow standard conventions
+
+## Recent Changes
+
+- 001-festival-reminders: Added Swift 6 / iOS 18+ + SwiftUI, SwiftData, UserNotifications, Foundation Calendar APIs
+
+<!-- MANUAL ADDITIONS START -->
+<!-- MANUAL ADDITIONS END -->

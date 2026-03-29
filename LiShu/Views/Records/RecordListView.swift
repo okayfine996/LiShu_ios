@@ -209,6 +209,10 @@ struct RecordListView: View {
             NavigationStack {
                 AddEventView()
             }
+        case .addFestivalEvent(let prefill):
+            NavigationStack {
+                AddEventView(prefill: prefill)
+            }
         case .editContact(let contactID):
             NavigationStack {
                 AddContactView(contactID: contactID)

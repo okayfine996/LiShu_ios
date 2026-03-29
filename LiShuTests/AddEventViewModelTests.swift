@@ -93,4 +93,20 @@ struct AddEventViewModelTests {
         #expect(events[0].type == .birthday)
         #expect(events[0].location == "新地点")
     }
+
+    @Test func testApplyFestivalPrefill() {
+        let vm = AddEventViewModel()
+        let prefill = FestivalEventPrefill(
+            name: "中秋节",
+            eventType: .festival,
+            date: TestDateFactory.date(year: 2026, month: 9, day: 25)
+        )
+
+        vm.apply(prefill: prefill)
+
+        #expect(vm.name == "中秋节")
+        #expect(vm.eventType == .festival)
+        #expect(vm.date == TestDateFactory.date(year: 2026, month: 9, day: 25))
+        #expect(vm.hasAppliedPrefill == true)
+    }
 }

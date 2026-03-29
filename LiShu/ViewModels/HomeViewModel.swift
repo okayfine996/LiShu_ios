@@ -9,12 +9,24 @@ class HomeViewModel {
     var recordCount: Int = 0
     var recentRecords: [Record] = []
     var upcomingEvents: [Event] = []
+    var upcomingFestivals: [TraditionalFestivalOccurrence] = []
     var currentYear: Int = Calendar.current.component(.year, from: Date())
+    private let festivalCalendarService: FestivalCalendarService
+    private let festivalReminderService: FestivalReminderService
+
+    init(
+        festivalCalendarService: FestivalCalendarService = FestivalCalendarService(),
+        festivalReminderService: FestivalReminderService = FestivalReminderService()
+    ) {
+        self.festivalCalendarService = festivalCalendarService
+        self.festivalReminderService = festivalReminderService
+    }
 
     func load(context: ModelContext) {
         loadYearlySummary(context: context)
         loadRecentRecords(context: context)
         loadUpcomingEvents(context: context)
+        loadUpcomingFestivals()
     }
 
     private func loadYearlySummary(context: ModelContext) {
@@ -82,6 +94,14 @@ class HomeViewModel {
         } catch {
             upcomingEvents = []
         }
+    }
+
+    private func loadUpcomingFestivals() {
+        upcomingFestivals = festivalCalendarService.upcomingFestivals(limit: 3)
+    }
+
+    func festivalPrefill(for occurrence: TraditionalFestivalOccurrence) -> FestivalEventPrefill {
+        festivalReminderService.makeEventPrefill(from: occurrence)
     }
 
     var formattedIncome: String {

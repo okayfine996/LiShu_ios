@@ -151,6 +151,17 @@ struct NotificationSettingsView: View {
                     .background(DesignSystem.Colors.separator)
                     .padding(.leading, 56)
 
+                Text(String(localized: "settings.notification.eventHint"))
+                    .font(DesignSystem.Typography.small)
+                    .foregroundStyle(DesignSystem.Colors.textTertiary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+
+                Divider()
+                    .background(DesignSystem.Colors.separator)
+                    .padding(.leading, 56)
+
                 notificationToggle(
                     icon: "gift.fill",
                     title: String(localized: "settings.notification.returnGift"),
@@ -193,6 +204,16 @@ struct NotificationSettingsView: View {
                     title: String(localized: "debug.notification.test.event")
                 ) {
                     NotificationManager.shared.sendTestNotification(category: .eventReminder)
+                    showToast()
+                }
+
+                debugDivider
+
+                debugButton(
+                    icon: "sparkles",
+                    title: String(localized: "debug.notification.test.festival")
+                ) {
+                    NotificationManager.shared.sendTestNotification(category: .festivalReminder)
                     showToast()
                 }
 
