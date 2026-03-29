@@ -1,0 +1,16 @@
+# MCP configuration (contains API keys)
+.mcp.json
+
+# Xcode
+build/
+DerivedData/
+*.xcuserdata
+*.xcworkspace/xcuserdata/
+
+# macOS
+.DS_Store
+*.swp
+*~
+
+# Claude Code
+.claude/

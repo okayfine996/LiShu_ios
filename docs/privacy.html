@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>礼数 — 隐私政策</title>
+    <style>
+        :root {
+            --primary: #B76E5A;
+            --primary-dark: #9A5A48;
+            --accent-gold: #C5A065;
+            --bg-page: #F5EFE6;
+            --bg-card: #FFFFFF;
+            --bg-card-alt: #E8DDD1;
+            --bg-tag: #D9CFC4;
+            --text-primary: #2C2C2C;
+            --text-secondary: #7A746E;
+            --text-tertiary: #ABA59F;
+            --border: #D9CFC4;
+            --radius-card: 20px;
+            --radius-small: 14px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", sans-serif;
+            background: var(--bg-page);
+            color: var(--text-primary);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Hero */
+        .hero {
+            background: linear-gradient(135deg, #3D2B1F, #5C3D2E);
+            padding: 60px 20px 48px;
+            color: #fff;
+        }
+        .hero-inner {
+            max-width: 720px;
+            margin: 0 auto;
+        }
+        .hero-label {
+            font-size: 12px;
+            letter-spacing: 2px;
+            opacity: 0.6;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+        .hero h1 {
+            font-size: 30px;
+            font-weight: 700;
+            line-height: 1.3;
+        }
+        .hero-meta {
+            margin-top: 16px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            font-size: 13px;
+            opacity: 0.7;
+        }
+
+        /* Content */
+        .content {
+            padding: 32px 0 48px;
+        }
+
+        /* Intro card */
+        .intro-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-card);
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        .intro-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .intro-badge-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            background: var(--primary);
+            color: #fff;
+            border-radius: 50%;
+            font-size: 13px;
+        }
+        .intro-badge span {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+        .intro-card p {
+            font-size: 15px;
+            color: var(--text-secondary);
+            line-height: 1.8;
+        }
+
+        /* Section */
+        .policy-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-card);
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .section-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            background: var(--primary);
+            color: #fff;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        .section-header h2 {
+            font-size: 18px;
+            font-weight: 700;
+        }
+        .policy-section p {
+            font-size: 15px;
+            color: var(--text-secondary);
+            line-height: 1.8;
+            margin-bottom: 12px;
+        }
+        .policy-section p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Info items */
+        .info-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 14px;
+            background: var(--bg-page);
+            border-radius: var(--radius-small);
+            margin-bottom: 10px;
+        }
+        .info-item:last-child {
+            margin-bottom: 0;
+        }
+        .info-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            background: var(--bg-card-alt);
+            border-radius: 10px;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+        .info-item h4 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+        .info-item p {
+            font-size: 13px;
+            color: var(--text-tertiary);
+            line-height: 1.6;
+            margin-bottom: 0;
+        }
+
+        /* Rights grid */
+        .rights-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .right-card {
+            text-align: center;
+            padding: 20px 12px;
+            background: var(--bg-page);
+            border-radius: var(--radius-small);
+        }
+        .right-card .icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+        .right-card h4 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .right-card p {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            margin-bottom: 0;
+        }
+
+        /* Highlight box */
+        .highlight-box {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            background: var(--bg-page);
+            border-radius: var(--radius-small);
+            border-left: 3px solid var(--primary);
+        }
+        .highlight-box .icon {
+            font-size: 22px;
+            flex-shrink: 0;
+        }
+        .highlight-box-content h4 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+        .highlight-box-content p {
+            font-size: 13px;
+            color: var(--text-tertiary);
+            margin-bottom: 0;
+        }
+
+        /* Contact */
+        .contact-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-card);
+            padding: 32px 24px;
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        .contact-section h3 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .contact-section p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+        .contact-email {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 28px;
+            background: var(--primary);
+            color: #fff;
+            border-radius: 100px;
+            font-size: 15px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .contact-email:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(183,110,90,0.35);
+        }
+
+        /* Footer */
+        .footer {
+            padding: 32px 20px;
+            text-align: center;
+            font-size: 13px;
+            color: var(--text-tertiary);
+            border-top: 1px solid var(--border);
+        }
+        .footer a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-bottom: 12px;
+        }
+
+        @media (max-width: 480px) {
+            .hero { padding: 48px 16px 36px; }
+            .hero h1 { font-size: 24px; }
+            .hero-meta { flex-direction: column; gap: 4px; }
+            .rights-grid { grid-template-columns: 1fr; }
+            .policy-section, .intro-card { padding: 20px 16px; }
+            .contact-section { padding: 24px 16px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Hero -->
+<header class="hero">
+    <div class="hero-inner">
+        <div class="hero-label">LI SHU APP</div>
+        <h1>我们如何保护<br>您的隐私</h1>
+        <div class="hero-meta">
+            <span>生效日期：2025年1月1日</span>
+            <span>版本：v1.0.0</span>
+        </div>
+    </div>
+</header>
+
+<main class="container content">
+
+    <!-- Intro -->
+    <div class="intro-card">
+        <div class="intro-badge">
+            <span class="intro-badge-icon">🛡</span>
+            <span>隐私政策导言</span>
+        </div>
+        <p>感谢您信任并使用「礼数」APP（以下简称"本软件"）。我们深知个人信息对您的重要性，并会尽全力保护您的个人信息安全可靠。本政策向您说明我们在您使用我们的产品与服务时如何收集、使用、保存、共享和转让这些信息，以及我们为您提供的访问、更新、控制和保护这些信息的方式。</p>
+    </div>
+
+    <!-- 1. 信息收集说明 -->
+    <section class="policy-section">
+        <div class="section-header">
+            <span class="section-number">1</span>
+            <h2>信息收集说明</h2>
+        </div>
+        <p>为了向您提供更好的服务，我们可能会收集和使用您的相关信息。我们承诺仅收集实现功能所必需的最少信息，这些信息包括：</p>
+
+        <div class="info-item">
+            <div class="info-icon">📱</div>
+            <div>
+                <h4>设备信息</h4>
+                <p>包括设备型号、操作系统版本等，用于适配您的使用体验和提供技术支持。</p>
+            </div>
+        </div>
+
+        <div class="info-item">
+            <div class="info-icon">📋</div>
+            <div>
+                <h4>您主动输入的信息</h4>
+                <p>包括联系人姓名、电话、事件名称、礼金金额等人情往来记录。这些数据存储在您的设备本地，仅在您开启 iCloud 同步后才会通过 Apple iCloud 进行同步。</p>
+            </div>
+        </div>
+
+        <div class="info-item">
+            <div class="info-icon">📸</div>
+            <div>
+                <h4>相机与相册权限</h4>
+                <p>当您使用 OCR 拍照识别礼簿、设置联系人头像或添加事件封面时，我们会请求相机或相册访问权限。照片数据仅存储在您的设备本地。</p>
+            </div>
+        </div>
+
+        <div class="info-item">
+            <div class="info-icon">👥</div>
+            <div>
+                <h4>通讯录权限</h4>
+                <p>当您使用批量导入联系人功能时，我们会请求通讯录访问权限。我们仅读取您选择的联系人的姓名和电话信息，不会上传通讯录数据至任何服务器。</p>
+            </div>
+        </div>
+
+        <div class="info-item">
+            <div class="info-icon">💳</div>
+            <div>
+                <h4>购买信息</h4>
+                <p>当您购买 Pro 会员服务时，购买交易由 Apple 处理。我们仅接收购买凭证用于验证您的会员状态，不会收集您的支付卡号等敏感支付信息。</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 2. 数据使用方式 -->
+    <section class="policy-section">
+        <div class="section-header">
+            <span class="section-number">2</span>
+            <h2>数据使用方式</h2>
+        </div>
+        <p>我们收集的信息仅用于以下目的：</p>
+        <p><strong>提供核心服务</strong> — 记录和管理您的人情往来数据，包括联系人、事件、记录的增删改查与统计分析。</p>
+        <p><strong>功能优化</strong> — 基于设备信息适配界面展示，提升使用体验。</p>
+        <p><strong>会员服务</strong> — 验证您的 Pro 会员状态，以解锁相应功能。</p>
+        <p><strong>通知提醒</strong> — 在您授权后，通过本地通知提醒您即将到来的事件、联系人生日和待回礼项目。</p>
+        <p>我们<strong>不会</strong>将您的数据用于广告投放、用户画像或任何与本应用服务无关的目的。</p>
+    </section>
+
+    <!-- 3. 数据安全保障 -->
+    <section class="policy-section">
+        <div class="section-header">
+            <span class="section-number">3</span>
+            <h2>数据安全保障</h2>
+        </div>
+        <p>我们已采用符合业界标准的安全防护措施保护您提供的个人信息，防止数据遭到未经授权访问、公开披露、使用、修改、损坏或丢失。</p>
+
+        <div class="highlight-box">
+            <span class="icon">🔒</span>
+            <div class="highlight-box-content">
+                <h4>本地优先存储</h4>
+                <p>您的所有数据默认存储在设备本地（通过 SwiftData / SQLite），不经过任何第三方服务器。</p>
+            </div>
+        </div>
+        <br>
+        <div class="highlight-box">
+            <span class="icon">☁️</span>
+            <div class="highlight-box-content">
+                <h4>iCloud 加密同步</h4>
+                <p>开启 iCloud 同步后，数据通过 Apple CloudKit 加密传输和存储，仅您本人的 Apple ID 可访问。</p>
+            </div>
+        </div>
+        <br>
+        <div class="highlight-box">
+            <span class="icon">🍎</span>
+            <div class="highlight-box-content">
+                <h4>Apple 安全支付</h4>
+                <p>所有支付通过 Apple App Store 处理，我们无法接触您的银行卡或支付账户信息。</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 4. 第三方服务 -->
+    <section class="policy-section">
+        <div class="section-header">
+            <span class="section-number">4</span>
+            <h2>第三方服务</h2>
+        </div>
+        <p>本应用<strong>不集成任何第三方分析、广告或追踪 SDK</strong>。我们仅使用以下 Apple 原生服务：</p>
+        <p><strong>Apple StoreKit</strong> — 处理应用内订阅和购买交易。</p>
+        <p><strong>Apple CloudKit</strong> — 在您开启 iCloud 同步后，通过 Apple 服务器同步数据。</p>
+        <p><strong>Apple 推送通知服务 (APNs)</strong> — 发送本地提醒通知（事件、生日、回礼提醒）。</p>
+        <p><strong>Apple Vision</strong> — 在设备本地完成 OCR 文字识别，照片不会上传至任何服务器。</p>
+        <p>上述服务均由 Apple 提供，受 <a href="https://www.apple.com/legal/privacy/" style="color:var(--primary);">Apple 隐私政策</a> 保护。我们不会向任何第三方出售、交换或转让您的个人信息。</p>
+    </section>
+
+    <!-- 5. 用户权利 -->
+    <section class="policy-section">
+        <div class="section-header">
+            <span class="section-number">5</span>
+            <h2>您的权利</h2>
+        </div>
+        <p>按照中国相关法律法规以及其他国家、地区的通行做法，我们保障您对自己的个人信息行使以下权利：</p>
+
+        <div class="rights-grid">
+            <div class="right-card">
+                <div class="icon">👁</div>
+                <h4>访问权</h4>
+                <p>查阅您在应用中的所有数据</p>
+            </div>
+            <div class="right-card">
+                <div class="icon">✏️</div>
+                <h4>更正权</h4>
+                <p>随时修改您的个人信息和记录</p>
+            </div>
+            <div class="right-card">
+                <div class="icon">🗑</div>
+                <h4>删除权</h4>
+                <p>删除单条记录或一键清除全部数据</p>
+            </div>
+            <div class="right-card">
+                <div class="icon">↩️</div>
+                <h4>撤回同意</h4>
+                <p>在系统设置中撤销相机、通讯录等权限</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 6. 儿童隐私 -->
+    <section class="policy-section">
+        <div class="section-header">
+            <span class="section-number">6</span>
+            <h2>儿童隐私保护</h2>
+        </div>
+        <p>本应用不面向 13 岁以下的儿童。我们不会故意收集 13 岁以下儿童的个人信息。如果您是家长或监护人，发现您的孩子在未征得您同意的情况下向我们提供了个人信息，请通过下方联系方式与我们联系，我们将尽快删除相关信息。</p>
+    </section>
+
+    <!-- 7. 政策更新 -->
+    <section class="policy-section">
+        <div class="section-header">
+            <span class="section-number">7</span>
+            <h2>隐私政策的更新</h2>
+        </div>
+        <p>我们可能会适时对本隐私政策进行修订。当政策条款发生变更时，我们会在应用内以推送通知或弹窗的方式向您展示变更后的内容。如果您在隐私政策修改后继续使用我们的服务，即表示您已接受修改后的政策。</p>
+        <p>对于重大变更，我们还会提供更为显著的通知，例如通过应用内公告或向您发送电子邮件通知。</p>
+    </section>
+
+    <!-- 8. 联系我们 -->
+    <div class="contact-section">
+        <h3>联系我们</h3>
+        <p>如果您对本隐私政策有任何疑问、意见或建议，或需要行使您的个人信息权利，欢迎随时与我们联系。</p>
+        <a href="mailto:support@finefine.com" class="contact-email">
+            ✉ support@finefine.com
+        </a>
+    </div>
+
+</main>
+
+<!-- Footer -->
+<footer class="footer">
+    <div class="container">
+        <div class="footer-links">
+            <a href="./">支持与帮助</a>
+            <a href="https://apps.apple.com/app/id6744597881">App Store</a>
+        </div>
+        <p>© 2025 礼数 · 传承中华礼仪之美</p>
+    </div>
+</footer>
+
+</body>
+</html>

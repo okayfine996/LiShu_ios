@@ -1,0 +1,49 @@
+import XCTest
+
+final class SettingsFlowTests: BaseUITestCase {
+
+    @MainActor
+    func testSettingsNavigation() throws {
+        let settingsTab = app.tabBars.buttons[TabLabels.settings]
+        XCTAssertTrue(settingsTab.waitForExistence(timeout: 5))
+        settingsTab.tap()
+        sleep(1)
+
+        let navBar = app.navigationBars.firstMatch
+        XCTAssertTrue(navBar.waitForExistence(timeout: 3), "Settings navigation bar should exist")
+
+        let appearanceRow = app.staticTexts.matching(
+            NSPredicate(format: "label CONTAINS[c] '外观' OR label CONTAINS[c] '显示'")
+        ).firstMatch
+        if appearanceRow.waitForExistence(timeout: 3) {
+            appearanceRow.tap()
+            sleep(1)
+            app.navigationBars.buttons.firstMatch.tap()
+            sleep(1)
+        }
+    }
+
+    @MainActor
+    func testAboutPage() throws {
+        let settingsTab = app.tabBars.buttons[TabLabels.settings]
+        XCTAssertTrue(settingsTab.waitForExistence(timeout: 5))
+        settingsTab.tap()
+        sleep(1)
+
+        let aboutRow = app.staticTexts.matching(
+            NSPredicate(format: "label CONTAINS[c] '关于'")
+        ).firstMatch
+
+        if aboutRow.waitForExistence(timeout: 3) {
+            aboutRow.tap()
+            sleep(1)
+
+            let versionText = app.staticTexts.matching(
+                NSPredicate(format: "label CONTAINS[c] 'v' OR label CONTAINS[c] '版本'")
+            ).firstMatch
+            XCTAssertTrue(versionText.waitForExistence(timeout: 3), "About page should show version info")
+
+            app.navigationBars.buttons.firstMatch.tap()
+        }
+    }
+}

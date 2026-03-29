@@ -1,0 +1,276 @@
+import SwiftUI
+import SwiftData
+import PhotosUI
+
+struct OCRImportView: View {
+    @Environment(\.dismiss) private var dismiss
+    @State private var viewModel: OCRImportViewModel
+    @State private var selectedPhotos: [PhotosPickerItem] = []
+    @State private var showPhotosPicker = false
+    @State private var showProSheet = false
+
+    init(viewModel: OCRImportViewModel = OCRImportViewModel()) {
+        _viewModel = State(initialValue: viewModel)
+    }
+
+    var body: some View {
+        NavigationStack {
+            Group {
+                switch viewModel.processingState {
+                case .idle:
+                    sourceSelectionView
+                case .loading:
+                    processingView
+                case .loaded:
+                    OCRResultView(viewModel: viewModel)
+                case .error(let message):
+                    errorView(message)
+                }
+            }
+            .background(DesignSystem.Colors.bgPage)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                if case .idle = viewModel.processingState {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button(String(localized: "common.cancel")) {
+                            dismiss()
+                        }
+                        .font(DesignSystem.Typography.body)
+                        .foregroundStyle(DesignSystem.Colors.textSecondary)
+                    }
+                }
+                if case .error = viewModel.processingState {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button(String(localized: "common.cancel")) {
+                            dismiss()
+                        }
+                        .font(DesignSystem.Typography.body)
+                        .foregroundStyle(DesignSystem.Colors.textSecondary)
+                    }
+                }
+            }
+        }
+        .photosPicker(
+            isPresented: $showPhotosPicker,
+            selection: $selectedPhotos,
+            maxSelectionCount: 20,
+            matching: .images
+        )
+        .onChange(of: selectedPhotos) { _, newItems in
+            guard !newItems.isEmpty else { return }
+            loadPhotos(newItems)
+        }
+        .fullScreenCover(isPresented: $viewModel.isShowingCamera) {
+            CameraImagePicker { image in
+                viewModel.addImage(image)
+                startProcessingIfNeeded()
+            }
+            .ignoresSafeArea()
+        }
+        .sheet(isPresented: $showProSheet) {
+            NavigationStack {
+                ProMembershipView()
+                    .environment(SubscriptionManager.shared)
+            }
+        }
+    }
+
+    // MARK: - Source Selection
+
+    private var sourceSelectionView: some View {
+        VStack(spacing: 0) {
+            Spacer()
+
+            VStack(spacing: 24) {
+                Image(systemName: "doc.viewfinder")
+                    .font(.system(size: 56))
+                    .foregroundStyle(DesignSystem.Colors.primary)
+
+                VStack(spacing: 8) {
+                    Text(String(localized: "ocr.source.title"))
+                        .font(DesignSystem.Typography.title2)
+                        .foregroundStyle(DesignSystem.Colors.textPrimary)
+
+                    Text(String(localized: "ocr.source.subtitle"))
+                        .font(DesignSystem.Typography.caption)
+                        .foregroundStyle(DesignSystem.Colors.textSecondary)
+                        .multilineTextAlignment(.center)
+                }
+
+                VStack(spacing: 12) {
+                    Button {
+                        guard SubscriptionManager.shared.canUseOCR() else {
+                            showProSheet = true
+                            return
+                        }
+                        viewModel.isShowingCamera = true
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: "camera.fill")
+                                .font(.system(size: 18))
+                            Text(String(localized: "ocr.source.camera"))
+                                .font(DesignSystem.Typography.body)
+                                .fontWeight(.medium)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                    }
+                    .buttonStyle(PrimaryButtonStyle())
+
+                    Button {
+                        guard SubscriptionManager.shared.canUseOCR() else {
+                            showProSheet = true
+                            return
+                        }
+                        showPhotosPicker = true
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: "photo.on.rectangle.angled")
+                                .font(.system(size: 18))
+                            Text(String(localized: "ocr.source.album"))
+                                .font(DesignSystem.Typography.body)
+                                .fontWeight(.medium)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                    }
+                    .buttonStyle(SecondaryButtonStyle())
+                }
+                .padding(.horizontal, 40)
+            }
+
+            Spacer()
+        }
+        .navigationTitle(String(localized: "ocr.import.title"))
+    }
+
+    // MARK: - Processing
+
+    private var processingView: some View {
+        VStack(spacing: 20) {
+            Spacer()
+
+            if viewModel.isAIEnhanced {
+                AISparkleIcon()
+            } else {
+                ProgressView()
+                    .controlSize(.large)
+                    .tint(DesignSystem.Colors.primary)
+            }
+
+            Text(viewModel.isAIEnhanced
+                 ? String(localized: "ocr.ai.processing")
+                 : String(localized: "ocr.import.processing"))
+                .font(DesignSystem.Typography.body)
+                .foregroundStyle(DesignSystem.Colors.textSecondary)
+
+            Text(String(localized: "ocr.import.processingHint"))
+                .font(DesignSystem.Typography.caption)
+                .foregroundStyle(DesignSystem.Colors.textTertiary)
+
+            Spacer()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .navigationTitle(String(localized: "ocr.import.title"))
+    }
+
+    // MARK: - Error
+
+    private func errorView(_ message: String) -> some View {
+        VStack(spacing: 20) {
+            Spacer()
+
+            Image(systemName: "exclamationmark.triangle")
+                .font(.system(size: 48))
+                .foregroundStyle(DesignSystem.Colors.primary)
+
+            Text(String(localized: "ocr.error.title"))
+                .font(DesignSystem.Typography.title3)
+                .foregroundStyle(DesignSystem.Colors.textPrimary)
+
+            Text(message)
+                .font(DesignSystem.Typography.caption)
+                .foregroundStyle(DesignSystem.Colors.textSecondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 40)
+
+            Button {
+                viewModel.clearImages()
+            } label: {
+                Text(String(localized: "ocr.error.retry"))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+            }
+            .buttonStyle(PrimaryButtonStyle())
+            .padding(.horizontal, 40)
+
+            Spacer()
+        }
+        .navigationTitle(String(localized: "ocr.import.title"))
+    }
+
+    // MARK: - Helpers
+
+    private func loadPhotos(_ items: [PhotosPickerItem]) {
+        Task {
+            var images: [UIImage] = []
+            for item in items {
+                if let data = try? await item.loadTransferable(type: Data.self),
+                   let image = UIImage(data: data) {
+                    images.append(image)
+                }
+            }
+
+            await MainActor.run {
+                viewModel.capturedImages = images
+                selectedPhotos = []
+            }
+
+            if !images.isEmpty {
+                guard SubscriptionManager.shared.canUseOCR() else {
+                    await MainActor.run { showProSheet = true }
+                    return
+                }
+                await viewModel.processImages()
+            }
+        }
+    }
+
+    private func startProcessingIfNeeded() {
+        guard !viewModel.capturedImages.isEmpty else { return }
+        guard SubscriptionManager.shared.canUseOCR() else {
+            showProSheet = true
+            return
+        }
+        Task {
+            await viewModel.processImages()
+        }
+    }
+}
+
+#Preview {
+    OCRImportView()
+        .modelContainer(for: [Contact.self, Record.self, Event.self], inMemory: true)
+}
+
+#Preview("Processing") {
+    let vm = OCRImportViewModel()
+    vm.processingState = .loading
+    return OCRImportView(viewModel: vm)
+        .modelContainer(for: [Contact.self, Record.self, Event.self], inMemory: true)
+}
+
+#Preview("AI Processing") {
+    let vm = OCRImportViewModel()
+    vm.processingState = .loading
+    vm.isAIEnhanced = true
+    return OCRImportView(viewModel: vm)
+        .modelContainer(for: [Contact.self, Record.self, Event.self], inMemory: true)
+}
+
+#Preview("Error") {
+    let vm = OCRImportViewModel()
+    vm.processingState = .error(String(localized: "ocr.error.recognitionFailed"))
+    return OCRImportView(viewModel: vm)
+        .modelContainer(for: [Contact.self, Record.self, Event.self], inMemory: true)
+}
