@@ -12,6 +12,7 @@ enum AppTab: String, CaseIterable {
 struct MainTabView: View {
     @State private var selectedTab: AppTab = .home
     @State private var sheetRoute: SheetRoute?
+    @State private var notificationRouter = NotificationRouter.shared
 
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -79,6 +80,12 @@ struct MainTabView: View {
         .sheet(item: $sheetRoute) { route in
             sheetContent(for: route)
         }
+        .onChange(of: notificationRouter.pendingFestivalRoute) { _, newValue in
+            guard let route = newValue else { return }
+            selectedTab = .home
+            sheetRoute = .festivalReminderDetail(route)
+            _ = notificationRouter.consumeFestivalRoute()
+        }
     }
 
     // MARK: - Route Destination
@@ -120,6 +127,12 @@ struct MainTabView: View {
             AppearanceSettingsView()
         case .notificationSettings:
             NotificationSettingsView()
+        case .festivalManagement:
+            FestivalManagementView()
+        case .addCustomFestival:
+            AddCustomFestivalView()
+        case .festivalRecipientSettings(let route):
+            FestivalRecipientSettingsView(route: route)
         case .dataManagement:
             DataManagementView()
         case .importExport:
@@ -154,6 +167,10 @@ struct MainTabView: View {
             NavigationStack {
                 AddEventView(prefill: prefill)
             }
+        case .festivalReminderDetail(let route):
+            NavigationStack {
+                FestivalReminderDetailView(route: route)
+            }
         case .editContact(let contactID):
             NavigationStack {
                 AddContactView(contactID: contactID)
@@ -182,7 +199,7 @@ struct MainTabView: View {
 
 #Preview {
     MainTabView()
-        .modelContainer(for: [Contact.self, Record.self, Event.self], inMemory: true)
+        .modelContainer(for: [Contact.self, Record.self, Event.self, CustomFestival.self, FestivalReminderPreference.self], inMemory: true)
         .environment(SubscriptionManager.shared)
         .environment(AppSettings.shared)
 }

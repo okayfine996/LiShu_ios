@@ -12,6 +12,7 @@ class AddContactViewModel {
     var hasBirthday: Bool = false
     var phone: String = ""
     var note: String = ""
+    var isFestivalReminderRecipient: Bool = false
     var showValidationAlert: Bool = false
     var needsProUpgrade: Bool = false
 
@@ -29,6 +30,7 @@ class AddContactViewModel {
         hasBirthday = contact.birthday != nil
         phone = contact.phone
         note = contact.note
+        isFestivalReminderRecipient = contact.isFestivalReminderRecipient
     }
 
     func saveContact(context: ModelContext) -> Bool {
@@ -53,6 +55,7 @@ class AddContactViewModel {
             existing.circle = circle
             existing.birthday = hasBirthday ? birthday : nil
             existing.note = note.trimmingCharacters(in: .whitespaces)
+            existing.isFestivalReminderRecipient = isFestivalReminderRecipient
 
             do {
                 try context.save()
@@ -73,7 +76,8 @@ class AddContactViewModel {
                 category: selectedCategory?.rawValue ?? "",
                 circle: circle,
                 birthday: hasBirthday ? birthday : nil,
-                note: note.trimmingCharacters(in: .whitespaces)
+                note: note.trimmingCharacters(in: .whitespaces),
+                isFestivalReminderRecipient: isFestivalReminderRecipient
             )
 
             context.insert(contact)

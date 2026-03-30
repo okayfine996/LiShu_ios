@@ -19,6 +19,7 @@ struct NotificationSettingsView: View {
                 }
                 pushNotificationSection
                 notificationTypesSection
+                festivalManagementSection
                 #if DEBUG
                 debugSection
                 #endif
@@ -188,6 +189,42 @@ struct NotificationSettingsView: View {
             .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
             .opacity(settings.notificationEnabled ? 1 : 0.5)
             .disabled(!settings.notificationEnabled)
+        }
+    }
+
+    private var festivalManagementSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            sectionHeader(String(localized: "festival.management.entrySection"))
+
+            NavigationLink(value: AppRoute.festivalManagement) {
+                HStack(spacing: 12) {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 18))
+                        .foregroundStyle(DesignSystem.Colors.primary)
+                        .frame(width: 28, height: 28)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(String(localized: "festival.management.entryTitle"))
+                            .font(DesignSystem.Typography.body)
+                            .foregroundStyle(DesignSystem.Colors.textPrimary)
+
+                        Text(String(localized: "festival.management.entryHint"))
+                            .font(DesignSystem.Typography.small)
+                            .foregroundStyle(DesignSystem.Colors.textTertiary)
+                    }
+
+                    Spacer()
+
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(DesignSystem.Colors.textTertiary)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 14)
+                .background(DesignSystem.Colors.bgSurface)
+                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+            }
+            .buttonStyle(.plain)
         }
     }
 

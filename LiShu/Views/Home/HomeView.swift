@@ -144,7 +144,7 @@ struct HomeView: View {
                     HStack(spacing: 12) {
                         ForEach(viewModel.upcomingFestivals) { occurrence in
                             Button {
-                                sheetRoute = .addFestivalEvent(viewModel.festivalPrefill(for: occurrence))
+                                sheetRoute = .festivalReminderDetail(viewModel.festivalRoute(for: occurrence))
                             } label: {
                                 FestivalReminderCard(occurrence: occurrence)
                             }
@@ -416,6 +416,10 @@ struct HomeView: View {
             NavigationStack {
                 AddEventView(prefill: prefill)
             }
+        case .festivalReminderDetail(let route):
+            NavigationStack {
+                FestivalReminderDetailView(route: route)
+            }
         case .editContact(let contactID):
             NavigationStack {
                 AddContactView(contactID: contactID)
@@ -444,7 +448,7 @@ struct HomeView: View {
 
 private func makeHomePreviewContainer() -> ModelContainer? {
     guard let container = try? ModelContainer(
-        for: Contact.self, Record.self, Event.self,
+        for: Contact.self, Record.self, Event.self, CustomFestival.self, FestivalReminderPreference.self,
         configurations: ModelConfiguration(isStoredInMemoryOnly: true)
     ) else { return nil }
     let ctx = container.mainContext

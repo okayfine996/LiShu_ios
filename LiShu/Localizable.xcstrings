@@ -290,12 +290,32 @@
         }
       }
     },
+    "common.disabled" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未开启"
+          }
+        }
+      }
+    },
     "common.edit" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "编辑"
+          }
+        }
+      }
+    },
+    "common.enabled" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已开启"
           }
         }
       }
@@ -441,6 +461,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "关联家庭单元"
+          }
+        }
+      }
+    },
+    "contact.add.festivalRecipient" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "参与节日提醒"
+          }
+        }
+      }
+    },
+    "contact.add.festivalRecipientHint" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "开启后，该联系人会进入默认节日提醒对象"
           }
         }
       }
@@ -656,6 +696,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "确定要移除这位亲友吗？"
+          }
+        }
+      }
+    },
+    "contact.detail.festivalRecipient" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "节日提醒"
           }
         }
       }
@@ -1841,6 +1891,367 @@
         }
       }
     },
+    "festival.calendar.lunar" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "农历"
+          }
+        }
+      }
+    },
+    "festival.calendar.solar" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "公历"
+          }
+        }
+      }
+    },
+    "festival.custom.addTitle" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新增自定义节日"
+          }
+        }
+      }
+    },
+    "festival.custom.basicInfo" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "基础信息"
+          }
+        }
+      }
+    },
+    "festival.custom.calendarType" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "日期类型"
+          }
+        }
+      }
+    },
+    "festival.custom.day" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "日期"
+          }
+        }
+      }
+    },
+    "festival.custom.dayValue" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld日"
+          }
+        }
+      }
+    },
+    "festival.custom.enableReminder" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "启用此节日"
+          }
+        }
+      }
+    },
+    "festival.custom.enableReminderHint" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关闭后不会出现在首页，也不会参与提醒调度"
+          }
+        }
+      }
+    },
+    "festival.custom.month" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "月份"
+          }
+        }
+      }
+    },
+    "festival.custom.monthValue" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld月"
+          }
+        }
+      }
+    },
+    "festival.custom.name" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "节日名称"
+          }
+        }
+      }
+    },
+    "festival.custom.namePlaceholder" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "如：乔迁纪念日"
+          }
+        }
+      }
+    },
+    "festival.custom.noContacts" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "还没有联系人，请先去联系人页添加"
+          }
+        }
+      }
+    },
+    "festival.custom.recipients" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "提醒对象"
+          }
+        }
+      }
+    },
+    "festival.custom.reminder" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "提醒设置"
+          }
+        }
+      }
+    },
+    "festival.custom.useDefaultRecipients" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用默认提醒对象"
+          }
+        }
+      }
+    },
+    "festival.custom.useDefaultRecipientsHint" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关闭后可为当前节日单独指定联系人"
+          }
+        }
+      }
+    },
+    "festival.custom.validationMessage" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请填写节日名称，并确认月份与日期有效"
+          }
+        }
+      }
+    },
+    "festival.custom.validationTitle" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法保存自定义节日"
+          }
+        }
+      }
+    },
+    "festival.detail.actions" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "快捷操作"
+          }
+        }
+      }
+    },
+    "festival.detail.adjustRecipients" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "调整本节日提醒对象"
+          }
+        }
+      }
+    },
+    "festival.detail.createEvent" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "发起节日事件"
+          }
+        }
+      }
+    },
+    "festival.detail.daysRemaining" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "还有 %lld 天"
+          }
+        }
+      }
+    },
+    "festival.detail.latestRecord" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最近往来：%@ · ¥%@"
+          }
+        }
+      }
+    },
+    "festival.detail.moreInfo" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "辅助信息"
+          }
+        }
+      }
+    },
+    "festival.detail.noRecipients" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前还没有命中的提醒对象，你可以先去调整节日提醒设置"
+          }
+        }
+      }
+    },
+    "festival.detail.recipientMode" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "提醒对象来源"
+          }
+        }
+      }
+    },
+    "festival.detail.recipientModeCustom" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前节日单独指定"
+          }
+        }
+      }
+    },
+    "festival.detail.recipientModeDefault" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全局默认提醒对象"
+          }
+        }
+      }
+    },
+    "festival.detail.recipients" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "提醒对象"
+          }
+        }
+      }
+    },
+    "festival.detail.recipientTime" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "提醒时间"
+          }
+        }
+      }
+    },
+    "festival.detail.reminderTime" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "提醒时间"
+          }
+        }
+      }
+    },
+    "festival.detail.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "节日提醒详情"
+          }
+        }
+      }
+    },
+    "festival.detail.today" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "就是今天"
+          }
+        }
+      }
+    },
+    "festival.detail.tomorrow" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "明天到来"
+          }
+        }
+      }
+    },
     "festival.doubleNinthFestival" : {
       "localizations" : {
         "zh-Hans" : {
@@ -1881,6 +2292,126 @@
         }
       }
     },
+    "festival.management.builtIn" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "内置"
+          }
+        }
+      }
+    },
+    "festival.management.custom" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自定义"
+          }
+        }
+      }
+    },
+    "festival.management.defaultRecipients" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "默认提醒对象"
+          }
+        }
+      }
+    },
+    "festival.management.defaultRecipientsHint" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "默认对象来自联系人详情页中的“参与节日提醒”开关"
+          }
+        }
+      }
+    },
+    "festival.management.defaultRecipientsSummary" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前共有 %lld 位联系人会进入默认节日提醒"
+          }
+        }
+      }
+    },
+    "festival.management.entryHint" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "管理内置节日、自定义节日和节日级提醒对象"
+          }
+        }
+      }
+    },
+    "festival.management.entrySection" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "节日提醒"
+          }
+        }
+      }
+    },
+    "festival.management.entryTitle" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "节日提醒管理"
+          }
+        }
+      }
+    },
+    "festival.management.listTitle" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "节日列表"
+          }
+        }
+      }
+    },
+    "festival.management.recipientDefaultSummary" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用默认对象，共 %lld 人"
+          }
+        }
+      }
+    },
+    "festival.management.recipientOverrideSummary" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "单独指定对象，共 %lld 人"
+          }
+        }
+      }
+    },
+    "festival.management.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "节日提醒管理"
+          }
+        }
+      }
+    },
     "festival.midAutumnFestival" : {
       "localizations" : {
         "zh-Hans" : {
@@ -1897,6 +2428,96 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "七夕节"
+          }
+        }
+      }
+    },
+    "festival.settings.customActions" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自定义节日操作"
+          }
+        }
+      }
+    },
+    "festival.settings.customRecipients" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "单独指定提醒对象"
+          }
+        }
+      }
+    },
+    "festival.settings.defaultRecipients" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "默认提醒对象"
+          }
+        }
+      }
+    },
+    "festival.settings.defaultRecipientsSummary" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前默认对象共 %lld 人"
+          }
+        }
+      }
+    },
+    "festival.settings.deleteCustomFestival" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除这个自定义节日"
+          }
+        }
+      }
+    },
+    "festival.settings.enableReminder" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "启用节日提醒"
+          }
+        }
+      }
+    },
+    "festival.settings.enableReminderHint" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关闭后该节日不会展示在首页，也不会安排通知"
+          }
+        }
+      }
+    },
+    "festival.settings.useDefaultRecipients" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用默认提醒对象"
+          }
+        }
+      }
+    },
+    "festival.settings.useDefaultRecipientsHint" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关闭后仅对当前节日生效，不会影响其他节日"
           }
         }
       }

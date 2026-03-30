@@ -58,15 +58,36 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         didReceive response: UNNotificationResponse,
         withCompletionHandler completionHandler: @escaping () -> Void
     ) {
-        // Future: parse response.notification.request.content.userInfo
-        // to route user to specific event/contact detail page
         let userInfo = response.notification.request.content.userInfo
         let category = response.notification.request.content.categoryIdentifier
+
+        if category == NotificationManager.Category.festivalReminder.rawValue,
+           let festivalID = userInfo["festivalID"] as? String,
+           let occurrenceDateText = userInfo["occurrenceDate"] as? String,
+           let occurrenceDate = parseFestivalDate(from: occurrenceDateText) {
+            let festivalName = (userInfo["festivalName"] as? String) ?? String(localized: "event.type.festival")
+            NotificationRouter.shared.openFestivalDetail(
+                FestivalReminderRouteData(
+                    festivalID: festivalID,
+                    festivalName: festivalName,
+                    occurrenceDate: occurrenceDate
+                )
+            )
+        }
 
         #if DEBUG
         print("[Notification] Tapped - category: \(category), userInfo: \(userInfo)")
         #endif
 
         completionHandler()
+    }
+
+    private func parseFestivalDate(from value: String) -> Date? {
+        let formatter = DateFormatter()
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone.current
+        formatter.dateFormat = "yyyyMMdd"
+        return formatter.date(from: value)
     }
 }

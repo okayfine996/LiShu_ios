@@ -116,8 +116,11 @@ struct HomeViewModelTests {
             now: { referenceDate }
         )
         let vm = HomeViewModel(
-            festivalCalendarService: calendarService,
-            festivalReminderService: reminderService
+            festivalReminderService: reminderService,
+            customFestivalService: CustomFestivalService(),
+            calendar: TestDateFactory.gregorianCalendar,
+            chineseCalendar: TestDateFactory.chineseCalendar,
+            festivalNow: { referenceDate }
         )
 
         vm.load(context: db.context)

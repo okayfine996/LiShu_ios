@@ -208,12 +208,24 @@ final class NotificationManager {
     func scheduleFestivalReminders(context: ModelContext, now: @escaping () -> Date = Date.init) {
         guard settings.notificationEnabled, settings.eventReminder else { return }
 
-        let descriptor = FetchDescriptor<Contact>()
-        guard let contacts = try? context.fetch(descriptor) else { return }
+        let contactDescriptor = FetchDescriptor<Contact>()
+        let customFestivalDescriptor = FetchDescriptor<CustomFestival>()
+        let preferenceDescriptor = FetchDescriptor<FestivalReminderPreference>()
+        guard let contacts = try? context.fetch(contactDescriptor),
+              let customFestivals = try? context.fetch(customFestivalDescriptor),
+              let preferences = try? context.fetch(preferenceDescriptor) else { return }
 
-        let calendarService = FestivalCalendarService(now: now)
+        let customFestivalService = CustomFestivalService()
+        let definitions = customFestivalService.enabledDefinitions(
+            customFestivals: customFestivals,
+            preferences: preferences
+        )
+        let calendarService = FestivalCalendarService(definitions: definitions, now: now)
         let reminderService = FestivalReminderService(calendarService: calendarService, now: now)
-        let payloads = reminderService.makeReminderPayloads(contacts: contacts)
+        let payloads = reminderService.makeReminderPayloads(
+            contacts: contacts,
+            preferences: preferences
+        )
 
         for payload in payloads {
             guard let request = makeFestivalReminderRequest(payload: payload, now: now) else { continue }
@@ -243,6 +255,7 @@ final class NotificationManager {
         content.userInfo = [
             "type": Category.festivalReminder.rawValue,
             "festivalID": payload.festivalID,
+            "festivalName": payload.festivalName,
             "occurrenceDate": festivalDateIdentifier(from: payload.occurrenceDate)
         ]
 

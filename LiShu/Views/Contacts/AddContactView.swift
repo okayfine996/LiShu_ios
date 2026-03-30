@@ -89,6 +89,7 @@ struct AddContactView: View {
         VStack(spacing: 20) {
             nameField
             relationField
+            festivalRecipientField
             birthdayField
             phoneField
             notesField
@@ -167,6 +168,34 @@ struct AddContactView: View {
                         )
                 }
             }
+            .padding(.vertical, 12)
+            .padding(.horizontal, 16)
+            .background(DesignSystem.Colors.bgSurface)
+            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.input))
+            .overlay(
+                RoundedRectangle(cornerRadius: DesignSystem.Radius.input)
+                    .stroke(DesignSystem.Colors.border, lineWidth: 1)
+            )
+        }
+    }
+
+    private var festivalRecipientField: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(String(localized: "contact.add.festivalRecipient"))
+                .font(DesignSystem.Typography.caption)
+                .foregroundStyle(DesignSystem.Colors.textSecondary)
+
+            Toggle(isOn: $viewModel.isFestivalReminderRecipient) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(String(localized: "contact.add.festivalRecipient"))
+                        .font(DesignSystem.Typography.body)
+                        .foregroundStyle(DesignSystem.Colors.textPrimary)
+                    Text(String(localized: "contact.add.festivalRecipientHint"))
+                        .font(DesignSystem.Typography.small)
+                        .foregroundStyle(DesignSystem.Colors.textTertiary)
+                }
+            }
+            .tint(DesignSystem.Colors.primary)
             .padding(.vertical, 12)
             .padding(.horizontal, 16)
             .background(DesignSystem.Colors.bgSurface)

@@ -43,6 +43,8 @@ struct FestivalCalendarService {
         switch definition.rule {
         case .lunar(let month, let day):
             candidateDate = nextLunarDate(month: month, day: day, currentChineseYear: currentChineseYear, referenceDay: referenceDay)
+        case .solar(let month, let day):
+            candidateDate = nextSolarDate(month: month, day: day, referenceDay: referenceDay)
         case .lunarNewYearsEve:
             candidateDate = nextLunarNewYearsEve(currentChineseYear: currentChineseYear, referenceDay: referenceDay)
         }
@@ -74,6 +76,20 @@ struct FestivalCalendarService {
             components.isLeapMonth = false
 
             if let date = chineseCalendar.date(from: components),
+               calendar.startOfDay(for: date) >= referenceDay {
+                return date
+            }
+        }
+
+        return nil
+    }
+
+    private func nextSolarDate(month: Int, day: Int, referenceDay: Date) -> Date? {
+        let currentYear = calendar.component(.year, from: referenceDay)
+
+        for year in [currentYear, currentYear + 1] {
+            let components = DateComponents(year: year, month: month, day: day)
+            if let date = calendar.date(from: components),
                calendar.startOfDay(for: date) >= referenceDay {
                 return date
             }

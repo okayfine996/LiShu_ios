@@ -9,7 +9,14 @@ struct TestDB {
     let context: ModelContext
 
     init() throws {
-        let schema = Schema([Contact.self, Record.self, Event.self, RecordPhoto.self])
+        let schema = Schema([
+            Contact.self,
+            Record.self,
+            Event.self,
+            RecordPhoto.self,
+            CustomFestival.self,
+            FestivalReminderPreference.self,
+        ])
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         container = try ModelContainer(for: schema, configurations: [config])
         context = container.mainContext

@@ -69,7 +69,7 @@ final class EventFlowTests: BaseUITestCase {
     }
 
     @MainActor
-    func testFestivalCardCanOpenPrefilledAddEvent() throws {
+    func testFestivalCardCanOpenFestivalDetailThenCreateEvent() throws {
         let homeTab = app.tabBars.buttons[TabLabels.home]
         XCTAssertTrue(homeTab.waitForExistence(timeout: 5))
         homeTab.tap()
@@ -80,8 +80,12 @@ final class EventFlowTests: BaseUITestCase {
         XCTAssertTrue(festivalCard.waitForExistence(timeout: 5), "Festival card should appear on home")
         festivalCard.tap()
 
+        let createEventButton = app.buttons["发起节日事件"]
+        XCTAssertTrue(createEventButton.waitForExistence(timeout: 5), "Festival detail should open from home card")
+        createEventButton.tap()
+
         let nameField = app.textFields["event.add.nameField"]
-        XCTAssertTrue(nameField.waitForExistence(timeout: 5), "Add event sheet should open from festival card")
+        XCTAssertTrue(nameField.waitForExistence(timeout: 5), "Add event sheet should open from festival detail")
 
         let value = nameField.value as? String
         XCTAssertNotNil(value)

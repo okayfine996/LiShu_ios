@@ -195,6 +195,18 @@ struct ContactDetailView: View {
                     value: viewModel.circleText(contact.circle)
                 )
 
+                Divider()
+                    .background(DesignSystem.Colors.separator)
+                    .padding(.leading, 52)
+
+                infoRow(
+                    icon: "bell.badge.fill",
+                    label: String(localized: "contact.detail.festivalRecipient"),
+                    value: contact.isFestivalReminderRecipient
+                        ? String(localized: "common.enabled")
+                        : String(localized: "common.disabled")
+                )
+
                 if !contact.phone.isEmpty {
                     Divider()
                         .background(DesignSystem.Colors.separator)

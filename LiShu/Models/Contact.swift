@@ -4,6 +4,8 @@ import SwiftData
 /// 联系人
 @Model
 final class Contact {
+    /// 稳定业务标识，用于提醒对象配置与跨页面匹配
+    var identifier: String = UUID().uuidString
     /// 姓名
     var name: String = ""
     /// 手机号
@@ -23,6 +25,8 @@ final class Contact {
     var location: String = ""
     /// 备注
     var note: String = ""
+    /// 是否默认参与节日提醒
+    var isFestivalReminderRecipient: Bool = false
     /// 关联的往来记录，删除联系人时级联删除
     @Relationship(deleteRule: .cascade, inverse: \Record.contact)
     var records: [Record]?
@@ -30,6 +34,7 @@ final class Contact {
     var createdAt: Date = Date()
 
     init(
+        identifier: String = UUID().uuidString,
         name: String,
         phone: String = "",
         avatar: Data? = nil,
@@ -38,8 +43,10 @@ final class Contact {
         circle: Int = 4,
         birthday: Date? = nil,
         location: String = "",
-        note: String = ""
+        note: String = "",
+        isFestivalReminderRecipient: Bool = false
     ) {
+        self.identifier = identifier
         self.name = name
         self.phone = phone
         self.avatar = avatar
@@ -49,6 +56,7 @@ final class Contact {
         self.birthday = birthday
         self.location = location
         self.note = note
+        self.isFestivalReminderRecipient = isFestivalReminderRecipient
         self.createdAt = .now
     }
 

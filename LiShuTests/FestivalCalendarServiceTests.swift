@@ -50,4 +50,27 @@ struct FestivalCalendarServiceTests {
         #expect(newYearsEve?.date == TestDateFactory.date(year: 2026, month: 2, day: 16))
         #expect(newYearsEve?.daysRemaining == 46)
     }
+
+    @Test func testSolarFestivalRollsToNextGregorianYear() {
+        let referenceDate = TestDateFactory.date(year: 2026, month: 10, day: 2)
+        let definition = TraditionalFestivalDefinition(
+            id: "custom-national-day",
+            nameKey: nil,
+            customName: "国庆聚会",
+            rule: .solar(month: 10, day: 1),
+            eventType: .festival,
+            sortPriority: 100,
+            source: .custom
+        )
+        let service = FestivalCalendarService(
+            definitions: [definition],
+            calendar: TestDateFactory.gregorianCalendar,
+            chineseCalendar: TestDateFactory.chineseCalendar,
+            now: { referenceDate }
+        )
+
+        let occurrence = service.allUpcomingFestivals().first
+
+        #expect(occurrence?.date == TestDateFactory.date(year: 2027, month: 10, day: 1))
+    }
 }

@@ -11,22 +11,31 @@ class HomeViewModel {
     var upcomingEvents: [Event] = []
     var upcomingFestivals: [TraditionalFestivalOccurrence] = []
     var currentYear: Int = Calendar.current.component(.year, from: Date())
-    private let festivalCalendarService: FestivalCalendarService
     private let festivalReminderService: FestivalReminderService
+    private let customFestivalService: CustomFestivalService
+    private let calendar: Calendar
+    private let chineseCalendar: Calendar
+    private let festivalNow: () -> Date
 
     init(
-        festivalCalendarService: FestivalCalendarService = FestivalCalendarService(),
-        festivalReminderService: FestivalReminderService = FestivalReminderService()
+        festivalReminderService: FestivalReminderService = FestivalReminderService(),
+        customFestivalService: CustomFestivalService = CustomFestivalService(),
+        calendar: Calendar = .current,
+        chineseCalendar: Calendar = Calendar(identifier: .chinese),
+        festivalNow: @escaping () -> Date = Date.init
     ) {
-        self.festivalCalendarService = festivalCalendarService
         self.festivalReminderService = festivalReminderService
+        self.customFestivalService = customFestivalService
+        self.calendar = calendar
+        self.chineseCalendar = chineseCalendar
+        self.festivalNow = festivalNow
     }
 
     func load(context: ModelContext) {
         loadYearlySummary(context: context)
         loadRecentRecords(context: context)
         loadUpcomingEvents(context: context)
-        loadUpcomingFestivals()
+        loadUpcomingFestivals(context: context)
     }
 
     private func loadYearlySummary(context: ModelContext) {
@@ -96,12 +105,32 @@ class HomeViewModel {
         }
     }
 
-    private func loadUpcomingFestivals() {
+    private func loadUpcomingFestivals(context: ModelContext) {
+        let customFestivals = (try? context.fetch(FetchDescriptor<CustomFestival>())) ?? []
+        let preferences = (try? context.fetch(FetchDescriptor<FestivalReminderPreference>())) ?? []
+        let definitions = customFestivalService.enabledDefinitions(
+            customFestivals: customFestivals,
+            preferences: preferences
+        )
+        let festivalCalendarService = FestivalCalendarService(
+            definitions: definitions,
+            calendar: calendar,
+            chineseCalendar: chineseCalendar,
+            now: festivalNow
+        )
         upcomingFestivals = festivalCalendarService.upcomingFestivals(limit: 3)
     }
 
     func festivalPrefill(for occurrence: TraditionalFestivalOccurrence) -> FestivalEventPrefill {
         festivalReminderService.makeEventPrefill(from: occurrence)
+    }
+
+    func festivalRoute(for occurrence: TraditionalFestivalOccurrence) -> FestivalReminderRouteData {
+        FestivalReminderRouteData(
+            festivalID: occurrence.definition.id,
+            festivalName: occurrence.name,
+            occurrenceDate: occurrence.date
+        )
     }
 
     var formattedIncome: String {

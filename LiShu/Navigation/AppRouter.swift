@@ -24,6 +24,9 @@ enum AppRoute: Hashable {
     case proMembership
     case appearanceSettings
     case notificationSettings
+    case festivalManagement
+    case addCustomFestival
+    case festivalRecipientSettings(FestivalConfigurationRouteData)
     case dataManagement
     case importExport
     case about
@@ -36,6 +39,7 @@ enum SheetRoute: Identifiable, Equatable {
     case addContact
     case addEvent
     case addFestivalEvent(FestivalEventPrefill)
+    case festivalReminderDetail(FestivalReminderRouteData)
     case editContact(PersistentIdentifier)
     case editEvent(PersistentIdentifier)
     case editRecord(PersistentIdentifier)
@@ -49,6 +53,7 @@ enum SheetRoute: Identifiable, Equatable {
         case .addContact: return "addContact"
         case .addEvent: return "addEvent"
         case .addFestivalEvent(let prefill): return "addFestivalEvent-\(prefill.name)-\(prefill.date.timeIntervalSince1970)"
+        case .festivalReminderDetail(let route): return "festivalReminderDetail-\(route.id)"
         case .editContact(let id): return "editContact-\(id)"
         case .editEvent(let id): return "editEvent-\(id)"
         case .editRecord(let id): return "editRecord-\(id)"
