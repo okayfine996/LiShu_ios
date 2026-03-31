@@ -37,6 +37,17 @@ struct DebugDataGeneratorTests {
 
         let records = try db.context.fetch(FetchDescriptor<Record>())
         #expect(records.count >= 5)
+
+        let recordTypes = Set(records.map(\.recordType))
+        #expect(recordTypes.contains(.monetary))
+        #expect(recordTypes.contains(.gift))
+        #expect(recordTypes.contains(.favor))
+        #expect(recordTypes.contains(.banquet))
+
+        let banquetRecord = records.first { $0.recordType == .banquet }
+        #expect(banquetRecord?.banquetData != nil)
+        #expect(banquetRecord?.banquetData?.location.isEmpty == false)
+        #expect(banquetRecord?.status == .settled)
     }
 
     @Test func testClearAllDataRemovesAll() throws {

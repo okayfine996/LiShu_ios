@@ -16,18 +16,22 @@ struct ExportService {
         ))
 
         let items = records.compactMap { record -> ExportRecordItem? in
-            guard let contact = record.contact, let event = record.event else { return nil }
+            guard let contact = record.contact else { return nil }
             return ExportRecordItem(
                 contactName: contact.name,
-                eventName: event.name,
-                eventType: event.type.displayName,
-                amount: record.amount,
+                eventName: record.event?.name ?? "",
+                eventType: record.event?.type.displayName ?? "",
+                amount: record.resolvedDisplayAmount,
                 direction: record.direction.exportValue,
-                paymentMethod: record.paymentMethod.exportValue,
+                paymentMethod: record.isMonetary ? record.resolvedPaymentMethod.exportValue : "",
                 returnedAmount: record.returnedAmount,
                 status: record.status.exportValue(direction: record.direction),
                 date: dateFormatter.string(from: record.date),
-                note: record.note
+                recordType: record.recordType.rawValue,
+                relationshipWeight: record.relationshipWeight.rawValue,
+                favorDescription: record.resolvedDescription,
+                note: record.note,
+                kvData: record.kvData
             )
         }
 
@@ -44,24 +48,28 @@ struct ExportService {
             sortBy: [SortDescriptor(\.date, order: .reverse)]
         ))
 
-        let header = "联系人,事件,事件类型,金额,方向,支付方式,已退金额,状态,日期,备注"
+        let header = "联系人,事件,事件类型,金额,方向,支付方式,已退金额,状态,日期,记录类型,情分分量,人情描述,备注,kvData"
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "zh_Hans")
         formatter.dateFormat = "yyyy-MM-dd HH:mm"
 
         let rows = records.compactMap { record -> String? in
-            guard let contact = record.contact, let event = record.event else { return nil }
+            guard let contact = record.contact else { return nil }
             return [
                 escapeCSV(contact.name),
-                escapeCSV(event.name),
-                escapeCSV(event.type.displayName),
-                String(format: "%.2f", record.amount),
+                escapeCSV(record.event?.name ?? ""),
+                escapeCSV(record.event?.type.displayName ?? ""),
+                String(format: "%.2f", record.resolvedDisplayAmount),
                 escapeCSV(record.direction.csvValue),
-                escapeCSV(record.paymentMethod.csvValue),
+                escapeCSV(record.isMonetary ? record.resolvedPaymentMethod.csvValue : ""),
                 String(format: "%.2f", record.returnedAmount),
                 escapeCSV(record.status.csvValue(direction: record.direction)),
                 escapeCSV(formatter.string(from: record.date)),
-                escapeCSV(record.note)
+                escapeCSV(record.recordType.displayName),
+                escapeCSV(record.relationshipWeight.displayName),
+                escapeCSV(record.resolvedDescription),
+                escapeCSV(record.note),
+                escapeCSV(record.kvData)
             ].joined(separator: ",")
         }
 
@@ -109,31 +117,104 @@ struct ExportService {
             let paymentStr = fields[5]
             let returnedStr = fields[6]
             let dateStr = fields[8]
-            let note = fields.count > 9 ? fields[9] : ""
 
-            guard let amount = Double(amountStr), amount > 0 else {
-                result.errors += 1
-                continue
+            // Detect format: new 14 columns (with relationship weight + kvData),
+            // old 13 columns (with kvData), new 13 columns (with relationship weight),
+            // old 12 columns (typed), or old 10 columns
+            let hasKvData = (fields.last ?? "").trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("{")
+            let recordType: RecordType
+            let relationshipWeight: RelationshipWeight
+            let favorDescription: String
+            let note: String
+            let kvDataStr: String?
+
+            if fields.count >= 14 {
+                recordType = parseRecordType(fields[9])
+                relationshipWeight = parseRelationshipWeight(fields[10])
+                favorDescription = fields[11]
+                note = fields[12]
+                kvDataStr = fields[13]
+            } else if fields.count == 13 && hasKvData {
+                recordType = parseRecordType(fields[9])
+                favorDescription = fields[10]
+                note = fields[11]
+                kvDataStr = fields[12]
+                relationshipWeight = .reciprocal
+            } else if fields.count >= 13 {
+                recordType = parseRecordType(fields[9])
+                relationshipWeight = parseRelationshipWeight(fields[10])
+                favorDescription = fields[11]
+                note = fields[12]
+                kvDataStr = nil
+            } else if fields.count >= 12 {
+                recordType = parseRecordType(fields[9])
+                favorDescription = fields[10]
+                note = fields[11]
+                kvDataStr = nil
+                relationshipWeight = .reciprocal
+            } else {
+                recordType = .monetary
+                relationshipWeight = .reciprocal
+                favorDescription = ""
+                note = fields.count > 9 ? fields[9] : ""
+                kvDataStr = nil
+            }
+
+            let amount = Double(amountStr) ?? 0
+
+            // Validate: monetary requires amount > 0; non-monetary requires favorDescription
+            if recordType.isMonetary {
+                guard amount > 0 else {
+                    result.errors += 1
+                    continue
+                }
+            } else {
+                guard !favorDescription.trimmingCharacters(in: .whitespaces).isEmpty else {
+                    result.errors += 1
+                    continue
+                }
             }
 
             let contact = findOrCreateContact(name: contactName, context: context)
             let eventType = parseEventType(eventTypeStr)
-            let event = findOrCreateEvent(name: eventName, type: eventType, context: context)
+            let event = findOrCreateEventIfNeeded(name: eventName, type: eventType, context: context)
             let direction = parseDirection(directionStr)
             let paymentMethod = parsePaymentMethod(paymentStr)
-            let returnedAmount = Double(returnedStr) ?? 0
+            let returnedAmount = recordType.isMonetary ? (Double(returnedStr) ?? 0) : 0
             let date = parseDate(dateStr) ?? Date()
 
             let record = Record(
                 contact: contact,
                 event: event,
-                amount: amount,
                 direction: direction,
-                paymentMethod: paymentMethod,
                 returnedAmount: returnedAmount,
                 note: note,
-                date: date
+                date: date,
+                recordType: recordType,
+                relationshipWeight: relationshipWeight
             )
+
+            // Write kvData: use imported value if present, otherwise build from old fields
+            if let kv = kvDataStr, !kv.isEmpty, kv != "{}" {
+                record.kvData = kv
+                record.updateStatus()
+            } else {
+                // Build type data from old fields for dual-write
+                let typeData: RecordTypeData
+                switch recordType {
+                case .monetary:
+                    typeData = .monetary(MonetaryData(amount: amount, paymentMethod: paymentMethod.rawValue))
+                case .gift:
+                    typeData = .gift(GiftData(giftName: favorDescription, estimatedValue: amount > 0 ? amount : nil))
+                case .favor:
+                    typeData = .favor(FavorData(description: favorDescription))
+                case .banquet:
+                    typeData = .banquet(BanquetData(location: favorDescription))
+                }
+                record.applyTypeData(typeData)
+                record.updateStatus()
+            }
+
             context.insert(record)
             result.imported += 1
         }
@@ -274,6 +355,12 @@ struct ExportService {
         return event
     }
 
+    static func findOrCreateEventIfNeeded(name: String, type: EventType, context: ModelContext) -> Event? {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        return findOrCreateEvent(name: trimmed, type: type, context: context)
+    }
+
     static func parseEventType(_ str: String) -> EventType {
         let s = str.trimmingCharacters(in: .whitespaces)
         switch s {
@@ -305,6 +392,34 @@ struct ExportService {
         case "微信", "wechat": return .wechat
         case "支付宝", "alipay": return .alipay
         default: return .cash
+        }
+    }
+
+    static func parseRecordType(_ str: String) -> RecordType {
+        let s = str.trimmingCharacters(in: .whitespaces)
+        // Match by rawValue or display name
+        if let byRaw = RecordType(rawValue: s) { return byRaw }
+        switch s {
+        case "金额": return .monetary
+        case "礼品": return .gift
+        case "帮忙": return .favor
+        case "宴请": return .banquet
+        case "其他": return .favor
+        case "探望": return .favor
+        default: return .monetary
+        }
+    }
+
+    static func parseRelationshipWeight(_ str: String) -> RelationshipWeight {
+        let s = str.trimmingCharacters(in: .whitespaces)
+        if let byRaw = RelationshipWeight(rawValue: s) { return byRaw }
+        switch s {
+        case "举手之劳": return .trivial
+        case "点滴之恩": return .kindness
+        case "礼尚往来": return .reciprocal
+        case "倾力相助": return .support
+        case "重如泰山": return .profound
+        default: return .reciprocal
         }
     }
 
@@ -348,7 +463,11 @@ private struct ExportRecordItem: Encodable {
     let returnedAmount: Double
     let status: String
     let date: String
+    let recordType: String
+    let relationshipWeight: String
+    let favorDescription: String
     let note: String
+    let kvData: String
 }
 
 // MARK: - Export Value Extensions

@@ -112,6 +112,6 @@ struct RecordDetailViewModelTests {
         vm.load(id: record.persistentModelID, context: db.context)
 
         #expect(vm.record != nil)
-        #expect(vm.record?.amount == 500)
+        #expect(vm.record?.monetaryAmount == 500)
     }
 }

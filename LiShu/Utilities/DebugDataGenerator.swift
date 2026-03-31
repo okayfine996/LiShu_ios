@@ -173,6 +173,32 @@ enum DebugDataGenerator {
 
     // MARK: - Records
 
+    private static func makeRecord(
+        contact: Contact,
+        event: Event? = nil,
+        direction: RecordDirection = .given,
+        returnedAmount: Double = 0,
+        note: String = "",
+        date: Date,
+        recordType: RecordType,
+        relationshipWeight: RelationshipWeight = .reciprocal,
+        typeData: RecordTypeData
+    ) -> Record {
+        let record = Record(
+            contact: contact,
+            event: event,
+            direction: direction,
+            returnedAmount: returnedAmount,
+            note: note,
+            date: date,
+            recordType: recordType,
+            relationshipWeight: relationshipWeight
+        )
+        record.applyTypeData(typeData)
+        record.updateStatus()
+        return record
+    }
+
     private static func createRecords(contacts: [Contact], events: [Event]) -> [Record] {
         guard contacts.count >= 12, events.count >= 9 else { return [] }
 
@@ -221,6 +247,46 @@ enum DebugDataGenerator {
             // 多方向同一联系人
             Record(contact: c[5], event: e[5], amount: 300, direction: .received, paymentMethod: .wechat, date: e[5].date),
             Record(contact: c[5], event: e[3], amount: 800, direction: .given, paymentMethod: .cash, date: e[3].date),
+
+            // 礼品场景
+            makeRecord(
+                contact: c[9],
+                event: e[8],
+                direction: .given,
+                note: "生日聚餐带去的伴手礼",
+                date: e[8].date,
+                recordType: .gift,
+                relationshipWeight: .kindness,
+                typeData: .gift(GiftData(giftName: "茶叶礼盒", estimatedValue: 368))
+            ),
+
+            // 帮忙场景
+            makeRecord(
+                contact: c[11],
+                event: nil,
+                direction: .given,
+                note: "日常照应记录",
+                date: Date.now,
+                recordType: .favor,
+                relationshipWeight: .support,
+                typeData: .favor(FavorData(description: "临时帮忙接孩子放学并送回家"))
+            ),
+
+            // 宴请场景
+            makeRecord(
+                contact: c[10],
+                event: e[8],
+                direction: .received,
+                note: "下次回请要按差不多的规格安排",
+                date: e[8].date,
+                recordType: .banquet,
+                relationshipWeight: .reciprocal,
+                typeData: .banquet(BanquetData(
+                    location: "外婆家包厢，中档宴请",
+                    attendeeList: "主客外还有两位老同学陪同",
+                    extraCostNotes: "席间开了两瓶红酒，另加一条烟"
+                ))
+            )
         ]
     }
 }

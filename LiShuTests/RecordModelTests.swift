@@ -92,10 +92,25 @@ struct RecordModelTests {
         let record = SampleData.record(contact: contact, event: event)
         db.context.insert(record)
 
-        #expect(record.paymentMethod == .cash)
-        record.paymentMethod = .wechat
-        #expect(record.paymentMethod == .wechat)
-        #expect(record.paymentMethodRaw == "wechat")
+        #expect(record.resolvedPaymentMethod == .cash)
+        record.applyTypeData(.monetary(MonetaryData(amount: record.monetaryAmount, paymentMethod: PaymentMethod.wechat.rawValue)))
+        #expect(record.resolvedPaymentMethod == .wechat)
+    }
+
+    @Test func testRelationshipWeightComputedProperty() throws {
+        let db = try TestDB()
+        let contact = SampleData.contact()
+        let event = SampleData.event()
+        db.context.insert(contact)
+        db.context.insert(event)
+
+        let record = SampleData.record(contact: contact, event: event)
+        db.context.insert(record)
+
+        #expect(record.relationshipWeight == .reciprocal)
+        record.relationshipWeight = .profound
+        #expect(record.relationshipWeight == .profound)
+        #expect(record.relationshipWeightRaw == "profound")
     }
 
     @Test func testRecordPhotoRelationship() throws {
@@ -150,5 +165,22 @@ struct RecordModelTests {
         db.context.insert(record)
 
         #expect(record.status == .settled)
+    }
+
+    @Test func testBanquetResolvedDescriptionPrefersLocation() throws {
+        let db = try TestDB()
+        let contact = SampleData.contact()
+        db.context.insert(contact)
+
+        let record = Record(contact: contact, event: nil, direction: .given, recordType: .banquet)
+        record.applyTypeData(.banquet(BanquetData(
+            location: "兰亭包厢，商务档次",
+            attendeeList: "主客与两位长辈",
+            extraCostNotes: "额外带了两条烟"
+        )))
+        db.context.insert(record)
+
+        #expect(record.resolvedDescription == "兰亭包厢，商务档次")
+        #expect(record.banquetData?.attendeeList == "主客与两位长辈")
     }
 }

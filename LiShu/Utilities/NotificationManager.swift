@@ -155,6 +155,7 @@ final class NotificationManager {
 
     func scheduleReturnGiftReminder(record: Record) {
         guard settings.notificationEnabled, settings.returnGiftReminder else { return }
+        guard record.isMonetary else { return }
         guard record.direction == .given, record.status != .settled else { return }
 
         guard let reminderDate = Calendar.current.date(byAdding: .day, value: 30, to: record.date),
@@ -167,7 +168,7 @@ final class NotificationManager {
             format: String(localized: "notification.returnGift.body"),
             contact.name,
             event.name,
-            String(format: "%.0f", record.amount)
+            String(format: "%.0f", record.monetaryAmount)
         )
 
         content.sound = .default

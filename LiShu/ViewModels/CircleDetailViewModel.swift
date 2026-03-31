@@ -59,10 +59,10 @@ class CircleDetailViewModel {
 
                 let income = yearRecords
                     .filter { $0.direction == .received }
-                    .reduce(0.0) { $0 + $1.amount }
+                    .reduce(0.0) { $0 + $1.resolvedDisplayAmount }
                 let expense = yearRecords
                     .filter { $0.direction == .given }
-                    .reduce(0.0) { $0 + $1.amount }
+                    .reduce(0.0) { $0 + $1.resolvedDisplayAmount }
                 let lastDate = yearRecords.map(\.date).max()
 
                 sumIncome += income

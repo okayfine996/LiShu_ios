@@ -106,8 +106,10 @@ struct StatisticsViewModelTests {
         db.context.insert(e2)
         let r1 = Record(contact: c, event: e1, amount: 600, direction: .given, paymentMethod: .cash, returnedAmount: 0, date: recordDate)
         let r2 = Record(contact: c, event: e2, amount: 400, direction: .given, paymentMethod: .cash, returnedAmount: 0, date: recordDate)
+        let dailyRecord = Record(contact: c, event: nil, amount: 1000, direction: .given, paymentMethod: .cash, returnedAmount: 0, date: recordDate)
         db.context.insert(r1)
         db.context.insert(r2)
+        db.context.insert(dailyRecord)
         try db.context.save()
 
         let vm = StatisticsViewModel()

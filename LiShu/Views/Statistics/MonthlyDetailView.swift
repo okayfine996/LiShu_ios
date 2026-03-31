@@ -232,9 +232,12 @@ struct MonthlyDetailView: View {
                                     avatar: contact.avatar,
                                     contactName: contact.name,
                                     eventName: event.name,
-                                amount: record.amount,
+                                amount: record.resolvedDisplayAmount,
                                 direction: record.direction,
-                                date: record.date
+                                date: record.date,
+                                recordType: record.recordType,
+                                favorDescription: record.resolvedDescription,
+                                kvData: record.kvData
                             )
                         }
                         .buttonStyle(.plain)

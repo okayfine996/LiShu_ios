@@ -236,7 +236,7 @@ struct EventTypeDetailView: View {
 
     private func amountText(_ record: Record) -> String {
         let prefix = record.direction == .received ? "+" : "-"
-        return prefix + viewModel.formatAmount(record.amount)
+        return prefix + viewModel.formatAmount(record.resolvedDisplayAmount)
     }
 
     private func formatDate(_ date: Date) -> String {

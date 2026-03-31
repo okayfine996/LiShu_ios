@@ -247,7 +247,7 @@ struct ContactExchangeView: View {
 
                 NavigationLink(value: AppRoute.recordDetail(record.persistentModelID)) {
                     VStack(alignment: .leading, spacing: 6) {
-                        Text(record.event?.name ?? "")
+                        Text(record.contextDisplayName)
                             .font(DesignSystem.Typography.caption)
                             .fontWeight(.semibold)
                             .foregroundStyle(DesignSystem.Colors.textPrimary)
@@ -277,7 +277,7 @@ struct ContactExchangeView: View {
 
     private func amountText(_ record: Record) -> String {
         let prefix = record.direction == .received ? "+ " : "- "
-        return prefix + viewModel.formatAmount(record.amount)
+        return prefix + viewModel.formatAmount(record.resolvedDisplayAmount)
     }
 }
 

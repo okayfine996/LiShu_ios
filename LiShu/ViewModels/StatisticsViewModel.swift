@@ -36,6 +36,7 @@ class StatisticsViewModel {
     var allRankedContacts: [ContactRankingItem] = []
     var circleAnalysisItems: [CircleAnalysisItem] = []
     var heatmapGrid: [[Int]] = Array(repeating: Array(repeating: 0, count: 4), count: 12)
+    var nonFinancialInteractionCount: Int = 0
     var state: LoadingState<Bool> = .idle
 
     var chartBars: [(label: String, income: Double, expense: Double)] {
@@ -131,19 +132,21 @@ class StatisticsViewModel {
         let yearRecords = records.filter {
             calendar.component(.year, from: $0.date) == selectedYear
         }
-        totalIncome = yearRecords
+        let monetaryRecords = yearRecords.filter { $0.recordType == .monetary }
+        totalIncome = monetaryRecords
             .filter { $0.direction == .received }
-            .reduce(0.0) { $0 + $1.amount }
-        totalExpense = yearRecords
+            .reduce(0.0) { $0 + $1.monetaryAmount }
+        totalExpense = monetaryRecords
             .filter { $0.direction == .given }
-            .reduce(0.0) { $0 + $1.amount }
+            .reduce(0.0) { $0 + $1.monetaryAmount }
         netValue = totalIncome - totalExpense
+        nonFinancialInteractionCount = yearRecords.filter { $0.recordType != .monetary }.count
     }
 
     private func computeMonthlyData(from records: [Record]) {
         let calendar = Calendar.current
         let yearRecords = records.filter {
-            calendar.component(.year, from: $0.date) == selectedYear
+            calendar.component(.year, from: $0.date) == selectedYear && $0.recordType == .monetary
         }
         var monthly: [(month: Int, income: Double, expense: Double)] = []
         for month in 1...12 {
@@ -152,10 +155,10 @@ class StatisticsViewModel {
             }
             let income = monthRecords
                 .filter { $0.direction == .received }
-                .reduce(0.0) { $0 + $1.amount }
+                .reduce(0.0) { $0 + $1.monetaryAmount }
             let expense = monthRecords
                 .filter { $0.direction == .given }
-                .reduce(0.0) { $0 + $1.amount }
+                .reduce(0.0) { $0 + $1.monetaryAmount }
             monthly.append((month: month, income: income, expense: expense))
         }
         monthlyData = monthly
@@ -164,12 +167,14 @@ class StatisticsViewModel {
     private func computeEventTypeDistribution(from records: [Record]) {
         let calendar = Calendar.current
         let yearRecords = records.filter {
-            calendar.component(.year, from: $0.date) == selectedYear
+            calendar.component(.year, from: $0.date) == selectedYear &&
+            $0.recordType == .monetary &&
+            $0.event != nil
         }
         var typeAmounts: [EventType: Double] = [:]
         for record in yearRecords {
             guard let event = record.event else { continue }
-            typeAmounts[event.type, default: 0] += record.amount
+            typeAmounts[event.type, default: 0] += record.monetaryAmount
         }
         let totalAmount = typeAmounts.values.reduce(0, +)
         eventTypeDistribution = typeAmounts
@@ -188,10 +193,12 @@ class StatisticsViewModel {
             let cid = contact.persistentModelID
             var stats = contactStats[cid] ?? (contact: contact, recordCount: 0, income: 0, expense: 0, lastDate: nil)
             stats.recordCount += 1
-            if record.direction == .received {
-                stats.income += record.amount
-            } else {
-                stats.expense += record.amount
+            if record.recordType == .monetary {
+                if record.direction == .received {
+                    stats.income += record.monetaryAmount
+                } else {
+                    stats.expense += record.monetaryAmount
+                }
             }
             if stats.lastDate == nil || record.date > stats.lastDate! {
                 stats.lastDate = record.date
@@ -207,12 +214,12 @@ class StatisticsViewModel {
     private func computeCircleAnalysis(from records: [Record]) {
         let calendar = Calendar.current
         let yearRecords = records.filter {
-            calendar.component(.year, from: $0.date) == selectedYear
+            calendar.component(.year, from: $0.date) == selectedYear && $0.recordType == .monetary
         }
         var circleAmounts: [Int: Double] = [:]
         for record in yearRecords {
             guard let contact = record.contact else { continue }
-            circleAmounts[contact.circle, default: 0] += record.amount
+            circleAmounts[contact.circle, default: 0] += record.monetaryAmount
         }
         let maxAmount = max(circleAmounts.values.max() ?? 1, 1)
         circleAnalysisItems = circleAmounts
@@ -220,6 +227,8 @@ class StatisticsViewModel {
             .map { CircleAnalysisItem(circle: $0.key, name: circleDisplayName($0.key), amount: $0.value, ratio: $0.value / maxAmount) }
     }
 
+    /// Heatmap 统计所有记录类型（含非金额），作为"人情活跃度"展示，与 recordCount 一致。
+    /// 月度柱状图等金额图表仅统计 monetary，两者设计意图不同。
     private func computeHeatmapGrid(from records: [Record]) {
         let calendar = Calendar.current
         let yearRecords = records.filter {

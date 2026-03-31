@@ -100,6 +100,18 @@ struct ExportServiceTests {
         #expect(emptyDate == nil)
     }
 
+    @Test func testParseRelationshipWeight() {
+        #expect(ExportService.parseRelationshipWeight("举手之劳") == .trivial)
+        #expect(ExportService.parseRelationshipWeight("礼尚往来") == .reciprocal)
+        #expect(ExportService.parseRelationshipWeight("profound") == .profound)
+        #expect(ExportService.parseRelationshipWeight("未知") == .reciprocal)
+    }
+
+    @Test func testParseRecordTypeBanquet() {
+        #expect(ExportService.parseRecordType("宴请") == .banquet)
+        #expect(ExportService.parseRecordType("banquet") == .banquet)
+    }
+
     // MARK: - JSON Export
 
     @Test func testExportJSON() throws {
@@ -119,6 +131,7 @@ struct ExportServiceTests {
         #expect(jsonString.contains("张三"))
         #expect(jsonString.contains("500"))
         #expect(jsonString.contains("given"))
+        #expect(jsonString.contains("relationship_weight"))
     }
 
     // MARK: - CSV Export
@@ -139,6 +152,7 @@ struct ExportServiceTests {
 
         #expect(lines.count == 2)
         #expect(lines[0].contains("联系人"))
+        #expect(lines[0].contains("情分分量"))
         #expect(lines[1].contains("李四"))
         #expect(lines[1].contains("300.00"))
     }

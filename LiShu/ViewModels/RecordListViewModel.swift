@@ -3,8 +3,10 @@ import SwiftData
 
 enum RecordFilter: String, CaseIterable, Hashable {
     case all = "all"
-    case given = "given"
-    case received = "received"
+    case monetary = "monetary"
+    case gift = "gift"
+    case favor = "favor"
+    case banquet = "banquet"
 }
 
 @Observable
@@ -30,14 +32,17 @@ class RecordListViewModel {
                 sortBy: [SortDescriptor(\.date, order: .reverse)]
             )
 
-            if filter == .given {
-                descriptor.predicate = #Predicate<Record> { record in
-                    record.directionRaw == "given"
-                }
-            } else if filter == .received {
-                descriptor.predicate = #Predicate<Record> { record in
-                    record.directionRaw == "received"
-                }
+            switch filter {
+            case .all:
+                break
+            case .monetary:
+                descriptor.predicate = #Predicate<Record> { $0.recordTypeRaw == "monetary" }
+            case .gift:
+                descriptor.predicate = #Predicate<Record> { $0.recordTypeRaw == "gift" }
+            case .favor:
+                descriptor.predicate = #Predicate<Record> { $0.recordTypeRaw == "favor" }
+            case .banquet:
+                descriptor.predicate = #Predicate<Record> { $0.recordTypeRaw == "banquet" }
             }
 
             var records = try context.fetch(descriptor)
@@ -48,7 +53,8 @@ class RecordListViewModel {
                 records = records.filter { record in
                     let contactMatch = (record.contact?.name ?? "").lowercased().contains(query)
                     let eventMatch = (record.event?.name ?? "").lowercased().contains(query)
-                    return contactMatch || eventMatch
+                    let favorMatch = record.resolvedDescription.lowercased().contains(query)
+                    return contactMatch || eventMatch || favorMatch
                 }
             }
 

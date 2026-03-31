@@ -163,6 +163,14 @@ struct ContactDetailView: View {
                 icon: "wallet.bifold",
                 valueColor: netValueColor(contact.netValue)
             )
+
+            if contact.nonFinancialInteractionCount > 0 {
+                StatCard(
+                    title: String(localized: "contact.detail.nonFinancialCount"),
+                    value: "\(contact.nonFinancialInteractionCount)" + String(localized: "common.times"),
+                    icon: "hand.wave"
+                )
+            }
         }
         .padding(.horizontal, 16)
     }
@@ -288,9 +296,13 @@ struct ContactDetailView: View {
                                 avatar: contact.avatar,
                                 contactName: contact.name,
                                 eventName: record.event?.name ?? "",
-                                amount: record.amount,
+                                amount: record.resolvedDisplayAmount,
                                 direction: record.direction,
-                                date: record.date
+                                date: record.date,
+                                recordType: record.recordType,
+                                favorDescription: record.resolvedDescription,
+                                kvData: record.kvData,
+                                contextTag: record.contextTag
                             )
                         }
                         .buttonStyle(.plain)

@@ -124,6 +124,17 @@ struct HomeView: View {
                     .font(DesignSystem.Typography.caption)
                     .foregroundStyle(DesignSystem.Colors.textSecondary)
             }
+
+            if let nonFinancialSummary = viewModel.nonFinancialSummary {
+                HStack(spacing: 6) {
+                    Image(systemName: "hand.wave")
+                        .font(.system(size: 12))
+                        .foregroundStyle(DesignSystem.Colors.textSecondary)
+                    Text(nonFinancialSummary)
+                        .font(DesignSystem.Typography.caption)
+                        .foregroundStyle(DesignSystem.Colors.textSecondary)
+                }
+            }
         }
         .padding(20)
         .contentShape(Rectangle())
@@ -273,7 +284,7 @@ struct HomeView: View {
                     .fontWeight(.semibold)
                     .foregroundStyle(DesignSystem.Colors.textPrimary)
 
-                Text(record.event?.name ?? "")
+                Text(record.contextDisplayName)
                     .font(DesignSystem.Typography.small)
                     .foregroundStyle(DesignSystem.Colors.textSecondary)
                     .lineLimit(1)
@@ -282,10 +293,21 @@ struct HomeView: View {
             Spacer()
 
             VStack(alignment: .trailing, spacing: 4) {
-                Text("¥" + String(format: "%.0f", record.amount))
-                    .font(DesignSystem.Typography.body)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(DesignSystem.Colors.primary)
+                if record.isMonetary {
+                    Text("¥" + String(format: "%.0f", record.monetaryAmount))
+                        .font(DesignSystem.Typography.body)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(DesignSystem.Colors.primary)
+                } else {
+                    HStack(spacing: 4) {
+                        Text(record.recordType.iconEmoji)
+                            .font(DesignSystem.Typography.caption)
+                        Text(record.resolvedDescription)
+                            .font(DesignSystem.Typography.caption)
+                            .foregroundStyle(DesignSystem.Colors.textPrimary)
+                            .lineLimit(1)
+                    }
+                }
                 Text(relativeDateText(record.date))
                     .font(DesignSystem.Typography.small)
                     .foregroundStyle(DesignSystem.Colors.textTertiary)

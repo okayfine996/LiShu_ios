@@ -150,6 +150,18 @@ struct StatisticsView: View {
                     .foregroundStyle(.white.opacity(0.7))
             }
             .padding(.top, 12)
+
+            if viewModel.nonFinancialInteractionCount > 0 {
+                HStack(spacing: 6) {
+                    Image(systemName: "hand.wave")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.white.opacity(0.7))
+                    Text(String(format: String(localized: "statistics.nonFinancialSummary"), viewModel.nonFinancialInteractionCount))
+                        .font(DesignSystem.Typography.caption)
+                        .foregroundStyle(.white.opacity(0.7))
+                }
+                .padding(.top, 4)
+            }
         }
         .padding(24)
         .background(

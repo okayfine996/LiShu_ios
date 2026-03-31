@@ -15,14 +15,14 @@ class EventDetailViewModel {
         guard let event else { return 0 }
         return (event.records ?? [])
             .filter { $0.direction == .given }
-            .reduce(0.0) { $0 + $1.amount }
+            .reduce(0.0) { $0 + $1.resolvedDisplayAmount }
     }
 
     var totalReceived: Double {
         guard let event else { return 0 }
         return (event.records ?? [])
             .filter { $0.direction == .received }
-            .reduce(0.0) { $0 + $1.amount }
+            .reduce(0.0) { $0 + $1.resolvedDisplayAmount }
     }
 
     var formattedDate: String {

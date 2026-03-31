@@ -64,7 +64,7 @@ struct ReturnGiftSheet: View {
                     Text(record.contact?.name ?? "")
                         .font(DesignSystem.Typography.title3)
                         .foregroundStyle(DesignSystem.Colors.textPrimary)
-                    Text(record.event?.name ?? "")
+                    Text(record.contextDisplayName)
                         .font(DesignSystem.Typography.caption)
                         .foregroundStyle(DesignSystem.Colors.textSecondary)
                 }
@@ -77,7 +77,7 @@ struct ReturnGiftSheet: View {
             HStack(spacing: 8) {
                 amountInfoRow(
                     label: String(localized: "record.detail.giftAmount"),
-                    value: formatAmount(record.amount),
+                    value: formatAmount(record.monetaryAmount),
                     highlighted: false
                 )
                 amountInfoRow(

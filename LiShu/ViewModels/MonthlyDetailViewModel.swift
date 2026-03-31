@@ -130,8 +130,8 @@ class MonthlyDetailViewModel {
             records = []
         }
 
-        periodIncome = records.filter { $0.direction == .received }.reduce(0) { $0 + $1.amount }
-        periodExpense = records.filter { $0.direction == .given }.reduce(0) { $0 + $1.amount }
+        periodIncome = records.filter { $0.direction == .received }.reduce(0) { $0 + $1.monetaryAmount }
+        periodExpense = records.filter { $0.direction == .given }.reduce(0) { $0 + $1.monetaryAmount }
 
         loadPreviousPeriod(context: context, calendar: calendar)
         computeEventTypeSlices()
@@ -155,8 +155,8 @@ class MonthlyDetailViewModel {
                 predicate: #Predicate<Record> { $0.date >= start && $0.date < end }
             )
             let prevRecords = try context.fetch(descriptor)
-            prevIncome = prevRecords.filter { $0.direction == .received }.reduce(0) { $0 + $1.amount }
-            prevExpense = prevRecords.filter { $0.direction == .given }.reduce(0) { $0 + $1.amount }
+            prevIncome = prevRecords.filter { $0.direction == .received }.reduce(0) { $0 + $1.monetaryAmount }
+            prevExpense = prevRecords.filter { $0.direction == .given }.reduce(0) { $0 + $1.monetaryAmount }
         } catch {
             prevIncome = 0
             prevExpense = 0
@@ -168,7 +168,7 @@ class MonthlyDetailViewModel {
         var typeAmounts: [EventType: Double] = [:]
         for record in expenseRecords {
             guard let event = record.event else { continue }
-            typeAmounts[event.type, default: 0] += record.amount
+            typeAmounts[event.type, default: 0] += record.monetaryAmount
         }
         let total = max(typeAmounts.values.reduce(0, +), 1)
 

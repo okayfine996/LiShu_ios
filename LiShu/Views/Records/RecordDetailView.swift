@@ -18,6 +18,8 @@ struct RecordDetailView: View {
                         VStack(spacing: 16) {
                             profileSection(record)
                             amountGrid(record)
+                            contextSummaryCard(record)
+                            favorDescriptionSection(record)
                             detailsCard(record)
                             notesSection(record)
                             photosSection(record)
@@ -102,7 +104,7 @@ struct RecordDetailView: View {
 
             let subtitle = [
                 record.contact?.relation ?? "",
-                record.event?.name ?? ""
+                record.contextDisplayName
             ].filter { !$0.isEmpty }.joined(separator: " · ")
 
             if !subtitle.isEmpty {
@@ -125,6 +127,20 @@ struct RecordDetailView: View {
                 .padding(.vertical, 4)
                 .background(directionColor(record.direction).opacity(0.12))
                 .clipShape(Capsule())
+
+                if !record.isMonetary {
+                    HStack(spacing: 4) {
+                        Text(record.recordType.iconEmoji)
+                            .font(DesignSystem.Typography.small)
+                        Text(record.recordType.displayName)
+                            .font(DesignSystem.Typography.small)
+                    }
+                    .foregroundStyle(DesignSystem.Colors.textSecondary)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+                    .background(DesignSystem.Colors.bgTag)
+                    .clipShape(Capsule())
+                }
             }
         }
         .frame(maxWidth: .infinity)
@@ -136,23 +152,34 @@ struct RecordDetailView: View {
 
     // MARK: - Amount Grid
 
+    @ViewBuilder
     private func amountGrid(_ record: Record) -> some View {
-        HStack(spacing: 8) {
-            amountCell(
-                label: String(localized: "record.detail.giftAmount"),
-                value: formatAmount(record.amount),
-                highlighted: false
-            )
-            amountCell(
-                label: String(localized: "record.detail.returnAmount"),
-                value: formatAmount(record.returnedAmount),
-                highlighted: false
-            )
-            amountCell(
-                label: String(localized: "record.detail.actualDebt"),
-                value: formatAmount(record.outstandingAmount),
-                highlighted: true
-            )
+        if record.isMonetary {
+            HStack(spacing: 8) {
+                amountCell(
+                    label: String(localized: "record.detail.giftAmount"),
+                    value: formatAmount(record.monetaryAmount),
+                    highlighted: false
+                )
+                amountCell(
+                    label: String(localized: "record.detail.returnAmount"),
+                    value: formatAmount(record.returnedAmount),
+                    highlighted: false
+                )
+                amountCell(
+                    label: String(localized: "record.detail.actualDebt"),
+                    value: formatAmount(record.outstandingAmount),
+                    highlighted: true
+                )
+            }
+        } else if record.resolvedDisplayAmount > 0 {
+            HStack(spacing: 8) {
+                amountCell(
+                    label: String(localized: "record.detail.giftAmount"),
+                    value: formatAmount(record.resolvedDisplayAmount),
+                    highlighted: false
+                )
+            }
         }
     }
 
@@ -172,27 +199,163 @@ struct RecordDetailView: View {
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.smallCard))
     }
 
+    // MARK: - Type Specific Detail Section
+
+    private func contextSummaryCard(_ record: Record) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: record.isDailyInteraction ? "bubble.left.and.bubble.right" : "calendar")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(DesignSystem.Colors.primary)
+                .frame(width: 36, height: 36)
+                .background(DesignSystem.Colors.bgIconSubtle)
+                .clipShape(Circle())
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(record.isDailyInteraction ? String(localized: "record.detail.context.dailyTitle") : String(localized: "record.detail.context.eventTitle"))
+                    .font(DesignSystem.Typography.caption)
+                    .foregroundStyle(DesignSystem.Colors.textSecondary)
+
+                Text(record.isDailyInteraction ? String(localized: "record.detail.context.dailyName") : record.contextDisplayName)
+                    .font(DesignSystem.Typography.body)
+                    .foregroundStyle(DesignSystem.Colors.textPrimary)
+                    .fontWeight(.semibold)
+
+                Text(contextSummaryMessage(record))
+                    .font(DesignSystem.Typography.small)
+                    .foregroundStyle(DesignSystem.Colors.textTertiary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Spacer()
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(DesignSystem.Colors.bgSurface)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+    }
+
+    @ViewBuilder
+    private func favorDescriptionSection(_ record: Record) -> some View {
+        if record.isMonetary { EmptyView() }
+        else {
+            let typeData = record.resolvedTypeData
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 6) {
+                    Text(record.recordType.iconEmoji)
+                        .font(DesignSystem.Typography.caption)
+                    Text(record.recordType.displayName)
+                        .font(DesignSystem.Typography.caption)
+                        .foregroundStyle(DesignSystem.Colors.textPrimary)
+                        .fontWeight(.semibold)
+                }
+
+                switch typeData {
+                case .gift(let d):
+                    LabeledContent(String(localized: "record.detail.giftName")) {
+                        Text(d.giftName)
+                            .font(DesignSystem.Typography.body)
+                            .foregroundStyle(DesignSystem.Colors.textPrimary)
+                    }
+                    .font(DesignSystem.Typography.caption)
+                    .foregroundStyle(DesignSystem.Colors.textSecondary)
+                    if let v = d.estimatedValue, v > 0 {
+                        LabeledContent(String(localized: "record.detail.estimatedValue")) {
+                            Text(formatAmount(v))
+                                .font(DesignSystem.Typography.body)
+                                .foregroundStyle(DesignSystem.Colors.textPrimary)
+                        }
+                        .font(DesignSystem.Typography.caption)
+                        .foregroundStyle(DesignSystem.Colors.textSecondary)
+                    }
+                case .banquet(let d):
+                    if !d.location.isEmpty {
+                        LabeledContent(String(localized: "record.add.banquet.location")) {
+                            Text(d.location)
+                                .font(DesignSystem.Typography.body)
+                                .foregroundStyle(DesignSystem.Colors.textPrimary)
+                        }
+                        .font(DesignSystem.Typography.caption)
+                        .foregroundStyle(DesignSystem.Colors.textSecondary)
+                    }
+                    if !d.attendeeList.isEmpty {
+                        LabeledContent(String(localized: "record.add.banquet.attendees")) {
+                            Text(d.attendeeList)
+                                .font(DesignSystem.Typography.body)
+                                .foregroundStyle(DesignSystem.Colors.textPrimary)
+                                .multilineTextAlignment(.trailing)
+                        }
+                        .font(DesignSystem.Typography.caption)
+                        .foregroundStyle(DesignSystem.Colors.textSecondary)
+                    }
+                    if !d.extraCostNotes.isEmpty {
+                        LabeledContent(String(localized: "record.add.banquet.extraCostNotes")) {
+                            Text(d.extraCostNotes)
+                                .font(DesignSystem.Typography.body)
+                                .foregroundStyle(DesignSystem.Colors.textPrimary)
+                                .multilineTextAlignment(.trailing)
+                        }
+                        .font(DesignSystem.Typography.caption)
+                        .foregroundStyle(DesignSystem.Colors.textSecondary)
+                    }
+                default:
+                    if !record.resolvedDescription.isEmpty {
+                        Text(record.resolvedDescription)
+                            .font(DesignSystem.Typography.body)
+                            .foregroundStyle(DesignSystem.Colors.textPrimary)
+                            .lineSpacing(4)
+                    }
+                }
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(DesignSystem.Colors.bgSurface)
+            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+        }
+    }
+
     // MARK: - Details Card
 
     private func detailsCard(_ record: Record) -> some View {
         VStack(spacing: 0) {
             infoRow(
-                icon: "creditcard",
-                label: String(localized: "record.add.paymentMethod"),
-                value: viewModel.paymentMethodName
+                icon: "doc.text",
+                label: String(localized: "record.add.recordType"),
+                value: record.recordType.displayName
             )
             Divider().foregroundStyle(DesignSystem.Colors.separator).padding(.leading, 56)
             infoRow(
+                icon: "slider.horizontal.3",
+                label: String(localized: "record.detail.relationshipWeight"),
+                value: record.relationshipWeight.displayName
+            )
+            Divider().foregroundStyle(DesignSystem.Colors.separator).padding(.leading, 56)
+            if record.isMonetary {
+                infoRow(
+                    icon: "creditcard",
+                    label: String(localized: "record.add.paymentMethod"),
+                    value: viewModel.paymentMethodName
+                )
+                Divider().foregroundStyle(DesignSystem.Colors.separator).padding(.leading, 56)
+            }
+            infoRow(
                 icon: "calendar",
+                label: String(localized: "record.add.context"),
+                value: record.contextDisplayName
+            )
+            Divider().foregroundStyle(DesignSystem.Colors.separator).padding(.leading, 56)
+            infoRow(
+                icon: "calendar.badge.clock",
                 label: String(localized: "record.add.date"),
                 value: viewModel.formattedDate
             )
-            Divider().foregroundStyle(DesignSystem.Colors.separator).padding(.leading, 56)
-            infoRow(
-                icon: "tag",
-                label: String(localized: "record.add.eventType"),
-                value: record.event?.type.displayName ?? ""
-            )
+            if let eventTypeName = record.event?.type.displayName {
+                Divider().foregroundStyle(DesignSystem.Colors.separator).padding(.leading, 56)
+                infoRow(
+                    icon: "tag",
+                    label: String(localized: "record.add.eventType"),
+                    value: eventTypeName
+                )
+            }
         }
         .background(DesignSystem.Colors.bgSurface)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
@@ -220,6 +383,13 @@ struct RecordDetailView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
+    }
+
+    private func contextSummaryMessage(_ record: Record) -> String {
+        if let event = record.event {
+            return String(format: String(localized: "record.detail.context.eventMessage"), event.type.displayName)
+        }
+        return String(localized: "record.detail.context.dailyMessage")
     }
 
     // MARK: - Notes Section
@@ -347,20 +517,23 @@ struct RecordDetailView: View {
 
     // MARK: - Bottom Return Button
 
+    @ViewBuilder
     private var bottomReturnButton: some View {
-        Button {
-            viewModel.isShowingReturnSheet = true
-        } label: {
-            HStack(spacing: 6) {
-                Image(systemName: "plus")
-                    .font(.system(size: 14, weight: .semibold))
-                Text(String(localized: "record.detail.returnGift"))
-                    .font(DesignSystem.Typography.body)
+        if viewModel.shouldShowReturnButton {
+            Button {
+                viewModel.isShowingReturnSheet = true
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "plus")
+                        .font(.system(size: 14, weight: .semibold))
+                    Text(String(localized: "record.detail.returnGift"))
+                        .font(DesignSystem.Typography.body)
+                }
             }
+            .buttonStyle(PrimaryButtonStyle())
+            .padding(.horizontal, 16)
+            .padding(.bottom, 16)
         }
-        .buttonStyle(PrimaryButtonStyle())
-        .padding(.horizontal, 16)
-        .padding(.bottom, 16)
     }
 
     // MARK: - Return Gift Sheet
@@ -379,7 +552,7 @@ struct RecordDetailView: View {
                                 .font(DesignSystem.Typography.caption)
                                 .foregroundStyle(DesignSystem.Colors.textSecondary)
                             Spacer()
-                            Text(formatAmount(record.amount))
+                            Text(formatAmount(record.monetaryAmount))
                                 .font(DesignSystem.Typography.caption)
                                 .foregroundStyle(DesignSystem.Colors.textPrimary)
                                 .fontWeight(.medium)

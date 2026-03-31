@@ -114,39 +114,42 @@ struct RecordListView: View {
     // MARK: - Filter Chips
 
     private var filterChips: some View {
-        HStack(spacing: 8) {
-            ForEach(RecordFilter.allCases, id: \.self) { filter in
-                let isSelected = viewModel.filter == filter
-                Button {
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        viewModel.filter = filter
-                    }
-                } label: {
-                    Text(filterTitle(filter))
-                        .font(DesignSystem.Typography.caption)
-                        .foregroundStyle(isSelected ? .white : DesignSystem.Colors.textSecondary)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
-                        .background(isSelected ? DesignSystem.Colors.primary : DesignSystem.Colors.bgSurface)
-                        .clipShape(Capsule())
-                        .overlay(
-                            Capsule().stroke(
-                                isSelected ? Color.clear : DesignSystem.Colors.border,
-                                lineWidth: 1
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(RecordFilter.allCases, id: \.self) { filter in
+                    let isSelected = viewModel.filter == filter
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            viewModel.filter = filter
+                        }
+                    } label: {
+                        Text(filterTitle(filter))
+                            .font(DesignSystem.Typography.caption)
+                            .foregroundStyle(isSelected ? .white : DesignSystem.Colors.textSecondary)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background(isSelected ? DesignSystem.Colors.primary : DesignSystem.Colors.bgSurface)
+                            .clipShape(Capsule())
+                            .overlay(
+                                Capsule().stroke(
+                                    isSelected ? Color.clear : DesignSystem.Colors.border,
+                                    lineWidth: 1
+                                )
                             )
-                        )
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
             }
-            Spacer()
         }
     }
 
     private func filterTitle(_ filter: RecordFilter) -> String {
         switch filter {
         case .all: return String(localized: "record.filter.all")
-        case .given: return String(localized: "record.direction.given")
-        case .received: return String(localized: "record.direction.received")
+        case .monetary: return String(localized: "record.type.monetary")
+        case .gift: return String(localized: "record.type.gift")
+        case .favor: return String(localized: "record.type.favor")
+        case .banquet: return String(localized: "record.type.banquet")
         }
     }
 
@@ -167,9 +170,13 @@ struct RecordListView: View {
                             avatar: record.contact?.avatar,
                             contactName: record.contact?.name ?? "",
                             eventName: record.event?.name ?? "",
-                            amount: record.amount,
+                            amount: record.resolvedDisplayAmount,
                             direction: record.direction,
-                            date: record.date
+                            date: record.date,
+                            recordType: record.recordType,
+                            favorDescription: record.resolvedDescription,
+                            kvData: record.kvData,
+                            contextTag: record.contextTag
                         )
                     }
                     .buttonStyle(.plain)

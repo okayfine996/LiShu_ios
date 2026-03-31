@@ -7,6 +7,7 @@ class HomeViewModel {
     var yearlyExpense: Double = 0
     var contactCount: Int = 0
     var recordCount: Int = 0
+    var nonFinancialCount: Int = 0
     var recentRecords: [Record] = []
     var upcomingEvents: [Event] = []
     var currentYear: Int = Calendar.current.component(.year, from: Date())
@@ -26,6 +27,7 @@ class HomeViewModel {
             yearlyExpense = 0
             contactCount = 0
             recordCount = 0
+            nonFinancialCount = 0
             return
         }
 
@@ -37,22 +39,26 @@ class HomeViewModel {
             )
             let records = try context.fetch(descriptor)
 
-            yearlyIncome = records
-                .filter { $0.direction == .received }
-                .reduce(0.0) { $0 + $1.amount }
+            let monetaryRecords = records.filter { $0.recordType == .monetary }
 
-            yearlyExpense = records
+            yearlyIncome = monetaryRecords
+                .filter { $0.direction == .received }
+                .reduce(0.0) { $0 + $1.monetaryAmount }
+
+            yearlyExpense = monetaryRecords
                 .filter { $0.direction == .given }
-                .reduce(0.0) { $0 + $1.amount }
+                .reduce(0.0) { $0 + $1.monetaryAmount }
 
             let contactIDs = Set(records.compactMap { $0.contact?.persistentModelID })
             contactCount = contactIDs.count
             recordCount = records.count
+            nonFinancialCount = records.filter { $0.recordType != .monetary }.count
         } catch {
             yearlyIncome = 0
             yearlyExpense = 0
             contactCount = 0
             recordCount = 0
+            nonFinancialCount = 0
         }
     }
 
@@ -98,6 +104,11 @@ class HomeViewModel {
 
     var peopleSummary: String {
         String(format: String(localized: "home.peopleTxSummary"), contactCount, recordCount)
+    }
+
+    var nonFinancialSummary: String? {
+        guard nonFinancialCount > 0 else { return nil }
+        return String(format: String(localized: "home.nonFinancialSummary"), nonFinancialCount)
     }
 
     private func formatNumber(_ value: Double) -> String {

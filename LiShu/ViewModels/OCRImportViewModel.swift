@@ -230,20 +230,22 @@ class OCRImportViewModel {
                     contactMap[normalizedName] = contact
                 }
 
-                let event = ExportService.findOrCreateEvent(
+                let resolvedEventType = eventType(for: item.eventName) ?? item.eventType
+                let event = ExportService.findOrCreateEventIfNeeded(
                     name: item.eventName,
-                    type: item.eventType,
+                    type: resolvedEventType,
                     context: context
                 )
-                event.date = item.date
+                event?.date = item.date
 
                 let record = Record(
                     contact: contact,
                     event: event,
-                    amount: item.amount,
                     direction: direction,
                     date: item.date
                 )
+                record.applyTypeData(.monetary(MonetaryData(amount: item.amount, paymentMethod: PaymentMethod.cash.rawValue)))
+                record.updateStatus()
                 context.insert(record)
             }
 
