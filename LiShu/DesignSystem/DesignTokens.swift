@@ -22,7 +22,7 @@ public enum DesignSystem {
 
         // Border & Separator
         public static let border = Color(hexLight: "#D9CFC4", hexDark: "#3D3935")
-        public static let separator = Color(hexLight: "#D9CFC4", hexDark: "#3D3935")
+        public static let separator = border
 
         // Text
         public static let textPrimary = Color(hexLight: "#2C2C2C", hexDark: "#E6E1DC")
@@ -56,6 +56,21 @@ public enum DesignSystem {
         public static let button: CGFloat = .infinity
         public static let tag: CGFloat = 8
     }
+
+    // MARK: - Spacing
+    public struct Spacing {
+        public static let section: CGFloat = 28
+        public static let block: CGFloat = 12
+    }
+
+    // MARK: - Effects
+    public struct Effects {
+        public static let selectedFillOpacity: CGFloat = 0.1
+        public static let selectedShadowOpacity: CGFloat = 0.12
+        public static let disabledOpacity: CGFloat = 0.6
+        public static let selectedShadowRadius: CGFloat = 4
+        public static let selectedShadowYOffset: CGFloat = 2
+    }
 }
 
 // MARK: - Component Styles
@@ -66,7 +81,8 @@ public struct PrimaryButtonStyle: ButtonStyle {
 
     public func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 14, weight: .semibold))
+            .font(DesignSystem.Typography.caption)
+            .fontWeight(.semibold)
             .foregroundColor(.white)
             .padding(.vertical, 12)
             .padding(.horizontal, 24)
@@ -90,7 +106,8 @@ public struct SecondaryButtonStyle: ButtonStyle {
 
     public func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 14, weight: .semibold))
+            .font(DesignSystem.Typography.caption)
+            .fontWeight(.semibold)
             .foregroundColor(DesignSystem.Colors.primary)
             .padding(.vertical, 12)
             .padding(.horizontal, 24)
@@ -110,7 +127,7 @@ public struct SecondaryButtonStyle: ButtonStyle {
 public struct GhostButtonStyle: ButtonStyle {
     public func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 14, weight: .medium))
+            .font(DesignSystem.Typography.caption)
             .foregroundColor(DesignSystem.Colors.textSecondary)
             .padding(.vertical, 12)
             .padding(.horizontal, 24)

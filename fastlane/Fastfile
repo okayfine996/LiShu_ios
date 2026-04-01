@@ -1,0 +1,16 @@
+default_platform(:ios)
+
+platform :ios do
+  desc "Generate App Store screenshots via UI tests"
+  lane :screenshots do
+    snapshot(
+      scheme: "LiShu",
+      project: "./LiShu.xcodeproj",
+      test_target_name: "LiShuUITests",
+      only_testing: ["LiShuUITests/AppStoreScreenshotTests"],
+      derived_data_path: "./fastlane/DerivedData",
+      output_directory: "./fastlane/screenshots",
+      clear_previous_screenshots: true
+    )
+  end
+end

@@ -25,7 +25,7 @@ struct AddRecordView: View {
 
     var body: some View {
         ScrollView(showsIndicators: false) {
-            VStack(spacing: 24) {
+            VStack(spacing: DesignSystem.Spacing.section) {
                 contactIdentitySection
                 recordTypeGrid
                 contextSelectionSection
@@ -42,7 +42,7 @@ struct AddRecordView: View {
                 confirmButton
             }
             .padding(.horizontal, 20)
-            .padding(.top, 8)
+            .padding(.top, DesignSystem.Spacing.block)
             .padding(.bottom, 32)
         }
         .background(DesignSystem.Colors.bgPage)
@@ -110,7 +110,7 @@ struct AddRecordView: View {
     // MARK: - Contact Identity Section
 
     private var contactIdentitySection: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: DesignSystem.Spacing.block) {
             if let contact = viewModel.selectedContact {
                 selectedContactCard(contact)
             }
@@ -120,49 +120,54 @@ struct AddRecordView: View {
     }
 
     private func selectedContactCard(_ contact: Contact) -> some View {
-        HStack(spacing: 14) {
-            AvatarView(imageData: contact.avatar, name: contact.name, size: 56)
-                .overlay(
-                    Circle()
-                        .stroke(DesignSystem.Colors.bgPage, lineWidth: 2)
-                )
+        HStack(spacing: 12) {
+            HStack(spacing: 12) {
+                AvatarView(imageData: contact.avatar, name: contact.name, size: 52)
+                    .overlay(
+                        Circle()
+                            .stroke(DesignSystem.Colors.border, lineWidth: 1)
+                    )
 
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 8) {
-                    Text(contact.name)
-                        .font(.system(size: 22, weight: .semibold))
-                        .foregroundStyle(DesignSystem.Colors.textPrimary)
-                        .tracking(-0.3)
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 8) {
+                        Text(contact.name)
+                            .font(DesignSystem.Typography.title3)
+                            .foregroundStyle(DesignSystem.Colors.textPrimary)
 
-                    if !contact.relation.isEmpty {
-                        Text(contact.relation)
-                            .font(DesignSystem.Typography.small)
-                            .foregroundStyle(DesignSystem.Colors.primary)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 2)
-                            .background(DesignSystem.Colors.primary.opacity(0.1))
-                            .clipShape(Capsule())
-                            .overlay(
-                                Capsule()
-                                    .stroke(DesignSystem.Colors.primary.opacity(0.2), lineWidth: 1)
-                            )
+                        if !contact.relation.isEmpty {
+                            Text(contact.relation)
+                                .font(DesignSystem.Typography.small)
+                                .foregroundStyle(DesignSystem.Colors.primary)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 2)
+                                .background(DesignSystem.Colors.primary.opacity(0.1))
+                                .clipShape(Capsule())
+                                .overlay(
+                                    Capsule()
+                                        .stroke(DesignSystem.Colors.primary.opacity(0.2), lineWidth: 1)
+                                )
+                        }
                     }
+
+                    Text(String(localized: "record.add.contactLabel"))
+                        .font(DesignSystem.Typography.small)
+                        .foregroundStyle(DesignSystem.Colors.textTertiary)
                 }
 
-                Text(String(localized: "record.add.contactLabel"))
-                    .font(DesignSystem.Typography.small)
-                    .foregroundStyle(DesignSystem.Colors.textTertiary)
+                Spacer()
             }
-
-            Spacer()
         }
-        .padding(16)
-        .background(DesignSystem.Colors.bgInput)
+        .padding(14)
+        .background(DesignSystem.Colors.bgSurface)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
+                .stroke(DesignSystem.Colors.border, lineWidth: 1)
+        )
     }
 
     private var contactScrollSelector: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.block) {
             Text(String(localized: "record.add.selectContact"))
                 .font(DesignSystem.Typography.small)
                 .foregroundStyle(DesignSystem.Colors.textTertiary)
@@ -226,20 +231,30 @@ struct AddRecordView: View {
             }
         } label: {
             VStack(spacing: 6) {
-                AvatarView(
-                    imageData: contact.avatar,
-                    name: contact.name,
-                    size: 56,
-                    placeholderBackground: DesignSystem.Colors.bgSurface
-                )
-                    .overlay(
-                        Circle()
-                            .stroke(
-                                isSelected ? DesignSystem.Colors.primary : DesignSystem.Colors.border,
-                                lineWidth: isSelected ? 2 : 1
-                            )
+                Circle()
+                    .fill(isSelected ? DesignSystem.Colors.primary.opacity(DesignSystem.Effects.selectedFillOpacity) : .clear)
+                    .frame(width: 60, height: 60)
+                    .overlay {
+                        AvatarView(
+                            imageData: contact.avatar,
+                            name: contact.name,
+                            size: 56,
+                            placeholderBackground: DesignSystem.Colors.bgSurface
+                        )
+                        .overlay(
+                            Circle()
+                                .stroke(
+                                    isSelected ? DesignSystem.Colors.primary : DesignSystem.Colors.border,
+                                    lineWidth: isSelected ? 2 : 1
+                                )
+                        )
+                        .frame(width: 60, height: 60)
+                    }
+                    .shadow(
+                        color: isSelected ? DesignSystem.Colors.primary.opacity(DesignSystem.Effects.selectedShadowOpacity) : .clear,
+                        radius: DesignSystem.Effects.selectedShadowRadius,
+                        y: DesignSystem.Effects.selectedShadowYOffset
                     )
-                .frame(width: 60, height: 60)
 
                 Text(contact.name)
                     .font(DesignSystem.Typography.small)
@@ -269,6 +284,7 @@ struct AddRecordView: View {
             Text(String(localized: "record.add.recordType.description"))
                 .font(DesignSystem.Typography.small)
                 .foregroundStyle(DesignSystem.Colors.textTertiary)
+                .lineSpacing(2)
                 .fixedSize(horizontal: false, vertical: true)
 
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 4), spacing: 12) {
@@ -390,6 +406,7 @@ struct AddRecordView: View {
             Text(String(localized: "record.add.context.description"))
                 .font(DesignSystem.Typography.small)
                 .foregroundStyle(DesignSystem.Colors.textTertiary)
+                .lineSpacing(2)
                 .fixedSize(horizontal: false, vertical: true)
 
             HStack(spacing: 0) {
@@ -404,7 +421,7 @@ struct AddRecordView: View {
     }
 
     private var directionToggle: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.block) {
             Text(String(localized: "record.add.directionSection"))
                 .font(DesignSystem.Typography.caption)
                 .foregroundStyle(DesignSystem.Colors.textSecondary)
@@ -413,6 +430,7 @@ struct AddRecordView: View {
             Text(String(localized: "record.add.directionSection.description"))
                 .font(DesignSystem.Typography.small)
                 .foregroundStyle(DesignSystem.Colors.textTertiary)
+                .lineSpacing(2)
                 .fixedSize(horizontal: false, vertical: true)
 
             HStack(spacing: 0) {
@@ -437,7 +455,7 @@ struct AddRecordView: View {
                 .foregroundStyle(
                     viewModel.direction == dir
                         ? DesignSystem.Colors.textPrimary
-                        : DesignSystem.Colors.textSecondary
+                        : DesignSystem.Colors.textTertiary
                 )
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 10)
@@ -448,8 +466,9 @@ struct AddRecordView: View {
                 )
                 .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.tag))
                 .shadow(
-                    color: viewModel.direction == dir ? Color.black.opacity(0.04) : .clear,
-                    radius: 2, y: 1
+                    color: viewModel.direction == dir ? DesignSystem.Colors.primary.opacity(DesignSystem.Effects.selectedShadowOpacity) : .clear,
+                    radius: DesignSystem.Effects.selectedShadowRadius,
+                    y: DesignSystem.Effects.selectedShadowYOffset
                 )
         }
         .buttonStyle(.plain)
@@ -506,7 +525,7 @@ struct AddRecordView: View {
                 .foregroundStyle(
                     viewModel.contextSelection == selection
                         ? DesignSystem.Colors.textPrimary
-                        : DesignSystem.Colors.textSecondary
+                        : DesignSystem.Colors.textTertiary
                 )
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 10)
@@ -517,8 +536,9 @@ struct AddRecordView: View {
                 )
                 .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.tag))
                 .shadow(
-                    color: viewModel.contextSelection == selection ? Color.black.opacity(0.04) : .clear,
-                    radius: 2, y: 1
+                    color: viewModel.contextSelection == selection ? DesignSystem.Colors.primary.opacity(DesignSystem.Effects.selectedShadowOpacity) : .clear,
+                    radius: DesignSystem.Effects.selectedShadowRadius,
+                    y: DesignSystem.Effects.selectedShadowYOffset
                 )
         }
         .buttonStyle(.plain)
@@ -792,7 +812,7 @@ struct AddRecordView: View {
     // MARK: - Event Section
 
     private var eventSection: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: DesignSystem.Spacing.block) {
             if let event = viewModel.selectedEvent {
                 selectedEventCard(event)
             }
@@ -802,52 +822,58 @@ struct AddRecordView: View {
     }
 
     private func selectedEventCard(_ event: Event) -> some View {
-        HStack(spacing: 14) {
-            EventCoverView(coverImage: event.coverImage, eventType: event.type, size: 56)
-                .overlay(
-                    RoundedRectangle(cornerRadius: DesignSystem.Radius.input)
-                        .stroke(DesignSystem.Colors.bgPage, lineWidth: 2)
-                )
+        HStack(spacing: 12) {
+            HStack(spacing: 12) {
+                EventCoverView(coverImage: event.coverImage, eventType: event.type, size: 52, placeholderBackground: DesignSystem.Colors.bgSurface)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: DesignSystem.Radius.input)
+                            .stroke(DesignSystem.Colors.border, lineWidth: 1)
+                    )
 
-            VStack(alignment: .leading, spacing: 6) {
-                Text(event.name)
-                    .font(DesignSystem.Typography.title3)
-                    .foregroundStyle(DesignSystem.Colors.textPrimary)
-                    .lineLimit(2)
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(event.name)
+                        .font(DesignSystem.Typography.title3)
+                        .foregroundStyle(DesignSystem.Colors.textPrimary)
+                        .lineLimit(2)
 
-                HStack(spacing: 8) {
-                    Text(event.type.displayName)
+                    HStack(spacing: 8) {
+                        Text(event.type.displayName)
+                            .font(DesignSystem.Typography.small)
+                            .foregroundStyle(DesignSystem.Colors.primary)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 2)
+                            .background(DesignSystem.Colors.primary.opacity(0.1))
+                            .clipShape(Capsule())
+                            .overlay(
+                                Capsule()
+                                    .stroke(DesignSystem.Colors.primary.opacity(0.2), lineWidth: 1)
+                            )
+
+                        Text(formattedEventDate(event.date))
+                            .font(DesignSystem.Typography.small)
+                            .foregroundStyle(DesignSystem.Colors.textSecondary)
+                            .lineLimit(1)
+                    }
+
+                    Text(String(localized: "record.add.relatedEvent"))
                         .font(DesignSystem.Typography.small)
-                        .foregroundStyle(DesignSystem.Colors.primary)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 2)
-                        .background(DesignSystem.Colors.primary.opacity(0.1))
-                        .clipShape(Capsule())
-                        .overlay(
-                            Capsule()
-                                .stroke(DesignSystem.Colors.primary.opacity(0.2), lineWidth: 1)
-                        )
-
-                    Text(formattedEventDate(event.date))
-                        .font(DesignSystem.Typography.small)
-                        .foregroundStyle(DesignSystem.Colors.textSecondary)
-                        .lineLimit(1)
+                        .foregroundStyle(DesignSystem.Colors.textTertiary)
                 }
 
-                Text(String(localized: "record.add.relatedEvent"))
-                    .font(DesignSystem.Typography.small)
-                    .foregroundStyle(DesignSystem.Colors.textTertiary)
+                Spacer()
             }
-
-            Spacer()
         }
-        .padding(16)
-        .background(DesignSystem.Colors.bgInput)
+        .padding(14)
+        .background(DesignSystem.Colors.bgSurface)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
+                .stroke(DesignSystem.Colors.border, lineWidth: 1)
+        )
     }
 
     private var eventScrollSelector: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.block) {
             HStack {
                 Text(String(localized: "record.add.selectEvent"))
                     .font(DesignSystem.Typography.small)
@@ -892,18 +918,28 @@ struct AddRecordView: View {
             }
         } label: {
             VStack(spacing: 6) {
-                EventCoverView(
-                    coverImage: event.coverImage,
-                    eventType: event.type,
-                    size: 56,
-                    placeholderBackground: DesignSystem.Colors.bgSurface
-                )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: DesignSystem.Radius.input)
-                            .stroke(
-                                isSelected ? DesignSystem.Colors.primary : DesignSystem.Colors.border.opacity(0.35),
-                                lineWidth: isSelected ? 2 : 1
-                            )
+                RoundedRectangle(cornerRadius: DesignSystem.Radius.input)
+                    .fill(isSelected ? DesignSystem.Colors.primary.opacity(DesignSystem.Effects.selectedFillOpacity) : .clear)
+                    .frame(width: 60, height: 60)
+                    .overlay {
+                        EventCoverView(
+                            coverImage: event.coverImage,
+                            eventType: event.type,
+                            size: 56,
+                            placeholderBackground: DesignSystem.Colors.bgSurface
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: DesignSystem.Radius.input)
+                                .stroke(
+                                    isSelected ? DesignSystem.Colors.primary : DesignSystem.Colors.border.opacity(0.35),
+                                    lineWidth: isSelected ? 2 : 1
+                                )
+                        )
+                    }
+                    .shadow(
+                        color: isSelected ? DesignSystem.Colors.primary.opacity(DesignSystem.Effects.selectedShadowOpacity) : .clear,
+                        radius: DesignSystem.Effects.selectedShadowRadius,
+                        y: DesignSystem.Effects.selectedShadowYOffset
                     )
 
                 Text(event.name)
@@ -930,7 +966,7 @@ struct AddRecordView: View {
         } label: {
             VStack(spacing: 6) {
                 RoundedRectangle(cornerRadius: DesignSystem.Radius.input)
-                    .fill(DesignSystem.Colors.bgCard)
+                    .fill(DesignSystem.Colors.bgSurface)
                     .frame(width: 56, height: 56)
                     .overlay {
                         Image(systemName: "plus")
@@ -1177,15 +1213,28 @@ struct AddRecordView: View {
     // MARK: - Confirm Button
 
     private var confirmButton: some View {
-        Button {
-            saveRecord()
-        } label: {
-            Text(viewModel.confirmButtonTitle)
+        VStack(spacing: 8) {
+            Button {
+                saveRecord()
+            } label: {
+                Text(viewModel.confirmButtonTitle)
+            }
+            .buttonStyle(PrimaryButtonStyle())
+            .disabled(!viewModel.isValid)
+            .opacity(viewModel.isValid ? 1.0 : DesignSystem.Effects.disabledOpacity)
+            .padding(.top, 4)
+
+            if !viewModel.isValid {
+                Text(String(localized: "record.add.saveDisabledHint"))
+                    .font(DesignSystem.Typography.small)
+                    .foregroundStyle(DesignSystem.Colors.textTertiary)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(DesignSystem.Colors.bgInput)
+                    .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.tag))
+                    .frame(maxWidth: .infinity)
+            }
         }
-        .buttonStyle(PrimaryButtonStyle())
-        .disabled(!viewModel.isValid)
-        .opacity(viewModel.isValid ? 1.0 : 0.6)
-        .padding(.top, 4)
     }
 
     // MARK: - Helpers
