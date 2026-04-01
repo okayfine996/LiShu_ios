@@ -55,12 +55,45 @@ public enum DesignSystem {
         public static let input: CGFloat = 12
         public static let button: CGFloat = .infinity
         public static let tag: CGFloat = 8
+        /// 柱状图条、迷你进度条、热力图图例色块等细圆角
+        public static let chartBar: CGFloat = 2
     }
 
     // MARK: - Spacing
     public struct Spacing {
         public static let section: CGFloat = 28
         public static let block: CGFloat = 12
+        /// 页面水平内边距（与导航内容区对齐）
+        public static let pageHorizontal: CGFloat = 16
+        /// 纵向大区块间距（如统计页各模块之间）
+        public static let stackLoose: CGFloat = 20
+        /// Scroll 内容底部留白
+        public static let scrollBottom: CGFloat = 24
+        /// 图标与文字、紧凑行内间距
+        public static let inlineTight: CGFloat = 8
+        /// 热力图格内等更密间距
+        public static let dense: CGFloat = 6
+        /// 两行标题/标签之间
+        public static let stackTight: CGFloat = 4
+        /// 常规卡片内边距（环形图、柱状图等）
+        public static let cardPadding: CGFloat = 20
+        /// 首屏总览等强调卡片内边距
+        public static let heroCardPadding: CGFloat = 24
+        /// 横向滑动小卡、紧凑信息块内边距
+        public static let cardPaddingSmall: CGFloat = 16
+    }
+
+    // MARK: - Layout（常用固定尺寸，避免视图内魔法数）
+    public struct Layout {
+        public static let statisticsBarChartHeight: CGFloat = 160
+        public static let rankBadgeSize: CGFloat = 28
+        public static let avatarM: CGFloat = 48
+        public static let circleAnalysisCardWidth: CGFloat = 140
+        public static let heroDecorationDiameter: CGFloat = 128
+        public static let heroDecorationBlur: CGFloat = 20
+        public static let heroDecorationOffset: CGFloat = 80
+        public static let heatmapLegendSwatchWidth: CGFloat = 14
+        public static let heatmapLegendSwatchHeight: CGFloat = 8
     }
 
     // MARK: - Effects

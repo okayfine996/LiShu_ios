@@ -1965,6 +1965,7 @@
       }
     },
     "eventDetail.expense" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1975,6 +1976,7 @@
       }
     },
     "eventDetail.given" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1985,6 +1987,7 @@
       }
     },
     "eventDetail.income" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1995,6 +1998,7 @@
       }
     },
     "eventDetail.monthlyTrend" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -2005,6 +2009,7 @@
       }
     },
     "eventDetail.netValue" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -2015,6 +2020,7 @@
       }
     },
     "eventDetail.received" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -2025,6 +2031,7 @@
       }
     },
     "eventDetail.records" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -2035,6 +2042,7 @@
       }
     },
     "eventDetail.sortByDate" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -2045,6 +2053,7 @@
       }
     },
     "eventDetail.totalCount" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -2055,11 +2064,22 @@
       }
     },
     "eventDetail.unit" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "笔"
+          }
+        }
+      }
+    },
+    "eventTypeComposition.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "事件分布分析"
           }
         }
       }
@@ -2230,6 +2250,156 @@
     "Ghost" : {
 
     },
+    "heatmap.detail.insightBody" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "该月共 %d 笔往来"
+          }
+        }
+      }
+    },
+    "heatmap.detail.insightTitle" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ · 互动高峰"
+          }
+        }
+      }
+    },
+    "heatmap.detail.legendCold" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "冷"
+          }
+        }
+      }
+    },
+    "heatmap.detail.legendHot" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "热"
+          }
+        }
+      }
+    },
+    "heatmap.detail.matrixTitle" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "年度人情矩阵"
+          }
+        }
+      }
+    },
+    "heatmap.detail.noEventTitle" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "往来"
+          }
+        }
+      }
+    },
+    "heatmap.detail.recordsByWeekEmpty" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本年度暂无往来记录"
+          }
+        }
+      }
+    },
+    "heatmap.detail.recordsByWeekTitle" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按周往来"
+          }
+        }
+      }
+    },
+    "heatmap.detail.summaryBase" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本年度共计互动 %d 次"
+          }
+        }
+      }
+    },
+    "heatmap.detail.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "人情热力"
+          }
+        }
+      }
+    },
+    "heatmap.detail.unknownContact" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未命名联系人"
+          }
+        }
+      }
+    },
+    "heatmap.detail.weekRecordsCount" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%d 笔记录"
+          }
+        }
+      }
+    },
+    "heatmap.detail.weekSectionTitle" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 第%d周"
+          }
+        }
+      }
+    },
+    "heatmap.detail.yoyDown" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "，较去年下降 %.0f%%"
+          }
+        }
+      }
+    },
+    "heatmap.detail.yoyUp" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "，较去年增长 %.0f%%"
+          }
+        }
+      }
+    },
     "home.addRecord" : {
       "localizations" : {
         "zh-Hans" : {
@@ -2277,7 +2447,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "礼金净值: 收 ¥%@ / 支 ¥%@"
+            "value" : "礼金净值 %@（收 ¥%@ / 支 ¥%@）"
           }
         }
       }
@@ -4712,16 +4882,6 @@
         }
       }
     },
-    "record.add.saveDisabledHint" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "请先完成必填项后再保存"
-          }
-        }
-      }
-    },
     "record.add.noContact" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -4847,6 +5007,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "记录这次往来在人情轻重上的分量，方便后续判断关系投入。"
+          }
+        }
+      }
+    },
+    "record.add.saveDisabledHint" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请先完成必填项后再保存"
           }
         }
       }
@@ -6832,7 +7002,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "收支趋势图"
+            "value" : "收支趋势"
           }
         }
       }
@@ -6892,7 +7062,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "关系圈层分析"
+            "value" : "圈层分析"
           }
         }
       }
@@ -6923,7 +7093,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "事件类型分布"
+            "value" : "事件分布"
           }
         }
       }
@@ -6949,6 +7119,16 @@
         }
       }
     },
+    "statistics.heatmap.legend" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "颜色越深表示往来越频繁"
+          }
+        }
+      }
+    },
     "statistics.heatmap.subtitle" : {
       "localizations" : {
         "zh-Hans" : {
@@ -6964,7 +7144,47 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "人情日历热力图"
+            "value" : "人情热力"
+          }
+        }
+      }
+    },
+    "statistics.hero.covered" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "覆盖"
+          }
+        }
+      }
+    },
+    "statistics.hero.covered.value" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%d 人"
+          }
+        }
+      }
+    },
+    "statistics.hero.interactions" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "互动"
+          }
+        }
+      }
+    },
+    "statistics.hero.interactions.value" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%d 次"
           }
         }
       }
@@ -6979,12 +7199,93 @@
         }
       }
     },
+    "statistics.hero.nonFinancial" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "非金额"
+          }
+        }
+      }
+    },
+    "statistics.hero.nonFinancial.value" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%d 次"
+          }
+        }
+      }
+    },
+    "statistics.hero.overviewTitle" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "人情经营总览"
+          }
+        }
+      }
+    },
     "statistics.hero.peopleTxSummary" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%d 位亲友，%d 笔往来"
+          }
+        }
+      }
+    },
+    "statistics.hero.relationship.close" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "紧密"
+          }
+        }
+      }
+    },
+    "statistics.hero.relationship.distant" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "疏远"
+          }
+        }
+      }
+    },
+    "statistics.hero.relationship.needsAttention" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "需关注"
+          }
+        }
+      }
+    },
+    "statistics.hero.relationship.stable" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正常"
+          }
+        }
+      }
+    },
+    "statistics.hero.totalExchange" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "往来总额"
           }
         }
       }
@@ -7005,6 +7306,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "总礼入"
+          }
+        }
+      }
+    },
+    "statistics.hero.yoy" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "同比 %@%.0f%%"
           }
         }
       }
@@ -7031,6 +7342,7 @@
       }
     },
     "statistics.nonFinancialSummary" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -7063,7 +7375,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "事件类型分布"
+            "value" : "事件分布"
           }
         }
       }
@@ -7164,6 +7476,26 @@
         }
       }
     },
+    "statistics.ranking.deepBondTitle" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "往来深交榜"
+          }
+        }
+      }
+    },
+    "statistics.ranking.deepInteractionLine" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "往来 %d 次"
+          }
+        }
+      }
+    },
     "statistics.ranking.empty" : {
       "localizations" : {
         "zh-Hans" : {
@@ -7241,6 +7573,7 @@
       }
     },
     "statistics.ranking.netValue" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -7260,12 +7593,32 @@
         }
       }
     },
+    "statistics.ranking.netValueAmountLabel" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "净值金额"
+          }
+        }
+      }
+    },
     "statistics.ranking.noMore" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "已经到底了"
+          }
+        }
+      }
+    },
+    "statistics.ranking.topBadge" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TOP 5"
           }
         }
       }

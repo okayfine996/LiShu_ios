@@ -105,8 +105,13 @@ class HomeViewModel {
     }
 
     var monetaryNetSummary: String {
-        String(format: String(localized: "home.monetaryNetSummary"),
-               formatNumber(yearlyIncome), formatNumber(yearlyExpense))
+        let net = yearlyIncome - yearlyExpense
+        return String(
+            format: String(localized: "home.monetaryNetSummary"),
+            formatNetValue(net),
+            formatNumber(yearlyIncome),
+            formatNumber(yearlyExpense)
+        )
     }
 
     /// 各类型统计（count > 0 的才展示）
@@ -135,5 +140,18 @@ class HomeViewModel {
             return String(format: String(localized: "number.tenThousandsFormat"), value / 10000)
         }
         return String(format: "%.0f", value)
+    }
+
+    private func formatAmountWithComma(_ amount: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.maximumFractionDigits = 0
+        return formatter.string(from: NSNumber(value: amount)) ?? String(format: "%.0f", amount)
+    }
+
+    /// 与统计页口径一致：礼金收支净值（收 − 支），正数带「+」。
+    private func formatNetValue(_ value: Double) -> String {
+        let prefix = value >= 0 ? "+" : ""
+        return prefix + "¥" + formatAmountWithComma(value)
     }
 }

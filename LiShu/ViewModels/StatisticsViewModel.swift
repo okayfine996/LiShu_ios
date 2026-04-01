@@ -25,6 +25,13 @@ struct CircleAnalysisItem: Identifiable {
 
 @Observable
 class StatisticsViewModel {
+    struct RelationshipHealthSummary {
+        var close: Int = 0
+        var stable: Int = 0
+        var distant: Int = 0
+        var needsAttention: Int = 0
+    }
+
     var selectedYear: Int = Calendar.current.component(.year, from: Date())
     var availableYears: [Int] = []
     var totalIncome: Double = 0
@@ -38,6 +45,8 @@ class StatisticsViewModel {
     var heatmapGrid: [[Int]] = Array(repeating: Array(repeating: 0, count: 4), count: 12)
     var nonFinancialInteractionCount: Int = 0
     var recordTypeDistribution: [(type: RecordType, count: Int, percentage: Double)] = []
+    var yearOverYearChangeRate: Double?
+    var relationshipHealthSummary = RelationshipHealthSummary()
     var state: LoadingState<Bool> = .idle
 
     var chartBars: [(label: String, income: Double, expense: Double)] {
@@ -61,6 +70,8 @@ class StatisticsViewModel {
             computeCircleAnalysis(from: allRecords)
             computeHeatmapGrid(from: allRecords)
             computeRecordTypeDistribution(from: allRecords)
+            computeYearOverYearChange(from: allRecords)
+            computeRelationshipHealthSummary()
             state = .loaded(true)
         } catch {
             state = .error(error.localizedDescription)
@@ -82,6 +93,10 @@ class StatisticsViewModel {
 
     var contactCount: Int {
         allRankedContacts.count
+    }
+
+    var totalExchangeAmount: Double {
+        totalIncome + totalExpense
     }
 
     // MARK: - Ranking sorted lists
@@ -210,7 +225,7 @@ class StatisticsViewModel {
         allRankedContacts = contactStats.values
             .map { ContactRankingItem(contact: $0.contact, recordCount: $0.recordCount, income: $0.income, expense: $0.expense, lastRecordDate: $0.lastDate) }
             .sorted { abs($0.netValue) > abs($1.netValue) }
-        topContacts = Array(allRankedContacts.prefix(3))
+        topContacts = Array(allRankedContacts.prefix(5))
     }
 
     private func computeCircleAnalysis(from records: [Record]) {
@@ -263,6 +278,52 @@ class StatisticsViewModel {
             .sorted { $0.count > $1.count }
     }
 
+    private func computeYearOverYearChange(from records: [Record]) {
+        let calendar = Calendar.current
+        let currentTotal = records
+            .filter {
+                calendar.component(.year, from: $0.date) == selectedYear &&
+                $0.recordType == .monetary
+            }
+            .reduce(0.0) { $0 + $1.monetaryAmount }
+
+        let previousYear = selectedYear - 1
+        let previousTotal = records
+            .filter {
+                calendar.component(.year, from: $0.date) == previousYear &&
+                $0.recordType == .monetary
+            }
+            .reduce(0.0) { $0 + $1.monetaryAmount }
+
+        guard previousTotal > 0 else {
+            yearOverYearChangeRate = nil
+            return
+        }
+        yearOverYearChangeRate = (currentTotal - previousTotal) / previousTotal
+    }
+
+    private func computeRelationshipHealthSummary() {
+        let today = Date()
+        var summary = RelationshipHealthSummary()
+        let calendar = Calendar.current
+
+        for item in allRankedContacts {
+            guard let lastDate = item.lastRecordDate else { continue }
+            let days = calendar.dateComponents([.day], from: lastDate, to: today).day ?? 0
+            switch days {
+            case ...90:
+                summary.close += 1
+            case 91...180:
+                summary.stable += 1
+            case 181...365:
+                summary.distant += 1
+            default:
+                summary.needsAttention += 1
+            }
+        }
+        relationshipHealthSummary = summary
+    }
+
     // MARK: - Formatting helpers
 
     func formatAmount(_ amount: Double) -> String {
@@ -282,6 +343,16 @@ class StatisticsViewModel {
     func formatNetValue(_ value: Double) -> String {
         let prefix = value >= 0 ? "+" : ""
         return prefix + "¥" + formatAmountWithComma(value)
+    }
+
+    func formatPercentageValue(_ value: Double) -> String {
+        String(format: "%.0f%%", value * 100)
+    }
+
+    func formatYearOverYearChange() -> String? {
+        guard let yearOverYearChangeRate else { return nil }
+        let sign = yearOverYearChangeRate >= 0 ? "+" : "-"
+        return String(format: String(localized: "statistics.hero.yoy"), sign, abs(yearOverYearChangeRate) * 100)
     }
 
     func eventTypeIconName(for type: EventType) -> String {

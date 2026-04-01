@@ -127,7 +127,7 @@ struct StatisticsViewModelTests {
         #expect(birthday!.percentage == 0.4)
     }
 
-    @Test("topContacts has 3, allRankedContacts has 5")
+    @Test("topContacts has 5, allRankedContacts has 5")
     func testTopContacts() throws {
         let db = try TestDB()
         let cal = Calendar.current
@@ -155,7 +155,7 @@ struct StatisticsViewModelTests {
         let vm = StatisticsViewModel()
         vm.loadData(context: db.context)
 
-        #expect(vm.topContacts.count == 3)
+        #expect(vm.topContacts.count == 5)
         #expect(vm.allRankedContacts.count == 5)
     }
 
