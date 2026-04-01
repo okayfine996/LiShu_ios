@@ -80,20 +80,51 @@ struct RecordListView: View {
             ProgressView()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         case .loaded(let grouped) where grouped.isEmpty:
-            EmptyStateView(
-                icon: "doc.text",
-                message: String(localized: "record.list.empty"),
-                actionTitle: String(localized: "home.addRecord"),
-                action: {
-                    sheetRoute = .addRecord(direction: nil, contactID: nil)
-                }
-            )
+            if hasActiveQuery {
+                filteredEmptyContent
+            } else {
+                EmptyStateView(
+                    icon: "doc.text",
+                    message: String(localized: "record.list.empty"),
+                    actionTitle: String(localized: "home.addRecord"),
+                    action: {
+                        sheetRoute = .addRecord(direction: nil, contactID: nil)
+                    }
+                )
+            }
         case .loaded:
             recordsList
         case .error(let message):
             ErrorStateView(message: message) {
                 viewModel.load(context: modelContext)
             }
+        }
+    }
+
+    private var hasActiveQuery: Bool {
+        viewModel.filter != .all || !viewModel.searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    private var filteredEmptyContent: some View {
+        ScrollView(showsIndicators: false) {
+            VStack(spacing: 16) {
+                filterChips
+
+                EmptyStateView(
+                    icon: "line.3.horizontal.decrease.circle",
+                    message: String(localized: "record.list.empty"),
+                    actionTitle: String(localized: "record.filter.all"),
+                    action: {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            viewModel.filter = .all
+                            viewModel.searchText = ""
+                        }
+                    }
+                )
+                .frame(minHeight: 320)
+            }
+            .padding(.horizontal, 16)
+            .padding(.bottom, 80)
         }
     }
 
