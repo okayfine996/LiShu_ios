@@ -4,6 +4,13 @@ struct EventCoverView: View {
     let coverImage: Data?
     let eventType: EventType
     var size: CGFloat = 48
+    /// 无封面图时的底色（有图时仍使用 `bgIconSubtle` 作为图片衬底）
+    var placeholderBackground: Color = DesignSystem.Colors.bgIconSubtle
+
+    private var hasImage: Bool {
+        if let data = coverImage, UIImage(data: data) != nil { return true }
+        return false
+    }
 
     var body: some View {
         Group {
@@ -18,7 +25,7 @@ struct EventCoverView: View {
             }
         }
         .frame(width: size, height: size)
-        .background(DesignSystem.Colors.bgIconSubtle)
+        .background(hasImage ? DesignSystem.Colors.bgIconSubtle : placeholderBackground)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.input))
     }
 }

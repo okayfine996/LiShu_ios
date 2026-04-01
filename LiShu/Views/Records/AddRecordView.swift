@@ -8,6 +8,8 @@ struct AddRecordView: View {
     @State private var viewModel = AddRecordViewModel()
     @State private var showProSheet = false
     @State private var showAddEventSheet = false
+    @State private var showAddContactSheet = false
+    @State private var contactIDsBeforeAddSheet: Set<PersistentIdentifier> = []
     @State private var eventIDsBeforeCreation: Set<PersistentIdentifier> = []
     @State private var selectedPhotoItems: [PhotosPickerItem] = []
 
@@ -98,6 +100,11 @@ struct AddRecordView: View {
                 AddEventView()
             }
         }
+        .sheet(isPresented: $showAddContactSheet, onDismiss: refreshContactsAfterAddSheet) {
+            NavigationStack {
+                AddContactView()
+            }
+        }
     }
 
     // MARK: - Contact Identity Section
@@ -156,53 +163,16 @@ struct AddRecordView: View {
 
     private var contactScrollSelector: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Text(String(localized: "record.add.selectContact"))
-                    .font(DesignSystem.Typography.small)
-                    .foregroundStyle(DesignSystem.Colors.textTertiary)
-                    .tracking(1.5)
-                    .textCase(.uppercase)
+            Text(String(localized: "record.add.selectContact"))
+                .font(DesignSystem.Typography.small)
+                .foregroundStyle(DesignSystem.Colors.textTertiary)
+                .tracking(1.5)
+                .textCase(.uppercase)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 4)
 
-                Spacer()
-
-                Button {
-                    withAnimation {
-                        viewModel.isCreatingNewContact.toggle()
-                        if viewModel.isCreatingNewContact {
-                            viewModel.selectedContact = nil
-                            viewModel.isShowingContactPicker = false
-                            viewModel.contactSearchText = ""
-                        } else {
-                            viewModel.newContactName = ""
-                        }
-                    }
-                } label: {
-                    Text(viewModel.isCreatingNewContact ? String(localized: "common.cancel") : String(localized: "record.add.newContact"))
-                        .font(DesignSystem.Typography.caption)
-                        .foregroundStyle(DesignSystem.Colors.primary)
-                }
-            }
-            .padding(.horizontal, 4)
-
-            if viewModel.isCreatingNewContact {
-                newContactInputField
-            } else {
-                contactAvatarScroll
-            }
+            contactAvatarScroll
         }
-    }
-
-    private var newContactInputField: some View {
-        TextField(String(localized: "record.add.newContactName"), text: $viewModel.newContactName)
-            .font(DesignSystem.Typography.body)
-            .foregroundStyle(DesignSystem.Colors.textPrimary)
-            .padding(12)
-            .background(DesignSystem.Colors.bgSurface)
-            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.input))
-            .overlay(
-                RoundedRectangle(cornerRadius: DesignSystem.Radius.input)
-                    .stroke(DesignSystem.Colors.border, lineWidth: 1)
-            )
     }
 
     private var contactAvatarScroll: some View {
@@ -212,27 +182,40 @@ struct AddRecordView: View {
                     contactAvatarItem(contact)
                 }
 
-                // More button if empty
-                if viewModel.allContacts.isEmpty {
-                    VStack(spacing: 6) {
-                        ZStack {
-                            Circle()
-                                .fill(DesignSystem.Colors.bgCard)
-                                .frame(width: 56, height: 56)
-                            Image(systemName: "person.badge.plus")
-                                .font(.system(size: 20))
-                                .foregroundStyle(DesignSystem.Colors.textTertiary)
-                        }
-                        Text(String(localized: "record.add.noContact"))
-                            .font(DesignSystem.Typography.small)
-                            .foregroundStyle(DesignSystem.Colors.textTertiary)
-                    }
-                    .frame(minWidth: 72)
-                }
+                newContactTriggerItem
             }
             .padding(.horizontal, 4)
             .padding(.bottom, 4)
         }
+    }
+
+    private var newContactTriggerItem: some View {
+        Button {
+            contactIDsBeforeAddSheet = Set(viewModel.allContacts.map(\.persistentModelID))
+            showAddContactSheet = true
+        } label: {
+            VStack(spacing: 6) {
+                ZStack {
+                    Circle()
+                        .fill(DesignSystem.Colors.bgSurface)
+                        .frame(width: 56, height: 56)
+                    Circle()
+                        .stroke(DesignSystem.Colors.border, lineWidth: 1)
+                        .frame(width: 56, height: 56)
+                    Image(systemName: "person.badge.plus")
+                        .font(DesignSystem.Typography.caption)
+                        .foregroundStyle(DesignSystem.Colors.primary)
+                }
+                .frame(width: 60, height: 60)
+
+                Text(String(localized: "record.add.newContact"))
+                    .font(DesignSystem.Typography.small)
+                    .foregroundStyle(DesignSystem.Colors.textSecondary)
+                    .lineLimit(1)
+            }
+            .frame(minWidth: 72)
+        }
+        .buttonStyle(.plain)
     }
 
     private func contactAvatarItem(_ contact: Contact) -> some View {
@@ -243,14 +226,19 @@ struct AddRecordView: View {
             }
         } label: {
             VStack(spacing: 6) {
-                ZStack {
-                    if isSelected {
+                AvatarView(
+                    imageData: contact.avatar,
+                    name: contact.name,
+                    size: 56,
+                    placeholderBackground: DesignSystem.Colors.bgSurface
+                )
+                    .overlay(
                         Circle()
-                            .stroke(DesignSystem.Colors.primary, lineWidth: 2)
-                            .frame(width: 60, height: 60)
-                    }
-                    AvatarView(imageData: contact.avatar, name: contact.name, size: 56)
-                }
+                            .stroke(
+                                isSelected ? DesignSystem.Colors.primary : DesignSystem.Colors.border,
+                                lineWidth: isSelected ? 2 : 1
+                            )
+                    )
                 .frame(width: 60, height: 60)
 
                 Text(contact.name)
@@ -904,7 +892,12 @@ struct AddRecordView: View {
             }
         } label: {
             VStack(spacing: 6) {
-                EventCoverView(coverImage: event.coverImage, eventType: event.type, size: 56)
+                EventCoverView(
+                    coverImage: event.coverImage,
+                    eventType: event.type,
+                    size: 56,
+                    placeholderBackground: DesignSystem.Colors.bgSurface
+                )
                     .overlay(
                         RoundedRectangle(cornerRadius: DesignSystem.Radius.input)
                             .stroke(
@@ -1210,6 +1203,19 @@ struct AddRecordView: View {
         eventIDsBeforeCreation = []
     }
 
+    private func refreshContactsAfterAddSheet() {
+        viewModel.loadData(context: modelContext)
+
+        let newContacts = viewModel.allContacts.filter { contact in
+            !contactIDsBeforeAddSheet.contains(contact.persistentModelID)
+        }
+        if let newestContact = newContacts.max(by: { $0.createdAt < $1.createdAt }) {
+            viewModel.selectedContact = newestContact
+        }
+
+        contactIDsBeforeAddSheet = []
+    }
+
     private func formattedEventDate(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "zh_Hans")
@@ -1236,9 +1242,56 @@ struct AddRecordView: View {
     }
 }
 
+// MARK: - Preview
+
+private func makeAddRecordPreviewContainer() -> ModelContainer? {
+    guard let container = try? ModelContainer(
+        for: Contact.self, Record.self, Event.self, RecordPhoto.self,
+        configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+    ) else { return nil }
+    let ctx = container.mainContext
+    let cal = Calendar.current
+    let now = Date()
+
+    let c1 = Contact(name: "张三", relation: "同事", category: "社交", circle: 3)
+    let c2 = Contact(name: "李四", relation: "朋友", category: "社交", circle: 3)
+    let c3 = Contact(name: "王五", relation: "舅舅", category: "亲属", circle: 2)
+    let c4 = Contact(name: "赵六", relation: "同学", category: "社交", circle: 3)
+    let c5 = Contact(name: "钱七", relation: "邻居", category: "其他", circle: 4)
+    let c6 = Contact(name: "孙八", relation: "客户", category: "社交", circle: 3)
+    [c1, c2, c3, c4, c5, c6].forEach { ctx.insert($0) }
+
+    let e1 = Event(name: "表哥的婚礼", type: .wedding, date: cal.date(byAdding: .day, value: 5, to: now)!, location: "家乡酒店")
+    let e2 = Event(name: "小李30岁生日", type: .birthday, date: cal.date(byAdding: .day, value: 12, to: now)!, location: "上海")
+    let e3 = Event(name: "硕士毕业典礼", type: .education, date: cal.date(byAdding: .day, value: 20, to: now)!, location: "广州")
+    let e4 = Event(name: "春节拜年", type: .festival, date: cal.date(byAdding: .month, value: -1, to: now)!, location: "老家")
+    let e5 = Event(name: "王总乔迁", type: .property, date: cal.date(byAdding: .day, value: -5, to: now)!, location: "深圳")
+    let e6 = Event(name: "爷爷丧事", type: .funeral, date: cal.date(byAdding: .month, value: -2, to: now)!, location: "县城")
+    let e7 = Event(name: "新店开业", type: .business, date: cal.date(byAdding: .day, value: 30, to: now)!, location: "杭州")
+    [e1, e2, e3, e4, e5, e6, e7].forEach { ctx.insert($0) }
+
+    let r1 = Record(contact: c1, event: e1, amount: 800, direction: .given, paymentMethod: .wechat, date: now)
+    let r2 = Record(contact: c2, event: e2, amount: 600, direction: .given, paymentMethod: .cash, date: cal.date(byAdding: .day, value: -2, to: now)!)
+    let r3 = Record(contact: c3, event: e4, amount: 500, direction: .received, paymentMethod: .alipay, date: cal.date(byAdding: .month, value: -1, to: now)!)
+    let r4 = Record(contact: c4, event: nil, amount: 200, direction: .given, paymentMethod: .wechat, date: cal.date(byAdding: .day, value: -3, to: now)!)
+    r4.contextTag = "年会凑份"
+    let r5 = Record(contact: c5, event: nil, amount: 100, direction: .given, date: cal.date(byAdding: .day, value: -10, to: now)!)
+    r5.contextTag = "社区互助"
+    [r1, r2, r3, r4, r5].forEach { ctx.insert($0) }
+
+    return container
+}
+
 #Preview {
-    NavigationStack {
-        AddRecordView()
+    Group {
+        if let container = makeAddRecordPreviewContainer() {
+            NavigationStack {
+                AddRecordView()
+            }
+            .modelContainer(container)
+            .environment(SubscriptionManager.shared)
+        } else {
+            Text("Preview unavailable")
+        }
     }
-    .modelContainer(for: [Contact.self, Record.self, Event.self, RecordPhoto.self], inMemory: true)
 }

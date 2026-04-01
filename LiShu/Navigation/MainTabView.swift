@@ -114,6 +114,8 @@ struct MainTabView: View {
             NetValueRankingView(year: year)
         case .circleDetail(let circle, let year):
             CircleDetailView(circle: circle, year: year)
+        case .recordTypeComposition(let year):
+            RecordTypeCompositionDetailView(year: year)
         case .proMembership:
             ProMembershipView()
         case .appearanceSettings:

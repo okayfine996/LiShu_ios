@@ -60,9 +60,6 @@ class AddRecordViewModel {
         return tags
     }
 
-    var isCreatingNewContact: Bool = false
-    var newContactName: String = ""
-
     var allContacts: [Contact] = []
     var allEvents: [Event] = []
 
@@ -74,7 +71,7 @@ class AddRecordViewModel {
     }
 
     var isValid: Bool {
-        let hasContact = selectedContact != nil || (isCreatingNewContact && !newContactName.trimmingCharacters(in: .whitespaces).isEmpty)
+        let hasContact = selectedContact != nil
         let hasEvent = selectedEvent != nil
         guard hasContact else { return false }
         if contextSelection == .event && !hasEvent {
@@ -215,18 +212,8 @@ class AddRecordViewModel {
         }
     }
 
-    private func resolveContact(context: ModelContext) -> Contact? {
-        if let contact = selectedContact {
-            return contact
-        }
-        if isCreatingNewContact {
-            let trimmed = newContactName.trimmingCharacters(in: .whitespaces)
-            guard !trimmed.isEmpty else { return nil }
-            let contact = Contact(name: trimmed)
-            context.insert(contact)
-            return contact
-        }
-        return nil
+    private func resolveContact(context _: ModelContext) -> Contact? {
+        selectedContact
     }
 
     private func resolveEvent(context: ModelContext) -> Event? {

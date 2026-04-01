@@ -37,6 +37,7 @@ class StatisticsViewModel {
     var circleAnalysisItems: [CircleAnalysisItem] = []
     var heatmapGrid: [[Int]] = Array(repeating: Array(repeating: 0, count: 4), count: 12)
     var nonFinancialInteractionCount: Int = 0
+    var recordTypeDistribution: [(type: RecordType, count: Int, percentage: Double)] = []
     var state: LoadingState<Bool> = .idle
 
     var chartBars: [(label: String, income: Double, expense: Double)] {
@@ -59,6 +60,7 @@ class StatisticsViewModel {
             computeContactRanking(from: allRecords)
             computeCircleAnalysis(from: allRecords)
             computeHeatmapGrid(from: allRecords)
+            computeRecordTypeDistribution(from: allRecords)
             state = .loaded(true)
         } catch {
             state = .error(error.localizedDescription)
@@ -244,6 +246,21 @@ class StatisticsViewModel {
             }
         }
         heatmapGrid = grid
+    }
+
+    private func computeRecordTypeDistribution(from records: [Record]) {
+        let calendar = Calendar.current
+        let yearRecords = records.filter {
+            calendar.component(.year, from: $0.date) == selectedYear
+        }
+        var typeCounts: [RecordType: Int] = [:]
+        for record in yearRecords {
+            typeCounts[record.recordType, default: 0] += 1
+        }
+        let total = typeCounts.values.reduce(0, +)
+        recordTypeDistribution = typeCounts
+            .map { (type: $0.key, count: $0.value, percentage: total > 0 ? Double($0.value) / Double(total) : 0) }
+            .sorted { $0.count > $1.count }
     }
 
     // MARK: - Formatting helpers

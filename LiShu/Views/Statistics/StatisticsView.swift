@@ -54,6 +54,10 @@ struct StatisticsView: View {
                             sheetRoute = .proMembership
                         }
                     }
+                NavigationLink(value: AppRoute.recordTypeComposition(year: viewModel.selectedYear)) {
+                    recordTypeCompositionCard
+                }
+                .buttonStyle(.plain)
                 eventDistributionCard
                     .overlay {
                         ProLockedOverlay(isLocked: !subscriptionManager.isPro) {
@@ -435,6 +439,114 @@ struct StatisticsView: View {
             RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
                 .stroke(DesignSystem.Colors.primary.opacity(0.05), lineWidth: 1)
         )
+    }
+
+    // MARK: - Record Type Composition
+
+    private var recordTypeCompositionCard: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(spacing: 8) {
+                Image(systemName: "circle.lefthalf.filled")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(DesignSystem.Colors.primary)
+                Text(String(localized: "statistics.recordTypeComposition"))
+                    .font(DesignSystem.Typography.caption)
+                    .fontWeight(.bold)
+                    .foregroundStyle(DesignSystem.Colors.textPrimary)
+            }
+
+            if viewModel.recordTypeDistribution.isEmpty {
+                Text(String(localized: "statistics.overview.noEventData"))
+                    .font(DesignSystem.Typography.small)
+                    .foregroundStyle(DesignSystem.Colors.textTertiary)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.vertical, 20)
+            } else {
+                HStack(alignment: .center, spacing: 24) {
+                    recordTypeDonutChart
+                        .frame(width: 140, height: 140)
+
+                    VStack(alignment: .leading, spacing: 10) {
+                        ForEach(Array(viewModel.recordTypeDistribution.enumerated()), id: \.offset) { index, item in
+                            HStack(spacing: 8) {
+                                Circle()
+                                    .fill(recordTypeColor(for: index))
+                                    .frame(width: 10, height: 10)
+                                Text(item.type.displayName)
+                                    .font(DesignSystem.Typography.caption)
+                                    .foregroundStyle(DesignSystem.Colors.textPrimary)
+                                Spacer()
+                                Text(String(format: "%.0f%%", item.percentage * 100))
+                                    .font(DesignSystem.Typography.caption)
+                                    .fontWeight(.medium)
+                                    .foregroundStyle(DesignSystem.Colors.textSecondary)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        .padding(20)
+        .background(DesignSystem.Colors.bgSurface)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
+                .stroke(DesignSystem.Colors.primary.opacity(0.05), lineWidth: 1)
+        )
+    }
+
+    private var recordTypeDonutChart: some View {
+        ZStack {
+            Circle()
+                .stroke(DesignSystem.Colors.primary.opacity(0.1), lineWidth: 14)
+
+            ForEach(Array(recordTypeDonutSegments.enumerated()), id: \.offset) { _, segment in
+                Circle()
+                    .trim(from: segment.start, to: segment.end)
+                    .stroke(
+                        recordTypeColor(for: segment.index),
+                        style: StrokeStyle(lineWidth: 14, lineCap: .butt)
+                    )
+                    .rotationEffect(.degrees(-90))
+            }
+
+            VStack(spacing: 2) {
+                Text(String(localized: "recordTypeComposition.yearTotal"))
+                    .font(.system(size: 9, weight: .medium))
+                    .foregroundStyle(DesignSystem.Colors.textTertiary)
+                Text("\(viewModel.totalRecordCount)")
+                    .font(DesignSystem.Typography.title3)
+                    .fontWeight(.bold)
+                    .foregroundStyle(DesignSystem.Colors.textPrimary)
+            }
+        }
+    }
+
+    private struct RecordTypeDonutSegment {
+        let start: CGFloat
+        let end: CGFloat
+        let index: Int
+    }
+
+    private var recordTypeDonutSegments: [RecordTypeDonutSegment] {
+        let items = viewModel.recordTypeDistribution
+        var segments: [RecordTypeDonutSegment] = []
+        var current: CGFloat = 0
+        for (index, item) in items.enumerated() {
+            let end = current + CGFloat(item.percentage)
+            segments.append(RecordTypeDonutSegment(start: current, end: min(end, 1.0), index: index))
+            current = end
+        }
+        return segments
+    }
+
+    private func recordTypeColor(for index: Int) -> Color {
+        switch index {
+        case 0: return DesignSystem.Colors.primary
+        case 1: return DesignSystem.Colors.primary.opacity(0.55)
+        case 2: return DesignSystem.Colors.textTertiary.opacity(0.5)
+        default: return DesignSystem.Colors.textPrimary.opacity(0.7)
+        }
     }
 
     // MARK: - Circle Analysis

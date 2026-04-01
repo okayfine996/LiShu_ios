@@ -8,11 +8,7 @@ struct ContactDetailView: View {
 
     @State private var viewModel = ContactDetailViewModel()
     @State private var presentedSheet: SheetRoute?
-
-    private let statColumns = Array(
-        repeating: GridItem(.flexible(), spacing: 8),
-        count: 2
-    )
+    @State private var currentCardPage: Int = 0
 
     var body: some View {
         ZStack {
@@ -23,9 +19,9 @@ struct ContactDetailView: View {
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 20) {
                         profileSection(contact)
-                        statsSection(contact)
+                        summaryCardsSection(contact)
                         personalInfoSection(contact)
-                        recordsSection(contact)
+                        timelineSection(contact)
                     }
                     .padding(.bottom, 24)
                 }
@@ -133,45 +129,246 @@ struct ContactDetailView: View {
         .padding(.top, 16)
     }
 
-    // MARK: - Stats Section
+    // MARK: - Summary Cards (Swipeable)
 
-    private func statsSection(_ contact: Contact) -> some View {
-        LazyVGrid(columns: statColumns, spacing: 8) {
-            StatCard(
-                title: String(localized: "contact.detail.given"),
-                value: viewModel.formatAmount(contact.totalGiven),
-                icon: "arrow.up.right",
-                valueColor: DesignSystem.Colors.primary
-            )
+    private func summaryCardsSection(_ contact: Contact) -> some View {
+        TabView(selection: $currentCardPage) {
+            assetOverviewCard(contact)
+                .tag(0)
+            relationshipInsightCard(contact)
+                .tag(1)
+        }
+        .tabViewStyle(.page(indexDisplayMode: .never))
+        .aspectRatio(1.5, contentMode: .fit)
+        .padding(.horizontal, -4)
+    }
 
-            StatCard(
-                title: String(localized: "contact.detail.received"),
-                value: viewModel.formatAmount(contact.totalReceived),
-                icon: "arrow.down.left",
-                valueColor: DesignSystem.Colors.accentGold
-            )
-
-            StatCard(
-                title: String(localized: "contact.detail.returned"),
-                value: viewModel.formatAmount(contact.totalReturned),
-                icon: "arrow.uturn.backward"
-            )
-
-            StatCard(
-                title: String(localized: "contact.detail.netValue"),
-                value: viewModel.formatNetValue(contact.netValue),
-                icon: "wallet.bifold",
-                valueColor: netValueColor(contact.netValue)
-            )
-
-            if contact.nonFinancialInteractionCount > 0 {
-                StatCard(
-                    title: String(localized: "contact.detail.nonFinancialCount"),
-                    value: "\(contact.nonFinancialInteractionCount)" + String(localized: "common.times"),
-                    icon: "hand.wave"
-                )
+    private func pageIndicator(current: Int) -> some View {
+        HStack(spacing: 6) {
+            ForEach(0..<2, id: \.self) { index in
+                Circle()
+                    .fill(index == current
+                          ? DesignSystem.Colors.primary
+                          : DesignSystem.Colors.border)
+                    .frame(width: 6, height: 6)
             }
         }
+    }
+
+    // MARK: Card 1 — 往来资产概览
+
+    private func assetOverviewCard(_ contact: Contact) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            // Title + indicator
+            HStack {
+                Text(String(localized: "contact.detail.assetOverview"))
+                    .font(DesignSystem.Typography.title3)
+                    .foregroundStyle(DesignSystem.Colors.textPrimary)
+                Spacer()
+                pageIndicator(current: 0)
+            }
+            .padding(.bottom, 20)
+
+            // Middle row: net value + interaction frequency
+            HStack(alignment: .top) {
+                // Left: 礼金净值
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(String(localized: "contact.detail.netSurplus"))
+                        .font(DesignSystem.Typography.small)
+                        .foregroundStyle(DesignSystem.Colors.textSecondary)
+                    Text(viewModel.formatNetValue(contact.netValue))
+                        .font(DesignSystem.Typography.title1)
+                        .foregroundStyle(
+                            contact.netValue >= 0
+                                ? DesignSystem.Colors.accentGold
+                                : DesignSystem.Colors.primary
+                        )
+                }
+
+                Spacer()
+
+                // Right: 互动频次
+                VStack(alignment: .trailing, spacing: 4) {
+                    Text(String(localized: "contact.detail.frequency"))
+                        .font(DesignSystem.Typography.small)
+                        .foregroundStyle(DesignSystem.Colors.textSecondary)
+                    HStack(alignment: .firstTextBaseline, spacing: 2) {
+                        Text("\(viewModel.pastYearInteractionCount)")
+                            .font(DesignSystem.Typography.title1)
+                            .foregroundStyle(DesignSystem.Colors.textPrimary)
+                        Text(String(localized: "common.times"))
+                            .font(DesignSystem.Typography.caption)
+                            .foregroundStyle(DesignSystem.Colors.textSecondary)
+                    }
+                }
+            }
+            .padding(.bottom, 20)
+
+            // Bottom row: type composition + income/expense
+            HStack(alignment: .top) {
+                // Left: 互动构成
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(String(localized: "contact.detail.composition"))
+                        .font(DesignSystem.Typography.small)
+                        .foregroundStyle(DesignSystem.Colors.textSecondary)
+                    let typeCounts = viewModel.typeCounts
+                    if !typeCounts.isEmpty {
+                        HStack(spacing: 6) {
+                            ForEach(typeCounts.prefix(3)) { item in
+                                HStack(spacing: 3) {
+                                    Circle()
+                                        .fill(DesignSystem.Colors.textTertiary)
+                                        .frame(width: 4, height: 4)
+                                    Text("\(item.type.displayName) \(item.count)")
+                                        .font(DesignSystem.Typography.small)
+                                        .foregroundStyle(DesignSystem.Colors.textPrimary)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Spacer()
+
+                // Right: 累计收支
+                VStack(alignment: .trailing, spacing: 6) {
+                    Text(String(localized: "contact.detail.incomeExpense"))
+                        .font(DesignSystem.Typography.small)
+                        .foregroundStyle(DesignSystem.Colors.textSecondary)
+                    HStack(spacing: 4) {
+                        Text(String(localized: "contact.detail.incomeShort"))
+                            .font(DesignSystem.Typography.small)
+                            .foregroundStyle(DesignSystem.Colors.textSecondary)
+                        Text(viewModel.formatAmount(contact.totalReceived))
+                            .font(DesignSystem.Typography.caption)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(DesignSystem.Colors.textPrimary)
+                    }
+                    HStack(spacing: 4) {
+                        Text(String(localized: "contact.detail.expenseShort"))
+                            .font(DesignSystem.Typography.small)
+                            .foregroundStyle(DesignSystem.Colors.textSecondary)
+                        Text(viewModel.formatAmount(contact.totalGiven))
+                            .font(DesignSystem.Typography.caption)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(DesignSystem.Colors.textPrimary)
+                    }
+                }
+            }
+        }
+        .padding(20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(DesignSystem.Colors.bgSurface)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+        .padding(.horizontal, 16)
+    }
+
+    // MARK: Card 2 — 关系亲疏洞察
+
+    private func relationshipInsightCard(_ contact: Contact) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            // Title
+            Text(String(localized: "contact.detail.relationshipInsight"))
+                .font(DesignSystem.Typography.title3)
+                .foregroundStyle(DesignSystem.Colors.textPrimary)
+                .padding(.bottom, 20)
+
+            // Middle row: activity rate + balance index
+            HStack(alignment: .top) {
+                // Left: 年度互动活跃度
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(String(localized: "contact.detail.activityRate"))
+                        .font(DesignSystem.Typography.small)
+                        .foregroundStyle(DesignSystem.Colors.textSecondary)
+                    Text(String(format: "%.1f%%", viewModel.yearlyActivityRate * 100))
+                        .font(DesignSystem.Typography.title1)
+                        .foregroundStyle(DesignSystem.Colors.primary)
+                    // Progress bar
+                    GeometryReader { geo in
+                        ZStack(alignment: .leading) {
+                            RoundedRectangle(cornerRadius: 3)
+                                .fill(DesignSystem.Colors.bgTag)
+                                .frame(height: 6)
+                            RoundedRectangle(cornerRadius: 3)
+                                .fill(DesignSystem.Colors.primary)
+                                .frame(width: geo.size.width * viewModel.yearlyActivityRate, height: 6)
+                        }
+                    }
+                    .frame(height: 6)
+                    .frame(maxWidth: 120)
+                }
+
+                Spacer()
+
+                // Right: 互惠平衡指数
+                VStack(alignment: .trailing, spacing: 4) {
+                    Text(String(localized: "contact.detail.balanceIndex"))
+                        .font(DesignSystem.Typography.small)
+                        .foregroundStyle(DesignSystem.Colors.textSecondary)
+                    Text(viewModel.balanceLevelText(viewModel.balanceLevel))
+                        .font(DesignSystem.Typography.title2)
+                        .fontWeight(.bold)
+                        .foregroundStyle(DesignSystem.Colors.textPrimary)
+                    Text(viewModel.balanceDescription(viewModel.balanceLevel))
+                        .font(DesignSystem.Typography.small)
+                        .foregroundStyle(DesignSystem.Colors.textTertiary)
+                        .multilineTextAlignment(.trailing)
+                }
+            }
+            .padding(.bottom, 20)
+
+            // Bottom row: circle level + relation tags
+            HStack(alignment: .top) {
+                // Left: 核心圈层位置
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(String(localized: "contact.detail.circlePosition"))
+                        .font(DesignSystem.Typography.small)
+                        .foregroundStyle(DesignSystem.Colors.textSecondary)
+                    HStack(spacing: 6) {
+                        Image(systemName: "circle.grid.2x2.fill")
+                            .font(DesignSystem.Typography.body)
+                            .foregroundStyle(DesignSystem.Colors.primary)
+                        Text(viewModel.circleLabel(contact.circle))
+                            .font(DesignSystem.Typography.caption)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(DesignSystem.Colors.primary)
+                    }
+                }
+
+                Spacer()
+
+                // Right: 关系标签
+                VStack(alignment: .trailing, spacing: 8) {
+                    Text(String(localized: "contact.detail.relationTags"))
+                        .font(DesignSystem.Typography.small)
+                        .foregroundStyle(DesignSystem.Colors.textSecondary)
+                    HStack(spacing: 6) {
+                        if !contact.relation.isEmpty {
+                            Text(contact.relation)
+                                .font(DesignSystem.Typography.small)
+                                .foregroundStyle(DesignSystem.Colors.textSecondary)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(DesignSystem.Colors.bgTag)
+                                .clipShape(Capsule())
+                        }
+                        if !contact.category.isEmpty {
+                            Text(contact.category)
+                                .font(DesignSystem.Typography.small)
+                                .foregroundStyle(DesignSystem.Colors.textSecondary)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(DesignSystem.Colors.bgTag)
+                                .clipShape(Capsule())
+                        }
+                    }
+                }
+            }
+        }
+        .padding(20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(DesignSystem.Colors.bgSurface)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
         .padding(.horizontal, 16)
     }
 
@@ -255,16 +452,50 @@ struct ContactDetailView: View {
         .padding(.vertical, 12)
     }
 
-    // MARK: - Records Section
+    // MARK: - Timeline Section
 
-    private func recordsSection(_ contact: Contact) -> some View {
+    private func timelineSection(_ contact: Contact) -> some View {
         VStack(alignment: .leading, spacing: 0) {
+            // Header
             HStack {
-                Text(String(localized: "contact.detail.records"))
+                Text(String(localized: "contact.detail.timeline"))
                     .font(DesignSystem.Typography.title3)
                     .foregroundStyle(DesignSystem.Colors.textPrimary)
 
                 Spacer()
+
+                Menu {
+                    Button {
+                        viewModel.selectedTypeFilter = nil
+                    } label: {
+                        HStack {
+                            Text(String(localized: "contact.detail.filterAll"))
+                            if viewModel.selectedTypeFilter == nil {
+                                Image(systemName: "checkmark")
+                            }
+                        }
+                    }
+                    ForEach(RecordType.allCases, id: \.rawValue) { type in
+                        Button {
+                            viewModel.selectedTypeFilter = type
+                        } label: {
+                            HStack {
+                                Text(type.displayName)
+                                if viewModel.selectedTypeFilter == type {
+                                    Image(systemName: "checkmark")
+                                }
+                            }
+                        }
+                    }
+                } label: {
+                    HStack(spacing: 4) {
+                        Text(String(localized: "contact.detail.filter"))
+                            .font(DesignSystem.Typography.caption)
+                        Image(systemName: "line.3.horizontal.decrease")
+                            .font(DesignSystem.Typography.caption)
+                    }
+                    .foregroundStyle(DesignSystem.Colors.primary)
+                }
 
                 Button {
                     presentedSheet = .addRecord(
@@ -278,9 +509,9 @@ struct ContactDetailView: View {
                 }
             }
             .padding(.horizontal, 16)
-            .padding(.bottom, 12)
+            .padding(.bottom, 16)
 
-            let records = viewModel.sortedRecords
+            let records = viewModel.filteredRecords
 
             if records.isEmpty {
                 EmptyStateView(
@@ -289,62 +520,255 @@ struct ContactDetailView: View {
                 )
                 .frame(height: 160)
             } else {
+                // Timeline
                 VStack(spacing: 0) {
-                    ForEach(records) { record in
-                        NavigationLink(value: AppRoute.recordDetail(record.persistentModelID)) {
-                            RecordRow(
-                                avatar: contact.avatar,
-                                contactName: contact.name,
-                                eventName: record.event?.name ?? "",
-                                amount: record.resolvedDisplayAmount,
-                                direction: record.direction,
-                                date: record.date,
-                                recordType: record.recordType,
-                                favorDescription: record.resolvedDescription,
-                                kvData: record.kvData,
-                                contextTag: record.contextTag
-                            )
-                        }
-                        .buttonStyle(.plain)
-
-                        if record.id != records.last?.id {
-                            Divider()
-                                .background(DesignSystem.Colors.separator)
-                                .padding(.leading, 72)
-                        }
+                    ForEach(Array(records.enumerated()), id: \.element.persistentModelID) { index, record in
+                        timelineEntry(record, isLast: index == records.count - 1)
                     }
                 }
-                .background(DesignSystem.Colors.bgSurface)
-                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.smallCard))
                 .padding(.horizontal, 16)
             }
         }
     }
 
+    // MARK: - Timeline Entry
+
+    private func timelineEntry(_ record: Record, isLast: Bool) -> some View {
+        NavigationLink(value: AppRoute.recordDetail(record.persistentModelID)) {
+            HStack(alignment: .top, spacing: 0) {
+                // Timeline indicator
+                VStack(spacing: 0) {
+                    Circle()
+                        .stroke(DesignSystem.Colors.border, lineWidth: 1.5)
+                        .frame(width: 10, height: 10)
+                        .background(
+                            Circle()
+                                .fill(DesignSystem.Colors.bgPage)
+                        )
+                        .padding(.top, 6)
+
+                    if !isLast {
+                        Rectangle()
+                            .fill(DesignSystem.Colors.separator)
+                            .frame(width: 1)
+                    }
+                }
+                .frame(width: 10)
+
+                Spacer().frame(width: 12)
+
+                // Card content
+                VStack(alignment: .leading, spacing: 10) {
+                    // Date + amount/icon
+                    HStack(alignment: .top) {
+                        Text(viewModel.timelineDateText(record.date))
+                            .font(DesignSystem.Typography.caption)
+                            .foregroundStyle(DesignSystem.Colors.textSecondary)
+
+                        Spacer()
+
+                        timelineAmountView(record)
+                    }
+
+                    // Type tag + event title
+                    HStack(spacing: 8) {
+                        Text(record.recordType.displayName)
+                            .font(DesignSystem.Typography.small)
+                            .foregroundStyle(typeTagColor(record.recordType))
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 3)
+                            .background(typeTagColor(record.recordType).opacity(0.12))
+                            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.tag))
+
+                        Text(record.contextDisplayName)
+                            .font(DesignSystem.Typography.body)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(DesignSystem.Colors.textPrimary)
+                            .lineLimit(1)
+                    }
+
+                    // Note
+                    if !record.note.isEmpty {
+                        Text(record.note)
+                            .font(DesignSystem.Typography.caption)
+                            .foregroundStyle(DesignSystem.Colors.textSecondary)
+                            .lineLimit(3)
+                            .multilineTextAlignment(.leading)
+                    }
+                }
+                .padding(16)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(DesignSystem.Colors.bgSurface)
+                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.smallCard))
+                .padding(.bottom, isLast ? 0 : 16)
+            }
+        }
+        .buttonStyle(.plain)
+    }
+
     // MARK: - Helpers
 
-    private func netValueColor(_ value: Double) -> Color {
-        value >= 0
-            ? DesignSystem.Colors.accentGold
-            : DesignSystem.Colors.primary
+    @ViewBuilder
+    private func timelineAmountView(_ record: Record) -> some View {
+        switch record.recordType {
+        case .monetary:
+            let prefix = record.direction == .received ? "+" : "-"
+            let formatted = viewModel.formatAmount(record.resolvedDisplayAmount)
+            Text("\(prefix)\(formatted)")
+                .font(DesignSystem.Typography.body)
+                .fontWeight(.semibold)
+                .foregroundStyle(
+                    record.direction == .received
+                        ? DesignSystem.Colors.accentGold
+                        : DesignSystem.Colors.primary
+                )
+        case .gift:
+            if let estimated = record.resolvedEstimatedValue, estimated > 0 {
+                Text(String(localized: "contact.detail.estimated") + " " + viewModel.formatAmount(estimated))
+                    .font(DesignSystem.Typography.caption)
+                    .foregroundStyle(DesignSystem.Colors.textSecondary)
+            }
+        case .favor:
+            Image(systemName: "heart.fill")
+                .font(DesignSystem.Typography.body)
+                .foregroundStyle(DesignSystem.Colors.primary)
+        case .banquet:
+            EmptyView()
+        }
+    }
+
+    private func typeTagColor(_ type: RecordType) -> Color {
+        switch type {
+        case .monetary: return DesignSystem.Colors.primary
+        case .gift: return DesignSystem.Colors.accentGold
+        case .favor: return Color(hexLight: "#6B8E6B", hexDark: "#8BAF8B")
+        case .banquet: return Color(hexLight: "#7B6EA7", hexDark: "#9B8EC7")
+        }
     }
 }
 
 // MARK: - Preview
 
 private func makeContactDetailPreviewContainer() -> (container: ModelContainer, contactID: PersistentIdentifier)? {
-    guard let container = try? ModelContainer(for: Contact.self, configurations: ModelConfiguration(isStoredInMemoryOnly: true)) else { return nil }
+    guard let container = try? ModelContainer(
+        for: Contact.self,
+        configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+    ) else { return nil }
+
     let context = container.mainContext
     let contact = Contact(
-        name: "张三",
-        phone: "138-0000-0000",
-        relation: "同事",
-        category: "社会",
-        circle: 4,
+        name: "张敬轩",
+        phone: "138-8888-6666",
+        relation: "大学同学",
+        category: "社交",
+        circle: 3,
         birthday: Date(timeIntervalSince1970: 643_334_400),
-        location: "四川 · 成都"
+        location: "浙江 · 杭州"
     )
     context.insert(contact)
+
+    let cal = Calendar.current
+
+    // Event: 婚礼
+    let weddingEvent = Event(
+        name: "参加张三婚礼",
+        type: .wedding,
+        date: cal.date(from: DateComponents(year: 2025, month: 2, day: 15))!,
+        location: "西湖国宾馆"
+    )
+    context.insert(weddingEvent)
+
+    // Record 1: 礼金 — 参加婚礼
+    let r1 = Record(
+        contact: contact,
+        event: weddingEvent,
+        direction: .given,
+        date: cal.date(from: DateComponents(year: 2025, month: 2, day: 15))!,
+        recordType: .monetary
+    )
+    r1.applyTypeData(.monetary(MonetaryData(amount: 1000, paymentMethod: "wechat")))
+    r1.note = "大学同学聚会，随份子表达祝贺。于西湖国宾馆举行。"
+    context.insert(r1)
+
+    // Record 2: 帮忙 — 帮忙挂号
+    let r2 = Record(
+        contact: contact,
+        direction: .received,
+        date: cal.date(from: DateComponents(year: 2025, month: 1, day: 8))!,
+        recordType: .favor
+    )
+    r2.applyTypeData(.favor(FavorData(description: "帮忙挂号")))
+    r2.note = "协助张敬轩父亲在省人民医院挂专家号，通过老同学关系顺利排上。"
+    r2.contextTag = "帮忙挂号"
+    context.insert(r2)
+
+    // Record 3: 礼品 — 节日看望
+    let r3 = Record(
+        contact: contact,
+        direction: .given,
+        date: cal.date(from: DateComponents(year: 2024, month: 12, day: 22))!,
+        recordType: .gift
+    )
+    r3.applyTypeData(.gift(GiftData(giftName: "手工点心和茶叶", estimatedValue: 300)))
+    r3.note = "冬至带了两盒手工点心和茶叶登门拜访，闲聊两个小时。"
+    r3.contextTag = "节日看望"
+    context.insert(r3)
+
+    // Record 4: 宴请 — 接风洗尘
+    let r4 = Record(
+        contact: contact,
+        direction: .given,
+        date: cal.date(from: DateComponents(year: 2024, month: 10, day: 5))!,
+        recordType: .banquet
+    )
+    r4.applyTypeData(.banquet(BanquetData(location: "老杭帮菜馆", attendeeList: "张敬轩、李伟、王芳")))
+    r4.note = "国庆期间张敬轩从北京回来，约了几个老同学一起吃饭叙旧。"
+    r4.contextTag = "接风洗尘"
+    context.insert(r4)
+
+    // Record 5: 礼金 — 收到生日红包
+    let birthdayEvent = Event(
+        name: "我的生日",
+        type: .birthday,
+        date: cal.date(from: DateComponents(year: 2024, month: 8, day: 18))!
+    )
+    context.insert(birthdayEvent)
+
+    let r5 = Record(
+        contact: contact,
+        event: birthdayEvent,
+        direction: .received,
+        date: cal.date(from: DateComponents(year: 2024, month: 8, day: 18))!,
+        recordType: .monetary
+    )
+    r5.applyTypeData(.monetary(MonetaryData(amount: 520, paymentMethod: "wechat")))
+    r5.note = "生日当天收到微信红包，附言「生日快乐老同学」。"
+    context.insert(r5)
+
+    // Record 6: 帮忙 — 帮忙搬家
+    let r6 = Record(
+        contact: contact,
+        direction: .received,
+        date: cal.date(from: DateComponents(year: 2024, month: 6, day: 1))!,
+        recordType: .favor
+    )
+    r6.applyTypeData(.favor(FavorData(description: "帮忙搬家")))
+    r6.note = "新房搬家时主动开车来帮忙搬运，忙了一整天。"
+    r6.contextTag = "帮忙搬家"
+    context.insert(r6)
+
+    // Record 7: 礼品 — 出差带特产
+    let r7 = Record(
+        contact: contact,
+        direction: .received,
+        date: cal.date(from: DateComponents(year: 2024, month: 4, day: 10))!,
+        recordType: .gift
+    )
+    r7.applyTypeData(.gift(GiftData(giftName: "北京稻香村糕点", estimatedValue: 150)))
+    r7.note = "出差北京回来带的特产，说是特意给我留的。"
+    r7.contextTag = "出差带特产"
+    context.insert(r7)
+
     return (container, contact.persistentModelID)
 }
 

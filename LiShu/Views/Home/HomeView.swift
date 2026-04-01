@@ -59,87 +59,90 @@ struct HomeView: View {
     // MARK: - Summary Section
 
     private var summarySection: some View {
-        NavigationLink(value: AppRoute.statistics) {
+        VStack(alignment: .leading, spacing: 16) {
+            // Header: title + add record button
+            Text(String(localized: "home.yearSummaryTitle"))
+                .font(DesignSystem.Typography.title2)
+                .foregroundStyle(DesignSystem.Colors.textPrimary)
+
+            // Inner card: total interactions + type breakdown + monetary net
             summaryCardContent
         }
-        .buttonStyle(.plain)
     }
 
     private var summaryCardContent: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 20) {
+            // Total interactions + chart button
             HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(String(localized: "home.yearSummaryTitle"))
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(String(localized: "home.totalInteractions"))
                         .font(DesignSystem.Typography.caption)
-                        .foregroundStyle(DesignSystem.Colors.primary)
+                        .foregroundStyle(DesignSystem.Colors.textSecondary)
 
-                    Text(viewModel.yearBadge)
-                        .font(DesignSystem.Typography.title1)
-                        .foregroundStyle(DesignSystem.Colors.textPrimary)
+                    HStack(alignment: .firstTextBaseline, spacing: 2) {
+                        Text("\(viewModel.recordCount)")
+                            .font(.system(size: 40, weight: .bold))
+                            .foregroundStyle(DesignSystem.Colors.textPrimary)
+
+                        Text(String(localized: "home.interactionUnit"))
+                            .font(DesignSystem.Typography.title3)
+                            .foregroundStyle(DesignSystem.Colors.textSecondary)
+                    }
                 }
 
                 Spacer()
 
-                Image(systemName: "chart.bar.fill")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(DesignSystem.Colors.primary)
-                    .frame(width: 40, height: 40)
-                    .background(DesignSystem.Colors.bgSurface)
-                    .clipShape(Circle())
+                NavigationLink(value: AppRoute.statistics) {
+                    Image(systemName: "chart.bar.fill")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(DesignSystem.Colors.primary)
+                        .frame(width: 40, height: 40)
+                        .background(DesignSystem.Colors.bgPage)
+                        .clipShape(Circle())
+                }
             }
 
-            HStack(spacing: 8) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(String(localized: "home.income"))
-                        .font(DesignSystem.Typography.small)
-                        .foregroundStyle(DesignSystem.Colors.textSecondary)
-                    Text(viewModel.formattedIncome)
-                        .font(DesignSystem.Typography.title3)
-                        .foregroundStyle(DesignSystem.Colors.primary)
+            // Type breakdown capsules
+            if !viewModel.typeBreakdown.isEmpty {
+                FlowLayout(spacing: 8) {
+                    ForEach(viewModel.typeBreakdown, id: \.type) { item in
+                        typeCountCapsule(type: item.type, count: item.count)
+                    }
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(14)
-                .background(DesignSystem.Colors.bgPage)
-                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.smallCard))
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(String(localized: "home.expense"))
-                        .font(DesignSystem.Typography.small)
-                        .foregroundStyle(DesignSystem.Colors.textSecondary)
-                    Text(viewModel.formattedExpense)
-                        .font(DesignSystem.Typography.title3)
-                        .foregroundStyle(DesignSystem.Colors.primary)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(14)
-                .background(DesignSystem.Colors.bgPage)
-                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.smallCard))
             }
 
-            HStack(spacing: 6) {
-                Image(systemName: "person.2")
-                    .font(.system(size: 12))
-                    .foregroundStyle(DesignSystem.Colors.textSecondary)
-                Text(viewModel.peopleSummary)
+            // Monetary net summary
+            if viewModel.monetaryCount > 0 {
+                Divider()
+                    .foregroundStyle(DesignSystem.Colors.separator)
+
+                Text(viewModel.monetaryNetSummary)
                     .font(DesignSystem.Typography.caption)
-                    .foregroundStyle(DesignSystem.Colors.textSecondary)
-            }
-
-            if let nonFinancialSummary = viewModel.nonFinancialSummary {
-                HStack(spacing: 6) {
-                    Image(systemName: "hand.wave")
-                        .font(.system(size: 12))
-                        .foregroundStyle(DesignSystem.Colors.textSecondary)
-                    Text(nonFinancialSummary)
-                        .font(DesignSystem.Typography.caption)
-                        .foregroundStyle(DesignSystem.Colors.textSecondary)
-                }
+                    .foregroundStyle(DesignSystem.Colors.textTertiary)
             }
         }
-        .padding(20)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 24)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .contentShape(Rectangle())
         .background(DesignSystem.Colors.bgCard)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+    }
+
+    private func typeCountCapsule(type: RecordType, count: Int) -> some View {
+        HStack(spacing: 5) {
+            Image(systemName: type.iconName)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(DesignSystem.Colors.primary)
+            Text(String(format: String(localized: "home.typeCountFormat"), count))
+                .font(DesignSystem.Typography.caption)
+                .foregroundStyle(DesignSystem.Colors.textPrimary)
+                .fontWeight(.medium)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 6)
+        .background(DesignSystem.Colors.bgTag)
+        .clipShape(Capsule())
     }
 
     // MARK: - Upcoming Events Section

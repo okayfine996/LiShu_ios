@@ -10,12 +10,32 @@
     "/" : {
 
     },
+    "%@ %lld" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ %2$lld"
+          }
+        }
+      }
+    },
     "%@、%@" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "%1$@、%2$@"
+          }
+        }
+      }
+    },
+    "%@%@" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@%2$@"
           }
         }
       }
@@ -648,6 +668,116 @@
         }
       }
     },
+    "contact.detail.activityRate" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "年度互动活跃度"
+          }
+        }
+      }
+    },
+    "contact.detail.assetOverview" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "往来资产概览"
+          }
+        }
+      }
+    },
+    "contact.detail.balance.excellent" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "极佳"
+          }
+        }
+      }
+    },
+    "contact.detail.balance.excellent.desc" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "双方往来均衡，情分深厚"
+          }
+        }
+      }
+    },
+    "contact.detail.balance.fair" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一般"
+          }
+        }
+      }
+    },
+    "contact.detail.balance.fair.desc" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "往来有待加强"
+          }
+        }
+      }
+    },
+    "contact.detail.balance.good" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "良好"
+          }
+        }
+      }
+    },
+    "contact.detail.balance.good.desc" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "互动较为均衡"
+          }
+        }
+      }
+    },
+    "contact.detail.balance.poor" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "失衡"
+          }
+        }
+      }
+    },
+    "contact.detail.balance.poor.desc" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "单方面付出较多"
+          }
+        }
+      }
+    },
+    "contact.detail.balanceIndex" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "互惠平衡指数"
+          }
+        }
+      }
+    },
     "contact.detail.circle" : {
       "localizations" : {
         "zh-Hans" : {
@@ -669,6 +799,46 @@
         }
       }
     },
+    "contact.detail.circlePosition" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "核心圈层位置"
+          }
+        }
+      }
+    },
+    "contact.detail.circlePrefix" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "第"
+          }
+        }
+      }
+    },
+    "contact.detail.circleSuffix" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "圈层"
+          }
+        }
+      }
+    },
+    "contact.detail.composition" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "互动构成"
+          }
+        }
+      }
+    },
     "contact.detail.deleteConfirm" : {
       "localizations" : {
         "zh-Hans" : {
@@ -679,12 +849,94 @@
         }
       }
     },
+    "contact.detail.estimated" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "约"
+          }
+        }
+      }
+    },
+    "contact.detail.expenseShort" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "支出"
+          }
+        }
+      }
+    },
+    "contact.detail.filter" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "筛选"
+          }
+        }
+      }
+    },
+    "contact.detail.filterAll" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全部"
+          }
+        }
+      }
+    },
+    "contact.detail.financial" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "金钱往来"
+          }
+        }
+      }
+    },
+    "contact.detail.frequency" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "互动频次"
+          }
+        }
+      }
+    },
     "contact.detail.given" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "随礼"
+          }
+        }
+      }
+    },
+    "contact.detail.incomeExpense" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "累计收支"
+          }
+        }
+      }
+    },
+    "contact.detail.incomeShort" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "收入"
           }
         }
       }
@@ -700,7 +952,40 @@
         }
       }
     },
+    "contact.detail.interaction" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "人情互动"
+          }
+        }
+      }
+    },
+    "contact.detail.interactionCount" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "互动次数"
+          }
+        }
+      }
+    },
+    "contact.detail.netSurplus" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "净值盈余"
+          }
+        }
+      }
+    },
     "contact.detail.netValue" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -711,6 +996,7 @@
       }
     },
     "contact.detail.nonFinancialCount" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -736,6 +1022,17 @@
         }
       }
     },
+    "contact.detail.pastYear" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "过去一年"
+          }
+        }
+      }
+    },
     "contact.detail.personalInfo" : {
       "localizations" : {
         "zh-Hans" : {
@@ -747,6 +1044,7 @@
       }
     },
     "contact.detail.received" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -757,6 +1055,7 @@
       }
     },
     "contact.detail.records" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -766,12 +1065,43 @@
         }
       }
     },
+    "contact.detail.relationshipInsight" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关系亲疏洞察"
+          }
+        }
+      }
+    },
+    "contact.detail.relationTags" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关系标签"
+          }
+        }
+      }
+    },
     "contact.detail.returned" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "退礼"
+          }
+        }
+      }
+    },
+    "contact.detail.timeline" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "往来时间轴"
           }
         }
       }
@@ -782,6 +1112,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "联系人详情"
+          }
+        }
+      }
+    },
+    "contact.detail.totalExpense" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "累计支出"
+          }
+        }
+      }
+    },
+    "contact.detail.totalIncome" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "累计收入"
           }
         }
       }
@@ -1055,10 +1407,8 @@
     "Corner Radius: 20pt" : {
 
     },
-    "DEBUG: 清除购买状态" : {
-
-    },
     "debug.clearAllData" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1069,6 +1419,7 @@
       }
     },
     "debug.generateSampleData" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1079,6 +1430,7 @@
       }
     },
     "debug.notification.clearAll" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1089,6 +1441,7 @@
       }
     },
     "debug.notification.pending" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1099,6 +1452,7 @@
       }
     },
     "debug.notification.sent" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1109,6 +1463,7 @@
       }
     },
     "debug.notification.test.all" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1119,6 +1474,7 @@
       }
     },
     "debug.notification.test.birthday" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1129,6 +1485,7 @@
       }
     },
     "debug.notification.test.event" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1139,6 +1496,7 @@
       }
     },
     "debug.notification.test.returnGift" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1883,6 +2241,7 @@
       }
     },
     "home.expense" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1893,6 +2252,7 @@
       }
     },
     "home.income" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1902,18 +2262,22 @@
         }
       }
     },
-    "home.nonFinancialSummary" : {
+    "home.interactionUnit" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%d non-financial interactions"
-          }
-        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "非金额互动 %d 次"
+            "value" : "次"
+          }
+        }
+      }
+    },
+    "home.monetaryNetSummary" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "礼金净值: 收 ¥%@ / 支 ¥%@"
           }
         }
       }
@@ -1968,6 +2332,26 @@
         }
       }
     },
+    "home.totalInteractions" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今年总互动"
+          }
+        }
+      }
+    },
+    "home.typeCountFormat" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%d次"
+          }
+        }
+      }
+    },
     "home.upcoming" : {
       "localizations" : {
         "zh-Hans" : {
@@ -1979,6 +2363,7 @@
       }
     },
     "home.yearBadge" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -4290,12 +4675,13 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "新建"
+            "value" : "新建联系人"
           }
         }
       }
     },
     "record.add.newContactName" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -4327,6 +4713,7 @@
       }
     },
     "record.add.noContact" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -5349,6 +5736,77 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "金额"
+          }
+        }
+      }
+    },
+    "recordTypeComposition.countUnit" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "次"
+          }
+        }
+      }
+    },
+    "recordTypeComposition.detailSection" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "详细构成详情"
+          }
+        }
+      }
+    },
+    "recordTypeComposition.frequencyCount" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "频次换算"
+          }
+        }
+      }
+    },
+    "recordTypeComposition.ratio" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "占比 %.0f%%"
+          }
+        }
+      }
+    },
+    "recordTypeComposition.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "人情构成分析"
+          }
+        }
+      }
+    },
+    "recordTypeComposition.totalAmount" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "累计往来"
+          }
+        }
+      }
+    },
+    "recordTypeComposition.yearTotal" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "年度总往来"
           }
         }
       }
@@ -6798,6 +7256,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已经到底了"
+          }
+        }
+      }
+    },
+    "statistics.recordTypeComposition" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "人情构成"
           }
         }
       }
