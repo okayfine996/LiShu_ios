@@ -323,7 +323,7 @@ struct AddRecordView: View {
 
                 Text(type.displayName)
                     .font(DesignSystem.Typography.small)
-                    .foregroundStyle(isSelected ? DesignSystem.Colors.primary : DesignSystem.Colors.textSecondary)
+                    .foregroundStyle(isSelected ? DesignSystem.Colors.textPrimary : DesignSystem.Colors.textSecondary)
                     .fontWeight(isSelected ? .semibold : .medium)
             }
         }
@@ -377,7 +377,7 @@ struct AddRecordView: View {
                             .font(DesignSystem.Typography.small)
                             .foregroundStyle(
                                 viewModel.relationshipWeight == weight
-                                    ? DesignSystem.Colors.primary
+                                    ? DesignSystem.Colors.textPrimary
                                     : DesignSystem.Colors.textTertiary
                             )
                             .fontWeight(viewModel.relationshipWeight == weight ? .semibold : .medium)
@@ -640,7 +640,7 @@ struct AddRecordView: View {
         } label: {
             Text(paymentMethodName(method))
                 .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(isSelected ? DesignSystem.Colors.primary : DesignSystem.Colors.textSecondary)
+                .foregroundStyle(isSelected ? DesignSystem.Colors.textPrimary : DesignSystem.Colors.textSecondary)
                 .padding(.horizontal, 18)
                 .padding(.vertical, 8)
                 .background(isSelected ? DesignSystem.Colors.primary.opacity(0.08) : DesignSystem.Colors.bgSurface)
@@ -1070,7 +1070,7 @@ struct AddRecordView: View {
             Text(tag)
                 .font(DesignSystem.Typography.caption)
                 .fontWeight(.medium)
-                .foregroundStyle(isSelected ? DesignSystem.Colors.primary : DesignSystem.Colors.textSecondary)
+                .foregroundStyle(isSelected ? DesignSystem.Colors.textPrimary : DesignSystem.Colors.textSecondary)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 8)
                 .background(isSelected ? DesignSystem.Colors.primary.opacity(0.08) : DesignSystem.Colors.bgSurface)

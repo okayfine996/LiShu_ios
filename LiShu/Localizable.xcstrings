@@ -5000,7 +5000,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "确认送出金额"
+            "value" : "确认金钱支出"
           }
         }
       }
@@ -5010,7 +5010,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "确认收到金额"
+            "value" : "确认金钱收入"
           }
         }
       }
@@ -5471,7 +5471,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "送出"
+            "value" : "支出"
           }
         }
       }
@@ -5481,7 +5481,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "收到"
+            "value" : "收入"
           }
         }
       }
@@ -5745,7 +5745,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "金额"
+            "value" : "金钱"
           }
         }
       }
