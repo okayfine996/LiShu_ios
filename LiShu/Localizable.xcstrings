@@ -673,7 +673,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "年度互动活跃度"
+            "value" : "活跃月占比"
           }
         }
       }
@@ -683,7 +683,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "往来资产概览"
+            "value" : "人情往来一览"
           }
         }
       }
@@ -773,7 +773,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "互惠平衡指数"
+            "value" : "往来均衡度"
           }
         }
       }
@@ -804,7 +804,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "核心圈层位置"
+            "value" : "所在圈层"
           }
         }
       }
@@ -834,7 +834,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "互动构成"
+            "value" : "往来类型"
           }
         }
       }
@@ -864,12 +864,13 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "支出"
+            "value" : "随礼"
           }
         }
       }
     },
     "contact.detail.filter" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -880,6 +881,7 @@
       }
     },
     "contact.detail.filterAll" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -905,7 +907,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "互动频次"
+            "value" : "近一年往来"
           }
         }
       }
@@ -926,7 +928,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "累计收支"
+            "value" : "累计收送"
           }
         }
       }
@@ -936,7 +938,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "收入"
+            "value" : "收礼"
           }
         }
       }
@@ -979,7 +981,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "净值盈余"
+            "value" : "人情净值"
           }
         }
       }
@@ -1070,7 +1072,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "关系亲疏洞察"
+            "value" : "人情与关系"
           }
         }
       }
@@ -1080,7 +1082,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "关系标签"
+            "value" : "身份与分类"
           }
         }
       }
@@ -1407,8 +1409,10 @@
     "Corner Radius: 20pt" : {
 
     },
+    "DEBUG: 清除购买状态" : {
+
+    },
     "debug.clearAllData" : {
-      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1419,7 +1423,6 @@
       }
     },
     "debug.generateSampleData" : {
-      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1430,7 +1433,6 @@
       }
     },
     "debug.notification.clearAll" : {
-      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1441,7 +1443,6 @@
       }
     },
     "debug.notification.pending" : {
-      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1452,7 +1453,6 @@
       }
     },
     "debug.notification.sent" : {
-      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1463,7 +1463,6 @@
       }
     },
     "debug.notification.test.all" : {
-      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1474,7 +1473,6 @@
       }
     },
     "debug.notification.test.birthday" : {
-      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1485,7 +1483,6 @@
       }
     },
     "debug.notification.test.event" : {
-      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1496,7 +1493,6 @@
       }
     },
     "debug.notification.test.returnGift" : {
-      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -2270,62 +2266,12 @@
         }
       }
     },
-    "heatmap.detail.legendCold" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "冷"
-          }
-        }
-      }
-    },
-    "heatmap.detail.legendHot" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "热"
-          }
-        }
-      }
-    },
     "heatmap.detail.matrixTitle" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "年度人情矩阵"
-          }
-        }
-      }
-    },
-    "heatmap.detail.noEventTitle" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "往来"
-          }
-        }
-      }
-    },
-    "heatmap.detail.recordsByWeekEmpty" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "本年度暂无往来记录"
-          }
-        }
-      }
-    },
-    "heatmap.detail.recordsByWeekTitle" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "按周往来"
           }
         }
       }
@@ -2346,36 +2292,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "人情热力"
-          }
-        }
-      }
-    },
-    "heatmap.detail.unknownContact" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "未命名联系人"
-          }
-        }
-      }
-    },
-    "heatmap.detail.weekRecordsCount" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%d 笔记录"
-          }
-        }
-      }
-    },
-    "heatmap.detail.weekSectionTitle" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ 第%d周"
           }
         }
       }
@@ -2507,7 +2423,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "今年总互动"
+            "value" : "今年总来往"
           }
         }
       }
@@ -7124,12 +7040,13 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "颜色越深表示往来越频繁"
+            "value" : "颜色越深，当周笔数越多"
           }
         }
       }
     },
     "statistics.heatmap.subtitle" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {

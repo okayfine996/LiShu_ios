@@ -87,6 +87,10 @@ struct ContactDetailView: View {
     private func profileSection(_ contact: Contact) -> some View {
         VStack(spacing: 8) {
             AvatarView(imageData: contact.avatar, name: contact.name, size: 80)
+                .overlay {
+                    Circle()
+                        .stroke(DesignSystem.Colors.bgSurface, lineWidth: 1)
+                }
 
             Text(contact.name)
                 .font(DesignSystem.Typography.title2)
@@ -132,15 +136,24 @@ struct ContactDetailView: View {
     // MARK: - Summary Cards (Swipeable)
 
     private func summaryCardsSection(_ contact: Contact) -> some View {
-        TabView(selection: $currentCardPage) {
-            assetOverviewCard(contact)
-                .tag(0)
-            relationshipInsightCard(contact)
-                .tag(1)
+        ZStack(alignment: .topTrailing) {
+            TabView(selection: $currentCardPage) {
+                assetOverviewCard(contact)
+                    .tag(0)
+                relationshipInsightCard(contact)
+                    .tag(1)
+            }
+            .tabViewStyle(.page(indexDisplayMode: .never))
+            .aspectRatio(1.5, contentMode: .fit)
+
+            pageIndicator(current: currentCardPage)
+                .padding(.top, DesignSystem.Spacing.cardPadding)
+                .padding(.trailing, DesignSystem.Spacing.cardPadding)
+                .allowsHitTesting(false)
         }
-        .tabViewStyle(.page(indexDisplayMode: .never))
-        .aspectRatio(1.5, contentMode: .fit)
-        .padding(.horizontal, -4)
+        .background(DesignSystem.Colors.bgSurface)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+        .padding(.horizontal, 16)
     }
 
     private func pageIndicator(current: Int) -> some View {
@@ -159,15 +172,11 @@ struct ContactDetailView: View {
 
     private func assetOverviewCard(_ contact: Contact) -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Title + indicator
-            HStack {
-                Text(String(localized: "contact.detail.assetOverview"))
-                    .font(DesignSystem.Typography.title3)
-                    .foregroundStyle(DesignSystem.Colors.textPrimary)
-                Spacer()
-                pageIndicator(current: 0)
-            }
-            .padding(.bottom, 20)
+            Text(String(localized: "contact.detail.assetOverview"))
+                .font(DesignSystem.Typography.title3)
+                .foregroundStyle(DesignSystem.Colors.textPrimary)
+                .padding(.trailing, DesignSystem.Spacing.cardPadding + DesignSystem.Spacing.section)
+                .padding(.bottom, 20)
 
             // Middle row: net value + interaction frequency
             HStack(alignment: .top) {
@@ -256,21 +265,18 @@ struct ContactDetailView: View {
                 }
             }
         }
-        .padding(20)
+        .padding(DesignSystem.Spacing.cardPadding)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(DesignSystem.Colors.bgSurface)
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
-        .padding(.horizontal, 16)
     }
 
     // MARK: Card 2 — 关系亲疏洞察
 
     private func relationshipInsightCard(_ contact: Contact) -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Title
             Text(String(localized: "contact.detail.relationshipInsight"))
                 .font(DesignSystem.Typography.title3)
                 .foregroundStyle(DesignSystem.Colors.textPrimary)
+                .padding(.trailing, DesignSystem.Spacing.cardPadding + DesignSystem.Spacing.section)
                 .padding(.bottom, 20)
 
             // Middle row: activity rate + balance index
@@ -365,11 +371,8 @@ struct ContactDetailView: View {
                 }
             }
         }
-        .padding(20)
+        .padding(DesignSystem.Spacing.cardPadding)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(DesignSystem.Colors.bgSurface)
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
-        .padding(.horizontal, 16)
     }
 
     // MARK: - Personal Info Section
@@ -464,39 +467,6 @@ struct ContactDetailView: View {
 
                 Spacer()
 
-                Menu {
-                    Button {
-                        viewModel.selectedTypeFilter = nil
-                    } label: {
-                        HStack {
-                            Text(String(localized: "contact.detail.filterAll"))
-                            if viewModel.selectedTypeFilter == nil {
-                                Image(systemName: "checkmark")
-                            }
-                        }
-                    }
-                    ForEach(RecordType.allCases, id: \.rawValue) { type in
-                        Button {
-                            viewModel.selectedTypeFilter = type
-                        } label: {
-                            HStack {
-                                Text(type.displayName)
-                                if viewModel.selectedTypeFilter == type {
-                                    Image(systemName: "checkmark")
-                                }
-                            }
-                        }
-                    }
-                } label: {
-                    HStack(spacing: 4) {
-                        Text(String(localized: "contact.detail.filter"))
-                            .font(DesignSystem.Typography.caption)
-                        Image(systemName: "line.3.horizontal.decrease")
-                            .font(DesignSystem.Typography.caption)
-                    }
-                    .foregroundStyle(DesignSystem.Colors.primary)
-                }
-
                 Button {
                     presentedSheet = .addRecord(
                         direction: nil,
@@ -511,7 +481,7 @@ struct ContactDetailView: View {
             .padding(.horizontal, 16)
             .padding(.bottom, 16)
 
-            let records = viewModel.filteredRecords
+            let records = viewModel.sortedRecords
 
             if records.isEmpty {
                 EmptyStateView(
@@ -564,10 +534,12 @@ struct ContactDetailView: View {
                         Text(viewModel.timelineDateText(record.date))
                             .font(DesignSystem.Typography.caption)
                             .foregroundStyle(DesignSystem.Colors.textSecondary)
+                            .lineLimit(1)
 
                         Spacer()
 
                         timelineAmountView(record)
+                            .frame(width: DesignSystem.Layout.timelineMetaWidth, alignment: .trailing)
                     }
 
                     // Type tag + event title
@@ -596,7 +568,7 @@ struct ContactDetailView: View {
                             .multilineTextAlignment(.leading)
                     }
                 }
-                .padding(16)
+                .padding(DesignSystem.Spacing.cardPaddingSmall)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(DesignSystem.Colors.bgSurface)
                 .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.smallCard))
@@ -627,13 +599,17 @@ struct ContactDetailView: View {
                 Text(String(localized: "contact.detail.estimated") + " " + viewModel.formatAmount(estimated))
                     .font(DesignSystem.Typography.caption)
                     .foregroundStyle(DesignSystem.Colors.textSecondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.9)
             }
         case .favor:
             Image(systemName: "heart.fill")
                 .font(DesignSystem.Typography.body)
                 .foregroundStyle(DesignSystem.Colors.primary)
         case .banquet:
-            EmptyView()
+            Image(systemName: "fork.knife")
+                .font(DesignSystem.Typography.caption)
+                .foregroundStyle(DesignSystem.Colors.textSecondary)
         }
     }
 
@@ -641,8 +617,8 @@ struct ContactDetailView: View {
         switch type {
         case .monetary: return DesignSystem.Colors.primary
         case .gift: return DesignSystem.Colors.accentGold
-        case .favor: return Color(hexLight: "#6B8E6B", hexDark: "#8BAF8B")
-        case .banquet: return Color(hexLight: "#7B6EA7", hexDark: "#9B8EC7")
+        case .favor: return DesignSystem.Colors.textSecondary
+        case .banquet: return DesignSystem.Colors.textTertiary
         }
     }
 }

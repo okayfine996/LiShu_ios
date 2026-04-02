@@ -486,10 +486,6 @@ struct StatisticsView: View {
     private var heatmapOuterSection: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.block) {
             statisticsSectionHeader(systemImage: "square.grid.3x3.fill", title: String(localized: "statistics.heatmap.title")) {
-                Text(String(localized: "statistics.heatmap.subtitle"))
-                    .font(DesignSystem.Typography.small)
-                    .italic()
-                    .foregroundStyle(DesignSystem.Colors.textTertiary)
             }
             heatmapCard
         }
@@ -520,7 +516,7 @@ struct StatisticsView: View {
                 }
             }
 
-            heatmapLegendRow
+            HeatmapLegendRow()
         }
         .padding(DesignSystem.Spacing.cardPadding)
         .background(DesignSystem.Colors.bgSurface)
@@ -529,24 +525,6 @@ struct StatisticsView: View {
             RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
                 .stroke(DesignSystem.Colors.primary.opacity(0.05), lineWidth: 1)
         )
-    }
-
-    private var heatmapLegendRow: some View {
-        HStack(spacing: DesignSystem.Spacing.inlineTight) {
-            HStack(spacing: DesignSystem.Spacing.dense) {
-                ForEach(Array([0.12, 0.45, 0.8].enumerated()), id: \.offset) { _, opacity in
-                    RoundedRectangle(cornerRadius: DesignSystem.Radius.chartBar)
-                        .fill(DesignSystem.Colors.primary.opacity(opacity))
-                        .frame(
-                            width: DesignSystem.Layout.heatmapLegendSwatchWidth,
-                            height: DesignSystem.Layout.heatmapLegendSwatchHeight
-                        )
-                }
-            }
-            Text(String(localized: "statistics.heatmap.legend"))
-                .font(DesignSystem.Typography.small)
-                .foregroundStyle(DesignSystem.Colors.textTertiary)
-        }
     }
 
     private var recordTypeCompositionCard: some View {

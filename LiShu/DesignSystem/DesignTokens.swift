@@ -89,6 +89,8 @@ public enum DesignSystem {
         public static let rankBadgeSize: CGFloat = 28
         public static let avatarM: CGFloat = 48
         public static let circleAnalysisCardWidth: CGFloat = 140
+        /// 联系人详情时间轴右侧金额/状态锚点宽度
+        public static let timelineMetaWidth: CGFloat = 112
         public static let heroDecorationDiameter: CGFloat = 128
         public static let heroDecorationBlur: CGFloat = 20
         public static let heroDecorationOffset: CGFloat = 80

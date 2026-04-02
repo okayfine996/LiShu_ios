@@ -12,18 +12,11 @@ class ContactDetailViewModel {
     var contact: Contact?
     var isLoading: Bool = true
     var isShowingDeleteAlert: Bool = false
-    var selectedTypeFilter: RecordType?
 
     /// Sorted records for the contact, newest first
     var sortedRecords: [Record] {
         guard let contact else { return [] }
         return (contact.records ?? []).sorted { $0.date > $1.date }
-    }
-
-    /// Filtered records based on selected type filter
-    var filteredRecords: [Record] {
-        guard let filter = selectedTypeFilter else { return sortedRecords }
-        return sortedRecords.filter { $0.recordType == filter }
     }
 
     /// Past year interaction count

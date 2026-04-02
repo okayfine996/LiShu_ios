@@ -1,7 +1,7 @@
 import SwiftUI
 import SwiftData
 
-/// 人情热力详情：年度矩阵、高峰洞察与按周往来明细（参考 Stitch 稿）。
+/// 人情热力详情：年度人情矩阵与高峰洞察（参考 Stitch 稿）。
 struct HeatmapDetailView: View {
     @Environment(\.modelContext) private var modelContext
 
@@ -54,7 +54,6 @@ struct HeatmapDetailView: View {
                 if !viewModel.insights.isEmpty {
                     insightsSection
                 }
-                weekRecordsSection
             }
             .padding(.horizontal, DesignSystem.Spacing.pageHorizontal)
             .padding(.bottom, DesignSystem.Spacing.scrollBottom)
@@ -65,20 +64,14 @@ struct HeatmapDetailView: View {
 
     private var matrixCard: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.block) {
-            HStack(alignment: .center) {
-                HStack(spacing: DesignSystem.Spacing.inlineTight) {
-                    Image(systemName: "square.grid.3x3.fill")
-                        .font(DesignSystem.Typography.body)
-                        .foregroundStyle(DesignSystem.Colors.primary)
-                    Text(String(localized: "heatmap.detail.matrixTitle"))
-                        .font(DesignSystem.Typography.body)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(DesignSystem.Colors.textPrimary)
-                }
-
-                Spacer()
-
-                matrixLegendCompact
+            HStack(spacing: DesignSystem.Spacing.inlineTight) {
+                Image(systemName: "square.grid.3x3.fill")
+                    .font(DesignSystem.Typography.body)
+                    .foregroundStyle(DesignSystem.Colors.primary)
+                Text(String(localized: "heatmap.detail.matrixTitle"))
+                    .font(DesignSystem.Typography.body)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(DesignSystem.Colors.textPrimary)
             }
 
             LazyVGrid(columns: monthMatrixGridColumns, spacing: DesignSystem.Spacing.block) {
@@ -86,6 +79,9 @@ struct HeatmapDetailView: View {
                     monthMiniGrid(month: month)
                 }
             }
+
+            HeatmapLegendRow()
+                .frame(maxWidth: .infinity, alignment: .leading)
 
             Divider()
                 .background(DesignSystem.Colors.separator.opacity(0.6))
@@ -99,26 +95,6 @@ struct HeatmapDetailView: View {
             RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
                 .stroke(DesignSystem.Colors.primary.opacity(0.05), lineWidth: 1)
         )
-    }
-
-    private var matrixLegendCompact: some View {
-        HStack(spacing: DesignSystem.Spacing.dense) {
-            Text(String(localized: "heatmap.detail.legendCold"))
-                .font(DesignSystem.Typography.small)
-                .foregroundStyle(DesignSystem.Colors.textTertiary)
-
-            HStack(spacing: DesignSystem.Spacing.dense / 2) {
-                ForEach(Array([0.1, 0.3, 0.55, 0.85].enumerated()), id: \.offset) { _, opacity in
-                    RoundedRectangle(cornerRadius: DesignSystem.Radius.chartBar)
-                        .fill(DesignSystem.Colors.primary.opacity(opacity))
-                        .frame(width: DesignSystem.Spacing.inlineTight, height: DesignSystem.Spacing.inlineTight)
-                }
-            }
-
-            Text(String(localized: "heatmap.detail.legendHot"))
-                .font(DesignSystem.Typography.small)
-                .foregroundStyle(DesignSystem.Colors.textTertiary)
-        }
     }
 
     private func monthMiniGrid(month: Int) -> some View {
@@ -205,130 +181,6 @@ struct HeatmapDetailView: View {
                 .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(DesignSystem.Spacing.cardPaddingSmall)
-        .background(DesignSystem.Colors.bgSurface)
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.smallCard))
-        .overlay(
-            RoundedRectangle(cornerRadius: DesignSystem.Radius.smallCard)
-                .stroke(DesignSystem.Colors.primary.opacity(0.05), lineWidth: 1)
-        )
-    }
-
-    // MARK: - Records by Week
-
-    private var weekRecordsSection: some View {
-        VStack(alignment: .leading, spacing: DesignSystem.Spacing.block) {
-            HStack(spacing: DesignSystem.Spacing.dense) {
-                RoundedRectangle(cornerRadius: DesignSystem.Radius.chartBar)
-                    .fill(DesignSystem.Colors.primary)
-                    .frame(width: DesignSystem.Spacing.dense, height: DesignSystem.Spacing.block)
-
-                Text(String(localized: "heatmap.detail.recordsByWeekTitle"))
-                    .font(DesignSystem.Typography.body)
-                    .fontWeight(.bold)
-                    .foregroundStyle(DesignSystem.Colors.textPrimary)
-
-                Spacer(minLength: 0)
-            }
-            .padding(.horizontal, DesignSystem.Spacing.dense)
-
-            if viewModel.weekSections.isEmpty {
-                Text(String(localized: "heatmap.detail.recordsByWeekEmpty"))
-                    .font(DesignSystem.Typography.small)
-                    .foregroundStyle(DesignSystem.Colors.textTertiary)
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.vertical, DesignSystem.Spacing.block)
-            } else {
-                VStack(alignment: .leading, spacing: DesignSystem.Spacing.stackLoose) {
-                    ForEach(viewModel.weekSections) { section in
-                        weekSubsection(section: section)
-                    }
-                }
-            }
-        }
-    }
-
-    private func weekSubsection(section: HeatmapWeekSectionItem) -> some View {
-        VStack(alignment: .leading, spacing: DesignSystem.Spacing.inlineTight) {
-            HStack {
-                HStack(spacing: DesignSystem.Spacing.dense) {
-                    RoundedRectangle(cornerRadius: DesignSystem.Radius.chartBar)
-                        .fill(DesignSystem.Colors.primary.opacity(0.35))
-                        .frame(width: DesignSystem.Spacing.dense, height: DesignSystem.Spacing.block)
-
-                    Text(
-                        String(
-                            format: String(localized: "heatmap.detail.weekSectionTitle"),
-                            viewModel.monthName(forMonthIndex: section.monthIndex),
-                            section.weekIndex + 1
-                        )
-                    )
-                    .font(DesignSystem.Typography.caption)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(DesignSystem.Colors.textPrimary)
-                }
-
-                Spacer(minLength: 0)
-
-                Text(String(format: String(localized: "heatmap.detail.weekRecordsCount"), section.records.count))
-                    .font(DesignSystem.Typography.small)
-                    .foregroundStyle(DesignSystem.Colors.textTertiary)
-            }
-            .padding(.horizontal, DesignSystem.Spacing.dense)
-
-            VStack(spacing: DesignSystem.Spacing.inlineTight) {
-                ForEach(section.records) { row in
-                    NavigationLink(value: AppRoute.recordDetail(row.recordID)) {
-                        recordRowView(row: row)
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-        }
-    }
-
-    private func recordRowView(row: HeatmapRecordRowItem) -> some View {
-        HStack(alignment: .center, spacing: DesignSystem.Spacing.cardPaddingSmall) {
-            Circle()
-                .fill(DesignSystem.Colors.bgTag)
-                .frame(width: DesignSystem.Layout.rankBadgeSize + DesignSystem.Spacing.dense, height: DesignSystem.Layout.rankBadgeSize + DesignSystem.Spacing.dense)
-                .overlay(
-                    Image(systemName: "person.fill")
-                        .font(DesignSystem.Typography.caption)
-                        .foregroundStyle(DesignSystem.Colors.textSecondary)
-                )
-
-            VStack(alignment: .leading, spacing: DesignSystem.Spacing.dense / 2) {
-                Text(row.contactName)
-                    .font(DesignSystem.Typography.caption)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(DesignSystem.Colors.textPrimary)
-
-                HStack(spacing: DesignSystem.Spacing.dense) {
-                    Text(row.eventTitle)
-                        .font(DesignSystem.Typography.small)
-                        .foregroundStyle(DesignSystem.Colors.textSecondary)
-                        .lineLimit(1)
-
-                    Circle()
-                        .fill(DesignSystem.Colors.border)
-                        .frame(width: DesignSystem.Spacing.dense / 2, height: DesignSystem.Spacing.dense / 2)
-
-                    Text(row.dateText)
-                        .font(DesignSystem.Typography.small)
-                        .foregroundStyle(DesignSystem.Colors.textSecondary)
-                }
-            }
-
-            Spacer(minLength: 0)
-
-            if let amount = row.amountText {
-                Text(amount)
-                    .font(DesignSystem.Typography.small)
-                    .fontWeight(.bold)
-                    .foregroundStyle(DesignSystem.Colors.primary)
-            }
-        }
         .padding(DesignSystem.Spacing.cardPaddingSmall)
         .background(DesignSystem.Colors.bgSurface)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.smallCard))

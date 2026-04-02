@@ -39,7 +39,9 @@ struct ContactListView: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
-                    NavigationLink(value: AppRoute.addContact) {
+                    Button {
+                        presentedSheet = .addContact
+                    } label: {
                         Label(String(localized: "contact.add.title"), systemImage: "person.badge.plus")
                     }
                     Button {
