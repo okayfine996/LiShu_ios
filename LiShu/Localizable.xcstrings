@@ -343,6 +343,23 @@
         }
       }
     },
+    "common.preview.unavailable" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preview unavailable"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法预览"
+          }
+        }
+      }
+    },
     "common.retry" : {
       "localizations" : {
         "zh-Hans" : {
@@ -1815,7 +1832,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "事件列表"
+            "value" : "事件"
           }
         }
       }

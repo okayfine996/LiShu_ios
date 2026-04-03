@@ -756,7 +756,7 @@ private func makeContactDetailPreviewContainer() -> (container: ModelContainer, 
             }
             .modelContainer(preview.container)
         } else {
-            Text("Preview unavailable")
+            Text(String(localized: "common.preview.unavailable"))
         }
     }
 }

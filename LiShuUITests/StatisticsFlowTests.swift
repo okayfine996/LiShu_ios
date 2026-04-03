@@ -9,22 +9,19 @@ final class StatisticsFlowTests: BaseUITestCase {
         homeTab.tap()
         sleep(1)
 
-        let statsButton = app.buttons.matching(
-            NSPredicate(format: "label CONTAINS[c] '统计' OR label CONTAINS[c] '报表' OR label CONTAINS[c] '详情'")
-        ).firstMatch
-
-        let statsLink = app.staticTexts.matching(
+        let statsFromHome = app.buttons["home.openStatistics"].firstMatch
+        let statsByLabel = app.buttons.matching(
             NSPredicate(format: "label CONTAINS[c] '统计' OR label CONTAINS[c] '报表'")
         ).firstMatch
 
-        if statsButton.waitForExistence(timeout: 3) {
-            statsButton.tap()
+        if statsFromHome.waitForExistence(timeout: 3) {
+            statsFromHome.tap()
             sleep(1)
 
             let navBar = app.navigationBars.firstMatch
             XCTAssertTrue(navBar.waitForExistence(timeout: 3), "Statistics view should have a navigation bar")
-        } else if statsLink.waitForExistence(timeout: 3) {
-            statsLink.tap()
+        } else if statsByLabel.waitForExistence(timeout: 3) {
+            statsByLabel.tap()
             sleep(1)
 
             let navBar = app.navigationBars.firstMatch
@@ -39,10 +36,11 @@ final class StatisticsFlowTests: BaseUITestCase {
         homeTab.tap()
         sleep(1)
 
-        let incomeLabel = app.staticTexts.matching(
-            NSPredicate(format: "label CONTAINS[c] '收入' OR label CONTAINS[c] '¥'")
+        // 空库时无「礼金/¥」汇总；年度总览与「今年总来往」始终存在
+        let summaryLabel = app.staticTexts.matching(
+            NSPredicate(format: "label CONTAINS[c] '年度总览' OR label CONTAINS[c] '今年总来往'")
         ).firstMatch
-        XCTAssertTrue(incomeLabel.waitForExistence(timeout: 5), "Home summary card should display income info")
+        XCTAssertTrue(summaryLabel.waitForExistence(timeout: 5), "Home summary card should show year overview")
     }
 
     @MainActor

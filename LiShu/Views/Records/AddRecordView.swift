@@ -1340,7 +1340,7 @@ private func makeAddRecordPreviewContainer() -> ModelContainer? {
             .modelContainer(container)
             .environment(SubscriptionManager.shared)
         } else {
-            Text("Preview unavailable")
+            Text(String(localized: "common.preview.unavailable"))
         }
     }
 }

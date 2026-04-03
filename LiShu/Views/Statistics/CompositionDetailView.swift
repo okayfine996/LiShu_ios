@@ -400,7 +400,7 @@ private func makeCompositionDetailPreviewContainer() -> ModelContainer? {
             }
             .modelContainer(container)
         } else {
-            Text("Preview unavailable")
+            Text(String(localized: "common.preview.unavailable"))
         }
     }
 }
@@ -413,7 +413,7 @@ private func makeCompositionDetailPreviewContainer() -> ModelContainer? {
             }
             .modelContainer(container)
         } else {
-            Text("Preview unavailable")
+            Text(String(localized: "common.preview.unavailable"))
         }
     }
 }

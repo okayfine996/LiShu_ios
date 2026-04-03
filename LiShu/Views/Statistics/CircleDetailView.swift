@@ -365,7 +365,7 @@ private func makeCircleDetailPreviewContainer() -> ModelContainer? {
             }
             .modelContainer(container)
         } else {
-            Text("Preview unavailable")
+            Text(String(localized: "common.preview.unavailable"))
         }
     }
 }

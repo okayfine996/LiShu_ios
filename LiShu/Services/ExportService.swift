@@ -121,7 +121,6 @@ struct ExportService {
             // Detect format: new 14 columns (with relationship weight + kvData),
             // old 13 columns (with kvData), new 13 columns (with relationship weight),
             // old 12 columns (typed), or old 10 columns
-            let hasKvData = (fields.last ?? "").trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("{")
             let recordType: RecordType
             let relationshipWeight: RelationshipWeight
             let favorDescription: String
@@ -134,18 +133,27 @@ struct ExportService {
                 favorDescription = fields[11]
                 note = fields[12]
                 kvDataStr = fields[13]
-            } else if fields.count == 13 && hasKvData {
-                recordType = parseRecordType(fields[9])
-                favorDescription = fields[10]
-                note = fields[11]
-                kvDataStr = fields[12]
-                relationshipWeight = .reciprocal
-            } else if fields.count >= 13 {
-                recordType = parseRecordType(fields[9])
-                relationshipWeight = parseRelationshipWeight(fields[10])
-                favorDescription = fields[11]
-                note = fields[12]
-                kvDataStr = nil
+            } else if fields.count == 13 {
+                let col12 = fields[12].trimmingCharacters(in: .whitespacesAndNewlines)
+                if looksLikeRelationshipWeightColumn(fields[10]) {
+                    recordType = parseRecordType(fields[9])
+                    relationshipWeight = parseRelationshipWeight(fields[10])
+                    favorDescription = fields[11]
+                    note = fields[12]
+                    kvDataStr = nil
+                } else if col12.hasPrefix("{") {
+                    recordType = parseRecordType(fields[9])
+                    favorDescription = fields[10]
+                    note = fields[11]
+                    kvDataStr = fields[12]
+                    relationshipWeight = .reciprocal
+                } else {
+                    recordType = parseRecordType(fields[9])
+                    relationshipWeight = parseRelationshipWeight(fields[10])
+                    favorDescription = fields[11]
+                    note = fields[12]
+                    kvDataStr = nil
+                }
             } else if fields.count >= 12 {
                 recordType = parseRecordType(fields[9])
                 favorDescription = fields[10]
@@ -359,6 +367,20 @@ struct ExportService {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return nil }
         return findOrCreateEvent(name: trimmed, type: type, context: context)
+    }
+
+    /// 区分「新 13 列」（第 10 列为情分分量）与「旧 13 列 + kvData」（第 12 列为 JSON）。
+    private static func looksLikeRelationshipWeightColumn(_ raw: String) -> Bool {
+        let s = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !s.isEmpty else { return false }
+        if RelationshipWeight(rawValue: s) != nil { return true }
+        if RelationshipWeight.allCases.contains(where: { $0.displayName == s }) { return true }
+        switch s {
+        case "举手之劳", "点滴之恩", "礼尚往来", "倾力相助", "重如泰山":
+            return true
+        default:
+            return false
+        }
     }
 
     static func parseEventType(_ str: String) -> EventType {

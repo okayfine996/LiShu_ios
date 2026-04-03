@@ -254,7 +254,7 @@ private func makeEventListPreviewContainer() -> ModelContainer? {
             }
             .modelContainer(container)
         } else {
-            Text("Preview unavailable")
+            Text(String(localized: "common.preview.unavailable"))
         }
     }
 }

@@ -9,8 +9,9 @@ description: Write, review, or improve SwiftUI code following best practices for
 
 - Consult `references/latest-apis.md` at the start of every task to avoid deprecated APIs
 - Prefer native SwiftUI APIs over UIKit/AppKit bridging unless bridging is necessary
-- Focus on correctness and performance; do not enforce specific architectures (MVVM, VIPER, etc.)
-- Encourage separating business logic from views for testability without mandating how
+- Always follow workspace and project rules first; if architecture is mandated by project docs, treat it as required
+- Focus on correctness and performance; do not enforce a specific architecture only when project rules do not mandate one
+- Encourage separating business logic from views for testability; when project rules define how, follow that definition
 - Follow Apple's Human Interface Guidelines and API design patterns
 - Only adopt Liquid Glass when explicitly requested by the user (see `references/liquid-glass.md`)
 - Present performance optimizations as suggestions, not requirements

@@ -36,8 +36,8 @@ struct RecordListViewModelTests {
         #expect(allRecords.count == 3)
     }
 
-    @Test("load with filter=given returns only given records")
-    func testLoadFilterGiven() throws {
+    @Test("load with filter=monetary returns only monetary records")
+    func testLoadFilterMonetary() throws {
         let db = try TestDB()
         let c1 = SampleData.contact(name: "张三")
         let c2 = SampleData.contact(name: "李四")
@@ -45,25 +45,25 @@ struct RecordListViewModelTests {
         db.context.insert(c1)
         db.context.insert(c2)
         db.context.insert(e)
-        let rGiven = SampleData.record(contact: c1, event: e, direction: .given)
-        let rReceived = SampleData.record(contact: c2, event: e, direction: .received)
-        db.context.insert(rGiven)
-        db.context.insert(rReceived)
+        let rMonetary = SampleData.record(contact: c1, event: e)
+        let rGift = SampleData.recordGift(contact: c2, event: e)
+        db.context.insert(rMonetary)
+        db.context.insert(rGift)
         try db.context.save()
 
         let vm = RecordListViewModel()
-        vm.filter = .given
+        vm.filter = .monetary
         vm.load(context: db.context)
 
         let grouped = vm.state.value
         #expect(grouped != nil)
         let records = grouped!.values.flatMap { $0 }
         #expect(records.count == 1)
-        #expect(records.first!.direction == .given)
+        #expect(records.first!.recordType == .monetary)
     }
 
-    @Test("load with filter=received returns only received records")
-    func testLoadFilterReceived() throws {
+    @Test("load with filter=gift returns only gift records")
+    func testLoadFilterGift() throws {
         let db = try TestDB()
         let c1 = SampleData.contact(name: "张三")
         let c2 = SampleData.contact(name: "李四")
@@ -71,21 +71,21 @@ struct RecordListViewModelTests {
         db.context.insert(c1)
         db.context.insert(c2)
         db.context.insert(e)
-        let rGiven = SampleData.record(contact: c1, event: e, direction: .given)
-        let rReceived = SampleData.record(contact: c2, event: e, direction: .received)
-        db.context.insert(rGiven)
-        db.context.insert(rReceived)
+        let rMonetary = SampleData.record(contact: c1, event: e)
+        let rGift = SampleData.recordGift(contact: c2, event: e)
+        db.context.insert(rMonetary)
+        db.context.insert(rGift)
         try db.context.save()
 
         let vm = RecordListViewModel()
-        vm.filter = .received
+        vm.filter = .gift
         vm.load(context: db.context)
 
         let grouped = vm.state.value
         #expect(grouped != nil)
         let records = grouped!.values.flatMap { $0 }
         #expect(records.count == 1)
-        #expect(records.first!.direction == .received)
+        #expect(records.first!.recordType == .gift)
     }
 
     @Test("searchText filters by contact name")
@@ -133,9 +133,9 @@ struct RecordListViewModelTests {
         comps.month = 3
         let mar = cal.date(from: comps)!
 
-        let r1 = Record(contact: c, event: e, amount: 500, direction: .given, paymentMethod: .cash, returnedAmount: 0, date: jan)
-        let r2 = Record(contact: c, event: e, amount: 500, direction: .given, paymentMethod: .cash, returnedAmount: 0, date: jun)
-        let r3 = Record(contact: c, event: e, amount: 500, direction: .given, paymentMethod: .cash, returnedAmount: 0, date: mar)
+        let r1 = SampleData.record(contact: c, event: e, amount: 500, date: jan)
+        let r2 = SampleData.record(contact: c, event: e, amount: 500, date: jun)
+        let r3 = SampleData.record(contact: c, event: e, amount: 500, date: mar)
         db.context.insert(r1)
         db.context.insert(r2)
         db.context.insert(r3)

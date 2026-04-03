@@ -4,6 +4,9 @@
 # Xcode
 build/
 DerivedData/
+
+# fastlane 打包产物
+fastlane/build/
 *.xcuserdata
 *.xcworkspace/xcuserdata/
 

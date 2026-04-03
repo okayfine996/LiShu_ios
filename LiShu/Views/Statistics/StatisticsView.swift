@@ -830,7 +830,7 @@ private func makeStatisticsPreviewContainer() -> ModelContainer? {
             .environment(SubscriptionManager.shared)
             .modelContainer(container)
         } else {
-            Text("Preview unavailable")
+            Text(String(localized: "common.preview.unavailable"))
         }
     }
 }

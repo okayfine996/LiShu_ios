@@ -59,6 +59,7 @@ final class Record {
     /// 记录类型
     var recordType: RecordType {
         get {
+            // 历史数据曾使用 rawValue "other"；当前 `RecordType` 无该 case，映射为 `.favor` 以保持读路径兼容。
             if recordTypeRaw == "other" {
                 return .favor
             }
@@ -371,13 +372,26 @@ extension Record {
         let encoder = JSONEncoder()
         switch typeData {
         case .monetary(let d):
-            if let json = try? encoder.encode(d) { kvData = String(data: json, encoding: .utf8) ?? "{}" }
+            if let json = try? encoder.encode(d) {
+                kvData = String(data: json, encoding: .utf8) ?? "{}"
+                amount = d.amount
+                paymentMethodRaw = d.paymentMethod
+            }
         case .gift(let d):
-            if let json = try? encoder.encode(d) { kvData = String(data: json, encoding: .utf8) ?? "{}" }
+            if let json = try? encoder.encode(d) {
+                kvData = String(data: json, encoding: .utf8) ?? "{}"
+                amount = d.estimatedValue ?? 0
+            }
         case .favor(let d):
-            if let json = try? encoder.encode(d) { kvData = String(data: json, encoding: .utf8) ?? "{}" }
+            if let json = try? encoder.encode(d) {
+                kvData = String(data: json, encoding: .utf8) ?? "{}"
+                amount = 0
+            }
         case .banquet(let d):
-            if let json = try? encoder.encode(d) { kvData = String(data: json, encoding: .utf8) ?? "{}" }
+            if let json = try? encoder.encode(d) {
+                kvData = String(data: json, encoding: .utf8) ?? "{}"
+                amount = 0
+            }
         }
     }
 }

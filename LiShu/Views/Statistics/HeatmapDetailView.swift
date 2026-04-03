@@ -283,7 +283,7 @@ private func makeHeatmapDetailPreviewContainer() -> ModelContainer? {
             }
             .modelContainer(container)
         } else {
-            Text("Preview unavailable")
+            Text(String(localized: "common.preview.unavailable"))
         }
     }
 }

@@ -38,11 +38,20 @@ final class LiShuUITests: XCTestCase {
         let addButton = app.navigationBars.buttons.matching(identifier: "contact.list.addButton").firstMatch
         if addButton.waitForExistence(timeout: 3) {
             addButton.tap()
+            Thread.sleep(forTimeInterval: 0.5)
+            let menuAdd = app.buttons[UITestStrings.newContactMenuItem].firstMatch
+            if menuAdd.waitForExistence(timeout: 2) {
+                menuAdd.tap()
+            }
         } else {
-            // If no contacts yet, there may be an empty state - try the navigation bar plus
             let navPlus = app.navigationBars.buttons["plus"]
             if navPlus.waitForExistence(timeout: 3) {
                 navPlus.tap()
+                Thread.sleep(forTimeInterval: 0.5)
+                let menuAdd = app.buttons[UITestStrings.newContactMenuItem].firstMatch
+                if menuAdd.waitForExistence(timeout: 2) {
+                    menuAdd.tap()
+                }
             }
         }
 
@@ -70,8 +79,8 @@ final class LiShuUITests: XCTestCase {
 
     @MainActor
     func testTabNavigation() throws {
-        // Verify all tabs are accessible
-        let tabs = ["首页", "账本", "人脉", "事件", "我的"]
+        // Verify all tabs are accessible（与 Localizable zh-Hans / UITestConstants.TabLabels 一致）
+        let tabs = [TabLabels.home, TabLabels.records, TabLabels.contacts, TabLabels.events, TabLabels.settings]
         for tabName in tabs {
             let tab = app.tabBars.buttons[tabName]
             XCTAssertTrue(tab.waitForExistence(timeout: 3), "Tab '\(tabName)' should exist")

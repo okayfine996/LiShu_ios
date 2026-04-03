@@ -1,37 +1,72 @@
-# App Store 截图自动化
+fastlane documentation
+----
 
-## 1) 安装依赖
+# Installation
 
-```bash
-sudo gem install fastlane
+Make sure you have the latest version of the Xcode command line tools installed:
+
+```sh
+xcode-select --install
 ```
 
-## 2) 执行截图
+For _fastlane_ installation instructions, see [Installing _fastlane_](https://docs.fastlane.tools/#installing-fastlane)
 
-在项目根目录运行：
+# Available Actions
 
-```bash
-fastlane ios screenshots
+## iOS
+
+### ios ipa
+
+```sh
+[bundle exec] fastlane ios ipa
 ```
 
-截图输出目录：
+Archive Release 并导出 IPA（默认 app-store，可上传 TestFlight）
 
-```text
-fastlane/screenshots
+### ios screenshots
+
+```sh
+[bundle exec] fastlane ios screenshots
 ```
 
-## 3) 已配置说明
+Generate App Store screenshots via UI tests（须命令行执行，见 docs.fastlane screenshots）
 
-- 使用 `LiShuUITests/AppStoreScreenshotTests`
-- 默认设备：`iPhone 16 Pro Max`、`iPhone 16 Pro`
-- 默认语言：`zh-Hans`
+### ios screenshots_html
 
-## 4) 自定义文案/页面顺序
+```sh
+[bundle exec] fastlane ios screenshots_html
+```
 
-编辑 `LiShuUITests/AppStoreScreenshotTests.swift` 中的：
+仅根据 fastlane/screenshots 下已有 PNG 重写 screenshots.html（不调 snapshot；换机后也可补预览）
 
-- `snapshot("01-首页-总览")`
-- `snapshot("02-人情-记录")`
-- `snapshot("03-人脉-管理")`
-- `snapshot("04-事件-场景")`
-- `snapshot("05-设置-个人中心")`
+### ios framed_html
+
+```sh
+[bundle exec] fastlane ios framed_html
+```
+
+仅为已有 *_framed.png 生成 framed.html（套壳+文案预览）
+
+### ios frameit
+
+```sh
+[bundle exec] fastlane ios frameit
+```
+
+对 fastlane/screenshots 套设备壳并叠加标题（需已跑过 screenshots；依赖 ImageMagick）
+
+### ios store_screenshots
+
+```sh
+[bundle exec] fastlane ios store_screenshots
+```
+
+先 snapshot 再 frameit，生成可上架风格的带壳+文案截图（产物为 *_framed.png）
+
+----
+
+This README.md is auto-generated and will be re-generated every time [_fastlane_](https://fastlane.tools) is run.
+
+More information about _fastlane_ can be found on [fastlane.tools](https://fastlane.tools).
+
+The documentation of _fastlane_ can be found on [docs.fastlane.tools](https://docs.fastlane.tools).
