@@ -112,28 +112,6 @@ struct ExportServiceTests {
         #expect(ExportService.parseRecordType("banquet") == .banquet)
     }
 
-    // MARK: - JSON Export
-
-    @Test func testExportJSON() throws {
-        let db = try TestDB()
-        let contact = SampleData.contact(name: "张三")
-        let event = SampleData.event(name: "婚礼")
-        db.context.insert(contact)
-        db.context.insert(event)
-
-        let record = SampleData.record(contact: contact, event: event, amount: 500, direction: .given)
-        db.context.insert(record)
-        try db.context.save()
-
-        let jsonData = try ExportService.exportJSON(context: db.context)
-        let jsonString = String(data: jsonData, encoding: .utf8)!
-
-        #expect(jsonString.contains("张三"))
-        #expect(jsonString.contains("500"))
-        #expect(jsonString.contains("given"))
-        #expect(jsonString.contains("relationship_weight"))
-    }
-
     // MARK: - CSV Export
 
     @Test func testExportCSV() throws {
@@ -153,6 +131,9 @@ struct ExportServiceTests {
         #expect(lines.count == 2)
         #expect(lines[0].contains("联系人"))
         #expect(lines[0].contains("情分分量"))
+        #expect(lines[0].contains("礼品名称"))
+        #expect(lines[0].contains("宴请额外费用"))
+        #expect(!lines[0].contains("kvData"))
         #expect(lines[1].contains("李四"))
         #expect(lines[1].contains("300.00"))
     }

@@ -6172,17 +6172,6 @@
         }
       }
     },
-    "settings.data.exportJSON" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "导出原始数据 (JSON)"
-          }
-        }
-      }
-    },
     "settings.data.exportPDF" : {
       "extractionState" : "stale",
       "localizations" : {

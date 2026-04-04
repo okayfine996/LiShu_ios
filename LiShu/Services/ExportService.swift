@@ -2,59 +2,26 @@ import Foundation
 import SwiftData
 
 struct ExportService {
-    private static let dateFormatter: ISO8601DateFormatter = {
-        let f = ISO8601DateFormatter()
-        f.formatOptions = [.withInternetDateTime]
-        return f
-    }()
-
-    // MARK: - JSON Export
-
-    static func exportJSON(context: ModelContext) throws -> Data {
-        let records = try context.fetch(FetchDescriptor<Record>(
-            sortBy: [SortDescriptor(\.date, order: .reverse)]
-        ))
-
-        let items = records.compactMap { record -> ExportRecordItem? in
-            guard let contact = record.contact else { return nil }
-            return ExportRecordItem(
-                contactName: contact.name,
-                eventName: record.event?.name ?? "",
-                eventType: record.event?.type.displayName ?? "",
-                amount: record.resolvedDisplayAmount,
-                direction: record.direction.exportValue,
-                paymentMethod: record.isMonetary ? record.resolvedPaymentMethod.exportValue : "",
-                returnedAmount: record.resolvedReturnedAmount,
-                status: record.exportReturnGiftStatusValue(for: record.direction),
-                date: dateFormatter.string(from: record.date),
-                recordType: record.recordType.rawValue,
-                relationshipWeight: record.relationshipWeight.rawValue,
-                favorDescription: record.resolvedDescription,
-                note: record.note,
-                kvData: record.kvData
-            )
-        }
-
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-        encoder.keyEncodingStrategy = .convertToSnakeCase
-        return try encoder.encode(items)
-    }
 
     // MARK: - CSV Export
+
+    /// 表头：`备注` 后为 6 列类型平铺字段，不含 `kvData`；不含退礼展示用「状态」列。
+    private static let csvHeader =
+        "联系人,事件,事件类型,金额,方向,支付方式,已退金额,日期,记录类型,情分分量,人情描述,备注,礼品名称,礼品估值,帮忙说明,宴请地点,宴请宾客,宴请额外费用"
 
     static func exportCSV(context: ModelContext) throws -> String {
         let records = try context.fetch(FetchDescriptor<Record>(
             sortBy: [SortDescriptor(\.date, order: .reverse)]
         ))
 
-        let header = "联系人,事件,事件类型,金额,方向,支付方式,已退金额,状态,日期,记录类型,情分分量,人情描述,备注,kvData"
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "zh_Hans")
         formatter.dateFormat = "yyyy-MM-dd HH:mm"
 
         let rows = records.compactMap { record -> String? in
             guard let contact = record.contact else { return nil }
+            let flat = flatTypeColumnsForExport(record)
+            guard flat.count == 6 else { return nil }
             return [
                 escapeCSV(contact.name),
                 escapeCSV(record.event?.name ?? ""),
@@ -63,17 +30,58 @@ struct ExportService {
                 escapeCSV(record.direction.csvValue),
                 escapeCSV(record.isMonetary ? record.resolvedPaymentMethod.csvValue : ""),
                 String(format: "%.2f", record.resolvedReturnedAmount),
-                escapeCSV(record.csvReturnGiftStatus(for: record.direction)),
                 escapeCSV(formatter.string(from: record.date)),
                 escapeCSV(record.recordType.displayName),
                 escapeCSV(record.relationshipWeight.displayName),
                 escapeCSV(record.resolvedDescription),
                 escapeCSV(record.note),
-                escapeCSV(record.kvData)
+                flat[0],
+                flat[1],
+                flat[2],
+                flat[3],
+                flat[4],
+                flat[5],
             ].joined(separator: ",")
         }
 
-        return ([header] + rows).joined(separator: "\n")
+        return ([csvHeader] + rows).joined(separator: "\n")
+    }
+
+    /// 返回 6 个已 `escapeCSV` 的字段：礼品名称、礼品估值、帮忙说明、宴请地点、宴请宾客、宴请额外费用。
+    private static func flatTypeColumnsForExport(_ record: Record) -> [String] {
+        switch record.recordType {
+        case .monetary:
+            return Array(repeating: "", count: 6)
+        case .gift:
+            let g = record.giftData
+            let name = g?.giftName ?? ""
+            let estStr: String
+            if let est = g?.estimatedValue {
+                estStr = String(format: "%.2f", est)
+            } else {
+                estStr = ""
+            }
+            return [
+                escapeCSV(name),
+                escapeCSV(estStr),
+                "", "", "", "",
+            ]
+        case .favor:
+            let d = record.favorData?.description ?? ""
+            return [
+                "", "",
+                escapeCSV(d),
+                "", "", "",
+            ]
+        case .banquet:
+            let b = record.banquetData
+            return [
+                "", "", "",
+                escapeCSV(b?.location ?? ""),
+                escapeCSV(b?.attendeeList ?? ""),
+                escapeCSV(b?.extraCostNotes ?? ""),
+            ]
+        }
     }
 
     static func escapeCSV(_ value: String) -> String {
@@ -98,86 +106,99 @@ struct ExportService {
 
         guard rows.count > 1 else { return ImportResult() }
 
+        let headerRow = rows[0]
+        let columnIndex = buildCSVColumnIndexMap(headerRow)
+        guard columnIndex["联系人"] != nil else {
+            var r = ImportResult()
+            r.errors = rows.count - 1
+            return r
+        }
+
+        let hasRecordTypeColumn = columnIndex["记录类型"] != nil
+        /// 仅在表头含「记录类型」且存在任一类型平铺列名时，按平铺列参与 Gift/Favor/Banquet 组装。
+        let hasFlatTypeData = hasRecordTypeColumn && csvImportHasFlatTypeColumns(columnIndex)
+
         var result = ImportResult()
 
-        for fields in rows.dropFirst() {
-            if fields.allSatisfy({ $0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }) {
+        for rawFields in rows.dropFirst() {
+            if rawFields.allSatisfy({ $0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }) {
                 continue
             }
-            guard fields.count >= 9 else {
+
+            let fields = alignFieldsToHeader(rawFields, headerColumnCount: headerRow.count)
+
+            let contactName = csvCell(fields, columnIndex: columnIndex, column: "联系人")
+            guard !contactName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
                 result.errors += 1
                 continue
             }
 
-            let contactName = fields[0]
-            let eventName = fields[1]
-            let eventTypeStr = fields[2]
-            let amountStr = fields[3]
-            let directionStr = fields[4]
-            let paymentStr = fields[5]
-            let returnedStr = fields[6]
-            let dateStr = fields[8]
+            let eventName = csvCell(fields, columnIndex: columnIndex, column: "事件")
+            let eventTypeStr = csvCell(fields, columnIndex: columnIndex, column: "事件类型")
+            let amountStr = csvCell(fields, columnIndex: columnIndex, column: "金额")
+            let directionStr = csvCell(fields, columnIndex: columnIndex, column: "方向")
+            let paymentStr = csvCell(fields, columnIndex: columnIndex, column: "支付方式")
+            let returnedStr = csvCell(fields, columnIndex: columnIndex, column: "已退金额")
+            let dateStr = csvCell(fields, columnIndex: columnIndex, column: "日期")
 
-            // Detect format: new 14 columns (with relationship weight + kvData),
-            // old 13 columns (with kvData), new 13 columns (with relationship weight),
-            // old 12 columns (typed), or old 10 columns
             let recordType: RecordType
             let relationshipWeight: RelationshipWeight
             let favorDescription: String
             let note: String
-            let kvDataStr: String?
+            var giftName: String = ""
+            var giftEstimatedValueStr: String = ""
+            var favorHelp: String = ""
+            var banquetLocation: String = ""
+            var banquetAttendees: String = ""
+            var banquetExtra: String = ""
 
-            if fields.count >= 14 {
-                recordType = parseRecordType(fields[9])
-                relationshipWeight = parseRelationshipWeight(fields[10])
-                favorDescription = fields[11]
-                note = fields[12]
-                kvDataStr = fields[13]
-            } else if fields.count == 13 {
-                let col12 = fields[12].trimmingCharacters(in: .whitespacesAndNewlines)
-                if looksLikeRelationshipWeightColumn(fields[10]) {
-                    recordType = parseRecordType(fields[9])
-                    relationshipWeight = parseRelationshipWeight(fields[10])
-                    favorDescription = fields[11]
-                    note = fields[12]
-                    kvDataStr = nil
-                } else if col12.hasPrefix("{") {
-                    recordType = parseRecordType(fields[9])
-                    favorDescription = fields[10]
-                    note = fields[11]
-                    kvDataStr = fields[12]
-                    relationshipWeight = .reciprocal
-                } else {
-                    recordType = parseRecordType(fields[9])
-                    relationshipWeight = parseRelationshipWeight(fields[10])
-                    favorDescription = fields[11]
-                    note = fields[12]
-                    kvDataStr = nil
-                }
-            } else if fields.count >= 12 {
-                recordType = parseRecordType(fields[9])
-                favorDescription = fields[10]
-                note = fields[11]
-                kvDataStr = nil
-                relationshipWeight = .reciprocal
-            } else {
+            if !hasRecordTypeColumn {
                 recordType = .monetary
                 relationshipWeight = .reciprocal
                 favorDescription = ""
-                note = fields.count > 9 ? fields[9] : ""
-                kvDataStr = nil
+                giftName = ""
+                giftEstimatedValueStr = ""
+                favorHelp = ""
+                banquetLocation = ""
+                banquetAttendees = ""
+                banquetExtra = ""
+                note = csvCell(fields, columnIndex: columnIndex, column: "备注")
+            } else {
+                recordType = parseRecordType(csvCell(fields, columnIndex: columnIndex, column: "记录类型"))
+                if columnIndex["情分分量"] != nil {
+                    relationshipWeight = parseRelationshipWeight(csvCell(fields, columnIndex: columnIndex, column: "情分分量"))
+                } else {
+                    relationshipWeight = .reciprocal
+                }
+                favorDescription = csvCell(fields, columnIndex: columnIndex, column: "人情描述")
+                note = csvCell(fields, columnIndex: columnIndex, column: "备注")
+                giftName = csvCell(fields, columnIndex: columnIndex, column: "礼品名称")
+                giftEstimatedValueStr = csvCell(fields, columnIndex: columnIndex, column: "礼品估值")
+                favorHelp = csvCell(fields, columnIndex: columnIndex, column: "帮忙说明")
+                banquetLocation = csvCell(fields, columnIndex: columnIndex, column: "宴请地点")
+                banquetAttendees = csvCell(fields, columnIndex: columnIndex, column: "宴请宾客")
+                banquetExtra = csvCell(fields, columnIndex: columnIndex, column: "宴请额外费用")
             }
 
             let amount = Double(amountStr) ?? 0
 
-            // Validate: monetary requires amount > 0; non-monetary requires favorDescription
             if recordType.isMonetary {
                 guard amount > 0 else {
                     result.errors += 1
                     continue
                 }
             } else {
-                guard !favorDescription.trimmingCharacters(in: .whitespaces).isEmpty else {
+                guard nonMonetaryImportHasPayload(
+                    recordType: recordType,
+                    humanDesc: favorDescription,
+                    giftName: giftName,
+                    giftEstStr: giftEstimatedValueStr,
+                    favorHelp: favorHelp,
+                    banquetLoc: banquetLocation,
+                    banquetAtt: banquetAttendees,
+                    banquetExtra: banquetExtra,
+                    amount: amount
+                ) else {
                     result.errors += 1
                     continue
                 }
@@ -191,12 +212,6 @@ struct ExportService {
             let returnedAmount = recordType.isMonetary ? (Double(returnedStr) ?? 0) : 0
             let date = parseDate(dateStr) ?? Date()
 
-            let importKV = kvDataStr.flatMap { raw -> String? in
-                let t = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-                guard !t.isEmpty, t != "{}" else { return nil }
-                return t
-            }
-
             let record = Record(
                 contact: contact,
                 event: event,
@@ -205,24 +220,24 @@ struct ExportService {
                 note: note,
                 date: date,
                 recordType: recordType,
-                relationshipWeight: relationshipWeight,
-                kvData: importKV
+                relationshipWeight: relationshipWeight
             )
 
-            if importKV == nil {
-                let typeData: RecordTypeData
-                switch recordType {
-                case .monetary:
-                    typeData = .monetary(MonetaryData(amount: amount, paymentMethod: paymentMethod.rawValue, returnedAmount: returnedAmount))
-                case .gift:
-                    typeData = .gift(GiftData(giftName: favorDescription, estimatedValue: amount > 0 ? amount : nil))
-                case .favor:
-                    typeData = .favor(FavorData(description: favorDescription))
-                case .banquet:
-                    typeData = .banquet(BanquetData(location: favorDescription))
-                }
-                record.applyTypeData(typeData)
-            }
+            let typeData = buildTypeDataForImport(
+                recordType: recordType,
+                amount: amount,
+                paymentMethod: paymentMethod,
+                returnedAmount: returnedAmount,
+                humanDesc: favorDescription,
+                giftName: giftName,
+                giftEstStr: giftEstimatedValueStr,
+                favorHelp: favorHelp,
+                banquetLoc: banquetLocation,
+                banquetAtt: banquetAttendees,
+                banquetExtra: banquetExtra,
+                hasFlatColumns: hasFlatTypeData
+            )
+            record.applyTypeData(typeData)
 
             context.insert(record)
             result.imported += 1
@@ -230,6 +245,132 @@ struct ExportService {
 
         try context.save()
         return result
+    }
+
+    /// 表头列名 → 列下标（同名取第一次出现）。
+    private static func buildCSVColumnIndexMap(_ headerRow: [String]) -> [String: Int] {
+        var map: [String: Int] = [:]
+        for (i, raw) in headerRow.enumerated() {
+            let key = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !key.isEmpty else { continue }
+            if map[key] == nil {
+                map[key] = i
+            }
+        }
+        return map
+    }
+
+    /// 将数据行对齐到表头列数：不足补空串，多余截断（仅与表头对齐，不再按固定列数推断语义）。
+    private static func alignFieldsToHeader(_ fields: [String], headerColumnCount: Int) -> [String] {
+        if fields.count >= headerColumnCount {
+            return Array(fields.prefix(headerColumnCount))
+        }
+        return fields + Array(repeating: "", count: headerColumnCount - fields.count)
+    }
+
+    private static func csvCell(_ row: [String], columnIndex: [String: Int], column: String) -> String {
+        let key = column.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let idx = columnIndex[key], idx < row.count else { return "" }
+        return row[idx]
+    }
+
+    private static let csvFlatTypeColumnNames: [String] = [
+        "礼品名称", "礼品估值", "帮忙说明", "宴请地点", "宴请宾客", "宴请额外费用",
+    ]
+
+    private static func csvImportHasFlatTypeColumns(_ columnIndex: [String: Int]) -> Bool {
+        csvFlatTypeColumnNames.contains { columnIndex[$0] != nil }
+    }
+
+    private static func nonMonetaryImportHasPayload(
+        recordType: RecordType,
+        humanDesc: String,
+        giftName: String,
+        giftEstStr: String,
+        favorHelp: String,
+        banquetLoc: String,
+        banquetAtt: String,
+        banquetExtra: String,
+        amount: Double
+    ) -> Bool {
+        let h = humanDesc.trimmingCharacters(in: .whitespacesAndNewlines)
+        switch recordType {
+        case .monetary:
+            return true
+        case .gift:
+            let g = giftName.trimmingCharacters(in: .whitespacesAndNewlines)
+            let e = giftEstStr.trimmingCharacters(in: .whitespacesAndNewlines)
+            return !g.isEmpty || !h.isEmpty || amount > 0 || !e.isEmpty
+        case .favor:
+            let f = favorHelp.trimmingCharacters(in: .whitespacesAndNewlines)
+            return !f.isEmpty || !h.isEmpty
+        case .banquet:
+            return !banquetLoc.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                || !banquetAtt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                || !banquetExtra.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                || !h.isEmpty
+        }
+    }
+
+    private static func buildTypeDataForImport(
+        recordType: RecordType,
+        amount: Double,
+        paymentMethod: PaymentMethod,
+        returnedAmount: Double,
+        humanDesc: String,
+        giftName: String,
+        giftEstStr: String,
+        favorHelp: String,
+        banquetLoc: String,
+        banquetAtt: String,
+        banquetExtra: String,
+        hasFlatColumns: Bool
+    ) -> RecordTypeData {
+        let h = humanDesc.trimmingCharacters(in: .whitespacesAndNewlines)
+        switch recordType {
+        case .monetary:
+            return .monetary(MonetaryData(amount: amount, paymentMethod: paymentMethod.rawValue, returnedAmount: returnedAmount))
+        case .gift:
+            let name: String
+            if hasFlatColumns {
+                let g = giftName.trimmingCharacters(in: .whitespacesAndNewlines)
+                name = g.isEmpty ? h : g
+            } else {
+                name = h
+            }
+            let estFromFlat = Double(giftEstStr.trimmingCharacters(in: .whitespacesAndNewlines))
+            let estimatedValue: Double?
+            if hasFlatColumns {
+                if let v = estFromFlat, v > 0 {
+                    estimatedValue = v
+                } else if amount > 0 {
+                    estimatedValue = amount
+                } else {
+                    estimatedValue = nil
+                }
+            } else {
+                estimatedValue = amount > 0 ? amount : nil
+            }
+            return .gift(GiftData(giftName: name, estimatedValue: estimatedValue))
+        case .favor:
+            let desc: String
+            if hasFlatColumns {
+                let f = favorHelp.trimmingCharacters(in: .whitespacesAndNewlines)
+                desc = f.isEmpty ? h : f
+            } else {
+                desc = h
+            }
+            return .favor(FavorData(description: desc))
+        case .banquet:
+            if hasFlatColumns {
+                let loc = banquetLoc.trimmingCharacters(in: .whitespacesAndNewlines)
+                let att = banquetAtt.trimmingCharacters(in: .whitespacesAndNewlines)
+                let ex = banquetExtra.trimmingCharacters(in: .whitespacesAndNewlines)
+                let location = loc.isEmpty ? h : loc
+                return .banquet(BanquetData(location: location, attendeeList: att, extraCostNotes: ex))
+            }
+            return .banquet(BanquetData(location: h, attendeeList: "", extraCostNotes: ""))
+        }
     }
 
     static func parseCSVLine(_ line: String) -> [String] {
@@ -370,20 +511,6 @@ struct ExportService {
         return findOrCreateEvent(name: trimmed, type: type, context: context)
     }
 
-    /// 区分「新 13 列」（第 10 列为情分分量）与「旧 13 列 + kvData」（第 12 列为 JSON）。
-    private static func looksLikeRelationshipWeightColumn(_ raw: String) -> Bool {
-        let s = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !s.isEmpty else { return false }
-        if RelationshipWeight(rawValue: s) != nil { return true }
-        if RelationshipWeight.allCases.contains(where: { $0.displayName == s }) { return true }
-        switch s {
-        case "举手之劳", "点滴之恩", "礼尚往来", "倾力相助", "重如泰山":
-            return true
-        default:
-            return false
-        }
-    }
-
     static func parseEventType(_ str: String) -> EventType {
         let s = str.trimmingCharacters(in: .whitespaces)
         switch s {
@@ -420,7 +547,6 @@ struct ExportService {
 
     static func parseRecordType(_ str: String) -> RecordType {
         let s = str.trimmingCharacters(in: .whitespaces)
-        // Match by rawValue or display name
         if let byRaw = RecordType(rawValue: s) { return byRaw }
         switch s {
         case "金额": return .monetary
@@ -474,35 +600,9 @@ enum ImportError: LocalizedError {
     }
 }
 
-// MARK: - Export Models
-
-private struct ExportRecordItem: Encodable {
-    let contactName: String
-    let eventName: String
-    let eventType: String
-    let amount: Double
-    let direction: String
-    let paymentMethod: String
-    let returnedAmount: Double
-    let status: String
-    let date: String
-    let recordType: String
-    let relationshipWeight: String
-    let favorDescription: String
-    let note: String
-    let kvData: String
-}
-
 // MARK: - Export Value Extensions
 
 private extension RecordDirection {
-    var exportValue: String {
-        switch self {
-        case .given: return "given"
-        case .received: return "received"
-        }
-    }
-
     var csvValue: String {
         switch self {
         case .given: return String(localized: "record.direction.given")
@@ -512,31 +612,11 @@ private extension RecordDirection {
 }
 
 private extension PaymentMethod {
-    var exportValue: String {
-        rawValue
-    }
-
     var csvValue: String {
         switch self {
         case .cash: return String(localized: "payment.cash")
         case .wechat: return String(localized: "payment.wechat")
         case .alipay: return String(localized: "payment.alipay")
         }
-    }
-}
-
-private extension Record {
-    func exportReturnGiftStatusValue(for direction: RecordDirection) -> String {
-        if direction == .received { return "received" }
-        if !isMonetary { return "not_applicable" }
-        return hasReturnedGift ? "returned" : "none"
-    }
-
-    func csvReturnGiftStatus(for direction: RecordDirection) -> String {
-        if direction == .received { return String(localized: "record.status.received") }
-        if !isMonetary { return "" }
-        return hasReturnedGift
-            ? String(localized: "record.returnGift.returned")
-            : String(localized: "record.returnGift.notReturned")
     }
 }
