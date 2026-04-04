@@ -191,6 +191,12 @@ struct ExportService {
             let returnedAmount = recordType.isMonetary ? (Double(returnedStr) ?? 0) : 0
             let date = parseDate(dateStr) ?? Date()
 
+            let importKV = kvDataStr.flatMap { raw -> String? in
+                let t = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !t.isEmpty, t != "{}" else { return nil }
+                return t
+            }
+
             let record = Record(
                 contact: contact,
                 event: event,
@@ -199,15 +205,11 @@ struct ExportService {
                 note: note,
                 date: date,
                 recordType: recordType,
-                relationshipWeight: relationshipWeight
+                relationshipWeight: relationshipWeight,
+                kvData: importKV
             )
 
-            // Write kvData: use imported value if present, otherwise build from old fields
-            if let kv = kvDataStr, !kv.isEmpty, kv != "{}" {
-                record.kvData = kv
-                record.updateStatus()
-            } else {
-                // Build type data from old fields for dual-write
+            if importKV == nil {
                 let typeData: RecordTypeData
                 switch recordType {
                 case .monetary:
@@ -220,7 +222,6 @@ struct ExportService {
                     typeData = .banquet(BanquetData(location: favorDescription))
                 }
                 record.applyTypeData(typeData)
-                record.updateStatus()
             }
 
             context.insert(record)

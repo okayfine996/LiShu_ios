@@ -87,7 +87,6 @@ class RecordDetailViewModel {
         guard var monetary = record.monetaryData else { return false }
         monetary.returnedAmount += returnValue
         record.applyTypeData(.monetary(monetary))
-        record.updateStatus()
 
         do {
             try context.save()

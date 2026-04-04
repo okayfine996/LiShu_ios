@@ -11,13 +11,13 @@ final class Record {
     var contact: Contact?
     /// 关联事件
     var event: Event?
-    /// 金额
+    /// 金额（遗留列，仅无 kv 时回退；真源见 kvData）
     var amount: Double = 0
     /// 方向原始值，通过 `direction` 计算属性读写枚举
     var directionRaw: String = "given"
-    /// 支付方式原始值，通过 `paymentMethod` 计算属性读写枚举
+    /// 支付方式原始值（遗留列，仅无 kv 时回退）
     var paymentMethodRaw: String = "cash"
-    /// 已退礼金额
+    /// 已退礼金额（遗留列，仅无 kv 时回退）
     var returnedAmount: Double = 0
     /// 备注
     var note: String = ""
@@ -43,10 +43,9 @@ final class Record {
         set { directionRaw = newValue.rawValue }
     }
 
-    /// 支付方式
+    /// 支付方式（真源在 kvData，不落列）
     var paymentMethod: PaymentMethod {
-        get { PaymentMethod(rawValue: paymentMethodRaw) ?? .cash }
-        set { paymentMethodRaw = newValue.rawValue }
+        resolvedPaymentMethod
     }
 
     /// 金额类：是否已有退礼（任意已退金额 > 0）
@@ -91,6 +90,8 @@ final class Record {
         return String(localized: "record.context.daily")
     }
 
+    /// 新建一条记录（仅在你写 `Record(...)` 时调用；从 SwiftData 取回已保存的记录**不会**走此初始化方法，而是由框架按存储属性还原，含 `kvData`）。
+    /// - Parameter kvData: 若已有序列化好的类型 JSON（如导入），传入则直接使用；为 `nil` 或空/`{}` 时，金额类会从 `amount` / `paymentMethod` / `returnedAmount` 编码写入，其它类型为 `"{}"`。
     init(
         contact: Contact,
         event: Event? = nil,
@@ -101,38 +102,42 @@ final class Record {
         note: String = "",
         date: Date = .now,
         recordType: RecordType = .monetary,
-        relationshipWeight: RelationshipWeight = .reciprocal
+        relationshipWeight: RelationshipWeight = .reciprocal,
+        kvData: String? = nil
     ) {
         self.contact = contact
         self.event = event
-        self.amount = amount
         self.directionRaw = direction.rawValue
-        self.paymentMethodRaw = paymentMethod.rawValue
-        self.returnedAmount = returnedAmount
         self.note = note
         self.date = date
         self.recordTypeRaw = recordType.rawValue
         self.relationshipWeightRaw = relationshipWeight.rawValue
         self.createdAt = .now
-        updateStatus()
+
+        if let trimmed = kvData?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !trimmed.isEmpty, trimmed != "{}" {
+            self.kvData = trimmed
+        } else if recordType == .monetary {
+            let monetary = MonetaryData(amount: amount, paymentMethod: paymentMethod.rawValue, returnedAmount: returnedAmount)
+            let encoder = JSONEncoder()
+            if let data = try? encoder.encode(monetary),
+               let json = String(data: data, encoding: .utf8) {
+                self.kvData = json
+            } else {
+                self.kvData = "{}"
+            }
+        } else {
+            self.kvData = "{}"
+        }
     }
 
-    /// 已退礼金额（优先与 kvData 中 `MonetaryData.returnedAmount` 一致）
+    /// 已退礼金额（优先 kvData 中 `MonetaryData.returnedAmount`，否则回退旧列）
     var resolvedReturnedAmount: Double {
         guard recordType == .monetary else { return 0 }
         if case .monetary(let d) = resolvedTypeData {
             return d.returnedAmount
         }
         return returnedAmount
-    }
-
-    /// 同步列 `returnedAmount` 与 kv 中的退礼金额；非金额类清零退礼列
-    func updateStatus() {
-        if recordType != .monetary {
-            returnedAmount = 0
-            return
-        }
-        returnedAmount = resolvedReturnedAmount
     }
 }
 
@@ -247,7 +252,7 @@ enum RecordTypeData {
 struct MonetaryData: Codable {
     var amount: Double = 0
     var paymentMethod: String = "cash"
-    /// 已退礼金额（与 `Record.returnedAmount` 列同步，真源在 kvData）
+    /// 已退礼金额（真源在 kvData；列仅作旧数据回退）
     var returnedAmount: Double = 0
 }
 
@@ -383,9 +388,6 @@ extension Record {
                 return
             }
             kvData = String(data: json, encoding: .utf8) ?? "{}"
-            amount = d.amount
-            paymentMethodRaw = d.paymentMethod
-            returnedAmount = d.returnedAmount
         case .gift(let d):
             guard let json = try? encoder.encode(d) else {
                 recordKVDataLogger.error("Failed to encode GiftData for kvData")
@@ -393,7 +395,6 @@ extension Record {
                 return
             }
             kvData = String(data: json, encoding: .utf8) ?? "{}"
-            amount = d.estimatedValue ?? 0
         case .favor(let d):
             guard let json = try? encoder.encode(d) else {
                 recordKVDataLogger.error("Failed to encode FavorData for kvData")
@@ -401,7 +402,6 @@ extension Record {
                 return
             }
             kvData = String(data: json, encoding: .utf8) ?? "{}"
-            amount = 0
         case .banquet(let d):
             guard let json = try? encoder.encode(d) else {
                 recordKVDataLogger.error("Failed to encode BanquetData for kvData")
@@ -409,7 +409,6 @@ extension Record {
                 return
             }
             kvData = String(data: json, encoding: .utf8) ?? "{}"
-            amount = 0
         }
     }
 }

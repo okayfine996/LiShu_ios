@@ -42,8 +42,8 @@ struct ContactDetailViewModelTests {
 
         let sorted = vm.sortedRecords
         #expect(sorted.count == 2)
-        #expect(sorted[0].amount == 200)
-        #expect(sorted[1].amount == 100)
+        #expect(sorted[0].monetaryAmount == 200)
+        #expect(sorted[1].monetaryAmount == 100)
     }
 
     @Test func testDeleteContact() throws {

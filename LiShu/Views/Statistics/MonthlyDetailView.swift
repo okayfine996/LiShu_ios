@@ -237,7 +237,7 @@ struct MonthlyDetailView: View {
                                     date: record.date,
                                     recordType: record.recordType,
                                     favorDescription: record.resolvedDescription,
-                                    paymentMethodRaw: record.paymentMethodRaw,
+                                    paymentMethodRaw: record.resolvedPaymentMethod.rawValue,
                                     kvData: record.kvData,
                                     contextTag: record.contextTag,
                                     returnedAmount: record.resolvedReturnedAmount

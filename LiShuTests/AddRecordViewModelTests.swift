@@ -108,7 +108,6 @@ struct AddRecordViewModelTests {
         let descriptor = FetchDescriptor<Record>()
         let records = try db.context.fetch(descriptor)
         #expect(records.count == 1)
-        #expect(records[0].amount == 800)
         #expect(records[0].monetaryAmount == 800)
     }
 
@@ -132,7 +131,6 @@ struct AddRecordViewModelTests {
         let descriptor = FetchDescriptor<Record>()
         let records = try db.context.fetch(descriptor)
         #expect(records.count == 1)
-        #expect(records[0].amount == 600)
         #expect(records[0].monetaryAmount == 600)
     }
 

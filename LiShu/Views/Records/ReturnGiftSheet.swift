@@ -179,7 +179,6 @@ struct ReturnGiftSheet: View {
         guard var monetary = record.monetaryData else { return }
         monetary.returnedAmount += returnValue
         record.applyTypeData(.monetary(monetary))
-        record.updateStatus()
 
         if record.hasReturnedGift {
             NotificationManager.shared.cancelReturnGiftReminder(record: record)

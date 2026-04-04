@@ -21,7 +21,6 @@ struct RecordModelTests {
         let record = SampleData.record(contact: contact, event: event, amount: 500, returnedAmount: 0)
         db.context.insert(record)
 
-        record.updateStatus()
         #expect(record.hasReturnedGift == false)
     }
 
@@ -35,7 +34,6 @@ struct RecordModelTests {
         let record = SampleData.record(contact: contact, event: event, amount: 500, returnedAmount: 200)
         db.context.insert(record)
 
-        record.updateStatus()
         #expect(record.hasReturnedGift == true)
     }
 
@@ -49,7 +47,6 @@ struct RecordModelTests {
         let record = SampleData.record(contact: contact, event: event, amount: 500, returnedAmount: 500)
         db.context.insert(record)
 
-        record.updateStatus()
         #expect(record.hasReturnedGift == true)
     }
 

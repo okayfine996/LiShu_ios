@@ -245,7 +245,6 @@ class OCRImportViewModel {
                     date: item.date
                 )
                 record.applyTypeData(.monetary(MonetaryData(amount: item.amount, paymentMethod: PaymentMethod.cash.rawValue, returnedAmount: 0)))
-                record.updateStatus()
                 context.insert(record)
             }
 

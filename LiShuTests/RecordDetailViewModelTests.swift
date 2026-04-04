@@ -26,7 +26,7 @@ struct RecordDetailViewModelTests {
         vm.returnedAmountText = "200"
 
         #expect(vm.saveReturn(context: db.context) == true)
-        #expect(record.returnedAmount == 200)
+        #expect(record.resolvedReturnedAmount == 200)
     }
 
     @Test func testSaveReturnZeroAmount() throws {

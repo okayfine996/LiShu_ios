@@ -257,7 +257,6 @@ class AddRecordViewModel {
             existing.relationshipWeight = relationshipWeight
             existing.contextTag = resolvedTag
             existing.applyTypeData(typeData)
-            existing.updateStatus()
 
             for data in newPhotoData {
                 let photo = RecordPhoto(record: existing, imageData: data)

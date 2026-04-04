@@ -48,7 +48,6 @@ struct SampleData {
             relationshipWeight: relationshipWeight
         )
         record.applyTypeData(typeData)
-        record.updateStatus()
         return record
     }
 
