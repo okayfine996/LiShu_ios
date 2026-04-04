@@ -173,4 +173,40 @@ struct RecordModelTests {
         #expect(record.resolvedDescription == "兰亭包厢，商务档次")
         #expect(record.banquetData?.attendeeList == "主客与两位长辈")
     }
+
+    @Test func testResolvedDisplayAmountUnknownRecordTypeRawUsesColumnWhenKVAmountZero() throws {
+        let db = try TestDB()
+        let contact = SampleData.contact()
+        let event = SampleData.event()
+        db.context.insert(contact)
+        db.context.insert(event)
+
+        let record = SampleData.record(contact: contact, event: event, amount: 888, direction: .given, returnedAmount: 0)
+        // 模拟迁移脏数据：无法识别的类型 raw + 实质 kv 中金额为 0，但遗留列上仍有金额
+        record.recordTypeRaw = "open"
+        record.amount = 888
+        record.kvData = "{\"amount\":0,\"paymentMethod\":\"cash\",\"returnedAmount\":0}"
+        db.context.insert(record)
+
+        #expect(record.recordType == .monetary)
+        #expect(record.resolvedDisplayAmount == 888)
+    }
+
+    @Test func testResolvedDisplayAmountMonetaryRecordTypeRawUsesColumnWhenKVAmountZero() throws {
+        let db = try TestDB()
+        let contact = SampleData.contact()
+        let event = SampleData.event()
+        db.context.insert(contact)
+        db.context.insert(event)
+
+        let record = SampleData.record(contact: contact, event: event, amount: 888, direction: .given, returnedAmount: 0)
+        // 轻量迁移后 recordTypeRaw 为合法 monetary，但 kv 占位 amount 0、列上仍为旧库金额
+        record.recordTypeRaw = RecordType.monetary.rawValue
+        record.amount = 888
+        record.kvData = "{\"amount\":0,\"paymentMethod\":\"cash\",\"returnedAmount\":0}"
+        db.context.insert(record)
+
+        #expect(record.recordType == .monetary)
+        #expect(record.resolvedDisplayAmount == 888)
+    }
 }

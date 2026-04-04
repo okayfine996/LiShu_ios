@@ -63,7 +63,10 @@ final class Record {
 
     /// 记录类型
     var recordType: RecordType {
-        get { RecordType(rawValue: recordTypeRaw) ?? .monetary }
+        get {
+            let raw = recordTypeRaw.trimmingCharacters(in: .whitespacesAndNewlines)
+            return RecordType(rawValue: raw) ?? .monetary
+        }
         set { recordTypeRaw = newValue.rawValue }
     }
 
@@ -275,16 +278,24 @@ struct BanquetData: Codable {
 
 extension Record {
     /// 统一业务读取：按 `recordType` 从 kvData 解码；金额类仅在 kv 有实质 JSON 时使用解码结果，否则用列构造；其它类型解码失败时用空占位
+    /// - Note: 若 kv 解码出的 `amount` 为 0 但遗留列 `amount` 仍大于 0，则回退列（升级迁移 / CloudKit 合并等场景下 kv 占位为 0 而旧库金额在列上）。
     var resolvedTypeData: RecordTypeData {
         let decoder = JSONDecoder()
-        switch recordType {
+        // 与 `recordType` 一致：无法解析的 raw 按 `.monetary` 分支处理，避免旧库无类型列时走错 gift/favor 等分支。
+        let kind = RecordType(rawValue: recordTypeRaw.trimmingCharacters(in: .whitespacesAndNewlines)) ?? .monetary
+        switch kind {
         case .monetary:
+            let columnFallback = MonetaryData(amount: amount, paymentMethod: paymentMethodRaw, returnedAmount: returnedAmount)
             if hasSubstantiveKVJSON,
                let data = kvData.data(using: .utf8),
                let m = try? decoder.decode(MonetaryData.self, from: data) {
+                // 含 recordTypeRaw 已为合法 "monetary" 时：kv 中 0 不得覆盖遗留列上的真实金额
+                if amount > 0, m.amount == 0 {
+                    return .monetary(columnFallback)
+                }
                 return .monetary(m)
             }
-            return .monetary(MonetaryData(amount: amount, paymentMethod: paymentMethodRaw, returnedAmount: returnedAmount))
+            return .monetary(columnFallback)
         case .gift:
             if let data = kvData.data(using: .utf8),
                let g = try? decoder.decode(GiftData.self, from: data) {

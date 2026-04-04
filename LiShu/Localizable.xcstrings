@@ -5618,7 +5618,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "还没有往来记录呢\n点击右下角，记下您的第一笔人情吧"
+            "value" : "还没有往来记录呢\n点击右上角，开始记录吧"
           }
         }
       }
