@@ -145,7 +145,7 @@ struct RecordModelTests {
         db.context.insert(contact)
         db.context.insert(event)
 
-        let record = Record(contact: contact, event: event, amount: 500, returnedAmount: 500)
+        let record = SampleData.record(contact: contact, event: event, amount: 500, returnedAmount: 500)
         db.context.insert(record)
 
         #expect(record.hasReturnedGift == true)
@@ -156,12 +156,18 @@ struct RecordModelTests {
         let contact = SampleData.contact()
         db.context.insert(contact)
 
-        let record = Record(contact: contact, event: nil, direction: .given, recordType: .banquet)
-        record.applyTypeData(.banquet(BanquetData(
-            location: "兰亭包厢，商务档次",
-            attendeeList: "主客与两位长辈",
-            extraCostNotes: "额外带了两条烟"
-        )))
+        let record = SampleData.typedRecord(
+            contact: contact,
+            event: nil,
+            direction: .given,
+            date: .now,
+            recordType: .banquet,
+            typeData: .banquet(BanquetData(
+                location: "兰亭包厢，商务档次",
+                attendeeList: "主客与两位长辈",
+                extraCostNotes: "额外带了两条烟"
+            ))
+        )
         db.context.insert(record)
 
         #expect(record.resolvedDescription == "兰亭包厢，商务档次")

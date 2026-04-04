@@ -182,8 +182,8 @@ private func makeNetValueRankingPreviewContainer() -> ModelContainer? {
     ]
     for (i, contact) in contacts.enumerated() {
         let (income, expense) = amounts[i]
-        ctx.insert(Record(contact: contact, event: event, amount: income, direction: .received, date: cal.date(from: DateComponents(year: thisYear, month: 1, day: 28))!))
-        ctx.insert(Record(contact: contact, event: event, amount: expense, direction: .given, date: cal.date(from: DateComponents(year: thisYear, month: 2, day: 10))!))
+        ctx.insert(Record.makeMonetaryRecord(contact: contact, event: event, amount: income, direction: .received, date: cal.date(from: DateComponents(year: thisYear, month: 1, day: 28))!))
+        ctx.insert(Record.makeMonetaryRecord(contact: contact, event: event, amount: expense, direction: .given, date: cal.date(from: DateComponents(year: thisYear, month: 2, day: 10))!))
     }
 
     return container

@@ -816,14 +816,14 @@ private func makeStatisticsPreviewContainer() -> ModelContainer? {
     [e1, e2, e3, e4].forEach { ctx.insert($0) }
 
     let records: [Record] = [
-        Record(contact: c1, event: e1, amount: 30000, direction: .received, paymentMethod: .wechat, date: cal.date(from: DateComponents(year: thisYear, month: 1, day: 15))!),
-        Record(contact: c1, event: e2, amount: 5000, direction: .given, paymentMethod: .cash, date: cal.date(from: DateComponents(year: thisYear, month: 2, day: 10))!),
-        Record(contact: c2, event: e1, amount: 28000, direction: .received, paymentMethod: .alipay, date: cal.date(from: DateComponents(year: thisYear, month: 1, day: 16))!),
-        Record(contact: c2, event: e3, amount: 12000, direction: .received, paymentMethod: .cash, date: cal.date(from: DateComponents(year: thisYear, month: 5, day: 20))!),
-        Record(contact: c3, event: e1, amount: 20000, direction: .given, paymentMethod: .wechat, date: cal.date(from: DateComponents(year: thisYear, month: 1, day: 15))!),
-        Record(contact: c3, event: e3, amount: 8000, direction: .given, paymentMethod: .cash, date: cal.date(from: DateComponents(year: thisYear, month: 5, day: 20))!),
-        Record(contact: c1, event: e4, amount: 5000, direction: .received, paymentMethod: .wechat, date: cal.date(from: DateComponents(year: thisYear, month: 8, day: 5))!),
-        Record(contact: c3, event: e4, amount: 3000, direction: .given, paymentMethod: .alipay, date: cal.date(from: DateComponents(year: thisYear, month: 8, day: 5))!),
+        Record.makeMonetaryRecord(contact: c1, event: e1, amount: 30000, direction: .received, paymentMethod: .wechat, date: cal.date(from: DateComponents(year: thisYear, month: 1, day: 15))!),
+        Record.makeMonetaryRecord(contact: c1, event: e2, amount: 5000, direction: .given, paymentMethod: .cash, date: cal.date(from: DateComponents(year: thisYear, month: 2, day: 10))!),
+        Record.makeMonetaryRecord(contact: c2, event: e1, amount: 28000, direction: .received, paymentMethod: .alipay, date: cal.date(from: DateComponents(year: thisYear, month: 1, day: 16))!),
+        Record.makeMonetaryRecord(contact: c2, event: e3, amount: 12000, direction: .received, paymentMethod: .cash, date: cal.date(from: DateComponents(year: thisYear, month: 5, day: 20))!),
+        Record.makeMonetaryRecord(contact: c3, event: e1, amount: 20000, direction: .given, paymentMethod: .wechat, date: cal.date(from: DateComponents(year: thisYear, month: 1, day: 15))!),
+        Record.makeMonetaryRecord(contact: c3, event: e3, amount: 8000, direction: .given, paymentMethod: .cash, date: cal.date(from: DateComponents(year: thisYear, month: 5, day: 20))!),
+        Record.makeMonetaryRecord(contact: c1, event: e4, amount: 5000, direction: .received, paymentMethod: .wechat, date: cal.date(from: DateComponents(year: thisYear, month: 8, day: 5))!),
+        Record.makeMonetaryRecord(contact: c3, event: e4, amount: 3000, direction: .given, paymentMethod: .alipay, date: cal.date(from: DateComponents(year: thisYear, month: 8, day: 5))!),
     ]
     records.forEach { ctx.insert($0) }
 

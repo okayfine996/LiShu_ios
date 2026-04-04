@@ -698,7 +698,7 @@ private struct RecordDetailPreview: View {
         let event = Event(name: "结婚大礼", type: .wedding, date: cal.date(byAdding: .day, value: -60, to: .now)!)
         modelContext.insert(event)
 
-        let record = Record(
+        let record = Record.makeMonetaryRecord(
             contact: contact,
             event: event,
             amount: 1000,
@@ -712,8 +712,8 @@ private struct RecordDetailPreview: View {
 
         let event2 = Event(name: "春节聚会", type: .festival, date: cal.date(byAdding: .month, value: -3, to: .now)!)
         modelContext.insert(event2)
-        let r2 = Record(contact: contact, event: event2, amount: 500, direction: .received, paymentMethod: .cash, date: cal.date(byAdding: .month, value: -3, to: .now)!)
-        let r3 = Record(contact: contact, event: event, amount: 300, direction: .received, paymentMethod: .alipay, date: cal.date(byAdding: .day, value: -30, to: .now)!)
+        let r2 = Record.makeMonetaryRecord(contact: contact, event: event2, amount: 500, direction: .received, paymentMethod: .cash, date: cal.date(byAdding: .month, value: -3, to: .now)!)
+        let r3 = Record.makeMonetaryRecord(contact: contact, event: event, amount: 300, direction: .received, paymentMethod: .alipay, date: cal.date(byAdding: .day, value: -30, to: .now)!)
         [r2, r3].forEach { modelContext.insert($0) }
 
         try? modelContext.save()

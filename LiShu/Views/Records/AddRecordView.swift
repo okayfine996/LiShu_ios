@@ -1319,12 +1319,12 @@ private func makeAddRecordPreviewContainer() -> ModelContainer? {
     let e7 = Event(name: "新店开业", type: .business, date: cal.date(byAdding: .day, value: 30, to: now)!, location: "杭州")
     [e1, e2, e3, e4, e5, e6, e7].forEach { ctx.insert($0) }
 
-    let r1 = Record(contact: c1, event: e1, amount: 800, direction: .given, paymentMethod: .wechat, date: now)
-    let r2 = Record(contact: c2, event: e2, amount: 600, direction: .given, paymentMethod: .cash, date: cal.date(byAdding: .day, value: -2, to: now)!)
-    let r3 = Record(contact: c3, event: e4, amount: 500, direction: .received, paymentMethod: .alipay, date: cal.date(byAdding: .month, value: -1, to: now)!)
-    let r4 = Record(contact: c4, event: nil, amount: 200, direction: .given, paymentMethod: .wechat, date: cal.date(byAdding: .day, value: -3, to: now)!)
+    let r1 = Record.makeMonetaryRecord(contact: c1, event: e1, amount: 800, direction: .given, paymentMethod: .wechat, date: now)
+    let r2 = Record.makeMonetaryRecord(contact: c2, event: e2, amount: 600, direction: .given, paymentMethod: .cash, date: cal.date(byAdding: .day, value: -2, to: now)!)
+    let r3 = Record.makeMonetaryRecord(contact: c3, event: e4, amount: 500, direction: .received, paymentMethod: .alipay, date: cal.date(byAdding: .month, value: -1, to: now)!)
+    let r4 = Record.makeMonetaryRecord(contact: c4, event: nil, amount: 200, direction: .given, paymentMethod: .wechat, date: cal.date(byAdding: .day, value: -3, to: now)!)
     r4.contextTag = "年会凑份"
-    let r5 = Record(contact: c5, event: nil, amount: 100, direction: .given, date: cal.date(byAdding: .day, value: -10, to: now)!)
+    let r5 = Record.makeMonetaryRecord(contact: c5, event: nil, amount: 100, direction: .given, date: cal.date(byAdding: .day, value: -10, to: now)!)
     r5.contextTag = "社区互助"
     [r1, r2, r3, r4, r5].forEach { ctx.insert($0) }
 

@@ -411,4 +411,33 @@ extension Record {
             kvData = String(data: json, encoding: .utf8) ?? "{}"
         }
     }
+
+    /// 与 `AddRecordViewModel.save` 一致：预览与种子数据中新建金额类记录的推荐写法。
+    static func makeMonetaryRecord(
+        contact: Contact,
+        event: Event? = nil,
+        amount: Double,
+        direction: RecordDirection = .given,
+        paymentMethod: PaymentMethod = .cash,
+        returnedAmount: Double = 0,
+        note: String = "",
+        date: Date = .now,
+        relationshipWeight: RelationshipWeight = .reciprocal
+    ) -> Record {
+        let record = Record(
+            contact: contact,
+            event: event,
+            direction: direction,
+            note: note,
+            date: date,
+            recordType: .monetary,
+            relationshipWeight: relationshipWeight
+        )
+        record.applyTypeData(.monetary(MonetaryData(
+            amount: amount,
+            paymentMethod: paymentMethod.rawValue,
+            returnedAmount: returnedAmount
+        )))
+        return record
+    }
 }

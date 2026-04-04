@@ -384,9 +384,9 @@ private func makeCompositionDetailPreviewContainer() -> ModelContainer? {
     let e2 = Event(name: "生日聚会", type: .birthday, date: cal.date(from: DateComponents(year: thisYear, month: 5, day: 20))!)
     [e1, e2].forEach { ctx.insert($0) }
 
-    let r1 = Record(contact: c1, event: e1, amount: 3000, direction: .received, date: cal.date(from: DateComponents(year: thisYear, month: 1, day: 15))!)
-    let r2 = Record(contact: c2, event: e1, amount: 2000, direction: .given, date: cal.date(from: DateComponents(year: thisYear, month: 2, day: 10))!)
-    let r3 = Record(contact: c1, event: e2, amount: 800, direction: .received, date: cal.date(from: DateComponents(year: thisYear, month: 5, day: 20))!)
+    let r1 = Record.makeMonetaryRecord(contact: c1, event: e1, amount: 3000, direction: .received, date: cal.date(from: DateComponents(year: thisYear, month: 1, day: 15))!)
+    let r2 = Record.makeMonetaryRecord(contact: c2, event: e1, amount: 2000, direction: .given, date: cal.date(from: DateComponents(year: thisYear, month: 2, day: 10))!)
+    let r3 = Record.makeMonetaryRecord(contact: c1, event: e2, amount: 800, direction: .received, date: cal.date(from: DateComponents(year: thisYear, month: 5, day: 20))!)
     [r1, r2, r3].forEach { ctx.insert($0) }
 
     return container

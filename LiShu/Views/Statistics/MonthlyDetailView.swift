@@ -275,13 +275,13 @@ private func makePreviewContainer() -> ModelContainer? {
     [e1, e2, e3, e4, e5].forEach { ctx.insert($0) }
 
     let records: [Record] = [
-        Record(contact: c1, event: e1, amount: 2000, direction: .given, date: .makeDate(2026, 3, 8)),
-        Record(contact: c2, event: e2, amount: 500, direction: .given, date: .makeDate(2026, 3, 15)),
-        Record(contact: c3, event: e3, amount: 800, direction: .received, date: .makeDate(2026, 3, 20)),
-        Record(contact: c1, event: e1, amount: 1000, direction: .received, date: .makeDate(2026, 3, 9)),
-        Record(contact: c4, event: e4, amount: 600, direction: .given, date: .makeDate(2026, 1, 10)),
-        Record(contact: c2, event: e5, amount: 1200, direction: .received, date: .makeDate(2026, 2, 17)),
-        Record(contact: c3, event: e5, amount: 800, direction: .given, date: .makeDate(2026, 2, 18)),
+        Record.makeMonetaryRecord(contact: c1, event: e1, amount: 2000, direction: .given, date: .makeDate(2026, 3, 8)),
+        Record.makeMonetaryRecord(contact: c2, event: e2, amount: 500, direction: .given, date: .makeDate(2026, 3, 15)),
+        Record.makeMonetaryRecord(contact: c3, event: e3, amount: 800, direction: .received, date: .makeDate(2026, 3, 20)),
+        Record.makeMonetaryRecord(contact: c1, event: e1, amount: 1000, direction: .received, date: .makeDate(2026, 3, 9)),
+        Record.makeMonetaryRecord(contact: c4, event: e4, amount: 600, direction: .given, date: .makeDate(2026, 1, 10)),
+        Record.makeMonetaryRecord(contact: c2, event: e5, amount: 1200, direction: .received, date: .makeDate(2026, 2, 17)),
+        Record.makeMonetaryRecord(contact: c3, event: e5, amount: 800, direction: .given, date: .makeDate(2026, 2, 18)),
     ]
     records.forEach { ctx.insert($0) }
 

@@ -373,38 +373,206 @@ enum DemoDataSeeding {
         let bday = firstEvent(.birthday, in: events)
 
         return [
-            Record(contact: c[4], event: w, amount: 2000, direction: .received, paymentMethod: .wechat, date: w.date),
-            Record(contact: c[5], event: w, amount: 1000, direction: .received, paymentMethod: .cash, date: w.date),
-            Record(contact: c[8], event: w, amount: 600, direction: .received, paymentMethod: .alipay, date: w.date),
-            Record(contact: c[9], event: w, amount: 500, direction: .received, paymentMethod: .wechat, date: w.date),
-            Record(contact: c[10], event: w, amount: 800, direction: .received, paymentMethod: .cash, date: w.date),
-            Record(contact: c[11], event: w, amount: 200, direction: .received, paymentMethod: .cash, note: "送了一套餐具", date: w.date),
+            makeRecord(
+                contact: c[4],
+                event: w,
+                direction: .received,
+                note: "",
+                date: w.date,
+                recordType: .monetary,
+                typeData: .monetary(MonetaryData(amount: 2000, paymentMethod: PaymentMethod.wechat.rawValue, returnedAmount: 0))
+            ),
+            makeRecord(
+                contact: c[5],
+                event: w,
+                direction: .received,
+                note: "",
+                date: w.date,
+                recordType: .monetary,
+                typeData: .monetary(MonetaryData(amount: 1000, paymentMethod: PaymentMethod.cash.rawValue, returnedAmount: 0))
+            ),
+            makeRecord(
+                contact: c[8],
+                event: w,
+                direction: .received,
+                note: "",
+                date: w.date,
+                recordType: .monetary,
+                typeData: .monetary(MonetaryData(amount: 600, paymentMethod: PaymentMethod.alipay.rawValue, returnedAmount: 0))
+            ),
+            makeRecord(
+                contact: c[9],
+                event: w,
+                direction: .received,
+                note: "",
+                date: w.date,
+                recordType: .monetary,
+                typeData: .monetary(MonetaryData(amount: 500, paymentMethod: PaymentMethod.wechat.rawValue, returnedAmount: 0))
+            ),
+            makeRecord(
+                contact: c[10],
+                event: w,
+                direction: .received,
+                note: "",
+                date: w.date,
+                recordType: .monetary,
+                typeData: .monetary(MonetaryData(amount: 800, paymentMethod: PaymentMethod.cash.rawValue, returnedAmount: 0))
+            ),
+            makeRecord(
+                contact: c[11],
+                event: w,
+                direction: .received,
+                note: "送了一套餐具",
+                date: w.date,
+                recordType: .monetary,
+                typeData: .monetary(MonetaryData(amount: 200, paymentMethod: PaymentMethod.cash.rawValue, returnedAmount: 0))
+            ),
 
-            Record(contact: c[1], event: long, amount: 5000, direction: .given, paymentMethod: .cash, date: long.date),
-            Record(contact: c[5], event: long, amount: 1000, direction: .given, paymentMethod: .wechat, date: long.date),
+            makeRecord(
+                contact: c[1],
+                event: long,
+                direction: .given,
+                note: "",
+                date: long.date,
+                recordType: .monetary,
+                typeData: .monetary(MonetaryData(amount: 5000, paymentMethod: PaymentMethod.cash.rawValue, returnedAmount: 0))
+            ),
+            makeRecord(
+                contact: c[5],
+                event: long,
+                direction: .given,
+                note: "",
+                date: long.date,
+                recordType: .monetary,
+                typeData: .monetary(MonetaryData(amount: 1000, paymentMethod: PaymentMethod.wechat.rawValue, returnedAmount: 0))
+            ),
 
-            Record(contact: c[2], event: prop, amount: 2000, direction: .given, paymentMethod: .alipay, date: prop.date),
+            makeRecord(
+                contact: c[2],
+                event: prop,
+                direction: .given,
+                note: "",
+                date: prop.date,
+                recordType: .monetary,
+                typeData: .monetary(MonetaryData(amount: 2000, paymentMethod: PaymentMethod.alipay.rawValue, returnedAmount: 0))
+            ),
 
-            Record(contact: c[12], event: edu, amount: 888, direction: .given, paymentMethod: .wechat, note: "升学红包", date: edu.date),
+            makeRecord(
+                contact: c[12],
+                event: edu,
+                direction: .given,
+                note: "升学红包",
+                date: edu.date,
+                recordType: .monetary,
+                typeData: .monetary(MonetaryData(amount: 888, paymentMethod: PaymentMethod.wechat.rawValue, returnedAmount: 0))
+            ),
 
-            Record(contact: c[3], event: birth, amount: 1600, direction: .given, paymentMethod: .cash, date: birth.date),
+            makeRecord(
+                contact: c[3],
+                event: birth,
+                direction: .given,
+                note: "",
+                date: birth.date,
+                recordType: .monetary,
+                typeData: .monetary(MonetaryData(amount: 1600, paymentMethod: PaymentMethod.cash.rawValue, returnedAmount: 0))
+            ),
 
-            Record(contact: c[4], event: fun, amount: 1000, direction: .given, paymentMethod: .cash, date: fun.date),
+            makeRecord(
+                contact: c[4],
+                event: fun,
+                direction: .given,
+                note: "",
+                date: fun.date,
+                recordType: .monetary,
+                typeData: .monetary(MonetaryData(amount: 1000, paymentMethod: PaymentMethod.cash.rawValue, returnedAmount: 0))
+            ),
 
-            Record(contact: c[6], event: fest, amount: 500, direction: .received, paymentMethod: .wechat, date: fest.date),
-            Record(contact: c[7], event: fest, amount: 500, direction: .received, paymentMethod: .wechat, date: fest.date),
-            Record(contact: c[6], event: fest, amount: 600, direction: .given, paymentMethod: .wechat, date: fest.date),
+            makeRecord(
+                contact: c[6],
+                event: fest,
+                direction: .received,
+                note: "",
+                date: fest.date,
+                recordType: .monetary,
+                typeData: .monetary(MonetaryData(amount: 500, paymentMethod: PaymentMethod.wechat.rawValue, returnedAmount: 0))
+            ),
+            makeRecord(
+                contact: c[7],
+                event: fest,
+                direction: .received,
+                note: "",
+                date: fest.date,
+                recordType: .monetary,
+                typeData: .monetary(MonetaryData(amount: 500, paymentMethod: PaymentMethod.wechat.rawValue, returnedAmount: 0))
+            ),
+            makeRecord(
+                contact: c[6],
+                event: fest,
+                direction: .given,
+                note: "",
+                date: fest.date,
+                recordType: .monetary,
+                typeData: .monetary(MonetaryData(amount: 600, paymentMethod: PaymentMethod.wechat.rawValue, returnedAmount: 0))
+            ),
 
-            Record(contact: c[8], event: long, amount: 800, direction: .given, paymentMethod: .cash, returnedAmount: 300, date: long.date),
+            makeRecord(
+                contact: c[8],
+                event: long,
+                direction: .given,
+                note: "",
+                date: long.date,
+                recordType: .monetary,
+                typeData: .monetary(MonetaryData(amount: 800, paymentMethod: PaymentMethod.cash.rawValue, returnedAmount: 300))
+            ),
 
-            Record(contact: c[10], event: prop, amount: 500, direction: .given, paymentMethod: .wechat, returnedAmount: 500, date: prop.date),
+            makeRecord(
+                contact: c[10],
+                event: prop,
+                direction: .given,
+                note: "",
+                date: prop.date,
+                recordType: .monetary,
+                typeData: .monetary(MonetaryData(amount: 500, paymentMethod: PaymentMethod.wechat.rawValue, returnedAmount: 500))
+            ),
 
-            Record(contact: c[0], event: w, amount: 10000, direction: .given, paymentMethod: .cash, note: "婚礼份子钱", date: w.date),
+            makeRecord(
+                contact: c[0],
+                event: w,
+                direction: .given,
+                note: "婚礼份子钱",
+                date: w.date,
+                recordType: .monetary,
+                typeData: .monetary(MonetaryData(amount: 10000, paymentMethod: PaymentMethod.cash.rawValue, returnedAmount: 0))
+            ),
 
-            Record(contact: c[11], event: fest, amount: 200, direction: .given, paymentMethod: .cash, note: "送了一箱水果", date: fest.date),
+            makeRecord(
+                contact: c[11],
+                event: fest,
+                direction: .given,
+                note: "送了一箱水果",
+                date: fest.date,
+                recordType: .monetary,
+                typeData: .monetary(MonetaryData(amount: 200, paymentMethod: PaymentMethod.cash.rawValue, returnedAmount: 0))
+            ),
 
-            Record(contact: c[5], event: fest, amount: 300, direction: .received, paymentMethod: .wechat, date: fest.date),
-            Record(contact: c[5], event: birth, amount: 800, direction: .given, paymentMethod: .cash, date: birth.date),
+            makeRecord(
+                contact: c[5],
+                event: fest,
+                direction: .received,
+                note: "",
+                date: fest.date,
+                recordType: .monetary,
+                typeData: .monetary(MonetaryData(amount: 300, paymentMethod: PaymentMethod.wechat.rawValue, returnedAmount: 0))
+            ),
+            makeRecord(
+                contact: c[5],
+                event: birth,
+                direction: .given,
+                note: "",
+                date: birth.date,
+                recordType: .monetary,
+                typeData: .monetary(MonetaryData(amount: 800, paymentMethod: PaymentMethod.cash.rawValue, returnedAmount: 0))
+            ),
 
             makeRecord(
                 contact: c[9],

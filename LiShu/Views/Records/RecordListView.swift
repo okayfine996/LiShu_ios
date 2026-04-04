@@ -297,11 +297,11 @@ private func makeRecordListPreviewContainer() -> ModelContainer? {
     let e5 = Event(name: "升职庆祝", type: .other, date: cal.date(byAdding: .month, value: -1, to: .now)!)
     [e1, e2, e3, e4, e5].forEach { ctx.insert($0) }
 
-    let r1 = Record(contact: c1, event: e1, amount: 2000, direction: .given, paymentMethod: .wechat, date: cal.date(byAdding: .day, value: -6, to: .now)!)
-    let r2 = Record(contact: c2, event: e2, amount: 800, direction: .received, paymentMethod: .cash, returnedAmount: 800, date: cal.date(byAdding: .day, value: -10, to: .now)!)
-    let r3 = Record(contact: c3, event: e3, amount: 500, direction: .given, paymentMethod: .alipay, returnedAmount: 500, date: cal.date(byAdding: .day, value: -15, to: .now)!)
-    let r4 = Record(contact: c4, event: e4, amount: 1200, direction: .given, paymentMethod: .wechat, date: cal.date(byAdding: .month, value: -1, to: .now)!)
-    let r5 = Record(contact: c5, event: e5, amount: 600, direction: .received, paymentMethod: .cash, returnedAmount: 600, date: cal.date(byAdding: .month, value: -1, to: .now)!)
+    let r1 = Record.makeMonetaryRecord(contact: c1, event: e1, amount: 2000, direction: .given, paymentMethod: .wechat, date: cal.date(byAdding: .day, value: -6, to: .now)!)
+    let r2 = Record.makeMonetaryRecord(contact: c2, event: e2, amount: 800, direction: .received, paymentMethod: .cash, returnedAmount: 800, date: cal.date(byAdding: .day, value: -10, to: .now)!)
+    let r3 = Record.makeMonetaryRecord(contact: c3, event: e3, amount: 500, direction: .given, paymentMethod: .alipay, returnedAmount: 500, date: cal.date(byAdding: .day, value: -15, to: .now)!)
+    let r4 = Record.makeMonetaryRecord(contact: c4, event: e4, amount: 1200, direction: .given, paymentMethod: .wechat, date: cal.date(byAdding: .month, value: -1, to: .now)!)
+    let r5 = Record.makeMonetaryRecord(contact: c5, event: e5, amount: 600, direction: .received, paymentMethod: .cash, returnedAmount: 600, date: cal.date(byAdding: .month, value: -1, to: .now)!)
     [r1, r2, r3, r4, r5].forEach { ctx.insert($0) }
 
     return container

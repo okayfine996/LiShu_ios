@@ -47,7 +47,7 @@ struct DebugDataGeneratorTests {
         let banquetRecord = records.first { $0.recordType == .banquet }
         #expect(banquetRecord?.banquetData != nil)
         #expect(banquetRecord?.banquetData?.location.isEmpty == false)
-        #expect(banquetRecord?.returnGiftBadge == .omitted)
+        #expect(banquetRecord?.returnGiftBadge == .received)
     }
 
     @Test func testClearAllDataRemovesAll() throws {

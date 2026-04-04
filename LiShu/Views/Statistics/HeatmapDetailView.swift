@@ -229,7 +229,7 @@ private func makeHeatmapDetailPreviewContainer() -> ModelContainer? {
     // 上一年：每月 1 笔，同比基数分散在 12 个月
     for month in 1...12 {
         records.append(
-            Record(
+            Record.makeMonetaryRecord(
                 contact: contacts[month % contacts.count],
                 event: nil,
                 amount: 700 + Double(month * 20),
@@ -244,7 +244,7 @@ private func makeHeatmapDetailPreviewContainer() -> ModelContainer? {
     for month in 1...12 {
         for (i, d) in daysSpreadInMonth(month).enumerated() {
             records.append(
-                Record(
+                Record.makeMonetaryRecord(
                     contact: contacts[(month + i) % contacts.count],
                     event: month == 2 ? ev1 : (month == 6 ? ev2 : nil),
                     amount: Double(500 + month * 40 + i * 80),

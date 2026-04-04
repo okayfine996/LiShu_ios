@@ -238,9 +238,9 @@ private func makeEventListPreviewContainer() -> ModelContainer? {
     let e5 = Event(name: "王五乔迁", type: .property, date: cal.date(byAdding: .month, value: -3, to: .now)!, location: "深圳南山")
     [e1, e2, e3, e4, e5].forEach { ctx.insert($0) }
 
-    let r1 = Record(contact: c1, event: e4, amount: 500, direction: .given, date: cal.date(byAdding: .month, value: -2, to: .now)!)
-    let r2 = Record(contact: c2, event: e4, amount: 300, direction: .received, date: cal.date(byAdding: .month, value: -2, to: .now)!)
-    let r3 = Record(contact: c1, event: e5, amount: 1000, direction: .given, date: cal.date(byAdding: .month, value: -3, to: .now)!)
+    let r1 = Record.makeMonetaryRecord(contact: c1, event: e4, amount: 500, direction: .given, date: cal.date(byAdding: .month, value: -2, to: .now)!)
+    let r2 = Record.makeMonetaryRecord(contact: c2, event: e4, amount: 300, direction: .received, date: cal.date(byAdding: .month, value: -2, to: .now)!)
+    let r3 = Record.makeMonetaryRecord(contact: c1, event: e5, amount: 1000, direction: .given, date: cal.date(byAdding: .month, value: -3, to: .now)!)
     [r1, r2, r3].forEach { ctx.insert($0) }
 
     return container

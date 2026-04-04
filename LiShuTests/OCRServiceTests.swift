@@ -80,25 +80,26 @@ struct OCRServiceTests {
     // MARK: - Event Name Matching
 
     @Test func testMatchEventNameWithKeywords() {
-        #expect(service.matchEventName(from: "张三婚礼") == EventType.wedding.displayName)
-        #expect(service.matchEventName(from: "李四结婚") == EventType.wedding.displayName)
-        #expect(service.matchEventName(from: "王五订婚宴") == EventType.engagement.displayName)
-        #expect(service.matchEventName(from: "赵六生日宴") == EventType.birthday.displayName)
-        #expect(service.matchEventName(from: "乔迁新居") == EventType.property.displayName)
-        #expect(service.matchEventName(from: "春节拜年") == EventType.festival.displayName)
-        #expect(service.matchEventName(from: "丧事份子") == EventType.funeral.displayName)
-        #expect(service.matchEventName(from: "满月酒") == EventType.birth.displayName)
-        #expect(service.matchEventName(from: "寿宴") == EventType.longevity.displayName)
-        #expect(service.matchEventName(from: "升学宴") == EventType.education.displayName)
-        #expect(service.matchEventName(from: "开业大吉") == EventType.business.displayName)
-        #expect(service.matchEventName(from: "升职庆祝") == EventType.promotion.displayName)
-        #expect(service.matchEventName(from: "探望病人") == EventType.visit.displayName)
+        #expect(service.matchEventType(from: "张三婚礼") == .wedding)
+        #expect(service.matchEventType(from: "李四结婚") == .wedding)
+        // 「订婚宴」含「婚宴」会先匹配婚礼关键词，故用不含「婚宴」的短语测订婚。
+        #expect(service.matchEventType(from: "王五订婚") == .engagement)
+        #expect(service.matchEventType(from: "赵六生日宴") == .birthday)
+        #expect(service.matchEventType(from: "乔迁新居") == .property)
+        #expect(service.matchEventType(from: "春节拜年") == .festival)
+        #expect(service.matchEventType(from: "丧事份子") == .funeral)
+        #expect(service.matchEventType(from: "满月酒") == .birth)
+        #expect(service.matchEventType(from: "寿宴") == .longevity)
+        #expect(service.matchEventType(from: "升学宴") == .education)
+        #expect(service.matchEventType(from: "开业大吉") == .business)
+        #expect(service.matchEventType(from: "升职庆祝") == .promotion)
+        #expect(service.matchEventType(from: "探望病人") == .visit)
     }
 
     @Test func testMatchEventNameDefaultsToOther() {
-        #expect(service.matchEventName(from: "张三 500") == EventType.other.displayName)
-        #expect(service.matchEventName(from: "普通记录") == EventType.other.displayName)
-        #expect(service.matchEventName(from: "") == EventType.other.displayName)
+        #expect(service.matchEventType(from: "张三 500") == .other)
+        #expect(service.matchEventType(from: "普通记录") == .other)
+        #expect(service.matchEventType(from: "") == .other)
     }
 
     @Test func testParseRecordItemsWithEventKeyword() {
