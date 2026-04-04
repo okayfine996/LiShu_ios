@@ -264,9 +264,9 @@ private func makeHeatmapDetailPreviewContainer() -> ModelContainer? {
             amount: 0,
             direction: .given,
             date: day(y, month, 11 + (month % 4)),
-            recordType: .favor,
-            favorDescription: String(localized: "record.type.favor")
+            recordType: .favor
         )
+        r.applyTypeData(.favor(FavorData(description: String(localized: "record.type.favor"))))
         records.append(r)
     }
 

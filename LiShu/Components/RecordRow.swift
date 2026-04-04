@@ -13,10 +13,12 @@ struct RecordRow: View {
     var paymentMethodRaw: String = "cash"
     var kvData: String = "{}"
     var contextTag: String = ""
+    /// 金额类已退礼金额（与 `Record.resolvedReturnedAmount` 一致，用于 kv 缺字段时的展示回退）
+    var returnedAmount: Double = 0
 
     var body: some View {
         HStack(spacing: 12) {
-            AvatarView(imageData: avatar, name: contactName, size: 48)
+            AvatarView(imageData: avatar, name: contactName)
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(contactName)
@@ -73,7 +75,13 @@ struct RecordRow: View {
         let decoder = JSONDecoder()
         switch recordType {
         case .monetary:
-            return (try? decoder.decode(MonetaryData.self, from: data)).map { .monetary($0) } ?? legacyTypeData
+            guard var d = try? decoder.decode(MonetaryData.self, from: data) else {
+                return legacyTypeData
+            }
+            if d.returnedAmount == 0, returnedAmount > 0 {
+                d.returnedAmount = returnedAmount
+            }
+            return .monetary(d)
         case .gift:
             return (try? decoder.decode(GiftData.self, from: data)).map { .gift($0) } ?? legacyTypeData
         case .favor:
@@ -86,7 +94,7 @@ struct RecordRow: View {
     private var legacyTypeData: RecordTypeData {
         switch recordType {
         case .monetary:
-            return .monetary(MonetaryData(amount: amount, paymentMethod: paymentMethodRaw))
+            return .monetary(MonetaryData(amount: amount, paymentMethod: paymentMethodRaw, returnedAmount: returnedAmount))
         case .gift:
             return .gift(GiftData(giftName: favorDescription, estimatedValue: amount > 0 ? amount : nil))
         case .favor:

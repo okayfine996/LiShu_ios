@@ -22,7 +22,7 @@ struct RecordModelTests {
         db.context.insert(record)
 
         record.updateStatus()
-        #expect(record.status == .open)
+        #expect(record.hasReturnedGift == false)
     }
 
     @Test func testUpdateStatusPartial() throws {
@@ -36,7 +36,7 @@ struct RecordModelTests {
         db.context.insert(record)
 
         record.updateStatus()
-        #expect(record.status == .partial)
+        #expect(record.hasReturnedGift == true)
     }
 
     @Test func testUpdateStatusSettled() throws {
@@ -50,20 +50,7 @@ struct RecordModelTests {
         db.context.insert(record)
 
         record.updateStatus()
-        #expect(record.status == .settled)
-    }
-
-    @Test func testOutstandingAmount() throws {
-        let db = try TestDB()
-        let contact = SampleData.contact()
-        let event = SampleData.event()
-        db.context.insert(contact)
-        db.context.insert(event)
-
-        let record = SampleData.record(contact: contact, event: event, amount: 500, returnedAmount: 200)
-        db.context.insert(record)
-
-        #expect(record.outstandingAmount == 300)
+        #expect(record.hasReturnedGift == true)
     }
 
     @Test func testDirectionComputedProperty() throws {
@@ -93,7 +80,7 @@ struct RecordModelTests {
         db.context.insert(record)
 
         #expect(record.resolvedPaymentMethod == .cash)
-        record.applyTypeData(.monetary(MonetaryData(amount: record.monetaryAmount, paymentMethod: PaymentMethod.wechat.rawValue)))
+        record.applyTypeData(.monetary(MonetaryData(amount: record.monetaryAmount, paymentMethod: PaymentMethod.wechat.rawValue, returnedAmount: record.returnedAmount)))
         #expect(record.resolvedPaymentMethod == .wechat)
     }
 
@@ -154,7 +141,7 @@ struct RecordModelTests {
         #expect(try db.context.fetchCount(FetchDescriptor<RecordPhoto>()) == 0)
     }
 
-    @Test func testInitSetsStatusViaUpdateStatus() throws {
+    @Test func testInitReflectsHasReturnedGiftViaUpdateStatus() throws {
         let db = try TestDB()
         let contact = SampleData.contact()
         let event = SampleData.event()
@@ -164,7 +151,7 @@ struct RecordModelTests {
         let record = Record(contact: contact, event: event, amount: 500, returnedAmount: 500)
         db.context.insert(record)
 
-        #expect(record.status == .settled)
+        #expect(record.hasReturnedGift == true)
     }
 
     @Test func testBanquetResolvedDescriptionPrefersLocation() throws {

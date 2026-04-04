@@ -206,8 +206,10 @@ struct RecordListView: View {
                             date: record.date,
                             recordType: record.recordType,
                             favorDescription: record.resolvedDescription,
+                            paymentMethodRaw: record.paymentMethodRaw,
                             kvData: record.kvData,
-                            contextTag: record.contextTag
+                            contextTag: record.contextTag,
+                            returnedAmount: record.resolvedReturnedAmount
                         )
                     }
                     .buttonStyle(.plain)

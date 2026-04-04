@@ -1,19 +1,56 @@
-# MCP configuration (contains API keys)
+# MCP / 本地密钥（勿提交）
 .mcp.json
+.env
+.env.*
 
 # Xcode
 build/
 DerivedData/
+*.xcarchive
+*.ipa
+*.dSYM.zip
+# 目录名为 xcuserdata（不是 *.xcuserdata）
+xcuserdata/
+*.xcuserstate
+*.xccheckout
+*.xcscmblueprint
+*.moved-aside
+*.hmap
+*.perspectivev3
+*.mode1v3
+*.mode2v3
 
-# fastlane 打包产物
+# Swift Package Manager（Xcode 内嵌依赖也会用到）
+.build/
+.swiftpm/xcode/xcuserdata/
+
+# CocoaPods（若使用）
+Pods/
+
+# fastlane 产物与测试缓存
 fastlane/build/
-*.xcuserdata
-*.xcworkspace/xcuserdata/
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/test_output
+fastlane/DerivedData/
+# fastlane snapshot / frameit 生成的截图与 HTML 预览（保留 Framefile.json 等）
+fastlane/screenshots/**/*.png
+fastlane/screenshots/screenshots.html
+fastlane/screenshots/framed.html
+# 简体中文截图目录（含截图、keyword/title.strings 等生成物）
+fastlane/screenshots/zh-Hans/
+# deliver 上传前从 screenshots 复制的临时目录（不含 *_framed）
+fastlane/screenshots_deliver/
 
 # macOS
 .DS_Store
+.AppleDouble
+.LSOverride
 *.swp
 *~
 
 # Claude Code
 .claude/
+
+# Cursor 本地覆盖（.cursor/rules 等仍可提交）
+.cursor/*.local.*

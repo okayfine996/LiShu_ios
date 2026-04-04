@@ -185,7 +185,11 @@ class AddRecordViewModel {
             monetaryPaymentMethod = PaymentMethod(rawValue: d.paymentMethod) ?? .cash
         case .gift(let d):
             giftName = d.giftName
-            if let v = d.estimatedValue { giftEstimatedValue = v == Double(Int(v)) ? String(Int(v)) : String(v) }
+            if let v = d.estimatedValue {
+                giftEstimatedValue = v == Double(Int(v)) ? String(Int(v)) : String(v)
+            } else {
+                giftEstimatedValue = ""
+            }
         case .favor(let d):
             favorDesc = d.description
         case .banquet(let d):
@@ -198,11 +202,21 @@ class AddRecordViewModel {
     func buildTypeData() -> RecordTypeData {
         switch recordType {
         case .monetary:
-            return .monetary(MonetaryData(amount: Double(monetaryAmount) ?? 0, paymentMethod: monetaryPaymentMethod.rawValue))
+            let amtStr = monetaryAmount.trimmingCharacters(in: .whitespacesAndNewlines)
+            let returned = editingRecord?.resolvedReturnedAmount ?? 0
+            return .monetary(MonetaryData(
+                amount: Double(amtStr) ?? 0,
+                paymentMethod: monetaryPaymentMethod.rawValue,
+                returnedAmount: returned
+            ))
         case .gift:
-            return .gift(GiftData(giftName: giftName, estimatedValue: Double(giftEstimatedValue)))
+            let name = giftName.trimmingCharacters(in: .whitespacesAndNewlines)
+            let estStr = giftEstimatedValue.trimmingCharacters(in: .whitespacesAndNewlines)
+            let est: Double? = estStr.isEmpty ? nil : Double(estStr)
+            return .gift(GiftData(giftName: name, estimatedValue: est))
         case .favor:
-            return .favor(FavorData(description: favorDesc))
+            let desc = favorDesc.trimmingCharacters(in: .whitespacesAndNewlines)
+            return .favor(FavorData(description: desc))
         case .banquet:
             return .banquet(BanquetData(
                 location: banquetLocation.trimmingCharacters(in: .whitespacesAndNewlines),
@@ -254,7 +268,7 @@ class AddRecordViewModel {
             do {
                 try context.save()
                 NotificationManager.shared.cancelReturnGiftReminder(record: existing)
-                if existing.isMonetary, existing.direction == .given, existing.status != .settled {
+                if existing.isMonetary, existing.direction == .given, !existing.hasReturnedGift {
                     NotificationManager.shared.scheduleReturnGiftReminder(record: existing)
                 }
                 return true
@@ -284,7 +298,7 @@ class AddRecordViewModel {
 
             do {
                 try context.save()
-                if record.isMonetary, record.direction == .given, record.status != .settled {
+                if record.isMonetary, record.direction == .given, !record.hasReturnedGift {
                     NotificationManager.shared.scheduleReturnGiftReminder(record: record)
                 }
                 return true

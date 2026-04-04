@@ -217,7 +217,7 @@ struct EventDetailView: View {
                     ForEach(viewModel.relatedContacts) { contact in
                         NavigationLink(value: AppRoute.contactDetail(contact.persistentModelID)) {
                             VStack(spacing: 6) {
-                                AvatarView(imageData: contact.avatar, name: contact.name, size: 48)
+                                AvatarView(imageData: contact.avatar, name: contact.name)
 
                                 Text(contact.name)
                                     .font(DesignSystem.Typography.small)
@@ -273,7 +273,10 @@ struct EventDetailView: View {
                                 date: record.date,
                                 recordType: record.recordType,
                                 favorDescription: record.resolvedDescription,
-                                kvData: record.kvData
+                                paymentMethodRaw: record.paymentMethodRaw,
+                                kvData: record.kvData,
+                                contextTag: record.contextTag,
+                                returnedAmount: record.resolvedReturnedAmount
                             )
                         }
                         .buttonStyle(.plain)

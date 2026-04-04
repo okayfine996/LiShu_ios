@@ -1,53 +1,67 @@
 import SwiftUI
 
 struct StatusBadge: View {
-    let status: RecordStatus
-    var direction: RecordDirection? = nil
+    let badge: RecordReturnGiftBadge
 
     var body: some View {
-        Text(statusText)
-            .font(DesignSystem.Typography.small)
-            .foregroundStyle(statusColor)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 2)
-            .background(statusBackground)
-            .clipShape(Capsule())
-    }
-
-    private var isReceivedDirection: Bool {
-        direction == .received
+        switch badge {
+        case .omitted:
+            EmptyView()
+        case .received, .notReturned, .returned:
+            Text(statusText)
+                .font(DesignSystem.Typography.small)
+                .foregroundStyle(statusColor)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 2)
+                .background(statusBackground)
+                .clipShape(Capsule())
+        }
     }
 
     private var statusText: String {
-        if isReceivedDirection {
+        switch badge {
+        case .received:
             return String(localized: "record.status.received")
-        }
-        switch status {
-        case .open: return String(localized: "record.status.open")
-        case .partial: return String(localized: "record.status.partial")
-        case .settled: return String(localized: "record.status.settled")
+        case .notReturned:
+            return String(localized: "record.returnGift.notReturned")
+        case .returned:
+            return String(localized: "record.returnGift.returned")
+        case .omitted:
+            return ""
         }
     }
 
     private var statusColor: Color {
-        if isReceivedDirection {
+        switch badge {
+        case .received:
             return DesignSystem.Colors.accentGold
-        }
-        switch status {
-        case .open: return DesignSystem.Colors.primary
-        case .partial: return DesignSystem.Colors.accentGold
-        case .settled: return DesignSystem.Colors.accentGold
+        case .notReturned:
+            return DesignSystem.Colors.primary
+        case .returned:
+            return DesignSystem.Colors.accentGold
+        case .omitted:
+            return DesignSystem.Colors.textSecondary
         }
     }
 
     private var statusBackground: Color {
-        if isReceivedDirection {
+        switch badge {
+        case .received:
             return DesignSystem.Colors.accentGold.opacity(0.12)
+        case .notReturned:
+            return DesignSystem.Colors.primary.opacity(0.12)
+        case .returned:
+            return DesignSystem.Colors.accentGold.opacity(0.12)
+        case .omitted:
+            return Color.clear
         }
-        switch status {
-        case .open: return DesignSystem.Colors.primary.opacity(0.12)
-        case .partial: return DesignSystem.Colors.accentGold.opacity(0.12)
-        case .settled: return DesignSystem.Colors.accentGold.opacity(0.12)
-        }
+    }
+}
+
+#Preview {
+    HStack {
+        StatusBadge(badge: .received)
+        StatusBadge(badge: .notReturned)
+        StatusBadge(badge: .returned)
     }
 }

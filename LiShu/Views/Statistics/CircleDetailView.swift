@@ -280,7 +280,7 @@ struct CircleDetailView: View {
 
     private func memberRow(member: CircleMemberItem, isLast: Bool) -> some View {
         HStack(spacing: 12) {
-            AvatarView(imageData: member.contact.avatar, name: member.contact.name, size: 48)
+            AvatarView(imageData: member.contact.avatar, name: member.contact.name)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(member.contact.name)

@@ -3,7 +3,7 @@ import SwiftUI
 struct EventCoverView: View {
     let coverImage: Data?
     let eventType: EventType
-    var size: CGFloat = 48
+    var size: CGFloat = DesignSystem.Layout.avatarM
     /// 无封面图时的底色（有图时仍使用 `bgIconSubtle` 作为图片衬底）
     var placeholderBackground: Color = DesignSystem.Colors.bgIconSubtle
 
@@ -34,6 +34,6 @@ struct EventCoverView: View {
     VStack(spacing: 16) {
         EventCoverView(coverImage: nil, eventType: .wedding)
         EventCoverView(coverImage: nil, eventType: .birthday)
-        EventCoverView(coverImage: nil, eventType: .festival, size: 64)
+        EventCoverView(coverImage: nil, eventType: .festival, size: DesignSystem.Layout.avatarM + 8)
     }
 }

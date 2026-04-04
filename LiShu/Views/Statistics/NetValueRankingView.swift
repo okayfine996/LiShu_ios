@@ -106,7 +106,7 @@ struct NetValueRankingView: View {
             HStack(spacing: 12) {
                 rankBadge(rank)
 
-                AvatarView(imageData: item.contact.avatar, name: item.contact.name, size: 48)
+                AvatarView(imageData: item.contact.avatar, name: item.contact.name)
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(item.contact.name)

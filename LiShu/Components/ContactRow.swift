@@ -8,7 +8,7 @@ struct ContactRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            AvatarView(imageData: avatar, name: name, size: 48)
+            AvatarView(imageData: avatar, name: name)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(name)

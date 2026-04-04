@@ -65,9 +65,9 @@ struct ExportImportIntegrationTests {
             note: "",
             date: Date(timeIntervalSince1970: 1772000000),
             recordType: .favor,
-            relationshipWeight: .kindness,
-            favorDescription: "帮忙搬家两天"
+            relationshipWeight: .kindness
         )
+        record.applyTypeData(.favor(FavorData(description: "帮忙搬家两天")))
         db.context.insert(record)
         try db.context.save()
 

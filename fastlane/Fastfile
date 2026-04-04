@@ -2,8 +2,9 @@ default_platform(:ios)
 
 platform :ios do
   # 与 Xcode 工程一致：scheme LiShu、Automatic 签名
-  desc "Archive Release 并导出 IPA（默认 app-store，可上传 TestFlight）"
+  desc "Archive Release 并导出 IPA（默认 app-store，可上传 TestFlight）。可选 bump:true 在打包前先递增 build"
   lane :ipa do |options|
+    perform_bump_build_number if options[:bump]
     export_method = options[:export_method] || ENV["EXPORT_METHOD"] || "app-store"
     build_app(
       scheme: "LiShu",
@@ -16,6 +17,23 @@ platform :ios do
       # 允许 xcodebuild 在 Automatic 签名下更新描述文件（CLI/CI 常用）
       xcargs: "-allowProvisioningUpdates"
     )
+  end
+
+  desc "将已有 IPA + fastlane/screenshots 上传到 App Store Connect（优先使用 frameit 的 *_framed.png；无套壳时回退 raw；元数据请在网页维护）"
+  lane :upload_app_store do
+    perform_upload_app_store
+  end
+
+  desc "仅递增 Xcode 工程中的 Build 号（CFBundleVersion / agvtool）；配置了 API Key 时会与当前 Marketing Version 下 TestFlight 最新 build 对齐，避免上传冲突"
+  lane :bump_build do
+    perform_bump_build_number
+  end
+
+  desc "打包 IPA 并上传 IPA + 截图到 App Store Connect（一键；默认先 bump build，可用 skip_bump 关闭）"
+  lane :release_store do |options|
+    perform_bump_build_number unless options[:skip_bump]
+    ipa unless options[:skip_ipa]
+    perform_upload_app_store
   end
 
   # 等价于 fastlane 文档中的 capture_screenshots / snapshot
@@ -63,6 +81,153 @@ platform :ios do
     frame_screenshots(path: "./fastlane/screenshots")
     generate_lishu_framed_screenshot_report
   end
+end
+
+def lishu_xcodeproj_path
+  File.expand_path("../LiShu.xcodeproj", __dir__)
+end
+
+# 仅当 Key 环境变量齐全时返回，用于 bump 与上传；不抛错
+def lishu_app_store_api_key_or_nil
+  return nil if ENV["APP_STORE_CONNECT_API_KEY_ID"].to_s.empty?
+  return nil if ENV["APP_STORE_CONNECT_ISSUER_ID"].to_s.empty?
+
+  if ENV["APP_STORE_CONNECT_API_KEY_PATH"].to_s != ""
+    app_store_connect_api_key(
+      key_id: ENV["APP_STORE_CONNECT_API_KEY_ID"],
+      issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
+      key_filepath: File.expand_path(ENV["APP_STORE_CONNECT_API_KEY_PATH"], __dir__),
+      duration: 1200,
+      in_house: false
+    )
+  elsif ENV["APP_STORE_CONNECT_API_KEY_CONTENT"].to_s != ""
+    app_store_connect_api_key(
+      key_id: ENV["APP_STORE_CONNECT_API_KEY_ID"],
+      issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
+      key_content: ENV["APP_STORE_CONNECT_API_KEY_CONTENT"],
+      is_key_content_base64: ENV["APP_STORE_CONNECT_API_KEY_IS_BASE64"] == "1",
+      duration: 1200,
+      in_house: false
+    )
+  else
+    nil
+  end
+end
+
+def lishu_app_store_api_key
+  return nil if ENV["APP_STORE_CONNECT_API_KEY_ID"].to_s.empty?
+
+  k = lishu_app_store_api_key_or_nil
+  return k if k
+
+  UI.user_error!("已设置 APP_STORE_CONNECT_API_KEY_ID，请同时设置 APP_STORE_CONNECT_API_KEY_PATH（.p8 路径）或 APP_STORE_CONNECT_API_KEY_CONTENT")
+end
+
+def perform_bump_build_number
+  xcodeproj = lishu_xcodeproj_path
+  target_name = "LiShu"
+
+  version = get_version_number(xcodeproj: xcodeproj, target: target_name)
+  current = get_build_number(xcodeproj: xcodeproj).to_i
+
+  key = lishu_app_store_api_key_or_nil
+  if key
+    latest_asc = latest_testflight_build_number(
+      api_key: key,
+      version: version,
+      initial_build_number: 0
+    ).to_i
+    next_bn = [current, latest_asc].max + 1
+    UI.success("Build 号：Marketing #{version} / 本地 #{current}，TestFlight 该版本最新 #{latest_asc} → 设为 #{next_bn}")
+  else
+    next_bn = current + 1
+    UI.important("未配置完整 App Store Connect API Key：仅本地 build +1（#{current} → #{next_bn}）。若需与 TestFlight 对齐避免冲突，请配置 Key 后再 release。")
+  end
+
+  increment_build_number(
+    build_number: next_bn.to_s,
+    xcodeproj: xcodeproj
+  )
+end
+
+# 优先使用 frameit 的 *_framed.png（复制为同名无 _framed 的 .png 供 Deliver）；缺套壳的单张回退 raw；整语言无套壳时全部 raw
+def prepare_deliver_screenshots_path
+  require "fileutils"
+
+  src_root = File.expand_path("screenshots", __dir__)
+  dst_root = File.expand_path("screenshots_deliver", __dir__)
+  FileUtils.rm_rf(dst_root)
+
+  unless File.directory?(src_root)
+    UI.important("未找到 #{src_root}，将跳过截图上传")
+    return nil
+  end
+
+  count = 0
+  used_framed = 0
+  Dir.children(src_root).sort.each do |name|
+    next if name.start_with?(".")
+    next if name == "assets"
+    next unless File.directory?(File.join(src_root, name))
+
+    locale_src = File.join(src_root, name)
+    out = File.join(dst_root, name)
+    FileUtils.mkdir_p(out)
+
+    framed_paths = Dir.glob(File.join(locale_src, "*_framed.png"))
+    framed_slugs = framed_paths.map { |p| File.basename(p).sub(/_framed\.png$/i, "") }.to_h { |slug| [slug, true] }
+
+    framed_paths.each do |src|
+      slug = File.basename(src).sub(/_framed\.png$/i, "")
+      FileUtils.cp(src, File.join(out, "#{slug}.png"))
+      count += 1
+      used_framed += 1
+    end
+
+    Dir.glob(File.join(locale_src, "*.png")).each do |src|
+      next if File.basename(src) =~ /_framed\.png$/i
+
+      slug = File.basename(src, ".png")
+      next if framed_slugs[slug]
+
+      FileUtils.cp(src, File.join(out, "#{slug}.png"))
+      count += 1
+    end
+  end
+
+  if count.zero?
+    UI.important("未找到可上传的截图（各语言目录下需有 snapshot 的 *.png，或先执行 fastlane ios frameit 生成 *_framed.png）。将跳过截图上传")
+    return nil
+  end
+
+  UI.success("已为 Deliver 准备 #{count} 张截图（其中 #{used_framed} 张为套壳图）：#{dst_root}")
+  dst_root
+end
+
+def perform_upload_app_store
+  ipa_path = File.expand_path("build/LiShu.ipa", __dir__)
+  UI.user_error!("找不到 IPA：#{ipa_path}，请先执行 fastlane ios ipa") unless File.exist?(ipa_path)
+
+  screenshots_path = prepare_deliver_screenshots_path
+  key = lishu_app_store_api_key
+
+  upload_params = {
+    ipa: ipa_path,
+    skip_metadata: true,
+    force: true,
+    submit_for_review: false
+  }
+  upload_params[:api_key] = key unless key.nil?
+
+  if screenshots_path
+    upload_params[:screenshots_path] = screenshots_path
+    upload_params[:overwrite_screenshots] = true
+    upload_params[:skip_screenshots] = false
+  else
+    upload_params[:skip_screenshots] = true
+  end
+
+  upload_to_app_store(**upload_params)
 end
 
 # fastlane snapshot 的 ReportsGenerator 仅识别内置映射里的模拟器名；新机型不在列表中时

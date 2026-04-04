@@ -3,7 +3,7 @@ import SwiftUI
 struct AvatarView: View {
     let imageData: Data?
     var name: String?
-    var size: CGFloat = 44
+    var size: CGFloat = DesignSystem.Layout.avatarM
     /// 无头像图片时的底色（有图时仍使用 `bgIconSubtle` 作为照片衬底）
     var placeholderBackground: Color = DesignSystem.Colors.bgIconSubtle
 
@@ -37,7 +37,7 @@ struct AvatarView: View {
 #Preview {
     VStack(spacing: 16) {
         AvatarView(imageData: nil, name: "张三", size: 88)
-        AvatarView(imageData: nil, name: "李四", size: 48)
-        AvatarView(imageData: nil, size: 44)
+        AvatarView(imageData: nil, name: "李四")
+        AvatarView(imageData: nil)
     }
 }

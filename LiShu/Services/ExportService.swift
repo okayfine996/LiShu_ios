@@ -24,8 +24,8 @@ struct ExportService {
                 amount: record.resolvedDisplayAmount,
                 direction: record.direction.exportValue,
                 paymentMethod: record.isMonetary ? record.resolvedPaymentMethod.exportValue : "",
-                returnedAmount: record.returnedAmount,
-                status: record.status.exportValue(direction: record.direction),
+                returnedAmount: record.resolvedReturnedAmount,
+                status: record.exportReturnGiftStatusValue(for: record.direction),
                 date: dateFormatter.string(from: record.date),
                 recordType: record.recordType.rawValue,
                 relationshipWeight: record.relationshipWeight.rawValue,
@@ -62,8 +62,8 @@ struct ExportService {
                 String(format: "%.2f", record.resolvedDisplayAmount),
                 escapeCSV(record.direction.csvValue),
                 escapeCSV(record.isMonetary ? record.resolvedPaymentMethod.csvValue : ""),
-                String(format: "%.2f", record.returnedAmount),
-                escapeCSV(record.status.csvValue(direction: record.direction)),
+                String(format: "%.2f", record.resolvedReturnedAmount),
+                escapeCSV(record.csvReturnGiftStatus(for: record.direction)),
                 escapeCSV(formatter.string(from: record.date)),
                 escapeCSV(record.recordType.displayName),
                 escapeCSV(record.relationshipWeight.displayName),
@@ -211,7 +211,7 @@ struct ExportService {
                 let typeData: RecordTypeData
                 switch recordType {
                 case .monetary:
-                    typeData = .monetary(MonetaryData(amount: amount, paymentMethod: paymentMethod.rawValue))
+                    typeData = .monetary(MonetaryData(amount: amount, paymentMethod: paymentMethod.rawValue, returnedAmount: returnedAmount))
                 case .gift:
                     typeData = .gift(GiftData(giftName: favorDescription, estimatedValue: amount > 0 ? amount : nil))
                 case .favor:
@@ -524,18 +524,18 @@ private extension PaymentMethod {
     }
 }
 
-private extension RecordStatus {
-    func exportValue(direction: RecordDirection) -> String {
+private extension Record {
+    func exportReturnGiftStatusValue(for direction: RecordDirection) -> String {
         if direction == .received { return "received" }
-        return rawValue
+        if !isMonetary { return "not_applicable" }
+        return hasReturnedGift ? "returned" : "none"
     }
 
-    func csvValue(direction: RecordDirection) -> String {
+    func csvReturnGiftStatus(for direction: RecordDirection) -> String {
         if direction == .received { return String(localized: "record.status.received") }
-        switch self {
-        case .open: return String(localized: "record.status.open")
-        case .partial: return String(localized: "record.status.partial")
-        case .settled: return String(localized: "record.status.settled")
-        }
+        if !isMonetary { return "" }
+        return hasReturnedGift
+            ? String(localized: "record.returnGift.returned")
+            : String(localized: "record.returnGift.notReturned")
     }
 }

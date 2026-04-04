@@ -61,7 +61,7 @@ struct SampleData {
             date: date,
             recordType: .monetary,
             relationshipWeight: relationshipWeight,
-            typeData: .monetary(MonetaryData(amount: amount, paymentMethod: PaymentMethod.cash.rawValue))
+            typeData: .monetary(MonetaryData(amount: amount, paymentMethod: PaymentMethod.cash.rawValue, returnedAmount: returnedAmount))
         )
     }
 
@@ -114,7 +114,7 @@ struct SampleData {
                 returnedAmount: 0,
                 date: Calendar.current.date(byAdding: .day, value: -i, to: .now) ?? .now,
                 recordType: .monetary,
-                typeData: .monetary(MonetaryData(amount: baseAmount + Double(i), paymentMethod: PaymentMethod.cash.rawValue))
+                typeData: .monetary(MonetaryData(amount: baseAmount + Double(i), paymentMethod: PaymentMethod.cash.rawValue, returnedAmount: 0))
             )
         }
     }

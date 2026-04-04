@@ -58,10 +58,11 @@ struct StatisticsView: View {
                 barChartOuterSection
                 recordTypeCompositionSection
                 eventDistributionSection
-                NavigationLink(value: AppRoute.heatmapDetail(year: viewModel.selectedYear)) {
-                    heatmapOuterSection
-                }
-                .buttonStyle(.plain)
+                // 人情热力图：暂不展示，保留实现便于恢复
+                // NavigationLink(value: AppRoute.heatmapDetail(year: viewModel.selectedYear)) {
+                //     heatmapOuterSection
+                // }
+                // .buttonStyle(.plain)
                 circleAnalysisSection
                 rankingSection
             }
@@ -310,11 +311,11 @@ struct StatisticsView: View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.block) {
             statisticsSectionHeader(systemImage: "chart.bar.fill", title: String(localized: "statistics.chart.trend"))
             barChartCard
-        }
-        .overlay {
-            ProLockedOverlay(isLocked: shouldLockProContent) {
-                sheetRoute = .proMembership
-            }
+                .overlay {
+                    ProLockedOverlay(isLocked: shouldLockProContent) {
+                        sheetRoute = .proMembership
+                    }
+                }
         }
     }
 
@@ -383,6 +384,11 @@ struct StatisticsView: View {
             statisticsSectionHeader(systemImage: "circle.lefthalf.filled", title: String(localized: "statistics.recordTypeComposition"))
             NavigationLink(value: AppRoute.recordTypeComposition(year: viewModel.selectedYear)) {
                 recordTypeCompositionCard
+                    .overlay {
+                        ProLockedOverlay(isLocked: shouldLockProContent) {
+                            sheetRoute = .proMembership
+                        }
+                    }
             }
             .buttonStyle(.plain)
         }
@@ -393,13 +399,13 @@ struct StatisticsView: View {
             statisticsSectionHeader(systemImage: "calendar.badge.clock", title: String(localized: "statistics.eventDistribution"))
             NavigationLink(value: AppRoute.eventTypeComposition(year: viewModel.selectedYear)) {
                 eventDistributionCard
+                    .overlay {
+                        ProLockedOverlay(isLocked: shouldLockProContent) {
+                            sheetRoute = .proMembership
+                        }
+                    }
             }
             .buttonStyle(.plain)
-        }
-        .overlay {
-            ProLockedOverlay(isLocked: shouldLockProContent) {
-                sheetRoute = .proMembership
-            }
         }
     }
 
@@ -481,8 +487,9 @@ struct StatisticsView: View {
         }
     }
 
-    // MARK: - Heatmap
+    // MARK: - Heatmap（暂不展示，整段注释保留）
 
+    /*
     private var heatmapOuterSection: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.block) {
             statisticsSectionHeader(systemImage: "square.grid.3x3.fill", title: String(localized: "statistics.heatmap.title")) {
@@ -526,6 +533,7 @@ struct StatisticsView: View {
                 .stroke(DesignSystem.Colors.primary.opacity(0.05), lineWidth: 1)
         )
     }
+    */
 
     private var recordTypeCompositionCard: some View {
         DonutDistributionCard(
@@ -727,8 +735,9 @@ struct StatisticsView: View {
     }
 
     private func deepBondRankingRow(rank: Int, item: ContactRankingItem) -> some View {
-        let netPositive = item.netValue >= 0
-        let netColor = netPositive ? DesignSystem.Colors.primary : DesignSystem.Colors.textPrimary
+        let netColor = item.netValue >= 0
+            ? DesignSystem.Colors.accentGold
+            : DesignSystem.Colors.primary
         let rankCircleFill = rank == 1
             ? DesignSystem.Colors.primary.opacity(0.12)
             : DesignSystem.Colors.bgTag

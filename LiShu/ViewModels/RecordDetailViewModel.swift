@@ -19,12 +19,7 @@ class RecordDetailViewModel {
 
     var formattedReturnAmount: String {
         guard let record else { return "¥0" }
-        return "¥" + String(format: "%.0f", record.returnedAmount)
-    }
-
-    var formattedActualDebt: String {
-        guard let record else { return "¥0" }
-        return "¥" + String(format: "%.0f", record.outstandingAmount)
+        return "¥" + String(format: "%.0f", record.resolvedReturnedAmount)
     }
 
     var formattedDate: String {
@@ -89,7 +84,9 @@ class RecordDetailViewModel {
         guard let record else { return false }
         guard let returnValue = Double(returnedAmountText), returnValue > 0 else { return false }
 
-        record.returnedAmount += returnValue
+        guard var monetary = record.monetaryData else { return false }
+        monetary.returnedAmount += returnValue
+        record.applyTypeData(.monetary(monetary))
         record.updateStatus()
 
         do {

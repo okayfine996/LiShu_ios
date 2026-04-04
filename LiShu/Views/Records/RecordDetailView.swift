@@ -114,7 +114,7 @@ struct RecordDetailView: View {
             }
 
             HStack(spacing: 8) {
-                StatusBadge(status: record.status, direction: record.direction)
+                StatusBadge(badge: record.returnGiftBadge)
 
                 HStack(spacing: 4) {
                     Image(systemName: record.direction == .given ? "arrow.up.right" : "arrow.down.left")
@@ -163,13 +163,8 @@ struct RecordDetailView: View {
                 )
                 amountCell(
                     label: String(localized: "record.detail.returnAmount"),
-                    value: formatAmount(record.returnedAmount),
+                    value: formatAmount(record.resolvedReturnedAmount),
                     highlighted: false
-                )
-                amountCell(
-                    label: String(localized: "record.detail.actualDebt"),
-                    value: formatAmount(record.outstandingAmount),
-                    highlighted: true
                 )
             }
         } else if record.resolvedDisplayAmount > 0 {
@@ -478,7 +473,7 @@ struct RecordDetailView: View {
 
             NavigationLink(value: AppRoute.contactDetail(contact.persistentModelID)) {
                 HStack(spacing: 12) {
-                    AvatarView(imageData: contact.avatar, name: contact.name, size: 44)
+                    AvatarView(imageData: contact.avatar, name: contact.name)
 
                     VStack(alignment: .leading, spacing: 3) {
                         Text(String(localized: "record.detail.historySummary"))
@@ -558,13 +553,13 @@ struct RecordDetailView: View {
                                 .fontWeight(.medium)
                         }
 
-                        if record.returnedAmount > 0 {
+                        if record.resolvedReturnedAmount > 0 {
                             HStack {
                                 Text(String(localized: "record.detail.alreadyReturned"))
                                     .font(DesignSystem.Typography.caption)
                                     .foregroundStyle(DesignSystem.Colors.textSecondary)
                                 Spacer()
-                                Text(formatAmount(record.returnedAmount))
+                                Text(formatAmount(record.resolvedReturnedAmount))
                                     .font(DesignSystem.Typography.caption)
                                     .foregroundStyle(DesignSystem.Colors.accentGold)
                                     .fontWeight(.medium)

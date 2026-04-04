@@ -81,8 +81,10 @@ struct HomeView: View {
 
                     HStack(alignment: .firstTextBaseline, spacing: 2) {
                         Text("\(viewModel.recordCount)")
-                            .font(.system(size: 40, weight: .bold))
+                            .font(DesignSystem.Typography.display)
                             .foregroundStyle(DesignSystem.Colors.textPrimary)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.85)
 
                         Text(String(localized: "home.interactionUnit"))
                             .font(DesignSystem.Typography.title3)
@@ -94,10 +96,11 @@ struct HomeView: View {
 
                 NavigationLink(value: AppRoute.statistics) {
                     Image(systemName: "chart.bar.fill")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(DesignSystem.Typography.caption)
+                        .fontWeight(.semibold)
                         .foregroundStyle(DesignSystem.Colors.primary)
                         .frame(width: 40, height: 40)
-                        .background(DesignSystem.Colors.bgPage)
+                        .background(DesignSystem.Colors.bgIconSubtle)
                         .clipShape(Circle())
                 }
                 .accessibilityIdentifier("home.openStatistics")
@@ -122,18 +125,22 @@ struct HomeView: View {
                     .foregroundStyle(DesignSystem.Colors.textTertiary)
             }
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 24)
+        .padding(.horizontal, DesignSystem.Spacing.cardPadding)
+        .padding(.vertical, DesignSystem.Spacing.heroCardPadding)
         .frame(maxWidth: .infinity, alignment: .leading)
         .contentShape(Rectangle())
-        .background(DesignSystem.Colors.bgCard)
+        .background(DesignSystem.Colors.bgSurface)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
+                .stroke(DesignSystem.Colors.primary.opacity(0.05), lineWidth: 1)
+        )
     }
 
     private func typeCountCapsule(type: RecordType, count: Int) -> some View {
         HStack(spacing: 5) {
             Image(systemName: type.iconName)
-                .font(.system(size: 12, weight: .medium))
+                .font(DesignSystem.Typography.small)
                 .foregroundStyle(DesignSystem.Colors.primary)
             Text(String(format: String(localized: "home.typeCountFormat"), count))
                 .font(DesignSystem.Typography.caption)
@@ -175,7 +182,7 @@ struct HomeView: View {
     private var emptyUpcomingCard: some View {
         HStack(spacing: 12) {
             Image(systemName: "calendar")
-                .font(.system(size: 20))
+                .font(DesignSystem.Typography.title3)
                 .foregroundStyle(DesignSystem.Colors.textTertiary)
                 .frame(width: 40, height: 40)
                 .background(DesignSystem.Colors.bgIconSubtle)
@@ -188,8 +195,12 @@ struct HomeView: View {
             Spacer()
         }
         .padding(14)
-        .background(DesignSystem.Colors.bgCard)
+        .background(DesignSystem.Colors.bgSurface)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.smallCard))
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignSystem.Radius.smallCard)
+                .stroke(DesignSystem.Colors.primary.opacity(0.05), lineWidth: 1)
+        )
     }
 
     private func upcomingEventCard(_ event: Event) -> some View {
@@ -280,7 +291,7 @@ struct HomeView: View {
 
     private func recentRecordCard(_ record: Record) -> some View {
         HStack(spacing: 12) {
-            AvatarView(imageData: record.contact?.avatar, name: record.contact?.name ?? "", size: 48)
+            AvatarView(imageData: record.contact?.avatar, name: record.contact?.name ?? "")
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(record.contact?.name ?? "")

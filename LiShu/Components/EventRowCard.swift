@@ -11,7 +11,7 @@ struct EventRowCard: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            EventCoverView(coverImage: coverImage, eventType: eventType, size: 48)
+            EventCoverView(coverImage: coverImage, eventType: eventType)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(name)

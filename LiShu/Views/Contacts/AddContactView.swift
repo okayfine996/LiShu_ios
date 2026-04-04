@@ -91,6 +91,7 @@ struct AddContactView: View {
             relationField
             birthdayField
             phoneField
+            locationField
             notesField
         }
         .padding(.horizontal, 16)
@@ -208,6 +209,23 @@ struct AddContactView: View {
             )
             .textFieldStyle(StandardTextFieldStyle())
             .keyboardType(.phonePad)
+        }
+    }
+
+    // MARK: - Location Field
+
+    private var locationField: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(String(localized: "contact.add.location"))
+                .font(DesignSystem.Typography.caption)
+                .foregroundStyle(DesignSystem.Colors.textSecondary)
+
+            TextField(
+                String(localized: "contact.add.locationPlaceholder"),
+                text: $viewModel.location
+            )
+            .textFieldStyle(StandardTextFieldStyle())
+            .accessibilityIdentifier("contact.add.locationField")
         }
     }
 

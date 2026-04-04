@@ -512,7 +512,6 @@
       }
     },
     "contact.add.location" : {
-      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -523,7 +522,6 @@
       }
     },
     "contact.add.locationPlaceholder" : {
-      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -5198,16 +5196,6 @@
         }
       }
     },
-    "record.detail.actualDebt" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "实际净额"
-          }
-        }
-      }
-    },
     "record.detail.alreadyReturned" : {
       "localizations" : {
         "zh-Hans" : {
@@ -5724,17 +5712,27 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "退礼金额不能超过未清金额"
+            "value" : "退礼金额超过可退范围"
           }
         }
       }
     },
-    "record.returnGift.outstandingHint" : {
+    "record.returnGift.notReturned" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "最多可退 %@"
+            "value" : "未退礼"
+          }
+        }
+      }
+    },
+    "record.returnGift.returned" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已退礼"
           }
         }
       }
@@ -5749,42 +5747,12 @@
         }
       }
     },
-    "record.status.open" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "待回礼"
-          }
-        }
-      }
-    },
-    "record.status.partial" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "部分退礼"
-          }
-        }
-      }
-    },
     "record.status.received" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "已收礼"
-          }
-        }
-      }
-    },
-    "record.status.settled" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "已完成"
           }
         }
       }
@@ -7074,6 +7042,7 @@
       }
     },
     "statistics.heatmap.title" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {

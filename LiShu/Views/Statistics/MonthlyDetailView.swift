@@ -232,13 +232,16 @@ struct MonthlyDetailView: View {
                                     avatar: contact.avatar,
                                     contactName: contact.name,
                                     eventName: event.name,
-                                amount: record.resolvedDisplayAmount,
-                                direction: record.direction,
-                                date: record.date,
-                                recordType: record.recordType,
-                                favorDescription: record.resolvedDescription,
-                                kvData: record.kvData
-                            )
+                                    amount: record.resolvedDisplayAmount,
+                                    direction: record.direction,
+                                    date: record.date,
+                                    recordType: record.recordType,
+                                    favorDescription: record.resolvedDescription,
+                                    paymentMethodRaw: record.paymentMethodRaw,
+                                    kvData: record.kvData,
+                                    contextTag: record.contextTag,
+                                    returnedAmount: record.resolvedReturnedAmount
+                                )
                         }
                         .buttonStyle(.plain)
                         .background(DesignSystem.Colors.bgSurface)

@@ -21,7 +21,31 @@ For _fastlane_ installation instructions, see [Installing _fastlane_](https://do
 [bundle exec] fastlane ios ipa
 ```
 
-Archive Release 并导出 IPA（默认 app-store，可上传 TestFlight）
+Archive Release 并导出 IPA（默认 app-store，可上传 TestFlight）。可选 bump:true 在打包前先递增 build
+
+### ios upload_app_store
+
+```sh
+[bundle exec] fastlane ios upload_app_store
+```
+
+将已有 IPA + fastlane/screenshots 上传到 App Store Connect（优先使用 frameit 的 *_framed.png；无套壳时回退 raw；元数据请在网页维护）
+
+### ios bump_build
+
+```sh
+[bundle exec] fastlane ios bump_build
+```
+
+仅递增 Xcode 工程中的 Build 号（CFBundleVersion / agvtool）；配置了 API Key 时会与当前 Marketing Version 下 TestFlight 最新 build 对齐，避免上传冲突
+
+### ios release_store
+
+```sh
+[bundle exec] fastlane ios release_store
+```
+
+打包 IPA 并上传 IPA + 截图到 App Store Connect（一键；默认先 bump build，可用 skip_bump 关闭）
 
 ### ios screenshots
 

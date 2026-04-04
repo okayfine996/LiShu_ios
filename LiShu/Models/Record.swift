@@ -1,5 +1,8 @@
 import Foundation
+import OSLog
 import SwiftData
+
+private let recordKVDataLogger = Logger(subsystem: "com.finefine.LiShu", category: "Record")
 
 /// 往来记录（一笔送礼或收礼）
 @Model
@@ -20,14 +23,10 @@ final class Record {
     var note: String = ""
     /// 记录日期
     var date: Date = Date()
-    /// 状态原始值，通过 `status` 计算属性读写枚举
-    var statusRaw: String = "open"
     /// 记录类型原始值，通过 `recordType` 计算属性读写枚举
     var recordTypeRaw: String = "monetary"
     /// 情分分量原始值，通过 `relationshipWeight` 计算属性读写枚举
     var relationshipWeightRaw: String = "reciprocal"
-    /// 非金额记录的人情描述
-    var favorDescription: String = ""
     /// 日常往来标签（如"日常走动"、"节日问候"等）
     var contextTag: String = ""
     /// 类型专属数据 (JSON)
@@ -50,21 +49,22 @@ final class Record {
         set { paymentMethodRaw = newValue.rawValue }
     }
 
-    /// 还礼状态：未还 / 部分 / 已清
-    var status: RecordStatus {
-        get { RecordStatus(rawValue: statusRaw) ?? .open }
-        set { statusRaw = newValue.rawValue }
+    /// 金额类：是否已有退礼（任意已退金额 > 0）
+    var hasReturnedGift: Bool {
+        guard recordType == .monetary else { return false }
+        return resolvedReturnedAmount > 0
+    }
+
+    /// 详情页退礼角标：收到 / 金额送出未退与已退 / 其它类型不展示
+    var returnGiftBadge: RecordReturnGiftBadge {
+        if direction == .received { return .received }
+        guard recordType == .monetary, direction == .given else { return .omitted }
+        return hasReturnedGift ? .returned : .notReturned
     }
 
     /// 记录类型
     var recordType: RecordType {
-        get {
-            // 历史数据曾使用 rawValue "other"；当前 `RecordType` 无该 case，映射为 `.favor` 以保持读路径兼容。
-            if recordTypeRaw == "other" {
-                return .favor
-            }
-            return RecordType(rawValue: recordTypeRaw) ?? .monetary
-        }
+        get { RecordType(rawValue: recordTypeRaw) ?? .monetary }
         set { recordTypeRaw = newValue.rawValue }
     }
 
@@ -101,8 +101,7 @@ final class Record {
         note: String = "",
         date: Date = .now,
         recordType: RecordType = .monetary,
-        relationshipWeight: RelationshipWeight = .reciprocal,
-        favorDescription: String = ""
+        relationshipWeight: RelationshipWeight = .reciprocal
     ) {
         self.contact = contact
         self.event = event
@@ -114,32 +113,26 @@ final class Record {
         self.date = date
         self.recordTypeRaw = recordType.rawValue
         self.relationshipWeightRaw = relationshipWeight.rawValue
-        self.favorDescription = favorDescription
-        self.statusRaw = RecordStatus.open.rawValue
         self.createdAt = .now
         updateStatus()
     }
 
-    /// 未清金额 = 金额 - 已退礼金额
-    var outstandingAmount: Double {
-        monetaryAmount - returnedAmount
+    /// 已退礼金额（优先与 kvData 中 `MonetaryData.returnedAmount` 一致）
+    var resolvedReturnedAmount: Double {
+        guard recordType == .monetary else { return 0 }
+        if case .monetary(let d) = resolvedTypeData {
+            return d.returnedAmount
+        }
+        return returnedAmount
     }
 
-    /// 根据退礼金额自动更新状态
+    /// 同步列 `returnedAmount` 与 kv 中的退礼金额；非金额类清零退礼列
     func updateStatus() {
         if recordType != .monetary {
             returnedAmount = 0
-            statusRaw = RecordStatus.settled.rawValue
             return
         }
-        let totalAmount = monetaryAmount
-        if returnedAmount <= 0 {
-            statusRaw = RecordStatus.open.rawValue
-        } else if returnedAmount < totalAmount {
-            statusRaw = RecordStatus.partial.rawValue
-        } else {
-            statusRaw = RecordStatus.settled.rawValue
-        }
+        returnedAmount = resolvedReturnedAmount
     }
 }
 
@@ -163,14 +156,16 @@ enum PaymentMethod: String, Codable, CaseIterable {
     case alipay = "alipay"
 }
 
-/// 还礼状态
-enum RecordStatus: String, Codable, CaseIterable {
-    /// 未还
-    case open = "open"
-    /// 部分归还
-    case partial = "partial"
-    /// 已清
-    case settled = "settled"
+/// 退礼角标（仅区分是否发生过退礼，不区分程度）
+enum RecordReturnGiftBadge: Equatable {
+    /// 方向为收到
+    case received
+    /// 金额送出且尚未退礼
+    case notReturned
+    /// 金额送出且已有退礼
+    case returned
+    /// 非金额送出等：不展示退礼角标
+    case omitted
 }
 
 /// 情分分量
@@ -252,6 +247,8 @@ enum RecordTypeData {
 struct MonetaryData: Codable {
     var amount: Double = 0
     var paymentMethod: String = "cash"
+    /// 已退礼金额（与 `Record.returnedAmount` 列同步，真源在 kvData）
+    var returnedAmount: Double = 0
 }
 
 struct GiftData: Codable {
@@ -272,34 +269,42 @@ struct BanquetData: Codable {
 // MARK: - Record kvData Helpers
 
 extension Record {
-    /// 解码 kvData 为类型安全的数据
-    func decodeTypeData() -> RecordTypeData? {
-        guard let data = kvData.data(using: .utf8) else { return nil }
+    /// 统一业务读取：按 `recordType` 从 kvData 解码；金额类仅在 kv 有实质 JSON 时使用解码结果，否则用列构造；其它类型解码失败时用空占位
+    var resolvedTypeData: RecordTypeData {
         let decoder = JSONDecoder()
         switch recordType {
-        case .monetary:  return (try? decoder.decode(MonetaryData.self, from: data)).map { .monetary($0) }
-        case .gift:      return (try? decoder.decode(GiftData.self, from: data)).map { .gift($0) }
-        case .favor:     return (try? decoder.decode(FavorData.self, from: data)).map { .favor($0) }
-        case .banquet:   return (try? decoder.decode(BanquetData.self, from: data)).map { .banquet($0) }
-        }
-    }
-
-    private func legacyTypeData() -> RecordTypeData {
-        switch recordType {
         case .monetary:
-            return .monetary(MonetaryData(amount: amount, paymentMethod: paymentMethodRaw))
+            if hasSubstantiveKVJSON,
+               let data = kvData.data(using: .utf8),
+               let m = try? decoder.decode(MonetaryData.self, from: data) {
+                return .monetary(m)
+            }
+            return .monetary(MonetaryData(amount: amount, paymentMethod: paymentMethodRaw, returnedAmount: returnedAmount))
         case .gift:
-            return .gift(GiftData(giftName: favorDescription, estimatedValue: amount > 0 ? amount : nil))
+            if let data = kvData.data(using: .utf8),
+               let g = try? decoder.decode(GiftData.self, from: data) {
+                return .gift(g)
+            }
+            return .gift(GiftData())
         case .favor:
-            return .favor(FavorData(description: favorDescription))
+            if let data = kvData.data(using: .utf8),
+               let f = try? decoder.decode(FavorData.self, from: data) {
+                return .favor(f)
+            }
+            return .favor(FavorData())
         case .banquet:
-            return .banquet(BanquetData(location: favorDescription))
+            if let data = kvData.data(using: .utf8),
+               let b = try? decoder.decode(BanquetData.self, from: data) {
+                return .banquet(b)
+            }
+            return .banquet(BanquetData())
         }
     }
 
-    /// 统一业务读取入口：优先 kvData，旧字段仅作回退
-    var resolvedTypeData: RecordTypeData {
-        decodeTypeData() ?? legacyTypeData()
+    /// 非空且非裸 `{}`，避免把「无 kv」误解码成全 0 的 `MonetaryData` 而覆盖列上的金额
+    private var hasSubstantiveKVJSON: Bool {
+        let t = kvData.trimmingCharacters(in: .whitespacesAndNewlines)
+        return !t.isEmpty && t != "{}"
     }
 
     var monetaryData: MonetaryData? {
@@ -372,26 +377,39 @@ extension Record {
         let encoder = JSONEncoder()
         switch typeData {
         case .monetary(let d):
-            if let json = try? encoder.encode(d) {
-                kvData = String(data: json, encoding: .utf8) ?? "{}"
-                amount = d.amount
-                paymentMethodRaw = d.paymentMethod
+            guard let json = try? encoder.encode(d) else {
+                recordKVDataLogger.error("Failed to encode MonetaryData for kvData")
+                assertionFailure("Failed to encode MonetaryData for kvData")
+                return
             }
+            kvData = String(data: json, encoding: .utf8) ?? "{}"
+            amount = d.amount
+            paymentMethodRaw = d.paymentMethod
+            returnedAmount = d.returnedAmount
         case .gift(let d):
-            if let json = try? encoder.encode(d) {
-                kvData = String(data: json, encoding: .utf8) ?? "{}"
-                amount = d.estimatedValue ?? 0
+            guard let json = try? encoder.encode(d) else {
+                recordKVDataLogger.error("Failed to encode GiftData for kvData")
+                assertionFailure("Failed to encode GiftData for kvData")
+                return
             }
+            kvData = String(data: json, encoding: .utf8) ?? "{}"
+            amount = d.estimatedValue ?? 0
         case .favor(let d):
-            if let json = try? encoder.encode(d) {
-                kvData = String(data: json, encoding: .utf8) ?? "{}"
-                amount = 0
+            guard let json = try? encoder.encode(d) else {
+                recordKVDataLogger.error("Failed to encode FavorData for kvData")
+                assertionFailure("Failed to encode FavorData for kvData")
+                return
             }
+            kvData = String(data: json, encoding: .utf8) ?? "{}"
+            amount = 0
         case .banquet(let d):
-            if let json = try? encoder.encode(d) {
-                kvData = String(data: json, encoding: .utf8) ?? "{}"
-                amount = 0
+            guard let json = try? encoder.encode(d) else {
+                recordKVDataLogger.error("Failed to encode BanquetData for kvData")
+                assertionFailure("Failed to encode BanquetData for kvData")
+                return
             }
+            kvData = String(data: json, encoding: .utf8) ?? "{}"
+            amount = 0
         }
     }
 }
