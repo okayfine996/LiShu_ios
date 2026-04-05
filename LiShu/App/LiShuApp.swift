@@ -2,7 +2,7 @@ import SwiftUI
 import SwiftData
 import Logging
 
-private nonisolated(unsafe) var appBootstrapLogger: Logger { PulseDiagnostics.makeLogger(label: AppLogLabel.settings) }
+private nonisolated(unsafe) var appBootstrapLogger: Logger { PulseDiagnostics.makeLogger(label: AppLogLabel.appBootstrap) }
 
 private func ensureApplicationSupportDirectoryExists() {
     guard let url = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else { return }

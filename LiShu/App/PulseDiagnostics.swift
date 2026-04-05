@@ -119,6 +119,7 @@ enum PulseDiagnostics {
 }
 
 nonisolated enum AppLogLabel {
+    static let appBootstrap = "app.bootstrap"
     static let uiInteraction = "ui.interaction"
     static let settings = "settings.app"
     static let notifications = "notifications.manager"

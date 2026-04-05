@@ -64,7 +64,7 @@ final class AIAnalysisService {
             aiAnalysisLogger.info("Finished AI OCR batch", metadata: [
                 "step": .string("analyze_ocr_text"),
                 "count": .stringConvertible(items.count),
-                "duration_ms": .stringConvertible(prompt.count)
+                "prompt_chars": .stringConvertible(prompt.count)
             ])
         }
 

@@ -79,7 +79,7 @@ struct AboutView: View {
                             .font(DesignSystem.Typography.title3)
                             .foregroundStyle(DesignSystem.Colors.textPrimary)
 
-                        Text("当需要排查问题时，可在此查看应用日志与网络请求，并使用 Pulse 的原生分享功能导出日志文件。")
+                        Text("当需要排查问题时，可在此查看应用日志，并使用 Pulse 的原生分享功能导出日志文件。")
                             .font(DesignSystem.Typography.body)
                             .foregroundStyle(DesignSystem.Colors.textSecondary)
                             .fixedSize(horizontal: false, vertical: true)
@@ -87,7 +87,7 @@ struct AboutView: View {
 
                     diagnosticsStepCard(
                         title: "采集方式",
-                        body: "日志会静默保存在本机沙盒中，常见敏感 Header、Query 和 JSON 字段会在导出前自动脱敏。"
+                        body: "日志会静默保存在本机沙盒中，并通过容量上限自动清理旧日志。"
                     )
 
                     diagnosticsStepCard(
