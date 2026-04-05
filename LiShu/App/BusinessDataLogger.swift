@@ -107,6 +107,8 @@ struct OCRRecordItemLogPayload: Encodable {
     let eventName: String
 }
 
+private struct EmptyBusinessLogPayload: Encodable {}
+
 enum BusinessDataLogger {
     private static let recordLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.dataRecord)
     private static let mutationLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.dataMutation)
@@ -171,7 +173,28 @@ enum BusinessDataLogger {
         screen: String,
         operation: String,
         payload: some Encodable,
-        results: [some Encodable] = [],
+        error: String? = nil
+    ) {
+        log(
+            logger: mutationLogger,
+            message: "Business entity mutation",
+            eventType: "entity_mutation",
+            domain: domain,
+            operation: operation,
+            screen: screen,
+            queryInput: QueryInputLogPayload(searchText: "", filters: [:], sort: "", screen: screen),
+            payload: payload,
+            results: [EmptyBusinessLogPayload](),
+            error: error
+        )
+    }
+
+    static func entityMutation(
+        domain: String,
+        screen: String,
+        operation: String,
+        payload: some Encodable,
+        results: [some Encodable],
         error: String? = nil
     ) {
         log(
