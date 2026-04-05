@@ -48,7 +48,6 @@ struct AddContactView: View {
             }
         }
         .onAppear {
-            InteractionLogger.screenView(contactID == nil ? "contacts.add" : "contacts.edit")
             if let contactID, let contact = modelContext.model(for: contactID) as? Contact {
                 viewModel.configure(with: contact)
             }

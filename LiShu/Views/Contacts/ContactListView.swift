@@ -90,7 +90,6 @@ struct ContactListView: View {
             }
         }
         .onAppear {
-            InteractionLogger.screenView("contacts.list")
             viewModel.loadContacts(context: modelContext)
         }
         .onChange(of: showBatchImport) { _, newValue in

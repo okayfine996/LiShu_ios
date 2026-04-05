@@ -40,6 +40,7 @@ enum PulseDiagnostics {
         arguments: [String] = CommandLine.arguments,
         environment: [String: String] = ProcessInfo.processInfo.environment
     ) {
+        guard !didConfigure else { return }
         lock.lock()
         defer { lock.unlock() }
         guard !didConfigure else { return }
@@ -169,7 +170,7 @@ nonisolated enum UILogAction: String {
 }
 
 nonisolated enum InteractionLogger {
-    private static var logger: Logger { PulseDiagnostics.makeLogger(label: AppLogLabel.uiInteraction) }
+    private static let logger = PulseDiagnostics.makeLogger(label: AppLogLabel.uiInteraction)
 
     static func screenView(_ screen: String, metadata: [String: String] = [:]) {
         log(

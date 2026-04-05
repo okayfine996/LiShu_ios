@@ -3,7 +3,7 @@ import Logging
 import Vision
 import UIKit
 
-private nonisolated(unsafe) var ocrLogger: Logger { PulseDiagnostics.makeLogger(label: AppLogLabel.ocr) }
+private let ocrLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.ocr)
 
 enum OCRConfidence: String, Codable {
     case high

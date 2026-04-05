@@ -2,7 +2,7 @@ import Foundation
 import Logging
 import SwiftData
 
-private nonisolated(unsafe) var contactsViewModelLogger: Logger { PulseDiagnostics.makeLogger(label: AppLogLabel.contactsViewModel) }
+private let contactsViewModelLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.contactsViewModel)
 
 @Observable
 class AddContactViewModel {

@@ -50,7 +50,6 @@ struct EventListView: View {
             }
         }
         .onAppear {
-            InteractionLogger.screenView("events.list")
             viewModel.load(context: modelContext)
         }
         .sheet(item: $sheetRoute) { route in

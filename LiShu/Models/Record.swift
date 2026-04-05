@@ -2,7 +2,7 @@ import Foundation
 import Logging
 import SwiftData
 
-private nonisolated(unsafe) var recordKVDataLogger: Logger { PulseDiagnostics.makeLogger(label: "storage.record-kv") }
+private let recordKVDataLogger = PulseDiagnostics.makeLogger(label: "storage.record-kv")
 
 /// 往来记录（一笔送礼或收礼）
 @Model

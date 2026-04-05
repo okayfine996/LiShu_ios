@@ -2,7 +2,7 @@ import Foundation
 import Logging
 import SwiftData
 
-private nonisolated(unsafe) var eventListLogger: Logger { PulseDiagnostics.makeLogger(label: AppLogLabel.eventsViewModel) }
+private let eventListLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.eventsViewModel)
 
 @Observable
 class EventListViewModel {

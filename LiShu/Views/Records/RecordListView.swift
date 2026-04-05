@@ -49,7 +49,6 @@ struct RecordListView: View {
             }
         }
         .onAppear {
-            InteractionLogger.screenView("records.list")
             viewModel.load(context: modelContext)
         }
         .onChange(of: viewModel.filter) { _, _ in

@@ -1,7 +1,7 @@
 import Foundation
 import Logging
 
-private nonisolated(unsafe) var appSettingsLogger: Logger { PulseDiagnostics.makeLogger(label: AppLogLabel.settings) }
+private let appSettingsLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.settings)
 
 @Observable
 @MainActor

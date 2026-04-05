@@ -2,8 +2,8 @@ import Foundation
 import Logging
 import SwiftData
 
-private nonisolated(unsafe) var exportLogger: Logger { PulseDiagnostics.makeLogger(label: AppLogLabel.export) }
-private nonisolated(unsafe) var importLogger: Logger { PulseDiagnostics.makeLogger(label: AppLogLabel.importFlow) }
+private let exportLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.export)
+private let importLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.importFlow)
 
 struct ExportService {
 

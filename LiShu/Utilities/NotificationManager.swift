@@ -4,7 +4,7 @@ import SwiftData
 import UserNotifications
 import UIKit
 
-private nonisolated(unsafe) var notificationLogger: Logger { PulseDiagnostics.makeLogger(label: AppLogLabel.notifications) }
+private let notificationLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.notifications)
 
 @MainActor
 final class NotificationManager {

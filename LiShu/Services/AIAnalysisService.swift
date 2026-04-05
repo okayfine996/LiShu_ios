@@ -1,7 +1,7 @@
 import Foundation
 import Logging
 
-private nonisolated(unsafe) var aiAnalysisLogger: Logger { PulseDiagnostics.makeLogger(label: AppLogLabel.ai) }
+private let aiAnalysisLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.ai)
 
 #if canImport(FoundationModels)
 import FoundationModels

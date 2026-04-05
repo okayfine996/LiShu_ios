@@ -2,7 +2,7 @@ import Foundation
 import Logging
 import SwiftData
 
-private nonisolated(unsafe) var contactListLogger: Logger { PulseDiagnostics.makeLogger(label: AppLogLabel.contactsViewModel) }
+private let contactListLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.contactsViewModel)
 
 /// Filter options for contacts by circle level
 enum ContactCircleFilter: String, CaseIterable, Hashable {

@@ -3,7 +3,7 @@ import Foundation
 import Logging
 import SwiftData
 
-private nonisolated(unsafe) var debugDataLogger: Logger { PulseDiagnostics.makeLogger(label: "debug.data") }
+private let debugDataLogger = PulseDiagnostics.makeLogger(label: "debug.data")
 
 @MainActor
 enum DebugDataGenerator {

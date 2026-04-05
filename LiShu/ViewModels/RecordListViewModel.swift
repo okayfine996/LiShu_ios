@@ -2,7 +2,7 @@ import Foundation
 import Logging
 import SwiftData
 
-private nonisolated(unsafe) var recordListLogger: Logger { PulseDiagnostics.makeLogger(label: AppLogLabel.recordsViewModel) }
+private let recordListLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.recordsViewModel)
 
 enum RecordFilter: String, CaseIterable, Hashable {
     case all = "all"

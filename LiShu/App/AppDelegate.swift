@@ -2,8 +2,8 @@ import UIKit
 import UserNotifications
 import Logging
 
-private nonisolated(unsafe) var appLifecycleLogger: Logger { PulseDiagnostics.makeLogger(label: "app.lifecycle") }
-private nonisolated(unsafe) var notificationsLogger: Logger { PulseDiagnostics.makeLogger(label: "notifications.apns") }
+private let appLifecycleLogger = PulseDiagnostics.makeLogger(label: "app.lifecycle")
+private let notificationsLogger = PulseDiagnostics.makeLogger(label: "notifications.apns")
 
 class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
 

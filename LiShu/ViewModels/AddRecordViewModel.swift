@@ -2,7 +2,7 @@ import Foundation
 import Logging
 import SwiftData
 
-private nonisolated(unsafe) var recordsViewModelLogger: Logger { PulseDiagnostics.makeLogger(label: AppLogLabel.recordsViewModel) }
+private let recordsViewModelLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.recordsViewModel)
 
 /// 待保存的新增照片（稳定 `id` 供 `ForEach` 使用）
 struct NewRecordPhotoItem: Identifiable, Equatable {

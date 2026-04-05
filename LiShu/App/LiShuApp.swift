@@ -2,7 +2,7 @@ import SwiftUI
 import SwiftData
 import Logging
 
-private nonisolated(unsafe) var appBootstrapLogger: Logger { PulseDiagnostics.makeLogger(label: AppLogLabel.appBootstrap) }
+private let appBootstrapLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.appBootstrap)
 
 private func ensureApplicationSupportDirectoryExists() {
     guard let url = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else { return }
@@ -107,10 +107,18 @@ struct LiShuApp: App {
             .animation(.easeInOut(duration: 0.4), value: settings.hasSeenOnboarding)
             .preferredColorScheme(resolvedColorScheme)
             .onAppear {
-                InteractionLogger.screenView(showSplash ? "app.splash" : (settings.hasSeenOnboarding ? "app.main" : "app.onboarding"))
+                InteractionLogger.screenView("app.splash")
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                     showSplash = false
                 }
+            }
+            .onChange(of: showSplash) { _, newValue in
+                guard !newValue else { return }
+                InteractionLogger.screenView(settings.hasSeenOnboarding ? "app.main" : "app.onboarding")
+            }
+            .onChange(of: settings.hasSeenOnboarding) { _, newValue in
+                guard !showSplash else { return }
+                InteractionLogger.screenView(newValue ? "app.main" : "app.onboarding")
             }
             .task {
                 appBootstrapLogger.notice("Starting application tasks", metadata: ["step": .string("startup_tasks")])

@@ -37,7 +37,6 @@ struct AddEventView: View {
         .navigationBarTitleDisplayMode(.inline)
         .trackScreen(eventID == nil ? "events.add" : "events.edit")
         .onAppear {
-            InteractionLogger.screenView(eventID == nil ? "events.add" : "events.edit")
             if let eventID {
                 if let event = modelContext.model(for: eventID) as? Event {
                     viewModel.configure(with: event)

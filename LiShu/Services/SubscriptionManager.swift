@@ -3,7 +3,7 @@ import Logging
 import StoreKit
 import SwiftData
 
-private nonisolated(unsafe) var subscriptionLogger: Logger { PulseDiagnostics.makeLogger(label: "billing.subscription") }
+private let subscriptionLogger = PulseDiagnostics.makeLogger(label: "billing.subscription")
 
 struct UsageLimits {
     static let freeOCRPerMonth = 3

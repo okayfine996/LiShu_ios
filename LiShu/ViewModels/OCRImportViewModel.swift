@@ -3,7 +3,7 @@ import Logging
 import SwiftData
 import UIKit
 
-private nonisolated(unsafe) var ocrImportLogger: Logger { PulseDiagnostics.makeLogger(label: AppLogLabel.ocr) }
+private let ocrImportLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.ocr)
 
 @Observable
 class OCRImportViewModel {
