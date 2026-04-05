@@ -69,6 +69,7 @@ struct LiShuApp: App {
             if snapshotScreenshot {
                 DemoDataSeeding.insertSampleData(context: sharedModelContainer.mainContext, attachDemoMedia: true)
             }
+            RecordTypeStorageNormalizer.runMigrationIfNeeded(context: sharedModelContainer.mainContext)
         } catch {
             fatalError("Could not create ModelContainer: \(error)")
         }

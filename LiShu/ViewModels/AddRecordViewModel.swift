@@ -88,7 +88,7 @@ class AddRecordViewModel {
             return false
         }
         switch recordType {
-        case .monetary:  return (Double(monetaryAmount) ?? 0) > 0
+        case .monetary:  return (UserEnteredDecimal.parse(monetaryAmount) ?? 0) > 0
         case .gift:      return !giftName.trimmingCharacters(in: .whitespaces).isEmpty
         case .favor:     return !favorDesc.trimmingCharacters(in: .whitespaces).isEmpty
         case .banquet:   return !banquetLocation.trimmingCharacters(in: .whitespaces).isEmpty
@@ -215,14 +215,14 @@ class AddRecordViewModel {
             let amtStr = monetaryAmount.trimmingCharacters(in: .whitespacesAndNewlines)
             let returned = editingRecord?.resolvedReturnedAmount ?? 0
             return .monetary(MonetaryData(
-                amount: Double(amtStr) ?? 0,
+                amount: UserEnteredDecimal.parse(amtStr) ?? 0,
                 paymentMethod: monetaryPaymentMethod.rawValue,
                 returnedAmount: returned
             ))
         case .gift:
             let name = giftName.trimmingCharacters(in: .whitespacesAndNewlines)
             let estStr = giftEstimatedValue.trimmingCharacters(in: .whitespacesAndNewlines)
-            let est: Double? = estStr.isEmpty ? nil : Double(estStr)
+            let est: Double? = estStr.isEmpty ? nil : UserEnteredDecimal.parse(estStr)
             return .gift(GiftData(giftName: name, estimatedValue: est))
         case .favor:
             let desc = favorDesc.trimmingCharacters(in: .whitespacesAndNewlines)

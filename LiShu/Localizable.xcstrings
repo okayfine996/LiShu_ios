@@ -5747,6 +5747,16 @@
         }
       }
     },
+    "record.returnGift.monetaryDataMissing" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法读取礼金数据，请返回后重试"
+          }
+        }
+      }
+    },
     "record.status.received" : {
       "localizations" : {
         "zh-Hans" : {

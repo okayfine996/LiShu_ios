@@ -180,7 +180,7 @@ struct ExportService {
                 banquetExtra = csvCell(fields, columnIndex: columnIndex, column: "宴请额外费用")
             }
 
-            let amount = Double(amountStr) ?? 0
+            let amount = UserEnteredDecimal.parse(amountStr) ?? 0
 
             if recordType.isMonetary {
                 guard amount > 0 else {
@@ -209,7 +209,7 @@ struct ExportService {
             let event = findOrCreateEventIfNeeded(name: eventName, type: eventType, context: context)
             let direction = parseDirection(directionStr)
             let paymentMethod = parsePaymentMethod(paymentStr)
-            let returnedAmount = recordType.isMonetary ? (Double(returnedStr) ?? 0) : 0
+            let returnedAmount = recordType.isMonetary ? (UserEnteredDecimal.parse(returnedStr) ?? 0) : 0
             let date = parseDate(dateStr) ?? Date()
 
             let record = Record(
@@ -338,7 +338,7 @@ struct ExportService {
             } else {
                 name = h
             }
-            let estFromFlat = Double(giftEstStr.trimmingCharacters(in: .whitespacesAndNewlines))
+            let estFromFlat = UserEnteredDecimal.parse(giftEstStr)
             let estimatedValue: Double?
             if hasFlatColumns {
                 if let v = estFromFlat, v > 0 {

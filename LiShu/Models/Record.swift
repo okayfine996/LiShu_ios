@@ -395,28 +395,24 @@ extension Record {
         case .monetary(let d):
             guard let json = try? encoder.encode(d) else {
                 recordKVDataLogger.error("Failed to encode MonetaryData for kvData")
-                assertionFailure("Failed to encode MonetaryData for kvData")
                 return
             }
             kvData = String(data: json, encoding: .utf8) ?? "{}"
         case .gift(let d):
             guard let json = try? encoder.encode(d) else {
                 recordKVDataLogger.error("Failed to encode GiftData for kvData")
-                assertionFailure("Failed to encode GiftData for kvData")
                 return
             }
             kvData = String(data: json, encoding: .utf8) ?? "{}"
         case .favor(let d):
             guard let json = try? encoder.encode(d) else {
                 recordKVDataLogger.error("Failed to encode FavorData for kvData")
-                assertionFailure("Failed to encode FavorData for kvData")
                 return
             }
             kvData = String(data: json, encoding: .utf8) ?? "{}"
         case .banquet(let d):
             guard let json = try? encoder.encode(d) else {
                 recordKVDataLogger.error("Failed to encode BanquetData for kvData")
-                assertionFailure("Failed to encode BanquetData for kvData")
                 return
             }
             kvData = String(data: json, encoding: .utf8) ?? "{}"

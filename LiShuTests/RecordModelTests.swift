@@ -209,4 +209,24 @@ struct RecordModelTests {
         #expect(record.recordType == .monetary)
         #expect(record.resolvedDisplayAmount == 888)
     }
+
+    @Test func testUserEnteredDecimalParsesCommas() {
+        #expect(UserEnteredDecimal.parse("1,234.5") == 1234.5)
+        #expect(UserEnteredDecimal.parse("1，000") == 1000)
+        #expect(UserEnteredDecimal.parse("  500  ") == 500)
+    }
+
+    @Test func testRecordTypeStorageNormalizerTrimsWhitespace() throws {
+        let db = try TestDB()
+        let contact = SampleData.contact()
+        db.context.insert(contact)
+        let record = SampleData.record(contact: contact, amount: 100)
+        record.recordTypeRaw = " monetary "
+        db.context.insert(record)
+        try db.context.save()
+
+        try RecordTypeStorageNormalizer.normalizeAllRecords(context: db.context)
+
+        #expect(record.recordTypeRaw == "monetary")
+    }
 }

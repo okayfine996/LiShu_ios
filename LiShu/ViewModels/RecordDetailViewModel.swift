@@ -12,11 +12,6 @@ class RecordDetailViewModel {
         record = context.model(for: id) as? Record
     }
 
-    var formattedAmount: String {
-        guard let record else { return "¥0" }
-        return "¥" + String(format: "%.0f", record.monetaryAmount)
-    }
-
     var formattedReturnAmount: String {
         guard let record else { return "¥0" }
         return "¥" + String(format: "%.0f", record.resolvedReturnedAmount)
@@ -82,7 +77,7 @@ class RecordDetailViewModel {
 
     func saveReturn(context: ModelContext) -> Bool {
         guard let record else { return false }
-        guard let returnValue = Double(returnedAmountText), returnValue > 0 else { return false }
+        guard let returnValue = UserEnteredDecimal.parse(returnedAmountText), returnValue > 0 else { return false }
 
         guard var monetary = record.monetaryData else { return false }
         monetary.returnedAmount += returnValue

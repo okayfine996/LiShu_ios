@@ -160,12 +160,12 @@ struct ReturnGiftSheet: View {
     }
 
     private func isValid(_ record: Record) -> Bool {
-        guard let value = Double(returnAmountText), value > 0 else { return false }
+        guard let value = UserEnteredDecimal.parse(returnAmountText), value > 0 else { return false }
         return value <= maxAdditionalReturn(for: record)
     }
 
     private func performReturn(_ record: Record) {
-        guard let returnValue = Double(returnAmountText), returnValue > 0 else {
+        guard let returnValue = UserEnteredDecimal.parse(returnAmountText), returnValue > 0 else {
             validationError = String(localized: "record.returnGift.amountRequired")
             isShowingErrorAlert = true
             return
@@ -176,7 +176,11 @@ struct ReturnGiftSheet: View {
             return
         }
 
-        guard var monetary = record.monetaryData else { return }
+        guard var monetary = record.monetaryData else {
+            validationError = String(localized: "record.returnGift.monetaryDataMissing")
+            isShowingErrorAlert = true
+            return
+        }
         monetary.returnedAmount += returnValue
         record.applyTypeData(.monetary(monetary))
 
