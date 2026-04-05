@@ -136,36 +136,23 @@ struct ContactDetailView: View {
     // MARK: - Summary Cards (Swipeable)
 
     private func summaryCardsSection(_ contact: Contact) -> some View {
-        ZStack(alignment: .topTrailing) {
-            TabView(selection: $currentCardPage) {
-                assetOverviewCard(contact)
-                    .tag(0)
-                relationshipInsightCard(contact)
-                    .tag(1)
+        CarouselView(
+            pageCount: 2,
+            currentPage: $currentCardPage,
+            indicatorPosition: .topTrailing
+        ) { index in
+            Group {
+                if index == 0 {
+                    assetOverviewCard(contact)
+                } else {
+                    relationshipInsightCard(contact)
+                }
             }
-            .tabViewStyle(.page(indexDisplayMode: .never))
-            .aspectRatio(1.5, contentMode: .fit)
-
-            pageIndicator(current: currentCardPage)
-                .padding(.top, DesignSystem.Spacing.cardPadding)
-                .padding(.trailing, DesignSystem.Spacing.cardPadding)
-                .allowsHitTesting(false)
         }
+        .aspectRatio(1.5, contentMode: .fit)
         .background(DesignSystem.Colors.bgSurface)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
         .padding(.horizontal, 16)
-    }
-
-    private func pageIndicator(current: Int) -> some View {
-        HStack(spacing: 6) {
-            ForEach(0 ..< 2, id: \.self) { index in
-                Circle()
-                    .fill(index == current
-                        ? DesignSystem.Colors.primary
-                        : DesignSystem.Colors.border)
-                    .frame(width: 6, height: 6)
-            }
-        }
     }
 
     // MARK: Card 1 — 往来资产概览
