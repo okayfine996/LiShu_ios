@@ -28,6 +28,8 @@ struct LiShuApp: App {
 
         if CommandLine.arguments.contains("--reset-onboarding") {
             AppSettings.shared.hasSeenOnboarding = false
+        } else if CommandLine.arguments.contains(PulseDiagnostics.Constants.skipOnboardingArgument) {
+            AppSettings.shared.hasSeenOnboarding = true
         } else if CommandLine.arguments.contains("--uitesting") {
             AppSettings.shared.hasSeenOnboarding = true
         }

@@ -1,8 +1,8 @@
 import Foundation
-import OSLog
+import Logging
 import SwiftData
 
-private let recordKVDataLogger = Logger(subsystem: "com.finefine.LiShu", category: "Record")
+private let recordKVDataLogger = Logger(label: "storage.record-kv")
 
 /// 往来记录（一笔送礼或收礼）
 @Model

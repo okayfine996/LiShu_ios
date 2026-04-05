@@ -1,6 +1,12 @@
 import SwiftUI
+import PulseUI
 
 struct AboutView: View {
+    @State private var showPulseConsole = false
+    @State private var showDiagnosticsGuide = false
+    @State private var diagnosticsTapCount = 0
+    @State private var diagnosticsTapResetTask: DispatchWorkItem?
+
     private var appVersion: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
     }
@@ -20,6 +26,14 @@ struct AboutView: View {
         .background(DesignSystem.Colors.bgPage)
         .navigationTitle(String(localized: "settings.about"))
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $showDiagnosticsGuide) {
+            diagnosticsGuideSheet
+        }
+        .sheet(isPresented: $showPulseConsole) {
+            NavigationStack {
+                ConsoleView()
+            }
+        }
     }
 
     // MARK: - App header
@@ -40,9 +54,110 @@ struct AboutView: View {
             Text(String(localized: "settings.about.version") + appVersion)
                 .font(DesignSystem.Typography.small)
                 .foregroundStyle(DesignSystem.Colors.textTertiary)
+                .accessibilityIdentifier("about.versionLabel")
+                .onTapGesture {
+                    handleDiagnosticsTap()
+                }
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 24)
+    }
+
+    private var diagnosticsGuideSheet: some View {
+        NavigationStack {
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 20) {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("诊断控制台")
+                            .font(DesignSystem.Typography.title3)
+                            .foregroundStyle(DesignSystem.Colors.textPrimary)
+
+                        Text("当需要排查问题时，可在此查看应用日志与网络请求，并使用 Pulse 的原生分享功能导出日志文件。")
+                            .font(DesignSystem.Typography.body)
+                            .foregroundStyle(DesignSystem.Colors.textSecondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+
+                    diagnosticsStepCard(
+                        title: "采集方式",
+                        body: "日志会静默保存在本机沙盒中，常见敏感 Header、Query 和 JSON 字段会在导出前自动脱敏。"
+                    )
+
+                    diagnosticsStepCard(
+                        title: "分享方式",
+                        body: "进入控制台后，点击右上角分享按钮即可导出 .pulse 或文本日志，再通过系统分享发送给开发者。"
+                    )
+
+                    diagnosticsStepCard(
+                        title: "覆盖范围",
+                        body: PulseDiagnostics.supportSummary
+                    )
+
+                    Button {
+                        showDiagnosticsGuide = false
+                        showPulseConsole = true
+                    } label: {
+                        Text("打开诊断控制台")
+                            .font(DesignSystem.Typography.body)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(DesignSystem.Colors.textOnPrimary)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(DesignSystem.Colors.primary)
+                            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+                    }
+                    .accessibilityIdentifier("about.openDiagnosticsConsole")
+                    .buttonStyle(.plain)
+                }
+                .padding(16)
+            }
+            .background(DesignSystem.Colors.bgPage)
+            .navigationTitle("诊断说明")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(String(localized: "common.cancel")) {
+                        showDiagnosticsGuide = false
+                    }
+                }
+            }
+        }
+    }
+
+    private func diagnosticsStepCard(title: String, body: String) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(DesignSystem.Typography.body)
+                .foregroundStyle(DesignSystem.Colors.textPrimary)
+                .fontWeight(.semibold)
+
+            Text(body)
+                .font(DesignSystem.Typography.caption)
+                .foregroundStyle(DesignSystem.Colors.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(16)
+        .background(DesignSystem.Colors.bgSurface)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+    }
+
+    private func handleDiagnosticsTap() {
+        guard PulseDiagnostics.isHiddenConsoleAvailable else { return }
+
+        diagnosticsTapCount += 1
+        diagnosticsTapResetTask?.cancel()
+
+        if diagnosticsTapCount >= 7 {
+            diagnosticsTapCount = 0
+            showDiagnosticsGuide = true
+            return
+        }
+
+        let resetTask = DispatchWorkItem {
+            diagnosticsTapCount = 0
+        }
+        diagnosticsTapResetTask = resetTask
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5, execute: resetTask)
     }
 
     // MARK: - Links section

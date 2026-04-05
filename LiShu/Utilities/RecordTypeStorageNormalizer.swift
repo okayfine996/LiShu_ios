@@ -1,12 +1,12 @@
 import Foundation
-import OSLog
+import Logging
 import SwiftData
+
+private let recordTypeStorageLogger = Logger(label: "storage.record-type")
 
 /// 将 `recordTypeRaw` 规范为 `RecordType` 的 canonical rawValue，使 `#Predicate { $0.recordTypeRaw == "…" }` 与业务解析一致。
 enum RecordTypeStorageNormalizer {
     static let userDefaultsKey = "didNormalizeRecordTypeRaw2026"
-
-    private static let logger = Logger(subsystem: "com.finefine.LiShu", category: "RecordTypeStorage")
 
     /// 一次性迁移：全量规范化后写入 UserDefaults，失败时不写入以便下次启动重试。
     static func runMigrationIfNeeded(context: ModelContext) {
@@ -14,8 +14,11 @@ enum RecordTypeStorageNormalizer {
         do {
             try normalizeAllRecords(context: context)
             UserDefaults.standard.set(true, forKey: userDefaultsKey)
+            recordTypeStorageLogger.notice("Record type normalization finished")
         } catch {
-            logger.error("Record type normalization failed: \(error.localizedDescription)")
+            recordTypeStorageLogger.error("Record type normalization failed", metadata: [
+                "error": .string(error.localizedDescription)
+            ])
         }
     }
 

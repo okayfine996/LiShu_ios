@@ -1,6 +1,9 @@
 #if DEBUG
 import Foundation
+import Logging
 import SwiftData
+
+private let debugDataLogger = Logger(label: "debug.data")
 
 @MainActor
 enum DebugDataGenerator {
@@ -17,7 +20,9 @@ enum DebugDataGenerator {
             try context.delete(model: Contact.self)
             try context.save()
         } catch {
-            print("[DebugDataGenerator] clearAllData failed: \(error)")
+            debugDataLogger.error("Failed to clear debug sample data", metadata: [
+                "error": .string(String(describing: error))
+            ])
         }
     }
 }
