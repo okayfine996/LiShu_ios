@@ -80,20 +80,51 @@ struct RecordListView: View {
             ProgressView()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         case .loaded(let grouped) where grouped.isEmpty:
-            EmptyStateView(
-                icon: "doc.text",
-                message: String(localized: "record.list.empty"),
-                actionTitle: String(localized: "home.addRecord"),
-                action: {
-                    sheetRoute = .addRecord(direction: nil, contactID: nil)
-                }
-            )
+            if hasActiveQuery {
+                filteredEmptyContent
+            } else {
+                EmptyStateView(
+                    icon: "doc.text",
+                    message: String(localized: "record.list.empty"),
+                    actionTitle: String(localized: "home.addRecord"),
+                    action: {
+                        sheetRoute = .addRecord(direction: nil, contactID: nil)
+                    }
+                )
+            }
         case .loaded:
             recordsList
         case .error(let message):
             ErrorStateView(message: message) {
                 viewModel.load(context: modelContext)
             }
+        }
+    }
+
+    private var hasActiveQuery: Bool {
+        viewModel.filter != .all || !viewModel.searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    private var filteredEmptyContent: some View {
+        ScrollView(showsIndicators: false) {
+            VStack(spacing: 16) {
+                filterChips
+
+                EmptyStateView(
+                    icon: "line.3.horizontal.decrease.circle",
+                    message: String(localized: "record.list.empty"),
+                    actionTitle: String(localized: "record.filter.all"),
+                    action: {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            viewModel.filter = .all
+                            viewModel.searchText = ""
+                        }
+                    }
+                )
+                .frame(minHeight: 320)
+            }
+            .padding(.horizontal, 16)
+            .padding(.bottom, 80)
         }
     }
 
@@ -114,39 +145,42 @@ struct RecordListView: View {
     // MARK: - Filter Chips
 
     private var filterChips: some View {
-        HStack(spacing: 8) {
-            ForEach(RecordFilter.allCases, id: \.self) { filter in
-                let isSelected = viewModel.filter == filter
-                Button {
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        viewModel.filter = filter
-                    }
-                } label: {
-                    Text(filterTitle(filter))
-                        .font(DesignSystem.Typography.caption)
-                        .foregroundStyle(isSelected ? .white : DesignSystem.Colors.textSecondary)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
-                        .background(isSelected ? DesignSystem.Colors.primary : DesignSystem.Colors.bgSurface)
-                        .clipShape(Capsule())
-                        .overlay(
-                            Capsule().stroke(
-                                isSelected ? Color.clear : DesignSystem.Colors.border,
-                                lineWidth: 1
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(RecordFilter.allCases, id: \.self) { filter in
+                    let isSelected = viewModel.filter == filter
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            viewModel.filter = filter
+                        }
+                    } label: {
+                        Text(filterTitle(filter))
+                            .font(DesignSystem.Typography.caption)
+                            .foregroundStyle(isSelected ? .white : DesignSystem.Colors.textSecondary)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background(isSelected ? DesignSystem.Colors.primary : DesignSystem.Colors.bgSurface)
+                            .clipShape(Capsule())
+                            .overlay(
+                                Capsule().stroke(
+                                    isSelected ? Color.clear : DesignSystem.Colors.border,
+                                    lineWidth: 1
+                                )
                             )
-                        )
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
             }
-            Spacer()
         }
     }
 
     private func filterTitle(_ filter: RecordFilter) -> String {
         switch filter {
         case .all: return String(localized: "record.filter.all")
-        case .given: return String(localized: "record.direction.given")
-        case .received: return String(localized: "record.direction.received")
+        case .monetary: return String(localized: "record.type.monetary")
+        case .gift: return String(localized: "record.type.gift")
+        case .favor: return String(localized: "record.type.favor")
+        case .banquet: return String(localized: "record.type.banquet")
         }
     }
 
@@ -163,23 +197,18 @@ struct RecordListView: View {
             if let records = viewModel.state.value?[monthKey] {
                 ForEach(records) { record in
                     NavigationLink(value: AppRoute.recordDetail(record.persistentModelID)) {
-                        RecordRow(
-                            avatar: record.contact?.avatar,
-                            contactName: record.contact?.name ?? "",
-                            eventName: record.event?.name ?? "",
-                            amount: record.amount,
-                            direction: record.direction,
-                            date: record.date
-                        )
+                        RecordRow(record: record)
                     }
                     .buttonStyle(.plain)
                     .background(DesignSystem.Colors.bgSurface)
                     .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
                     .contextMenu {
-                        Button {
-                            sheetRoute = .returnGift(recordID: record.persistentModelID)
-                        } label: {
-                            Label(String(localized: "record.detail.returnGift"), systemImage: "gift")
+                        if record.recordType == .monetary, record.direction == .given {
+                            Button {
+                                sheetRoute = .returnGift(recordID: record.persistentModelID)
+                            } label: {
+                                Label(String(localized: "record.detail.returnGift"), systemImage: "gift")
+                            }
                         }
                         Button(role: .destructive) {
                             viewModel.deleteRecord(record, context: modelContext)
@@ -257,11 +286,11 @@ private func makeRecordListPreviewContainer() -> ModelContainer? {
     let e5 = Event(name: "升职庆祝", type: .other, date: cal.date(byAdding: .month, value: -1, to: .now)!)
     [e1, e2, e3, e4, e5].forEach { ctx.insert($0) }
 
-    let r1 = Record(contact: c1, event: e1, amount: 2000, direction: .given, paymentMethod: .wechat, date: cal.date(byAdding: .day, value: -6, to: .now)!)
-    let r2 = Record(contact: c2, event: e2, amount: 800, direction: .received, paymentMethod: .cash, returnedAmount: 800, date: cal.date(byAdding: .day, value: -10, to: .now)!)
-    let r3 = Record(contact: c3, event: e3, amount: 500, direction: .given, paymentMethod: .alipay, returnedAmount: 500, date: cal.date(byAdding: .day, value: -15, to: .now)!)
-    let r4 = Record(contact: c4, event: e4, amount: 1200, direction: .given, paymentMethod: .wechat, date: cal.date(byAdding: .month, value: -1, to: .now)!)
-    let r5 = Record(contact: c5, event: e5, amount: 600, direction: .received, paymentMethod: .cash, returnedAmount: 600, date: cal.date(byAdding: .month, value: -1, to: .now)!)
+    let r1 = Record.makeMonetaryRecord(contact: c1, event: e1, amount: 2000, direction: .given, paymentMethod: .wechat, date: cal.date(byAdding: .day, value: -6, to: .now)!)
+    let r2 = Record.makeMonetaryRecord(contact: c2, event: e2, amount: 800, direction: .received, paymentMethod: .cash, returnedAmount: 800, date: cal.date(byAdding: .day, value: -10, to: .now)!)
+    let r3 = Record.makeMonetaryRecord(contact: c3, event: e3, amount: 500, direction: .given, paymentMethod: .alipay, returnedAmount: 500, date: cal.date(byAdding: .day, value: -15, to: .now)!)
+    let r4 = Record.makeMonetaryRecord(contact: c4, event: e4, amount: 1200, direction: .given, paymentMethod: .wechat, date: cal.date(byAdding: .month, value: -1, to: .now)!)
+    let r5 = Record.makeMonetaryRecord(contact: c5, event: e5, amount: 600, direction: .received, paymentMethod: .cash, returnedAmount: 600, date: cal.date(byAdding: .month, value: -1, to: .now)!)
     [r1, r2, r3, r4, r5].forEach { ctx.insert($0) }
 
     return container
@@ -275,7 +304,7 @@ private func makeRecordListPreviewContainer() -> ModelContainer? {
             }
             .modelContainer(container)
         } else {
-            Text("Preview unavailable")
+            Text(String(localized: "common.preview.unavailable"))
         }
     }
 }

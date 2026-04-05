@@ -6,6 +6,13 @@ struct StatisticsView: View {
     @Environment(SubscriptionManager.self) private var subscriptionManager
     @State private var viewModel = StatisticsViewModel()
     @State private var sheetRoute: SheetRoute?
+    
+    private var shouldLockProContent: Bool {
+        if ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1" {
+            return false
+        }
+        return !subscriptionManager.isPro
+    }
 
     var body: some View {
         Group {
@@ -45,27 +52,22 @@ struct StatisticsView: View {
 
     private var statisticsContent: some View {
         ScrollView(showsIndicators: false) {
-            VStack(spacing: 20) {
+            VStack(spacing: DesignSystem.Spacing.stackLoose) {
                 selectorSection
-                heroCard
-                barChartSection
-                    .overlay {
-                        ProLockedOverlay(isLocked: !subscriptionManager.isPro) {
-                            sheetRoute = .proMembership
-                        }
-                    }
-                eventDistributionCard
-                    .overlay {
-                        ProLockedOverlay(isLocked: !subscriptionManager.isPro) {
-                            sheetRoute = .proMembership
-                        }
-                    }
-                heatmapCard
+                heroSection
+                barChartOuterSection
+                recordTypeCompositionSection
+                eventDistributionSection
+                // 人情热力图：暂不展示，保留实现便于恢复
+                // NavigationLink(value: AppRoute.heatmapDetail(year: viewModel.selectedYear)) {
+                //     heatmapOuterSection
+                // }
+                // .buttonStyle(.plain)
                 circleAnalysisSection
                 rankingSection
             }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 24)
+            .padding(.horizontal, DesignSystem.Spacing.pageHorizontal)
+            .padding(.bottom, DesignSystem.Spacing.scrollBottom)
         }
     }
 
@@ -86,17 +88,83 @@ struct StatisticsView: View {
                     }
                 }
             } label: {
-                HStack(spacing: 4) {
+                HStack(spacing: DesignSystem.Spacing.stackTight) {
                     Text("\(viewModel.selectedYear)" + String(localized: "statistics.year.suffix"))
-                        .font(.system(size: 18, weight: .semibold))
+                        .font(DesignSystem.Typography.title3)
+                        .fontWeight(.semibold)
                         .foregroundStyle(DesignSystem.Colors.textPrimary)
                     Image(systemName: "chevron.down")
-                        .font(.system(size: 10, weight: .semibold))
+                        .font(DesignSystem.Typography.small)
+                        .fontWeight(.semibold)
                         .foregroundStyle(DesignSystem.Colors.textSecondary)
                 }
             }
 
             Spacer()
+        }
+    }
+
+    // MARK: - Section headers（标题在卡片外，左侧图标）
+
+    private func statisticsSectionHeader(systemImage: String, title: String) -> some View {
+        statisticsSectionHeader(systemImage: systemImage, title: title) {
+            EmptyView()
+        }
+    }
+
+    @ViewBuilder
+    private func statisticsSectionHeader(
+        systemImage: String,
+        title: String,
+        @ViewBuilder trailing: () -> some View
+    ) -> some View {
+        HStack(alignment: .center, spacing: DesignSystem.Spacing.inlineTight) {
+            Image(systemName: systemImage)
+                .font(DesignSystem.Typography.body)
+                .fontWeight(.semibold)
+                .foregroundStyle(DesignSystem.Colors.primary)
+                .accessibilityHidden(true)
+            Text(title)
+                .font(DesignSystem.Typography.body)
+                .fontWeight(.semibold)
+                .foregroundStyle(DesignSystem.Colors.textPrimary)
+                .accessibilityAddTraits(.isHeader)
+            Spacer(minLength: DesignSystem.Spacing.inlineTight)
+            trailing()
+        }
+    }
+
+    /// 与环形图等大卡风格一致的「空状态」底（圈层 / 排行等无数据时）。
+    @ViewBuilder
+    private func statisticsEmptyStateCard(@ViewBuilder content: () -> some View) -> some View {
+        content()
+            .frame(maxWidth: .infinity, alignment: .center)
+            .padding(.vertical, DesignSystem.Spacing.stackLoose)
+            .background(DesignSystem.Colors.bgSurface)
+            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+            .overlay(
+                RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
+                    .stroke(DesignSystem.Colors.primary.opacity(0.05), lineWidth: 1)
+            )
+    }
+
+    private var heroSection: some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.block) {
+            statisticsSectionHeader(
+                systemImage: "square.grid.2x2.fill",
+                title: String(localized: "statistics.hero.overviewTitle")
+            ) {
+                if let yoyText = viewModel.formatYearOverYearChange() {
+                    Text(yoyText)
+                        .font(DesignSystem.Typography.caption)
+                        .foregroundStyle(DesignSystem.Colors.primary)
+                        .padding(.horizontal, DesignSystem.Spacing.block)
+                        .padding(.vertical, DesignSystem.Spacing.dense)
+                        .background(DesignSystem.Colors.bgTag)
+                        .clipShape(Capsule())
+                }
+            }
+            heroCard
         }
     }
 
@@ -106,85 +174,158 @@ struct StatisticsView: View {
         VStack(alignment: .leading, spacing: 0) {
             Text(String(localized: "statistics.hero.netBalance"))
                 .font(DesignSystem.Typography.caption)
-                .foregroundStyle(.white.opacity(0.7))
-                .padding(.bottom, 4)
+                .foregroundStyle(DesignSystem.Colors.textSecondary)
+                .padding(.bottom, DesignSystem.Spacing.dense)
 
-            Text("¥" + viewModel.formatAmountWithComma(viewModel.netValue))
-                .font(.system(size: 36, weight: .bold))
-                .foregroundStyle(.white)
-                .padding(.bottom, 24)
+            Text("¥ " + viewModel.formatAmountWithComma(viewModel.netValue))
+                .font(DesignSystem.Typography.title1)
+                .fontWeight(.bold)
+                .foregroundStyle(DesignSystem.Colors.primary)
+                .padding(.bottom, DesignSystem.Spacing.stackLoose)
 
-            Rectangle()
-                .fill(.white.opacity(0.2))
-                .frame(height: 1)
+            heroDivider
 
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(String(localized: "statistics.hero.totalIncome"))
-                        .font(DesignSystem.Typography.small)
-                        .foregroundStyle(.white.opacity(0.7))
-                    Text("¥" + viewModel.formatAmountWithComma(viewModel.totalIncome))
-                        .font(DesignSystem.Typography.title3)
-                        .foregroundStyle(.white)
-                }
-
-                Spacer()
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(String(localized: "statistics.hero.totalExpense"))
-                        .font(DesignSystem.Typography.small)
-                        .foregroundStyle(.white.opacity(0.7))
-                    Text("¥" + viewModel.formatAmountWithComma(viewModel.totalExpense))
-                        .font(DesignSystem.Typography.title3)
-                        .foregroundStyle(.white)
-                }
+            HStack(spacing: DesignSystem.Spacing.block) {
+                heroMetricCell(
+                    title: String(localized: "statistics.hero.totalIncome"),
+                    value: "¥ " + viewModel.formatAmountWithComma(viewModel.totalIncome)
+                )
+                heroVerticalDivider
+                heroMetricCell(
+                    title: String(localized: "statistics.hero.totalExpense"),
+                    value: "¥ " + viewModel.formatAmountWithComma(viewModel.totalExpense)
+                )
+                heroVerticalDivider
+                heroMetricCell(
+                    title: String(localized: "statistics.hero.totalExchange"),
+                    value: "¥ " + viewModel.formatAmountWithComma(viewModel.totalExchangeAmount)
+                )
             }
-            .padding(.top, 16)
+            .padding(.vertical, DesignSystem.Spacing.cardPaddingSmall)
 
-            HStack(spacing: 6) {
-                Image(systemName: "person.2")
-                    .font(.system(size: 12))
-                    .foregroundStyle(.white.opacity(0.7))
-                Text(String(format: String(localized: "statistics.hero.peopleTxSummary"), viewModel.contactCount, viewModel.totalRecordCount))
-                    .font(DesignSystem.Typography.caption)
-                    .foregroundStyle(.white.opacity(0.7))
+            heroDivider
+
+            HStack(spacing: DesignSystem.Spacing.block) {
+                heroMetricCell(
+                    title: String(localized: "statistics.hero.interactions"),
+                    value: String(format: String(localized: "statistics.hero.interactions.value"), viewModel.totalRecordCount)
+                )
+                heroVerticalDivider
+                heroMetricCell(
+                    title: String(localized: "statistics.hero.covered"),
+                    value: String(format: String(localized: "statistics.hero.covered.value"), viewModel.contactCount)
+                )
+                heroVerticalDivider
+                heroMetricCell(
+                    title: String(localized: "statistics.hero.nonFinancial"),
+                    value: String(
+                        format: String(localized: "statistics.hero.nonFinancial.value"),
+                        viewModel.nonFinancialInteractionCount
+                    )
+                )
             }
-            .padding(.top, 12)
+            .padding(.vertical, DesignSystem.Spacing.cardPaddingSmall)
+
+            heroDivider
+
+            HStack(spacing: DesignSystem.Spacing.block) {
+                heroStatusItem(
+                    title: String(localized: "statistics.hero.relationship.close"),
+                    value: viewModel.relationshipHealthSummary.close
+                )
+                heroStatusItem(
+                    title: String(localized: "statistics.hero.relationship.stable"),
+                    value: viewModel.relationshipHealthSummary.stable
+                )
+                heroStatusItem(
+                    title: String(localized: "statistics.hero.relationship.distant"),
+                    value: viewModel.relationshipHealthSummary.distant
+                )
+                heroStatusItem(
+                    title: String(localized: "statistics.hero.relationship.needsAttention"),
+                    value: viewModel.relationshipHealthSummary.needsAttention,
+                    valueColor: DesignSystem.Colors.accentGold
+                )
+            }
+            .padding(.vertical, DesignSystem.Spacing.cardPaddingSmall)
         }
-        .padding(24)
+        .padding(DesignSystem.Spacing.heroCardPadding)
         .background(
             ZStack {
-                DesignSystem.Colors.primary
+                DesignSystem.Colors.bgSurface
 
                 Circle()
-                    .fill(.white.opacity(0.1))
-                    .frame(width: 128, height: 128)
-                    .blur(radius: 20)
-                    .offset(x: 80, y: -80)
+                    .fill(DesignSystem.Colors.primary.opacity(0.08))
+                    .frame(width: DesignSystem.Layout.heroDecorationDiameter, height: DesignSystem.Layout.heroDecorationDiameter)
+                    .blur(radius: DesignSystem.Layout.heroDecorationBlur)
+                    .offset(x: DesignSystem.Layout.heroDecorationOffset, y: -DesignSystem.Layout.heroDecorationOffset)
             }
         )
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
-        .shadow(color: DesignSystem.Colors.primary.opacity(0.2), radius: 16, y: 8)
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
+                .stroke(DesignSystem.Colors.primary.opacity(0.05), lineWidth: 1)
+        )
+    }
+
+    private var heroDivider: some View {
+        Rectangle()
+            .fill(DesignSystem.Colors.separator.opacity(0.7))
+            .frame(height: 1)
+    }
+
+    private var heroVerticalDivider: some View {
+        Rectangle()
+            .fill(DesignSystem.Colors.separator.opacity(0.8))
+            .frame(width: 1, height: 36)
+    }
+
+    private func heroMetricCell(title: String, value: String) -> some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.stackTight) {
+            Text(title)
+                .font(DesignSystem.Typography.small)
+                .foregroundStyle(DesignSystem.Colors.textSecondary)
+            Text(value)
+                .font(DesignSystem.Typography.title3)
+                .foregroundStyle(DesignSystem.Colors.textPrimary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func heroStatusItem(
+        title: String,
+        value: Int,
+        valueColor: Color = DesignSystem.Colors.primary
+    ) -> some View {
+        HStack(spacing: DesignSystem.Spacing.stackTight) {
+            Text(title)
+                .font(DesignSystem.Typography.caption)
+                .foregroundStyle(DesignSystem.Colors.textSecondary)
+            Text("\(value)")
+                .font(DesignSystem.Typography.title3)
+                .foregroundStyle(valueColor)
+        }
+    }
+
+    private var barChartOuterSection: some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.block) {
+            statisticsSectionHeader(systemImage: "chart.bar.fill", title: String(localized: "statistics.chart.trend"))
+            barChartCard
+                .overlay {
+                    ProLockedOverlay(isLocked: shouldLockProContent) {
+                        sheetRoute = .proMembership
+                    }
+                }
+        }
     }
 
     // MARK: - Bar Chart
 
-    private var barChartSection: some View {
+    private var barChartCard: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack(spacing: 8) {
-                RoundedRectangle(cornerRadius: 2)
-                    .fill(DesignSystem.Colors.primary)
-                    .frame(width: 4, height: 16)
-                Text(String(localized: "statistics.chart.trend"))
-                    .font(DesignSystem.Typography.caption)
-                    .fontWeight(.bold)
-                    .foregroundStyle(DesignSystem.Colors.textPrimary)
-            }
-            .padding(.bottom, 24)
-
             let bars = viewModel.chartBars
             let maxCombined = max(bars.map { $0.income + $0.expense }.max() ?? 1, 1)
-            let chartHeight: CGFloat = 160
+            let chartHeight = DesignSystem.Layout.statisticsBarChartHeight
 
             if bars.isEmpty {
                 Text(String(localized: "statistics.chart.noData"))
@@ -193,7 +334,7 @@ struct StatisticsView: View {
                     .frame(maxWidth: .infinity, alignment: .center)
                     .frame(height: chartHeight)
             } else {
-                HStack(alignment: .bottom, spacing: 8) {
+                HStack(alignment: .bottom, spacing: DesignSystem.Spacing.inlineTight) {
                     ForEach(Array(bars.enumerated()), id: \.offset) { index, bar in
                         if let period = viewModel.periodForBarIndex(index) {
                             NavigationLink(value: AppRoute.periodDetail(period)) {
@@ -205,11 +346,11 @@ struct StatisticsView: View {
                         }
                     }
                 }
-                .padding(.horizontal, 8)
+                .padding(.horizontal, DesignSystem.Spacing.inlineTight)
             }
 
-            HStack(spacing: 24) {
-                HStack(spacing: 8) {
+            HStack(spacing: DesignSystem.Spacing.stackLoose) {
+                HStack(spacing: DesignSystem.Spacing.inlineTight) {
                     Circle()
                         .fill(DesignSystem.Colors.primary.opacity(0.4))
                         .frame(width: 10, height: 10)
@@ -217,7 +358,7 @@ struct StatisticsView: View {
                         .font(DesignSystem.Typography.small)
                         .foregroundStyle(DesignSystem.Colors.textSecondary)
                 }
-                HStack(spacing: 8) {
+                HStack(spacing: DesignSystem.Spacing.inlineTight) {
                     Circle()
                         .fill(DesignSystem.Colors.primary)
                         .frame(width: 10, height: 10)
@@ -227,9 +368,9 @@ struct StatisticsView: View {
                 }
             }
             .frame(maxWidth: .infinity)
-            .padding(.top, 24)
+            .padding(.top, DesignSystem.Spacing.heroCardPadding)
         }
-        .padding(20)
+        .padding(DesignSystem.Spacing.cardPadding)
         .background(DesignSystem.Colors.bgSurface)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
         .overlay(
@@ -238,21 +379,49 @@ struct StatisticsView: View {
         )
     }
 
-    // MARK: - Event Distribution
+    private var recordTypeCompositionSection: some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.block) {
+            statisticsSectionHeader(systemImage: "circle.lefthalf.filled", title: String(localized: "statistics.recordTypeComposition"))
+            NavigationLink(value: AppRoute.recordTypeComposition(year: viewModel.selectedYear)) {
+                recordTypeCompositionCard
+                    .overlay {
+                        ProLockedOverlay(isLocked: shouldLockProContent) {
+                            sheetRoute = .proMembership
+                        }
+                    }
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    private var eventDistributionSection: some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.block) {
+            statisticsSectionHeader(systemImage: "calendar.badge.clock", title: String(localized: "statistics.eventDistribution"))
+            NavigationLink(value: AppRoute.eventTypeComposition(year: viewModel.selectedYear)) {
+                eventDistributionCard
+                    .overlay {
+                        ProLockedOverlay(isLocked: shouldLockProContent) {
+                            sheetRoute = .proMembership
+                        }
+                    }
+            }
+            .buttonStyle(.plain)
+        }
+    }
 
     private func barColumn(bar: (label: String, income: Double, expense: Double), maxCombined: Double, chartHeight: CGFloat) -> some View {
-        VStack(spacing: 4) {
-            VStack(spacing: 2) {
+        VStack(spacing: DesignSystem.Spacing.stackTight) {
+            VStack(spacing: DesignSystem.Spacing.stackTight / 2) {
                 Spacer(minLength: 0)
 
                 if bar.income > 0 {
-                    RoundedRectangle(cornerRadius: 2)
+                    RoundedRectangle(cornerRadius: DesignSystem.Radius.chartBar)
                         .fill(DesignSystem.Colors.primary.opacity(0.4))
                         .frame(height: chartHeight * bar.income / maxCombined)
                 }
 
                 if bar.expense > 0 {
-                    RoundedRectangle(cornerRadius: 2)
+                    RoundedRectangle(cornerRadius: DesignSystem.Radius.chartBar)
                         .fill(DesignSystem.Colors.primary)
                         .frame(height: chartHeight * bar.expense / maxCombined)
                 }
@@ -262,116 +431,48 @@ struct StatisticsView: View {
             Text(bar.label)
                 .font(DesignSystem.Typography.small)
                 .foregroundStyle(DesignSystem.Colors.textTertiary)
-                .textCase(.uppercase)
         }
         .frame(maxWidth: .infinity)
     }
 
-    // MARK: - Event Distribution
+    // MARK: - Event Distribution & Record Type (shared donut card)
 
     private var eventDistributionCard: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text(String(localized: "statistics.eventDistribution"))
-                .font(DesignSystem.Typography.caption)
-                .fontWeight(.bold)
-                .foregroundStyle(DesignSystem.Colors.textPrimary)
-
-            if viewModel.eventTypeDistribution.isEmpty {
-                Text(String(localized: "statistics.overview.noEventData"))
-                    .font(DesignSystem.Typography.small)
-                    .foregroundStyle(DesignSystem.Colors.textTertiary)
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.vertical, 20)
-            } else {
-                HStack(alignment: .center, spacing: 24) {
-                    if let topType = viewModel.eventTypeDistribution.first?.type {
-                        NavigationLink(value: AppRoute.eventTypeDetail(topType, year: viewModel.selectedYear)) {
-                            donutChart
-                        }
-                        .buttonStyle(.plain)
-                    } else {
-                        donutChart
-                    }
-
-                    VStack(alignment: .leading, spacing: 8) {
-                        ForEach(Array(viewModel.eventTypeDistribution.prefix(4).enumerated()), id: \.offset) { index, item in
-                            NavigationLink(value: AppRoute.eventTypeDetail(item.type, year: viewModel.selectedYear)) {
-                                HStack(spacing: 6) {
-                                    Circle()
-                                        .fill(DesignSystem.Colors.primary.opacity(donutOpacity(for: index)))
-                                        .frame(width: 8, height: 8)
-                                    Text(viewModel.eventTypeName(for: item.type))
-                                        .font(DesignSystem.Typography.small)
-                                        .foregroundStyle(DesignSystem.Colors.textPrimary)
-                                    Spacer()
-                                    Text(String(format: "%.0f%%", item.percentage * 100))
-                                        .font(DesignSystem.Typography.small)
-                                        .fontWeight(.medium)
-                                        .foregroundStyle(DesignSystem.Colors.textPrimary)
-                                    Image(systemName: "chevron.right")
-                                        .font(.system(size: 10))
-                                        .foregroundStyle(DesignSystem.Colors.textTertiary)
-                                }
-                                .contentShape(Rectangle())
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                }
+        DonutDistributionCard(
+            title: String(localized: "statistics.eventDistribution"),
+            showsTitleHeader: false,
+            emptyMessage: String(localized: "statistics.overview.noEventData"),
+            isEmpty: viewModel.eventTypeDistribution.isEmpty,
+            ringSegments: eventDonutRingSegments,
+            centerTopLabel: String(localized: "statistics.eventDistribution.largest"),
+            centerMainText: viewModel.eventTypeDistribution.first.map { viewModel.eventTypeName(for: $0.type) } ?? "",
+            centerMainUsesLargeValueStyle: false,
+            donutNavigationRoute: nil
+        ) {
+            ForEach(Array(viewModel.eventTypeDistribution.prefix(4).enumerated()), id: \.offset) { index, item in
+                donutDistributionListRow(
+                    swatchColor: DesignSystem.Colors.primary.opacity(donutOpacity(for: index)),
+                    title: viewModel.eventTypeName(for: item.type),
+                    percentage: item.percentage,
+                    showsChevron: false
+                )
             }
         }
-        .padding(20)
-        .background(DesignSystem.Colors.bgSurface)
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
-        .overlay(
-            RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
-                .stroke(DesignSystem.Colors.primary.opacity(0.05), lineWidth: 1)
-        )
     }
 
-    private var donutChart: some View {
-        ZStack {
-            Circle()
-                .stroke(DesignSystem.Colors.primary.opacity(0.1), lineWidth: 10)
-
-            ForEach(Array(donutSegments.enumerated()), id: \.offset) { _, segment in
-                Circle()
-                    .trim(from: segment.start, to: segment.end)
-                    .stroke(
-                        DesignSystem.Colors.primary.opacity(donutOpacity(for: segment.index)),
-                        style: StrokeStyle(lineWidth: 10, lineCap: .butt)
-                    )
-                    .rotationEffect(.degrees(-90))
-            }
-
-            VStack(spacing: 2) {
-                Text(String(localized: "statistics.eventDistribution.largest"))
-                    .font(.system(size: 9, weight: .medium))
-                    .foregroundStyle(DesignSystem.Colors.textTertiary)
-                if let topType = viewModel.eventTypeDistribution.first {
-                    Text(viewModel.eventTypeName(for: topType.type))
-                        .font(DesignSystem.Typography.caption)
-                        .fontWeight(.bold)
-                        .foregroundStyle(DesignSystem.Colors.textPrimary)
-                }
-            }
-        }
-        .frame(width: 140, height: 140)
-    }
-
-    private struct DonutSegment {
-        let start: CGFloat
-        let end: CGFloat
-        let index: Int
-    }
-
-    private var donutSegments: [DonutSegment] {
+    private var eventDonutRingSegments: [DonutRingSegment] {
         let items = Array(viewModel.eventTypeDistribution.prefix(4))
-        var segments: [DonutSegment] = []
+        var segments: [DonutRingSegment] = []
         var current: CGFloat = 0
         for (index, item) in items.enumerated() {
             let end = current + CGFloat(item.percentage)
-            segments.append(DonutSegment(start: current, end: min(end, 1.0), index: index))
+            segments.append(
+                DonutRingSegment(
+                    start: current,
+                    end: min(end, 1.0),
+                    color: DesignSystem.Colors.primary.opacity(donutOpacity(for: index))
+                )
+            )
             current = end
         }
         return segments
@@ -386,27 +487,24 @@ struct StatisticsView: View {
         }
     }
 
-    // MARK: - Heatmap
+    // MARK: - Heatmap（暂不展示，整段注释保留）
+
+    /*
+    private var heatmapOuterSection: some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.block) {
+            statisticsSectionHeader(systemImage: "square.grid.3x3.fill", title: String(localized: "statistics.heatmap.title")) {
+            }
+            heatmapCard
+        }
+    }
 
     private var heatmapCard: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack {
-                Text(String(localized: "statistics.heatmap.title"))
-                    .font(DesignSystem.Typography.caption)
-                    .fontWeight(.bold)
-                    .foregroundStyle(DesignSystem.Colors.textPrimary)
-                Spacer()
-                Text(String(localized: "statistics.heatmap.subtitle"))
-                    .font(.system(size: 10, weight: .medium))
-                    .italic()
-                    .foregroundStyle(DesignSystem.Colors.textTertiary)
-            }
-
-            HStack(spacing: 6) {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.block) {
+            HStack(spacing: DesignSystem.Spacing.dense) {
                 ForEach(0..<12, id: \.self) { month in
-                    VStack(spacing: 6) {
+                    VStack(spacing: DesignSystem.Spacing.dense) {
                         ForEach(0..<4, id: \.self) { week in
-                            RoundedRectangle(cornerRadius: 2)
+                            RoundedRectangle(cornerRadius: DesignSystem.Radius.chartBar)
                                 .fill(DesignSystem.Colors.primary.opacity(
                                     viewModel.heatmapOpacity(viewModel.heatmapGrid[month][week])
                                 ))
@@ -415,8 +513,19 @@ struct StatisticsView: View {
                     }
                 }
             }
+
+            HStack(spacing: DesignSystem.Spacing.dense) {
+                ForEach(0..<12, id: \.self) { m in
+                    Text("\(m + 1)")
+                        .font(DesignSystem.Typography.small)
+                        .foregroundStyle(DesignSystem.Colors.textTertiary)
+                        .frame(maxWidth: .infinity)
+                }
+            }
+
+            HeatmapLegendRow()
         }
-        .padding(20)
+        .padding(DesignSystem.Spacing.cardPadding)
         .background(DesignSystem.Colors.bgSurface)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
         .overlay(
@@ -424,25 +533,100 @@ struct StatisticsView: View {
                 .stroke(DesignSystem.Colors.primary.opacity(0.05), lineWidth: 1)
         )
     }
+    */
+
+    private var recordTypeCompositionCard: some View {
+        DonutDistributionCard(
+            title: String(localized: "statistics.recordTypeComposition"),
+            showsTitleHeader: false,
+            emptyMessage: String(localized: "statistics.overview.noEventData"),
+            isEmpty: viewModel.recordTypeDistribution.isEmpty,
+            ringSegments: recordTypeDonutRingSegments,
+            centerTopLabel: String(localized: "recordTypeComposition.yearTotal"),
+            centerMainText: "\(viewModel.totalRecordCount)",
+            centerMainUsesLargeValueStyle: true
+        ) {
+            ForEach(Array(viewModel.recordTypeDistribution.enumerated()), id: \.offset) { index, item in
+                donutDistributionListRow(
+                    swatchColor: recordTypeColor(for: index),
+                    title: item.type.displayName,
+                    percentage: item.percentage,
+                    showsChevron: false
+                )
+            }
+        }
+    }
+
+    private var recordTypeDonutRingSegments: [DonutRingSegment] {
+        let items = viewModel.recordTypeDistribution
+        var segments: [DonutRingSegment] = []
+        var current: CGFloat = 0
+        for (index, item) in items.enumerated() {
+            let end = current + CGFloat(item.percentage)
+            segments.append(
+                DonutRingSegment(
+                    start: current,
+                    end: min(end, 1.0),
+                    color: recordTypeColor(for: index)
+                )
+            )
+            current = end
+        }
+        return segments
+    }
+
+    @ViewBuilder
+    private func donutDistributionListRow(
+        swatchColor: Color,
+        title: String,
+        percentage: Double,
+        showsChevron: Bool
+    ) -> some View {
+        HStack(spacing: DesignSystem.Spacing.dense) {
+            Circle()
+                .fill(swatchColor)
+                .frame(width: DesignSystem.Spacing.inlineTight, height: DesignSystem.Spacing.inlineTight)
+            Text(title)
+                .font(DesignSystem.Typography.small)
+                .foregroundStyle(DesignSystem.Colors.textPrimary)
+            Spacer()
+            Text(String(format: "%.0f%%", percentage * 100))
+                .font(DesignSystem.Typography.small)
+                .fontWeight(.medium)
+                .foregroundStyle(DesignSystem.Colors.textPrimary)
+            if showsChevron {
+                Image(systemName: "chevron.right")
+                    .font(DesignSystem.Typography.small)
+                    .foregroundStyle(DesignSystem.Colors.textTertiary)
+            }
+        }
+        .contentShape(Rectangle())
+    }
+
+    private func recordTypeColor(for index: Int) -> Color {
+        switch index {
+        case 0: return DesignSystem.Colors.primary
+        case 1: return DesignSystem.Colors.primary.opacity(0.55)
+        case 2: return DesignSystem.Colors.textTertiary.opacity(0.5)
+        default: return DesignSystem.Colors.textPrimary.opacity(0.7)
+        }
+    }
 
     // MARK: - Circle Analysis
 
     private var circleAnalysisSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text(String(localized: "statistics.circleAnalysis"))
-                .font(DesignSystem.Typography.caption)
-                .fontWeight(.bold)
-                .foregroundStyle(DesignSystem.Colors.textPrimary)
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.block) {
+            statisticsSectionHeader(systemImage: "circle.hexagongrid.fill", title: String(localized: "statistics.circleAnalysis"))
 
             if viewModel.circleAnalysisItems.isEmpty {
-                Text(String(localized: "statistics.overview.noEventData"))
-                    .font(DesignSystem.Typography.small)
-                    .foregroundStyle(DesignSystem.Colors.textTertiary)
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.vertical, 12)
+                statisticsEmptyStateCard {
+                    Text(String(localized: "statistics.overview.noEventData"))
+                        .font(DesignSystem.Typography.small)
+                        .foregroundStyle(DesignSystem.Colors.textTertiary)
+                }
             } else {
                 ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 12) {
+                    HStack(spacing: DesignSystem.Spacing.block) {
                         ForEach(viewModel.circleAnalysisItems) { item in
                             NavigationLink(value: AppRoute.circleDetail(item.circle, year: viewModel.selectedYear)) {
                                 circleAnalysisCard(item)
@@ -456,7 +640,7 @@ struct StatisticsView: View {
     }
 
     private func circleAnalysisCard(_ item: CircleAnalysisItem) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.stackTight) {
             Text(item.name)
                 .font(DesignSystem.Typography.small)
                 .foregroundStyle(DesignSystem.Colors.textSecondary)
@@ -476,122 +660,136 @@ struct StatisticsView: View {
                     .fontWeight(.semibold)
                     .foregroundStyle(DesignSystem.Colors.textSecondary)
             }
-            .padding(.top, 8)
+            .padding(.top, DesignSystem.Spacing.inlineTight)
 
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 2)
+                    RoundedRectangle(cornerRadius: DesignSystem.Radius.chartBar)
                         .fill(DesignSystem.Colors.primary.opacity(0.1))
                         .frame(height: 4)
 
-                    RoundedRectangle(cornerRadius: 2)
+                    RoundedRectangle(cornerRadius: DesignSystem.Radius.chartBar)
                         .fill(DesignSystem.Colors.primary)
                         .frame(width: geo.size.width * item.ratio, height: 4)
                 }
             }
             .frame(height: 4)
-            .padding(.top, 4)
+            .padding(.top, DesignSystem.Spacing.dense)
         }
-        .frame(width: 140)
-        .padding(16)
+        .frame(width: DesignSystem.Layout.circleAnalysisCardWidth)
+        .padding(DesignSystem.Spacing.cardPaddingSmall)
         .contentShape(Rectangle())
         .background(DesignSystem.Colors.bgSurface)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
         .overlay(
             RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
-                .stroke(DesignSystem.Colors.primary.opacity(0.1), lineWidth: 1)
+                .stroke(DesignSystem.Colors.primary.opacity(0.05), lineWidth: 1)
         )
     }
 
-    // MARK: - Ranking
+    // MARK: - Ranking（往来深交榜）
 
     private var rankingSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text(String(localized: "statistics.ranking.netValue"))
-                    .font(DesignSystem.Typography.caption)
-                    .fontWeight(.bold)
-                    .foregroundStyle(DesignSystem.Colors.textPrimary)
-
-                Spacer()
-
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.block) {
+            statisticsSectionHeader(systemImage: "trophy.fill", title: String(localized: "statistics.ranking.deepBondTitle")) {
                 if !viewModel.topContacts.isEmpty {
-                    NavigationLink(value: AppRoute.netValueRanking(year: viewModel.selectedYear)) {
-                        HStack(spacing: 4) {
-                            Text(String(localized: "common.viewAll"))
-                                .font(DesignSystem.Typography.small)
-                            Image(systemName: "chevron.right")
-                                .font(.system(size: 10, weight: .medium))
-                        }
+                    Text(String(localized: "statistics.ranking.topBadge"))
+                        .font(DesignSystem.Typography.small)
+                        .fontWeight(.medium)
+                        .tracking(0.6)
                         .foregroundStyle(DesignSystem.Colors.textSecondary)
-                    }
-                    .buttonStyle(.plain)
                 }
             }
 
             if viewModel.topContacts.isEmpty {
-                Text(String(localized: "statistics.overview.noRankingData"))
-                    .font(DesignSystem.Typography.small)
-                    .foregroundStyle(DesignSystem.Colors.textTertiary)
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.vertical, 20)
+                statisticsEmptyStateCard {
+                    Text(String(localized: "statistics.overview.noRankingData"))
+                        .font(DesignSystem.Typography.small)
+                        .foregroundStyle(DesignSystem.Colors.textTertiary)
+                }
             } else {
-                VStack(spacing: 10) {
+                VStack(spacing: 0) {
                     ForEach(Array(viewModel.topContacts.enumerated()), id: \.element.id) { index, item in
-                        rankingRow(index: index + 1, item: item)
+                        VStack(spacing: 0) {
+                            deepBondRankingRow(rank: index + 1, item: item)
+                            if index < viewModel.topContacts.count - 1 {
+                                rankingDividerLine
+                            }
+                        }
                     }
                 }
+                .background(DesignSystem.Colors.bgSurface)
+                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+                .overlay(
+                    RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
+                        .stroke(DesignSystem.Colors.primary.opacity(0.05), lineWidth: 1)
+                )
             }
         }
     }
 
-    private func rankingRow(index: Int, item: ContactRankingItem) -> some View {
-        NavigationLink(value: AppRoute.contactDetail(item.contact.persistentModelID)) {
-            HStack(spacing: 12) {
-                Text("\(index)")
-                    .font(DesignSystem.Typography.small)
-                    .fontWeight(.bold)
-                    .foregroundStyle(index <= 3 ? .white : DesignSystem.Colors.textTertiary)
-                    .frame(width: 24, height: 24)
-                    .background(index <= 3 ? DesignSystem.Colors.primary : DesignSystem.Colors.bgInput)
+    private var rankingDividerLine: some View {
+        Rectangle()
+            .fill(DesignSystem.Colors.separator.opacity(0.55))
+            .frame(height: 1)
+    }
+
+    private func deepBondRankingRow(rank: Int, item: ContactRankingItem) -> some View {
+        let netColor = item.netValue >= 0
+            ? DesignSystem.Colors.accentGold
+            : DesignSystem.Colors.primary
+        let rankCircleFill = rank == 1
+            ? DesignSystem.Colors.primary.opacity(0.12)
+            : DesignSystem.Colors.bgTag
+
+        return NavigationLink(value: AppRoute.contactDetail(item.contact.persistentModelID)) {
+            HStack(alignment: .center, spacing: DesignSystem.Spacing.block) {
+                Text("\(rank)")
+                    .font(DesignSystem.Typography.caption)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(DesignSystem.Colors.textPrimary)
+                    .frame(width: DesignSystem.Layout.rankBadgeSize, height: DesignSystem.Layout.rankBadgeSize)
+                    .background(rankCircleFill)
                     .clipShape(Circle())
 
-                Text(String(item.contact.name.prefix(1)))
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(DesignSystem.Colors.textSecondary)
-                    .frame(width: 48, height: 48)
-                    .background(DesignSystem.Colors.bgTag)
-                    .clipShape(Circle())
+                AvatarView(
+                    imageData: item.contact.avatar,
+                    name: item.contact.name,
+                    size: DesignSystem.Layout.avatarM,
+                    placeholderBackground: DesignSystem.Colors.bgTag
+                )
 
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: DesignSystem.Spacing.stackTight) {
                     Text(item.contact.name)
-                        .font(.system(size: 17, weight: .semibold))
+                        .font(DesignSystem.Typography.body)
+                        .fontWeight(.bold)
                         .foregroundStyle(DesignSystem.Colors.textPrimary)
-                    Text(String(format: String(localized: "statistics.ranking.count"), item.recordCount))
-                        .font(.system(size: 13))
+
+                    Text(String(format: String(localized: "statistics.ranking.deepInteractionLine"), item.recordCount))
+                        .font(DesignSystem.Typography.caption)
+                        .fontWeight(.regular)
                         .foregroundStyle(DesignSystem.Colors.textSecondary)
                 }
 
-                Spacer()
+                Spacer(minLength: DesignSystem.Spacing.inlineTight)
 
-                Text(viewModel.formatNetValue(item.netValue))
-                    .font(DesignSystem.Typography.small)
-                    .fontWeight(.medium)
-                    .foregroundStyle(DesignSystem.Colors.primary)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(DesignSystem.Colors.primary.opacity(0.1))
-                    .clipShape(Capsule())
+                VStack(alignment: .trailing, spacing: DesignSystem.Spacing.stackTight) {
+                    Text(viewModel.formatNetValue(item.netValue))
+                        .font(DesignSystem.Typography.title2)
+                        .fontWeight(.bold)
+                        .foregroundStyle(netColor)
+
+                    Text(String(localized: "statistics.ranking.netValueAmountLabel"))
+                        .font(DesignSystem.Typography.small)
+                        .foregroundStyle(DesignSystem.Colors.textTertiary)
+                }
             }
-            .padding(16)
+            .padding(.horizontal, DesignSystem.Spacing.cardPaddingSmall)
+            .padding(.vertical, DesignSystem.Spacing.block)
             .contentShape(Rectangle())
-            .background(DesignSystem.Colors.bgSurface)
-            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.input))
-            .shadow(color: DesignSystem.Colors.separator.opacity(0.2), radius: 2, y: 1)
         }
         .buttonStyle(.plain)
     }
-
 
 }
 
@@ -618,14 +816,14 @@ private func makeStatisticsPreviewContainer() -> ModelContainer? {
     [e1, e2, e3, e4].forEach { ctx.insert($0) }
 
     let records: [Record] = [
-        Record(contact: c1, event: e1, amount: 30000, direction: .received, paymentMethod: .wechat, date: cal.date(from: DateComponents(year: thisYear, month: 1, day: 15))!),
-        Record(contact: c1, event: e2, amount: 5000, direction: .given, paymentMethod: .cash, date: cal.date(from: DateComponents(year: thisYear, month: 2, day: 10))!),
-        Record(contact: c2, event: e1, amount: 28000, direction: .received, paymentMethod: .alipay, date: cal.date(from: DateComponents(year: thisYear, month: 1, day: 16))!),
-        Record(contact: c2, event: e3, amount: 12000, direction: .received, paymentMethod: .cash, date: cal.date(from: DateComponents(year: thisYear, month: 5, day: 20))!),
-        Record(contact: c3, event: e1, amount: 20000, direction: .given, paymentMethod: .wechat, date: cal.date(from: DateComponents(year: thisYear, month: 1, day: 15))!),
-        Record(contact: c3, event: e3, amount: 8000, direction: .given, paymentMethod: .cash, date: cal.date(from: DateComponents(year: thisYear, month: 5, day: 20))!),
-        Record(contact: c1, event: e4, amount: 5000, direction: .received, paymentMethod: .wechat, date: cal.date(from: DateComponents(year: thisYear, month: 8, day: 5))!),
-        Record(contact: c3, event: e4, amount: 3000, direction: .given, paymentMethod: .alipay, date: cal.date(from: DateComponents(year: thisYear, month: 8, day: 5))!),
+        Record.makeMonetaryRecord(contact: c1, event: e1, amount: 30000, direction: .received, paymentMethod: .wechat, date: cal.date(from: DateComponents(year: thisYear, month: 1, day: 15))!),
+        Record.makeMonetaryRecord(contact: c1, event: e2, amount: 5000, direction: .given, paymentMethod: .cash, date: cal.date(from: DateComponents(year: thisYear, month: 2, day: 10))!),
+        Record.makeMonetaryRecord(contact: c2, event: e1, amount: 28000, direction: .received, paymentMethod: .alipay, date: cal.date(from: DateComponents(year: thisYear, month: 1, day: 16))!),
+        Record.makeMonetaryRecord(contact: c2, event: e3, amount: 12000, direction: .received, paymentMethod: .cash, date: cal.date(from: DateComponents(year: thisYear, month: 5, day: 20))!),
+        Record.makeMonetaryRecord(contact: c3, event: e1, amount: 20000, direction: .given, paymentMethod: .wechat, date: cal.date(from: DateComponents(year: thisYear, month: 1, day: 15))!),
+        Record.makeMonetaryRecord(contact: c3, event: e3, amount: 8000, direction: .given, paymentMethod: .cash, date: cal.date(from: DateComponents(year: thisYear, month: 5, day: 20))!),
+        Record.makeMonetaryRecord(contact: c1, event: e4, amount: 5000, direction: .received, paymentMethod: .wechat, date: cal.date(from: DateComponents(year: thisYear, month: 8, day: 5))!),
+        Record.makeMonetaryRecord(contact: c3, event: e4, amount: 3000, direction: .given, paymentMethod: .alipay, date: cal.date(from: DateComponents(year: thisYear, month: 8, day: 5))!),
     ]
     records.forEach { ctx.insert($0) }
 
@@ -641,7 +839,7 @@ private func makeStatisticsPreviewContainer() -> ModelContainer? {
             .environment(SubscriptionManager.shared)
             .modelContainer(container)
         } else {
-            Text("Preview unavailable")
+            Text(String(localized: "common.preview.unavailable"))
         }
     }
 }

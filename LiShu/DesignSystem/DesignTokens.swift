@@ -22,7 +22,7 @@ public enum DesignSystem {
 
         // Border & Separator
         public static let border = Color(hexLight: "#D9CFC4", hexDark: "#3D3935")
-        public static let separator = Color(hexLight: "#D9CFC4", hexDark: "#3D3935")
+        public static let separator = border
 
         // Text
         public static let textPrimary = Color(hexLight: "#2C2C2C", hexDark: "#E6E1DC")
@@ -55,6 +55,57 @@ public enum DesignSystem {
         public static let input: CGFloat = 12
         public static let button: CGFloat = .infinity
         public static let tag: CGFloat = 8
+        /// 柱状图条、迷你进度条、热力图图例色块等细圆角
+        public static let chartBar: CGFloat = 2
+    }
+
+    // MARK: - Spacing
+    public struct Spacing {
+        public static let section: CGFloat = 28
+        public static let block: CGFloat = 12
+        /// 页面水平内边距（与导航内容区对齐）
+        public static let pageHorizontal: CGFloat = 16
+        /// 纵向大区块间距（如统计页各模块之间）
+        public static let stackLoose: CGFloat = 20
+        /// Scroll 内容底部留白
+        public static let scrollBottom: CGFloat = 24
+        /// 图标与文字、紧凑行内间距
+        public static let inlineTight: CGFloat = 8
+        /// 热力图格内等更密间距
+        public static let dense: CGFloat = 6
+        /// 两行标题/标签之间
+        public static let stackTight: CGFloat = 4
+        /// 常规卡片内边距（环形图、柱状图等）
+        public static let cardPadding: CGFloat = 20
+        /// 首屏总览等强调卡片内边距
+        public static let heroCardPadding: CGFloat = 24
+        /// 横向滑动小卡、紧凑信息块内边距
+        public static let cardPaddingSmall: CGFloat = 16
+    }
+
+    // MARK: - Layout（常用固定尺寸，避免视图内魔法数）
+    public struct Layout {
+        public static let statisticsBarChartHeight: CGFloat = 160
+        public static let rankBadgeSize: CGFloat = 28
+        /// 列表行左侧头像、事件封面等缩略图
+        public static let avatarM: CGFloat = 56
+        public static let circleAnalysisCardWidth: CGFloat = 140
+        /// 联系人详情时间轴右侧金额/状态锚点宽度
+        public static let timelineMetaWidth: CGFloat = 112
+        public static let heroDecorationDiameter: CGFloat = 128
+        public static let heroDecorationBlur: CGFloat = 20
+        public static let heroDecorationOffset: CGFloat = 80
+        public static let heatmapLegendSwatchWidth: CGFloat = 14
+        public static let heatmapLegendSwatchHeight: CGFloat = 8
+    }
+
+    // MARK: - Effects
+    public struct Effects {
+        public static let selectedFillOpacity: CGFloat = 0.1
+        public static let selectedShadowOpacity: CGFloat = 0.12
+        public static let disabledOpacity: CGFloat = 0.6
+        public static let selectedShadowRadius: CGFloat = 4
+        public static let selectedShadowYOffset: CGFloat = 2
     }
 }
 
@@ -66,7 +117,8 @@ public struct PrimaryButtonStyle: ButtonStyle {
 
     public func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 14, weight: .semibold))
+            .font(DesignSystem.Typography.caption)
+            .fontWeight(.semibold)
             .foregroundColor(.white)
             .padding(.vertical, 12)
             .padding(.horizontal, 24)
@@ -90,7 +142,8 @@ public struct SecondaryButtonStyle: ButtonStyle {
 
     public func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 14, weight: .semibold))
+            .font(DesignSystem.Typography.caption)
+            .fontWeight(.semibold)
             .foregroundColor(DesignSystem.Colors.primary)
             .padding(.vertical, 12)
             .padding(.horizontal, 24)
@@ -110,7 +163,7 @@ public struct SecondaryButtonStyle: ButtonStyle {
 public struct GhostButtonStyle: ButtonStyle {
     public func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 14, weight: .medium))
+            .font(DesignSystem.Typography.caption)
             .foregroundColor(DesignSystem.Colors.textSecondary)
             .padding(.vertical, 12)
             .padding(.horizontal, 24)

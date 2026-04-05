@@ -1,29 +1,74 @@
 import Foundation
 import SwiftData
 
+/// 待保存的新增照片（稳定 `id` 供 `ForEach` 使用）
+struct NewRecordPhotoItem: Identifiable, Equatable {
+    let id: UUID
+    let data: Data
+
+    static func == (lhs: NewRecordPhotoItem, rhs: NewRecordPhotoItem) -> Bool {
+        lhs.id == rhs.id
+    }
+}
+
+enum RecordContextSelection: String, CaseIterable {
+    case event = "event"
+    case daily = "daily"
+}
+
 @Observable
 class AddRecordViewModel {
     var editingRecord: Record?
     var direction: RecordDirection = .given
     var selectedContact: Contact?
     var selectedEvent: Event?
-    var amountText: String = ""
-    var paymentMethod: PaymentMethod = .cash
+    var contextSelection: RecordContextSelection = .event
     var date: Date = .now
     var note: String = ""
     var contactSearchText: String = ""
     var isShowingContactPicker: Bool = false
-    var eventSearchText: String = ""
-    var isShowingEventPicker: Bool = false
     /// Pending photo data from PhotosPicker, converted to RecordPhoto on save
-    var newPhotoData: [Data] = []
+    var newPhotoItems: [NewRecordPhotoItem] = []
 
-    var isCreatingNewContact: Bool = false
-    var newContactName: String = ""
+    var recordType: RecordType = .monetary
+    var relationshipWeight: RelationshipWeight = .reciprocal
 
-    var isCreatingNewEvent: Bool = false
-    var newEventName: String = ""
-    var newEventType: EventType = .other
+    // 类型专属表单状态
+    var monetaryAmount: String = ""
+    var monetaryPaymentMethod: PaymentMethod = .cash
+
+    var giftName: String = ""
+    var giftEstimatedValue: String = ""
+
+    var favorDesc: String = ""
+
+    var banquetLocation: String = ""
+    var banquetAttendeeList: String = ""
+    var banquetExtraCostNotes: String = ""
+
+    // 日常往来标签
+    var selectedDailyTag: String = ""
+    var customTagInput: String = ""
+    var isCreatingCustomTag: Bool = false
+    var customDailyTags: [String] = []
+
+    static let builtInDailyTags: [String] = [
+        String(localized: "record.dailyTag.visit"),
+        String(localized: "record.dailyTag.holiday"),
+        String(localized: "record.dailyTag.dining"),
+        String(localized: "record.dailyTag.callOn"),
+        String(localized: "record.dailyTag.helpOut"),
+        String(localized: "record.dailyTag.accompany"),
+        String(localized: "record.dailyTag.lendReturn"),
+    ]
+
+    var allDailyTags: [String] {
+        var tags = Self.builtInDailyTags
+        for tag in customDailyTags where !tags.contains(tag) {
+            tags.append(tag)
+        }
+        return tags
+    }
 
     var allContacts: [Contact] = []
     var allEvents: [Event] = []
@@ -35,39 +80,55 @@ class AddRecordViewModel {
         return allContacts.filter { $0.name.localizedCaseInsensitiveContains(contactSearchText) }
     }
 
-    var filteredEvents: [Event] {
-        if eventSearchText.isEmpty {
-            return allEvents
-        }
-        return allEvents.filter { $0.name.localizedCaseInsensitiveContains(eventSearchText) }
-    }
-
-    var amount: Double {
-        Double(amountText) ?? 0
-    }
-
     var isValid: Bool {
-        let hasContact = selectedContact != nil || (isCreatingNewContact && !newContactName.trimmingCharacters(in: .whitespaces).isEmpty)
-        let hasEvent = selectedEvent != nil || (isCreatingNewEvent && !newEventName.trimmingCharacters(in: .whitespaces).isEmpty)
-        return hasContact && hasEvent && amount > 0
+        let hasContact = selectedContact != nil
+        let hasEvent = selectedEvent != nil
+        guard hasContact else { return false }
+        if contextSelection == .event && !hasEvent {
+            return false
+        }
+        switch recordType {
+        case .monetary:  return (UserEnteredDecimal.parse(monetaryAmount) ?? 0) > 0
+        case .gift:      return !giftName.trimmingCharacters(in: .whitespaces).isEmpty
+        case .favor:     return !favorDesc.trimmingCharacters(in: .whitespaces).isEmpty
+        case .banquet:   return !banquetLocation.trimmingCharacters(in: .whitespaces).isEmpty
+        }
     }
 
     var directionLabel: String {
-        direction == .given
-            ? String(localized: "record.add.sendTo")
-            : String(localized: "record.add.receiveFrom")
+        directionTitle(for: direction)
     }
 
     var confirmButtonTitle: String {
-        direction == .given
-            ? String(localized: "record.add.confirmGiven")
-            : String(localized: "record.add.confirmReceived")
+        switch (recordType, direction) {
+        case (.monetary, .given): return String(localized: "record.confirm.monetary.given")
+        case (.monetary, .received): return String(localized: "record.confirm.monetary.received")
+        case (.gift, .given): return String(localized: "record.confirm.gift.given")
+        case (.gift, .received): return String(localized: "record.confirm.gift.received")
+        case (.favor, .given): return String(localized: "record.confirm.favor.given")
+        case (.favor, .received): return String(localized: "record.confirm.favor.received")
+        case (.banquet, .given): return String(localized: "record.confirm.banquet.given")
+        case (.banquet, .received): return String(localized: "record.confirm.banquet.received")
+        }
     }
 
     var navigationTitle: String {
         direction == .given
             ? String(localized: "record.add.titleGiven")
             : String(localized: "record.add.titleReceived")
+    }
+
+    func directionTitle(for direction: RecordDirection) -> String {
+        switch (recordType, direction) {
+        case (.monetary, .given): return String(localized: "record.direction.monetary.given")
+        case (.monetary, .received): return String(localized: "record.direction.monetary.received")
+        case (.gift, .given): return String(localized: "record.direction.gift.given")
+        case (.gift, .received): return String(localized: "record.direction.gift.received")
+        case (.favor, .given): return String(localized: "record.direction.favor.given")
+        case (.favor, .received): return String(localized: "record.direction.favor.received")
+        case (.banquet, .given): return String(localized: "record.direction.banquet.given")
+        case (.banquet, .received): return String(localized: "record.direction.banquet.received")
+        }
     }
 
     func loadData(context: ModelContext) {
@@ -81,10 +142,30 @@ class AddRecordViewModel {
                 sortBy: [SortDescriptor(\.date, order: .reverse)]
             )
             allEvents = try context.fetch(eventDescriptor)
+
+            // 加载已有记录中的自定义标签（仅拉取 contextTag 非空的行，避免全表扫描）
+            var tagDescriptor = FetchDescriptor<Record>(
+                predicate: #Predicate<Record> { !$0.contextTag.isEmpty }
+            )
+            tagDescriptor.propertiesToFetch = [\.contextTag]
+            let tagRecords = try context.fetch(tagDescriptor)
+            let existingTags = Set(tagRecords.map(\.contextTag))
+            customDailyTags = existingTags.filter { !Self.builtInDailyTags.contains($0) }.sorted()
         } catch {
             allContacts = []
             allEvents = []
         }
+    }
+
+    func addCustomTag() {
+        let trimmed = customTagInput.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        if !customDailyTags.contains(trimmed) && !Self.builtInDailyTags.contains(trimmed) {
+            customDailyTags.append(trimmed)
+        }
+        selectedDailyTag = trimmed
+        customTagInput = ""
+        isCreatingCustomTag = false
     }
 
     func configure(direction: RecordDirection?, contactID: PersistentIdentifier?, context: ModelContext) {
@@ -100,66 +181,103 @@ class AddRecordViewModel {
         editingRecord = record
         direction = record.direction
         selectedContact = record.contact
-        selectedEvent = record.event  // may be nil for CloudKit-synced orphan records
-        amountText = record.amount == Double(Int(record.amount)) ? String(Int(record.amount)) : String(record.amount)
-        paymentMethod = record.paymentMethod
+        selectedEvent = record.event
+        contextSelection = record.event == nil ? .daily : .event
+        selectedDailyTag = record.contextTag
         date = record.date
         note = record.note
+        recordType = record.recordType
+        relationshipWeight = record.relationshipWeight
+
+        switch record.resolvedTypeData {
+        case .monetary(let d):
+            monetaryAmount = d.amount == Double(Int(d.amount)) ? String(Int(d.amount)) : String(d.amount)
+            monetaryPaymentMethod = PaymentMethod(rawValue: d.paymentMethod) ?? .cash
+        case .gift(let d):
+            giftName = d.giftName
+            if let v = d.estimatedValue {
+                giftEstimatedValue = v == Double(Int(v)) ? String(Int(v)) : String(v)
+            } else {
+                giftEstimatedValue = ""
+            }
+        case .favor(let d):
+            favorDesc = d.description
+        case .banquet(let d):
+            banquetLocation = d.location
+            banquetAttendeeList = d.attendeeList
+            banquetExtraCostNotes = d.extraCostNotes
+        }
     }
 
-    private func resolveContact(context: ModelContext) -> Contact? {
-        if let contact = selectedContact {
-            return contact
+    func buildTypeData() -> RecordTypeData {
+        switch recordType {
+        case .monetary:
+            let amtStr = monetaryAmount.trimmingCharacters(in: .whitespacesAndNewlines)
+            let returned = editingRecord?.resolvedReturnedAmount ?? 0
+            return .monetary(MonetaryData(
+                amount: UserEnteredDecimal.parse(amtStr) ?? 0,
+                paymentMethod: monetaryPaymentMethod.rawValue,
+                returnedAmount: returned
+            ))
+        case .gift:
+            let name = giftName.trimmingCharacters(in: .whitespacesAndNewlines)
+            let estStr = giftEstimatedValue.trimmingCharacters(in: .whitespacesAndNewlines)
+            let est: Double? = estStr.isEmpty ? nil : UserEnteredDecimal.parse(estStr)
+            return .gift(GiftData(giftName: name, estimatedValue: est))
+        case .favor:
+            let desc = favorDesc.trimmingCharacters(in: .whitespacesAndNewlines)
+            return .favor(FavorData(description: desc))
+        case .banquet:
+            return .banquet(BanquetData(
+                location: banquetLocation.trimmingCharacters(in: .whitespacesAndNewlines),
+                attendeeList: banquetAttendeeList.trimmingCharacters(in: .whitespacesAndNewlines),
+                extraCostNotes: banquetExtraCostNotes.trimmingCharacters(in: .whitespacesAndNewlines)
+            ))
         }
-        if isCreatingNewContact {
-            let trimmed = newContactName.trimmingCharacters(in: .whitespaces)
-            guard !trimmed.isEmpty else { return nil }
-            let contact = Contact(name: trimmed)
-            context.insert(contact)
-            return contact
-        }
-        return nil
+    }
+
+    private func resolveContact(context _: ModelContext) -> Contact? {
+        selectedContact
     }
 
     private func resolveEvent(context: ModelContext) -> Event? {
-        if let event = selectedEvent {
-            return event
+        guard contextSelection == .event else {
+            return nil
         }
-        if isCreatingNewEvent {
-            let trimmed = newEventName.trimmingCharacters(in: .whitespaces)
-            guard !trimmed.isEmpty else { return nil }
-            let event = Event(name: trimmed, type: newEventType)
-            context.insert(event)
-            return event
-        }
-        return nil
+        return selectedEvent
     }
 
     func save(context: ModelContext) -> Bool {
         guard isValid,
-              let contact = resolveContact(context: context),
-              let event = resolveEvent(context: context) else { return false }
+              let contact = resolveContact(context: context) else { return false }
+
+        let event = resolveEvent(context: context)
+
+        let typeData = buildTypeData()
+
+        let resolvedTag = contextSelection == .daily ? selectedDailyTag : ""
 
         if let existing = editingRecord {
             existing.contact = contact
             existing.event = event
-            existing.amount = amount
             existing.direction = direction
-            existing.paymentMethod = paymentMethod
             existing.note = note
             existing.date = date
-            existing.updateStatus()
+            existing.recordType = recordType
+            existing.relationshipWeight = relationshipWeight
+            existing.contextTag = resolvedTag
+            existing.applyTypeData(typeData)
 
-            for data in newPhotoData {
-                let photo = RecordPhoto(record: existing, imageData: data)
+            for item in newPhotoItems {
+                let photo = RecordPhoto(record: existing, imageData: item.data)
                 context.insert(photo)
             }
-            newPhotoData = []
+            newPhotoItems = []
 
             do {
                 try context.save()
                 NotificationManager.shared.cancelReturnGiftReminder(record: existing)
-                if existing.direction == .given, existing.status != .settled {
+                if existing.isMonetary, existing.direction == .given, !existing.hasReturnedGift {
                     NotificationManager.shared.scheduleReturnGiftReminder(record: existing)
                 }
                 return true
@@ -170,24 +288,26 @@ class AddRecordViewModel {
             let record = Record(
                 contact: contact,
                 event: event,
-                amount: amount,
                 direction: direction,
-                paymentMethod: paymentMethod,
                 note: note,
-                date: date
+                date: date,
+                recordType: recordType,
+                relationshipWeight: relationshipWeight
             )
+            record.contextTag = resolvedTag
+            record.applyTypeData(typeData)
 
             context.insert(record)
 
-            for data in newPhotoData {
-                let photo = RecordPhoto(record: record, imageData: data)
+            for item in newPhotoItems {
+                let photo = RecordPhoto(record: record, imageData: item.data)
                 context.insert(photo)
             }
-            newPhotoData = []
+            newPhotoItems = []
 
             do {
                 try context.save()
-                if record.direction == .given, record.status != .settled {
+                if record.isMonetary, record.direction == .given, !record.hasReturnedGift {
                     NotificationManager.shared.scheduleReturnGiftReminder(record: record)
                 }
                 return true

@@ -40,12 +40,19 @@ struct LiShuApp: App {
         ])
 
         let icloudEnabled = AppSettings.shared.icloudSyncEnabled
+        let snapshotScreenshot = DemoDataSeeding.isFastlaneSnapshotMode
 
         ensureApplicationSupportDirectoryExists()
 
         do {
             let config: ModelConfiguration
-            if icloudEnabled {
+            if snapshotScreenshot {
+                config = ModelConfiguration(
+                    schema: schema,
+                    isStoredInMemoryOnly: true,
+                    cloudKitDatabase: .none
+                )
+            } else if icloudEnabled {
                 config = ModelConfiguration(
                     schema: schema,
                     isStoredInMemoryOnly: false,
@@ -59,6 +66,10 @@ struct LiShuApp: App {
                 )
             }
             sharedModelContainer = try ModelContainer(for: schema, configurations: [config])
+            if snapshotScreenshot {
+                DemoDataSeeding.insertSampleData(context: sharedModelContainer.mainContext, attachDemoMedia: true)
+            }
+            RecordTypeStorageNormalizer.runMigrationIfNeeded(context: sharedModelContainer.mainContext)
         } catch {
             fatalError("Could not create ModelContainer: \(error)")
         }

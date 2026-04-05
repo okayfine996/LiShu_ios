@@ -1,0 +1,28 @@
+scheme("LiShu")
+project("./LiShu.xcodeproj")
+
+# 与 Fastfile `screenshots` lane 一致：仅跑 App Store 截图用例，避免裸跑 snapshot 时执行整套 UITest
+test_target_name("LiShuUITests")
+only_testing(["LiShuUITests/AppStoreScreenshotTests"])
+
+# 须本机 Xcode 已安装 iOS 26.1 Simulator Runtime，且存在「iPhone 17 Pro Max」模拟器
+ios_version("26.1")
+
+devices([
+  "iPhone 17 Pro Max"
+])
+
+languages([
+  "zh-Hans"
+])
+
+output_directory("./fastlane/screenshots")
+clear_previous_screenshots(true)
+override_status_bar(true)
+stop_after_first_error(true)
+reinstall_app(true)
+erase_simulator(true)
+localize_simulator(true)
+number_of_retries(1)
+# 单次 xcodebuild 多 destination 在部分环境下会报 FBSApplicationLibrary nil（误尝试启动 UITest bundle）
+concurrent_simulators(false)

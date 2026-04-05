@@ -21,7 +21,8 @@ struct ExportImportIntegrationTests {
             paymentMethod: .wechat,
             returnedAmount: 0,
             note: "新婚快乐",
-            date: Date(timeIntervalSince1970: 1772000000)
+            date: Date(timeIntervalSince1970: 1772000000),
+            relationshipWeight: .support
         )
         db.context.insert(record)
         try db.context.save()
@@ -42,8 +43,159 @@ struct ExportImportIntegrationTests {
 
         let importedRecords = try importDB.context.fetch(FetchDescriptor<Record>())
         #expect(importedRecords.count == 1)
-        #expect(importedRecords[0].amount == 888)
+        #expect(importedRecords[0].monetaryAmount == 888)
         #expect(importedRecords[0].contact?.name == "张三")
+        #expect(importedRecords[0].relationshipWeight == .support)
+    }
+
+    @Test func testCSVExportImportRoundTripNonMonetary() throws {
+        let db = try TestDB()
+        let contact = SampleData.contact(name: "李四")
+        let event = SampleData.event(name: "搬家帮忙", type: .other)
+        db.context.insert(contact)
+        db.context.insert(event)
+
+        let record = Record(
+            contact: contact,
+            event: event,
+            amount: 0,
+            direction: .given,
+            paymentMethod: .cash,
+            returnedAmount: 0,
+            note: "",
+            date: Date(timeIntervalSince1970: 1772000000),
+            recordType: .favor,
+            relationshipWeight: .kindness
+        )
+        record.applyTypeData(.favor(FavorData(description: "帮忙搬家两天")))
+        db.context.insert(record)
+        try db.context.save()
+
+        let csv = try ExportService.exportCSV(context: db.context)
+        #expect(csv.contains("李四"))
+        #expect(csv.contains("帮忙搬家两天"))
+
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("test_nonmonetary_roundtrip.csv")
+        try csv.write(to: tempURL, atomically: true, encoding: .utf8)
+        defer { try? FileManager.default.removeItem(at: tempURL) }
+
+        let importDB = try TestDB()
+        let result = try ExportService.importCSV(url: tempURL, context: importDB.context)
+
+        #expect(result.imported == 1)
+        #expect(result.errors == 0)
+
+        let importedRecords = try importDB.context.fetch(FetchDescriptor<Record>())
+        #expect(importedRecords.count == 1)
+        #expect(importedRecords[0].recordType == .favor)
+        #expect(importedRecords[0].relationshipWeight == .kindness)
+        #expect(importedRecords[0].resolvedDescription == "帮忙搬家两天")
+        #expect(importedRecords[0].resolvedDisplayAmount == 0)
+    }
+
+    @Test func testCSVExportImportRoundTripBanquet() throws {
+        let db = try TestDB()
+        let contact = SampleData.contact(name: "王五")
+        db.context.insert(contact)
+
+        let record = Record(
+            contact: contact,
+            event: nil,
+            direction: .given,
+            note: "记得下次按同档次回请",
+            date: Date(timeIntervalSince1970: 1772000300),
+            recordType: .banquet,
+            relationshipWeight: .support
+        )
+        record.applyTypeData(.banquet(BanquetData(
+            location: "兰亭包厢，商务档次",
+            attendeeList: "主客外还有两位同事陪同",
+            extraCostNotes: "席间开了两瓶酒"
+        )))
+        db.context.insert(record)
+        try db.context.save()
+
+        let csv = try ExportService.exportCSV(context: db.context)
+        #expect(csv.contains("王五"))
+        #expect(csv.contains("宴请"))
+        #expect(csv.contains("兰亭包厢，商务档次"))
+
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("test_banquet_roundtrip.csv")
+        try csv.write(to: tempURL, atomically: true, encoding: .utf8)
+        defer { try? FileManager.default.removeItem(at: tempURL) }
+
+        let importDB = try TestDB()
+        let result = try ExportService.importCSV(url: tempURL, context: importDB.context)
+
+        #expect(result.imported == 1)
+        #expect(result.errors == 0)
+
+        let importedRecords = try importDB.context.fetch(FetchDescriptor<Record>())
+        #expect(importedRecords.count == 1)
+        #expect(importedRecords[0].recordType == .banquet)
+        #expect(importedRecords[0].banquetData?.location == "兰亭包厢，商务档次")
+        #expect(importedRecords[0].banquetData?.attendeeList == "主客外还有两位同事陪同")
+        #expect(importedRecords[0].banquetData?.extraCostNotes == "席间开了两瓶酒")
+    }
+
+    @Test func testCSVExportImportRoundTripWithoutEvent() throws {
+        let db = try TestDB()
+        let contact = SampleData.contact(name: "无事件联系人")
+        db.context.insert(contact)
+
+        let record = Record(
+            contact: contact,
+            event: nil,
+            amount: 520,
+            direction: .given,
+            paymentMethod: .cash,
+            returnedAmount: 0,
+            note: "日常往来",
+            date: Date(timeIntervalSince1970: 1772000200)
+        )
+        db.context.insert(record)
+        try db.context.save()
+
+        let csv = try ExportService.exportCSV(context: db.context)
+        #expect(csv.contains("无事件联系人"))
+
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("test_daily_roundtrip.csv")
+        try csv.write(to: tempURL, atomically: true, encoding: .utf8)
+        defer { try? FileManager.default.removeItem(at: tempURL) }
+
+        let importDB = try TestDB()
+        let result = try ExportService.importCSV(url: tempURL, context: importDB.context)
+
+        #expect(result.imported == 1)
+        #expect(result.errors == 0)
+
+        let importedRecords = try importDB.context.fetch(FetchDescriptor<Record>())
+        #expect(importedRecords.count == 1)
+        #expect(importedRecords[0].event == nil)
+        #expect(importedRecords[0].note == "日常往来")
+    }
+
+    @Test func testCSVImportOldFormatBackwardCompatible() throws {
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("test_old_format.csv")
+        let csv = """
+        联系人,事件,事件类型,金额,方向,支付方式,已退金额,日期,备注
+        张三,婚礼,婚礼,888,送出,现金,0,2026-03-01 12:00,恭喜
+        """
+        try csv.write(to: tempURL, atomically: true, encoding: .utf8)
+        defer { try? FileManager.default.removeItem(at: tempURL) }
+
+        let db = try TestDB()
+        let result = try ExportService.importCSV(url: tempURL, context: db.context)
+
+        #expect(result.imported == 1)
+        #expect(result.errors == 0)
+
+        let importedRecords = try db.context.fetch(FetchDescriptor<Record>())
+        #expect(importedRecords.count == 1)
+        #expect(importedRecords[0].recordType == .monetary)
+        #expect(importedRecords[0].resolvedDescription == "")
+        #expect(importedRecords[0].monetaryAmount == 888)
+        #expect(importedRecords[0].note == "恭喜")
     }
 
     @Test func testCSVRoundTripWithMultilineQuotedNote() throws {
@@ -85,37 +237,12 @@ struct ExportImportIntegrationTests {
         #expect(importedRecords[0].note == note)
     }
 
-    @Test func testJSONExportStructure() throws {
-        let db = try TestDB()
-        let contact = SampleData.contact(name: "李四")
-        let event = SampleData.event(name: "生日", type: .birthday)
-        db.context.insert(contact)
-        db.context.insert(event)
-
-        let r1 = SampleData.record(contact: contact, event: event, amount: 200, direction: .received)
-        let r2 = SampleData.record(contact: contact, event: event, amount: 500, direction: .given)
-        db.context.insert(r1)
-        db.context.insert(r2)
-        try db.context.save()
-
-        let jsonData = try ExportService.exportJSON(context: db.context)
-        let array = try JSONSerialization.jsonObject(with: jsonData) as? [[String: Any]]
-
-        #expect(array != nil)
-        #expect(array?.count == 2)
-
-        if let first = array?.first {
-            #expect(first["contact_name"] as? String == "李四")
-            #expect(first["event_name"] as? String == "生日")
-        }
-    }
-
     @Test func testImportDuplicateContactDedup() throws {
         let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("test_dedup.csv")
         let csv = """
-        联系人,事件,事件类型,金额,方向,支付方式,已退金额,状态,日期,备注
-        张三,婚礼,婚礼,500,送出,现金,0,未还,2026-03-01 12:00,
-        张三,生日宴,生日,300,送出,微信,0,未还,2026-03-05 12:00,
+        联系人,事件,事件类型,金额,方向,支付方式,已退金额,日期,备注
+        张三,婚礼,婚礼,500,送出,现金,0,2026-03-01 12:00,
+        张三,生日宴,生日,300,送出,微信,0,2026-03-05 12:00,
         """
         try csv.write(to: tempURL, atomically: true, encoding: .utf8)
         defer { try? FileManager.default.removeItem(at: tempURL) }
@@ -169,10 +296,10 @@ struct ExportImportIntegrationTests {
     @Test func testImportInvalidCSV() throws {
         let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("test_invalid.csv")
         let csv = """
-        联系人,事件,事件类型,金额,方向,支付方式,已退金额,状态,日期,备注
+        联系人,事件,事件类型,金额,方向,支付方式,已退金额,日期,备注
         incomplete,row
-        ,,,invalid_amount,,,,,,,
-        张三,婚礼,婚礼,500,送出,现金,0,未还,2026-03-01 12:00,正常
+        ,,,invalid_amount,,,,,
+        张三,婚礼,婚礼,500,送出,现金,0,2026-03-01 12:00,正常
         """
         try csv.write(to: tempURL, atomically: true, encoding: .utf8)
         defer { try? FileManager.default.removeItem(at: tempURL) }
@@ -184,33 +311,44 @@ struct ExportImportIntegrationTests {
         #expect(result.errors >= 1)
     }
 
-    @Test func testJSONExportImportRoundTrip() throws {
+    @Test func testCSVExportImportRoundTripGift() throws {
         let db = try TestDB()
-        let contact = SampleData.contact(name: "JSON测试")
-        let event = SampleData.event(name: "升学宴", type: .education)
+        let contact = SampleData.contact(name: "礼品联系人")
+        let event = SampleData.event(name: "乔迁", type: .property)
         db.context.insert(contact)
         db.context.insert(event)
 
-        let record = Record(
+        let record = SampleData.recordGift(
             contact: contact,
             event: event,
-            amount: 1200,
-            direction: .received,
-            paymentMethod: .alipay,
-            returnedAmount: 0,
-            note: "升学红包",
-            date: Date(timeIntervalSince1970: 1772100000)
+            giftName: "景德镇茶具",
+            estimatedValue: 880,
+            direction: .given,
+            date: Date(timeIntervalSince1970: 1772000500),
+            relationshipWeight: .reciprocal
         )
         db.context.insert(record)
         try db.context.save()
 
-        let jsonData = try ExportService.exportJSON(context: db.context)
-        #expect(!jsonData.isEmpty)
+        let csv = try ExportService.exportCSV(context: db.context)
+        #expect(csv.contains("景德镇茶具"))
+        #expect(csv.contains("880.00"))
 
-        let array = try JSONSerialization.jsonObject(with: jsonData) as? [[String: Any]]
-        #expect(array?.count == 1)
-        #expect(array?.first?["contact_name"] as? String == "JSON测试")
-        #expect(array?.first?["amount"] as? Double == 1200)
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("test_gift_roundtrip.csv")
+        try csv.write(to: tempURL, atomically: true, encoding: .utf8)
+        defer { try? FileManager.default.removeItem(at: tempURL) }
+
+        let importDB = try TestDB()
+        let result = try ExportService.importCSV(url: tempURL, context: importDB.context)
+
+        #expect(result.imported == 1)
+        #expect(result.errors == 0)
+
+        let importedRecords = try importDB.context.fetch(FetchDescriptor<Record>())
+        #expect(importedRecords.count == 1)
+        #expect(importedRecords[0].recordType == .gift)
+        #expect(importedRecords[0].giftData?.giftName == "景德镇茶具")
+        #expect(importedRecords[0].giftData?.estimatedValue == 880)
     }
 
     @Test func testEmptyContextExport() throws {
@@ -218,10 +356,6 @@ struct ExportImportIntegrationTests {
 
         let csv = try ExportService.exportCSV(context: db.context)
         #expect(csv.contains("联系人,事件,事件类型,金额"))
-
-        let jsonData = try ExportService.exportJSON(context: db.context)
-        #expect(!jsonData.isEmpty)
-        let array = try JSONSerialization.jsonObject(with: jsonData) as? [[Any]]
-        #expect(array?.isEmpty == true)
+        #expect(csv.split(separator: "\n").count == 1)
     }
 }

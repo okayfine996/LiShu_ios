@@ -217,7 +217,7 @@ struct EventDetailView: View {
                     ForEach(viewModel.relatedContacts) { contact in
                         NavigationLink(value: AppRoute.contactDetail(contact.persistentModelID)) {
                             VStack(spacing: 6) {
-                                AvatarView(imageData: contact.avatar, name: contact.name, size: 48)
+                                AvatarView(imageData: contact.avatar, name: contact.name)
 
                                 Text(contact.name)
                                     .font(DesignSystem.Typography.small)
@@ -264,14 +264,7 @@ struct EventDetailView: View {
                 VStack(spacing: 0) {
                     ForEach(sortedRecords) { record in
                         NavigationLink(value: AppRoute.recordDetail(record.persistentModelID)) {
-                            RecordRow(
-                                avatar: record.contact?.avatar,
-                                contactName: record.contact?.name ?? "",
-                                eventName: event.name,
-                                amount: record.amount,
-                                direction: record.direction,
-                                date: record.date
-                            )
+                            RecordRow(record: record)
                         }
                         .buttonStyle(.plain)
 
@@ -373,9 +366,9 @@ private struct EventDetailPreview: View {
         )
         modelContext.insert(event)
 
-        let r1 = Record(contact: c1, event: event, amount: 1000, direction: .given, paymentMethod: .wechat, date: cal.date(byAdding: .day, value: -5, to: .now)!)
-        let r2 = Record(contact: c2, event: event, amount: 500, direction: .received, paymentMethod: .cash, date: cal.date(byAdding: .day, value: -3, to: .now)!)
-        let r3 = Record(contact: c3, event: event, amount: 800, direction: .given, paymentMethod: .alipay, date: cal.date(byAdding: .day, value: -1, to: .now)!)
+        let r1 = Record.makeMonetaryRecord(contact: c1, event: event, amount: 1000, direction: .given, paymentMethod: .wechat, date: cal.date(byAdding: .day, value: -5, to: .now)!)
+        let r2 = Record.makeMonetaryRecord(contact: c2, event: event, amount: 500, direction: .received, paymentMethod: .cash, date: cal.date(byAdding: .day, value: -3, to: .now)!)
+        let r3 = Record.makeMonetaryRecord(contact: c3, event: event, amount: 800, direction: .given, paymentMethod: .alipay, date: cal.date(byAdding: .day, value: -1, to: .now)!)
         [r1, r2, r3].forEach { modelContext.insert($0) }
 
         try? modelContext.save()

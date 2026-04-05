@@ -31,8 +31,8 @@ struct ContactDetailViewModelTests {
         let oldDate = cal.date(byAdding: .day, value: -10, to: .now)!
         let newDate = cal.date(byAdding: .day, value: -1, to: .now)!
 
-        let oldRecord = Record(contact: contact, event: event, amount: 100, direction: .given, date: oldDate)
-        let newRecord = Record(contact: contact, event: event, amount: 200, direction: .given, date: newDate)
+        let oldRecord = SampleData.record(contact: contact, event: event, amount: 100, direction: .given, date: oldDate)
+        let newRecord = SampleData.record(contact: contact, event: event, amount: 200, direction: .given, date: newDate)
         db.context.insert(oldRecord)
         db.context.insert(newRecord)
         try db.context.save()
@@ -42,8 +42,8 @@ struct ContactDetailViewModelTests {
 
         let sorted = vm.sortedRecords
         #expect(sorted.count == 2)
-        #expect(sorted[0].amount == 200)
-        #expect(sorted[1].amount == 100)
+        #expect(sorted[0].monetaryAmount == 200)
+        #expect(sorted[1].monetaryAmount == 100)
     }
 
     @Test func testDeleteContact() throws {

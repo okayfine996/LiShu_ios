@@ -155,7 +155,8 @@ final class NotificationManager {
 
     func scheduleReturnGiftReminder(record: Record) {
         guard settings.notificationEnabled, settings.returnGiftReminder else { return }
-        guard record.direction == .given, record.status != .settled else { return }
+        guard record.isMonetary else { return }
+        guard record.direction == .given, !record.hasReturnedGift else { return }
 
         guard let reminderDate = Calendar.current.date(byAdding: .day, value: 30, to: record.date),
               reminderDate > Date() else { return }
@@ -167,7 +168,7 @@ final class NotificationManager {
             format: String(localized: "notification.returnGift.body"),
             contact.name,
             event.name,
-            String(format: "%.0f", record.amount)
+            String(format: "%.0f", record.monetaryAmount)
         )
 
         content.sound = .default
@@ -254,11 +255,11 @@ final class NotificationManager {
         if settings.returnGiftReminder {
             let descriptor = FetchDescriptor<Record>(
                 predicate: #Predicate<Record> { record in
-                    record.directionRaw == "given" && record.statusRaw != "settled"
+                    record.directionRaw == "given" && record.recordTypeRaw == "monetary"
                 }
             )
             if let records = try? context.fetch(descriptor) {
-                for record in records {
+                for record in records where !record.hasReturnedGift {
                     scheduleReturnGiftReminder(record: record)
                 }
             }

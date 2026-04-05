@@ -1,0 +1,6 @@
+# App Store Connect / deliver 默认标识（与 Xcode 工程一致）
+app_identifier("com.finefine.LiShu")
+
+# 未使用 App Store Connect API Key 时，fastlane 会提示用 Apple ID 登录；也可设置：
+# apple_id("your@email.com")
+# team_id("XXXXXXXXXX") # 多团队时填写

@@ -1,0 +1,332 @@
+default_platform(:ios)
+
+platform :ios do
+  # 与 Xcode 工程一致：scheme LiShu、Automatic 签名
+  desc "Archive Release 并导出 IPA（默认 app-store，可上传 TestFlight）。可选 bump:true 在打包前先递增 build"
+  lane :ipa do |options|
+    perform_bump_build_number if options[:bump]
+    export_method = options[:export_method] || ENV["EXPORT_METHOD"] || "app-store"
+    build_app(
+      scheme: "LiShu",
+      project: "./LiShu.xcodeproj",
+      configuration: "Release",
+      clean: true,
+      export_method: export_method,
+      output_directory: "./fastlane/build",
+      output_name: "LiShu.ipa",
+      # 允许 xcodebuild 在 Automatic 签名下更新描述文件（CLI/CI 常用）
+      xcargs: "-allowProvisioningUpdates"
+    )
+  end
+
+  desc "将已有 IPA + fastlane/screenshots 上传到 App Store Connect（优先使用 frameit 的 *_framed.png；无套壳时回退 raw；元数据请在网页维护）"
+  lane :upload_app_store do
+    perform_upload_app_store
+  end
+
+  desc "仅递增 Xcode 工程中的 Build 号（CFBundleVersion / agvtool）；配置了 API Key 时会与当前 Marketing Version 下 TestFlight 最新 build 对齐，避免上传冲突"
+  lane :bump_build do
+    perform_bump_build_number
+  end
+
+  desc "打包 IPA 并上传 IPA + 截图到 App Store Connect（一键；默认先 bump build，可用 skip_bump 关闭）"
+  lane :release_store do |options|
+    perform_bump_build_number unless options[:skip_bump]
+    ipa unless options[:skip_ipa]
+    perform_upload_app_store
+  end
+
+  # 等价于 fastlane 文档中的 capture_screenshots / snapshot
+  desc "Generate App Store screenshots via UI tests（须命令行执行，见 docs.fastlane screenshots）"
+  lane :screenshots do
+    snapshot(
+      scheme: "LiShu",
+      project: "./LiShu.xcodeproj",
+      test_target_name: "LiShuUITests",
+      only_testing: ["LiShuUITests/AppStoreScreenshotTests"],
+      derived_data_path: "./fastlane/DerivedData",
+      output_directory: "./fastlane/screenshots",
+      clear_previous_screenshots: true,
+      # 自定义 SnapshotHelper（Swift 6 等）时勿改版本行；为防 fastlane 升级后误判，可跳过校验
+      skip_helper_version_check: true,
+      # 避免 Xcode 在「Clone N of Simulator」上跑 UI 测试时误启动 UITest bundle（FBSApplicationLibrary nil）
+      xcargs: "-parallel-testing-enabled NO",
+      # 内置 screenshots.html 依赖设备名白名单；实际设备见 Snapfile（当前为 iPhone 17 Pro Max + iOS 26.1）
+      skip_open_summary: true
+    )
+    generate_lishu_screenshot_report
+  end
+
+  desc "仅根据 fastlane/screenshots 下已有 PNG 重写 screenshots.html（不调 snapshot；换机后也可补预览）"
+  lane :screenshots_html do
+    generate_lishu_screenshot_report
+  end
+
+  desc "仅为已有 *_framed.png 生成 framed.html（套壳+文案预览）"
+  lane :framed_html do
+    generate_lishu_framed_screenshot_report
+  end
+
+  desc "对 fastlane/screenshots 套设备壳并叠加标题（需已跑过 screenshots；依赖 ImageMagick）"
+  lane :frameit do
+    frame_screenshots(
+      path: "./fastlane/screenshots"
+    )
+    generate_lishu_framed_screenshot_report
+  end
+
+  desc "先 snapshot 再 frameit，生成可上架风格的带壳+文案截图（产物为 *_framed.png）"
+  lane :store_screenshots do
+    screenshots
+    frame_screenshots(path: "./fastlane/screenshots")
+    generate_lishu_framed_screenshot_report
+  end
+end
+
+def lishu_xcodeproj_path
+  File.expand_path("../LiShu.xcodeproj", __dir__)
+end
+
+# 仅当 Key 环境变量齐全时返回，用于 bump 与上传；不抛错
+def lishu_app_store_api_key_or_nil
+  return nil if ENV["APP_STORE_CONNECT_API_KEY_ID"].to_s.empty?
+  return nil if ENV["APP_STORE_CONNECT_ISSUER_ID"].to_s.empty?
+
+  if ENV["APP_STORE_CONNECT_API_KEY_PATH"].to_s != ""
+    app_store_connect_api_key(
+      key_id: ENV["APP_STORE_CONNECT_API_KEY_ID"],
+      issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
+      key_filepath: File.expand_path(ENV["APP_STORE_CONNECT_API_KEY_PATH"], __dir__),
+      duration: 1200,
+      in_house: false
+    )
+  elsif ENV["APP_STORE_CONNECT_API_KEY_CONTENT"].to_s != ""
+    app_store_connect_api_key(
+      key_id: ENV["APP_STORE_CONNECT_API_KEY_ID"],
+      issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
+      key_content: ENV["APP_STORE_CONNECT_API_KEY_CONTENT"],
+      is_key_content_base64: ENV["APP_STORE_CONNECT_API_KEY_IS_BASE64"] == "1",
+      duration: 1200,
+      in_house: false
+    )
+  else
+    nil
+  end
+end
+
+def lishu_app_store_api_key
+  return nil if ENV["APP_STORE_CONNECT_API_KEY_ID"].to_s.empty?
+
+  k = lishu_app_store_api_key_or_nil
+  return k if k
+
+  UI.user_error!("已设置 APP_STORE_CONNECT_API_KEY_ID，请同时设置 APP_STORE_CONNECT_API_KEY_PATH（.p8 路径）或 APP_STORE_CONNECT_API_KEY_CONTENT")
+end
+
+def perform_bump_build_number
+  xcodeproj = lishu_xcodeproj_path
+  target_name = "LiShu"
+
+  version = get_version_number(xcodeproj: xcodeproj, target: target_name)
+  current = get_build_number(xcodeproj: xcodeproj).to_i
+
+  key = lishu_app_store_api_key_or_nil
+  if key
+    latest_asc = latest_testflight_build_number(
+      api_key: key,
+      version: version,
+      initial_build_number: 0
+    ).to_i
+    next_bn = [current, latest_asc].max + 1
+    UI.success("Build 号：Marketing #{version} / 本地 #{current}，TestFlight 该版本最新 #{latest_asc} → 设为 #{next_bn}")
+  else
+    next_bn = current + 1
+    UI.important("未配置完整 App Store Connect API Key：仅本地 build +1（#{current} → #{next_bn}）。若需与 TestFlight 对齐避免冲突，请配置 Key 后再 release。")
+  end
+
+  increment_build_number(
+    build_number: next_bn.to_s,
+    xcodeproj: xcodeproj
+  )
+end
+
+# 优先使用 frameit 的 *_framed.png（复制为同名无 _framed 的 .png 供 Deliver）；缺套壳的单张回退 raw；整语言无套壳时全部 raw
+def prepare_deliver_screenshots_path
+  require "fileutils"
+
+  src_root = File.expand_path("screenshots", __dir__)
+  dst_root = File.expand_path("screenshots_deliver", __dir__)
+  FileUtils.rm_rf(dst_root)
+
+  unless File.directory?(src_root)
+    UI.important("未找到 #{src_root}，将跳过截图上传")
+    return nil
+  end
+
+  count = 0
+  used_framed = 0
+  Dir.children(src_root).sort.each do |name|
+    next if name.start_with?(".")
+    next if name == "assets"
+    next unless File.directory?(File.join(src_root, name))
+
+    locale_src = File.join(src_root, name)
+    out = File.join(dst_root, name)
+    FileUtils.mkdir_p(out)
+
+    framed_paths = Dir.glob(File.join(locale_src, "*_framed.png"))
+    framed_slugs = framed_paths.map { |p| File.basename(p).sub(/_framed\.png$/i, "") }.to_h { |slug| [slug, true] }
+
+    framed_paths.each do |src|
+      slug = File.basename(src).sub(/_framed\.png$/i, "")
+      FileUtils.cp(src, File.join(out, "#{slug}.png"))
+      count += 1
+      used_framed += 1
+    end
+
+    Dir.glob(File.join(locale_src, "*.png")).each do |src|
+      next if File.basename(src) =~ /_framed\.png$/i
+
+      slug = File.basename(src, ".png")
+      next if framed_slugs[slug]
+
+      FileUtils.cp(src, File.join(out, "#{slug}.png"))
+      count += 1
+    end
+  end
+
+  if count.zero?
+    UI.important("未找到可上传的截图（各语言目录下需有 snapshot 的 *.png，或先执行 fastlane ios frameit 生成 *_framed.png）。将跳过截图上传")
+    return nil
+  end
+
+  UI.success("已为 Deliver 准备 #{count} 张截图（其中 #{used_framed} 张为套壳图）：#{dst_root}")
+  dst_root
+end
+
+def perform_upload_app_store
+  ipa_path = File.expand_path("build/LiShu.ipa", __dir__)
+  UI.user_error!("找不到 IPA：#{ipa_path}，请先执行 fastlane ios ipa") unless File.exist?(ipa_path)
+
+  screenshots_path = prepare_deliver_screenshots_path
+  key = lishu_app_store_api_key
+
+  upload_params = {
+    ipa: ipa_path,
+    skip_metadata: true,
+    force: true,
+    submit_for_review: false
+  }
+  upload_params[:api_key] = key unless key.nil?
+
+  if screenshots_path
+    upload_params[:screenshots_path] = screenshots_path
+    upload_params[:overwrite_screenshots] = true
+    upload_params[:skip_screenshots] = false
+  else
+    upload_params[:skip_screenshots] = true
+  end
+
+  upload_to_app_store(**upload_params)
+end
+
+# fastlane snapshot 的 ReportsGenerator 仅识别内置映射里的模拟器名；新机型不在列表中时
+# screenshots.html 里没有任何 <img>。PNG 实际在 zh-Hans/ 下，此处在 snapshot 后重写可浏览的汇总页。
+def generate_lishu_screenshot_report
+  require "cgi"
+  require "pathname"
+
+  base = File.expand_path("screenshots", __dir__)
+  pngs = Dir.glob(File.join(base, "**", "*.png")).sort
+  if pngs.empty?
+    UI.important("未在 #{base} 下找到 PNG，跳过截图预览页生成")
+    return
+  end
+
+  rows = +<<~HTML
+    <!DOCTYPE html>
+    <html lang="zh-Hans">
+    <head>
+      <meta charset="UTF-8"/>
+      <meta name="viewport" content="width=device-width, initial-scale=1"/>
+      <title>LiShu 截图预览</title>
+      <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; padding: 16px; background: #f2f2f7; color: #1c1c1e; }
+        h1 { font-size: 22px; }
+        .note { font-size: 13px; color: #636366; margin-bottom: 24px; }
+        h2 { font-size: 15px; margin: 28px 0 8px; }
+        img { max-width: min(430px, 100%); height: auto; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,.08); }
+        .path { font-size: 11px; color: #8e8e93; word-break: break-all; margin-bottom: 6px; }
+      </style>
+    </head>
+    <body>
+      <h1>LiShu 截图（snapshot）</h1>
+      <p class="note">PNG 位于本目录下语言子文件夹（如 zh-Hans/）。若 fastlane 自带的截图报告页为空白，是因上游尚未把当前模拟器名加入设备映射表。</p>
+    HTML
+
+  pngs.each do |abs|
+    rel = Pathname.new(abs).relative_path_from(Pathname.new(base)).to_s
+    src = "./#{rel.tr('\\', '/')}"
+    rows << "<h2>#{CGI.escapeHTML(rel)}</h2>\n"
+    rows << "<div class=\"path\">#{CGI.escapeHTML(src)}</div>\n"
+    rows << "<img src=\"#{CGI.escapeHTML(src)}\" alt=\"#{CGI.escapeHTML(rel)}\"/>\n"
+  end
+  rows << "</body></html>\n"
+
+  out = File.join(base, "screenshots.html")
+  File.write(out, rows)
+  UI.success("截图预览页已写入：#{File.expand_path(out)}")
+  if RUBY_PLATFORM.include?("darwin")
+    system("open", File.expand_path(out))
+  end
+end
+
+# 带设备壳与 title.strings / keyword.strings 文案的图：frameit 输出为「原名_framed.png」
+def generate_lishu_framed_screenshot_report
+  require "cgi"
+  require "pathname"
+
+  base = File.expand_path("screenshots", __dir__)
+  pngs = Dir.glob(File.join(base, "**", "*_framed.png")).sort
+  if pngs.empty?
+    UI.important("未找到 *_framed.png。请先成功执行 fastlane ios frameit（首次会下载设备框，若 SSL 失败请重试）。")
+    return
+  end
+
+  rows = +<<~HTML
+    <!DOCTYPE html>
+    <html lang="zh-Hans">
+    <head>
+      <meta charset="UTF-8"/>
+      <meta name="viewport" content="width=device-width, initial-scale=1"/>
+      <title>LiShu 套壳截图（含文案）</title>
+      <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; padding: 16px; background: #f2f2f7; color: #1c1c1e; }
+        h1 { font-size: 22px; }
+        .note { font-size: 13px; color: #636366; margin-bottom: 24px; }
+        h2 { font-size: 15px; margin: 28px 0 8px; }
+        img { max-width: min(520px, 100%); height: auto; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,.1); }
+        .path { font-size: 11px; color: #8e8e93; word-break: break-all; margin-bottom: 6px; }
+      </style>
+    </head>
+    <body>
+      <h1>LiShu 套壳截图（frameit）</h1>
+      <p class="note">文案来自 zh-Hans/title.strings 与 keyword.strings；修改后重新执行 <code>fastlane ios frameit</code>。</p>
+    HTML
+
+  pngs.each do |abs|
+    rel = Pathname.new(abs).relative_path_from(Pathname.new(base)).to_s
+    src = "./#{rel.tr('\\', '/')}"
+    rows << "<h2>#{CGI.escapeHTML(rel)}</h2>\n"
+    rows << "<div class=\"path\">#{CGI.escapeHTML(src)}</div>\n"
+    rows << "<img src=\"#{CGI.escapeHTML(src)}\" alt=\"#{CGI.escapeHTML(rel)}\"/>\n"
+  end
+  rows << "</body></html>\n"
+
+  out = File.join(base, "framed.html")
+  File.write(out, rows)
+  UI.success("套壳截图预览页已写入：#{File.expand_path(out)}")
+  if RUBY_PLATFORM.include?("darwin")
+    system("open", File.expand_path(out))
+  end
+end

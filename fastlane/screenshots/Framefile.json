@@ -1,0 +1,33 @@
+{
+  "device_frame_version": "latest",
+  "data": [
+    {
+      "filter": "iPhone 17 Pro Max",
+      "force_device_type": "iphone14-pro-max"
+    }
+  ],
+  "default": {
+    "font_scale_factor": 0.072,
+    "interline_spacing": 10,
+    "title_min_height": "16%",
+    "padding": "9%x11%",
+    "title": {
+      "color": "#B76E5A",
+      "font": "./assets/CaptionFont.ttc",
+      "font_size": 56,
+      "font_weight": 600
+    },
+    "keyword": {
+      "color": "#B76E5A",
+      "font": "./assets/CaptionFont.ttc",
+      "font_size": 34,
+      "font_weight": 500
+    },
+    "background": "../frameit_background.png",
+    "title_below_image": false,
+    "stack_title": true,
+    "show_complete_frame": true,
+    "frame": "BLACK",
+    "use_platform": "IOS"
+  }
+}

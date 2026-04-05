@@ -59,76 +59,98 @@ struct HomeView: View {
     // MARK: - Summary Section
 
     private var summarySection: some View {
-        NavigationLink(value: AppRoute.statistics) {
+        VStack(alignment: .leading, spacing: 16) {
+            // Header: title + add record button
+            Text(String(localized: "home.yearSummaryTitle"))
+                .font(DesignSystem.Typography.title2)
+                .foregroundStyle(DesignSystem.Colors.textPrimary)
+
+            // Inner card: total interactions + type breakdown + monetary net
             summaryCardContent
         }
-        .buttonStyle(.plain)
     }
 
     private var summaryCardContent: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 20) {
+            // Total interactions + chart button
             HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(String(localized: "home.yearSummaryTitle"))
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(String(localized: "home.totalInteractions"))
                         .font(DesignSystem.Typography.caption)
-                        .foregroundStyle(DesignSystem.Colors.primary)
+                        .foregroundStyle(DesignSystem.Colors.textSecondary)
 
-                    Text(viewModel.yearBadge)
-                        .font(DesignSystem.Typography.title1)
-                        .foregroundStyle(DesignSystem.Colors.textPrimary)
+                    HStack(alignment: .firstTextBaseline, spacing: 2) {
+                        Text("\(viewModel.recordCount)")
+                            .font(DesignSystem.Typography.display)
+                            .foregroundStyle(DesignSystem.Colors.textPrimary)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.85)
+
+                        Text(String(localized: "home.interactionUnit"))
+                            .font(DesignSystem.Typography.title3)
+                            .foregroundStyle(DesignSystem.Colors.textSecondary)
+                    }
                 }
 
                 Spacer()
 
-                Image(systemName: "chart.bar.fill")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(DesignSystem.Colors.primary)
-                    .frame(width: 40, height: 40)
-                    .background(DesignSystem.Colors.bgSurface)
-                    .clipShape(Circle())
+                NavigationLink(value: AppRoute.statistics) {
+                    Image(systemName: "chart.bar.fill")
+                        .font(DesignSystem.Typography.caption)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(DesignSystem.Colors.primary)
+                        .frame(width: 40, height: 40)
+                        .background(DesignSystem.Colors.bgIconSubtle)
+                        .clipShape(Circle())
+                }
+                .accessibilityIdentifier("home.openStatistics")
             }
 
-            HStack(spacing: 8) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(String(localized: "home.income"))
-                        .font(DesignSystem.Typography.small)
-                        .foregroundStyle(DesignSystem.Colors.textSecondary)
-                    Text(viewModel.formattedIncome)
-                        .font(DesignSystem.Typography.title3)
-                        .foregroundStyle(DesignSystem.Colors.primary)
+            // Type breakdown capsules
+            if !viewModel.typeBreakdown.isEmpty {
+                FlowLayout(spacing: 8) {
+                    ForEach(viewModel.typeBreakdown, id: \.type) { item in
+                        typeCountCapsule(type: item.type, count: item.count)
+                    }
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(14)
-                .background(DesignSystem.Colors.bgPage)
-                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.smallCard))
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(String(localized: "home.expense"))
-                        .font(DesignSystem.Typography.small)
-                        .foregroundStyle(DesignSystem.Colors.textSecondary)
-                    Text(viewModel.formattedExpense)
-                        .font(DesignSystem.Typography.title3)
-                        .foregroundStyle(DesignSystem.Colors.primary)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(14)
-                .background(DesignSystem.Colors.bgPage)
-                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.smallCard))
             }
 
-            HStack(spacing: 6) {
-                Image(systemName: "person.2")
-                    .font(.system(size: 12))
-                    .foregroundStyle(DesignSystem.Colors.textSecondary)
-                Text(viewModel.peopleSummary)
+            // Monetary net summary
+            if viewModel.monetaryCount > 0 {
+                Divider()
+                    .foregroundStyle(DesignSystem.Colors.separator)
+
+                Text(viewModel.monetaryNetSummary)
                     .font(DesignSystem.Typography.caption)
-                    .foregroundStyle(DesignSystem.Colors.textSecondary)
+                    .foregroundStyle(DesignSystem.Colors.textTertiary)
             }
         }
-        .padding(20)
+        .padding(.horizontal, DesignSystem.Spacing.cardPadding)
+        .padding(.vertical, DesignSystem.Spacing.heroCardPadding)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .contentShape(Rectangle())
-        .background(DesignSystem.Colors.bgCard)
+        .background(DesignSystem.Colors.bgSurface)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
+                .stroke(DesignSystem.Colors.primary.opacity(0.05), lineWidth: 1)
+        )
+    }
+
+    private func typeCountCapsule(type: RecordType, count: Int) -> some View {
+        HStack(spacing: 5) {
+            Image(systemName: type.iconName)
+                .font(DesignSystem.Typography.small)
+                .foregroundStyle(DesignSystem.Colors.primary)
+            Text(String(format: String(localized: "home.typeCountFormat"), count))
+                .font(DesignSystem.Typography.caption)
+                .foregroundStyle(DesignSystem.Colors.textPrimary)
+                .fontWeight(.medium)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 6)
+        .background(DesignSystem.Colors.bgTag)
+        .clipShape(Capsule())
     }
 
     // MARK: - Upcoming Events Section
@@ -160,7 +182,7 @@ struct HomeView: View {
     private var emptyUpcomingCard: some View {
         HStack(spacing: 12) {
             Image(systemName: "calendar")
-                .font(.system(size: 20))
+                .font(DesignSystem.Typography.title3)
                 .foregroundStyle(DesignSystem.Colors.textTertiary)
                 .frame(width: 40, height: 40)
                 .background(DesignSystem.Colors.bgIconSubtle)
@@ -173,8 +195,12 @@ struct HomeView: View {
             Spacer()
         }
         .padding(14)
-        .background(DesignSystem.Colors.bgCard)
+        .background(DesignSystem.Colors.bgSurface)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.smallCard))
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignSystem.Radius.smallCard)
+                .stroke(DesignSystem.Colors.primary.opacity(0.05), lineWidth: 1)
+        )
     }
 
     private func upcomingEventCard(_ event: Event) -> some View {
@@ -265,7 +291,7 @@ struct HomeView: View {
 
     private func recentRecordCard(_ record: Record) -> some View {
         HStack(spacing: 12) {
-            AvatarView(imageData: record.contact?.avatar, name: record.contact?.name ?? "", size: 48)
+            AvatarView(imageData: record.contact?.avatar, name: record.contact?.name ?? "")
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(record.contact?.name ?? "")
@@ -273,7 +299,7 @@ struct HomeView: View {
                     .fontWeight(.semibold)
                     .foregroundStyle(DesignSystem.Colors.textPrimary)
 
-                Text(record.event?.name ?? "")
+                Text(record.contextDisplayName)
                     .font(DesignSystem.Typography.small)
                     .foregroundStyle(DesignSystem.Colors.textSecondary)
                     .lineLimit(1)
@@ -282,10 +308,21 @@ struct HomeView: View {
             Spacer()
 
             VStack(alignment: .trailing, spacing: 4) {
-                Text("¥" + String(format: "%.0f", record.amount))
-                    .font(DesignSystem.Typography.body)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(DesignSystem.Colors.primary)
+                if record.isMonetary {
+                    Text("¥" + String(format: "%.0f", record.monetaryAmount))
+                        .font(DesignSystem.Typography.body)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(DesignSystem.Colors.primary)
+                } else {
+                    HStack(spacing: 4) {
+                        Text(record.recordType.iconEmoji)
+                            .font(DesignSystem.Typography.caption)
+                        Text(record.resolvedDescription)
+                            .font(DesignSystem.Typography.caption)
+                            .foregroundStyle(DesignSystem.Colors.textPrimary)
+                            .lineLimit(1)
+                    }
+                }
                 Text(relativeDateText(record.date))
                     .font(DesignSystem.Typography.small)
                     .foregroundStyle(DesignSystem.Colors.textTertiary)
@@ -432,10 +469,10 @@ private func makeHomePreviewContainer() -> ModelContainer? {
     let e3 = Event(name: "硕士毕业", type: .education, date: cal.date(byAdding: .day, value: 14, to: .now)!, location: "广州")
     [e1, e2, e3].forEach { ctx.insert($0) }
 
-    let r1 = Record(contact: c1, event: e1, amount: 500, direction: .given, paymentMethod: .wechat, date: .now)
-    let r2 = Record(contact: c2, event: e2, amount: 200, direction: .given, paymentMethod: .cash, date: cal.date(byAdding: .day, value: -1, to: .now)!)
-    let r3 = Record(contact: c3, event: e1, amount: 350, direction: .given, paymentMethod: .alipay, date: cal.date(byAdding: .day, value: -3, to: .now)!)
-    let r4 = Record(contact: c1, event: e2, amount: 600, direction: .received, paymentMethod: .wechat, date: cal.date(byAdding: .day, value: -10, to: .now)!)
+    let r1 = Record.makeMonetaryRecord(contact: c1, event: e1, amount: 500, direction: .given, paymentMethod: .wechat, date: .now)
+    let r2 = Record.makeMonetaryRecord(contact: c2, event: e2, amount: 200, direction: .given, paymentMethod: .cash, date: cal.date(byAdding: .day, value: -1, to: .now)!)
+    let r3 = Record.makeMonetaryRecord(contact: c3, event: e1, amount: 350, direction: .given, paymentMethod: .alipay, date: cal.date(byAdding: .day, value: -3, to: .now)!)
+    let r4 = Record.makeMonetaryRecord(contact: c1, event: e2, amount: 600, direction: .received, paymentMethod: .wechat, date: cal.date(byAdding: .day, value: -10, to: .now)!)
     [r1, r2, r3, r4].forEach { ctx.insert($0) }
 
     return container
@@ -450,7 +487,7 @@ private func makeHomePreviewContainer() -> ModelContainer? {
             .modelContainer(container)
             .environment(SubscriptionManager.shared)
         } else {
-            Text("Preview unavailable")
+            Text(String(localized: "common.preview.unavailable"))
         }
     }
 }

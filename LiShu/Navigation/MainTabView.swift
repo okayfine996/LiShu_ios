@@ -108,12 +108,16 @@ struct MainTabView: View {
             AddEventView()
         case .statistics:
             StatisticsView()
-        case .eventTypeDetail(let type, let year):
-            EventTypeDetailView(eventType: type, year: year)
+        case .eventTypeComposition(let year):
+            CompositionDetailView(mode: .eventTypes(year: year))
         case .netValueRanking(let year):
             NetValueRankingView(year: year)
         case .circleDetail(let circle, let year):
             CircleDetailView(circle: circle, year: year)
+        case .recordTypeComposition(let year):
+            CompositionDetailView(mode: .recordTypes(year: year))
+        case .heatmapDetail(let year):
+            HeatmapDetailView(year: year)
         case .proMembership:
             ProMembershipView()
         case .appearanceSettings:

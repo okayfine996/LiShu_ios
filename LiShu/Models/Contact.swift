@@ -52,30 +52,33 @@ final class Contact {
         self.createdAt = .now
     }
 
-    /// 人情净值 = 收到总额 - 送出总额（扣除退礼）
+    /// 人情净值 = 收到总额 - 送出总额（扣除退礼），仅统计金额类型
     var netValue: Double {
-        let recs = records ?? []
-        let received = recs
-            .filter { $0.direction == .received }
-            .reduce(0.0) { $0 + $1.amount - $1.returnedAmount }
-        let given = recs
-            .filter { $0.direction == .given }
-            .reduce(0.0) { $0 + $1.amount - $1.returnedAmount }
-        return received - given
+        (records ?? [])
+            .filter { $0.recordType == .monetary }
+            .reduce(0.0) { acc, r in
+                let net = r.monetaryAmount - r.resolvedReturnedAmount
+                return acc + (r.direction == .received ? net : -net)
+            }
     }
 
-    /// 累计送出金额
+    /// 累计送出金额，仅统计金额类型
     var totalGiven: Double {
-        (records ?? []).filter { $0.direction == .given }.reduce(0.0) { $0 + $1.amount }
+        (records ?? []).filter { $0.recordType == .monetary && $0.direction == .given }.reduce(0.0) { $0 + $1.monetaryAmount }
     }
 
-    /// 累计收到金额
+    /// 累计收到金额，仅统计金额类型
     var totalReceived: Double {
-        (records ?? []).filter { $0.direction == .received }.reduce(0.0) { $0 + $1.amount }
+        (records ?? []).filter { $0.recordType == .monetary && $0.direction == .received }.reduce(0.0) { $0 + $1.monetaryAmount }
     }
 
-    /// 累计退礼金额
+    /// 非金额互动次数
+    var nonFinancialInteractionCount: Int {
+        (records ?? []).filter { $0.recordType != .monetary }.count
+    }
+
+    /// 累计退礼金额，仅统计金额类型
     var totalReturned: Double {
-        (records ?? []).reduce(0.0) { $0 + $1.returnedAmount }
+        (records ?? []).filter { $0.recordType == .monetary }.reduce(0.0) { $0 + $1.resolvedReturnedAmount }
     }
 }

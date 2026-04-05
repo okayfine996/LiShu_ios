@@ -30,7 +30,8 @@ struct EventModelTests {
         #expect(event.location.isEmpty)
     }
 
-    @Test func testDenyDeleteWhenRecordsExist() throws {
+    /// `Event` 使用 `deleteRule: .nullify`：删除事件时关联记录的 `event` 被置空，保存成功；业务层若需禁止删除应在 UI 拦截。
+    @Test func testDeleteEventNullifiesRecordEvent() throws {
         let db = try TestDB()
         let contact = SampleData.contact()
         let event = SampleData.event(name: "有记录的事件")
@@ -42,14 +43,12 @@ struct EventModelTests {
         try db.context.save()
 
         db.context.delete(event)
+        try db.context.save()
 
-        var didThrow = false
-        do {
-            try db.context.save()
-        } catch {
-            didThrow = true
-        }
-        #expect(didThrow == true)
+        #expect(try db.context.fetchCount(FetchDescriptor<Event>()) == 0)
+        let records = try db.context.fetch(FetchDescriptor<Record>())
+        #expect(records.count == 1)
+        #expect(records.first?.event == nil)
     }
 
     @Test func testDeleteWithoutRecordsSucceeds() throws {

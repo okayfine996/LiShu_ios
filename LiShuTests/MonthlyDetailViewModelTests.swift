@@ -17,9 +17,9 @@ struct MonthlyDetailViewModelTests {
         let marchDate = cal.date(from: DateComponents(year: 2026, month: 3, day: 10))!
         let aprilDate = cal.date(from: DateComponents(year: 2026, month: 4, day: 5))!
 
-        let r1 = Record(contact: contact, event: event, amount: 500, direction: .given, date: marchDate)
-        let r2 = Record(contact: contact, event: event, amount: 300, direction: .received, date: marchDate)
-        let r3 = Record(contact: contact, event: event, amount: 800, direction: .given, date: aprilDate)
+        let r1 = SampleData.record(contact: contact, event: event, amount: 500, direction: .given, date: marchDate)
+        let r2 = SampleData.record(contact: contact, event: event, amount: 300, direction: .received, date: marchDate)
+        let r3 = SampleData.record(contact: contact, event: event, amount: 800, direction: .given, date: aprilDate)
         db.context.insert(r1)
         db.context.insert(r2)
         db.context.insert(r3)
@@ -42,9 +42,9 @@ struct MonthlyDetailViewModelTests {
         let cal = Calendar.current
         let date = cal.date(from: DateComponents(year: 2026, month: 6, day: 15))!
 
-        let given1 = Record(contact: contact, event: event, amount: 500, direction: .given, date: date)
-        let given2 = Record(contact: contact, event: event, amount: 300, direction: .given, date: date)
-        let received1 = Record(contact: contact, event: event, amount: 1000, direction: .received, date: date)
+        let given1 = SampleData.record(contact: contact, event: event, amount: 500, direction: .given, date: date)
+        let given2 = SampleData.record(contact: contact, event: event, amount: 300, direction: .given, date: date)
+        let received1 = SampleData.record(contact: contact, event: event, amount: 1000, direction: .received, date: date)
         db.context.insert(given1)
         db.context.insert(given2)
         db.context.insert(received1)
@@ -120,10 +120,10 @@ struct MonthlyDetailViewModelTests {
         let febDate = cal.date(from: DateComponents(year: 2026, month: 2, day: 15))!
         let marDate = cal.date(from: DateComponents(year: 2026, month: 3, day: 15))!
 
-        let rFebGiven = Record(contact: contact, event: event, amount: 200, direction: .given, date: febDate)
-        let rFebReceived = Record(contact: contact, event: event, amount: 100, direction: .received, date: febDate)
-        let rMarGiven = Record(contact: contact, event: event, amount: 400, direction: .given, date: marDate)
-        let rMarReceived = Record(contact: contact, event: event, amount: 300, direction: .received, date: marDate)
+        let rFebGiven = SampleData.record(contact: contact, event: event, amount: 200, direction: .given, date: febDate)
+        let rFebReceived = SampleData.record(contact: contact, event: event, amount: 100, direction: .received, date: febDate)
+        let rMarGiven = SampleData.record(contact: contact, event: event, amount: 400, direction: .given, date: marDate)
+        let rMarReceived = SampleData.record(contact: contact, event: event, amount: 300, direction: .received, date: marDate)
         db.context.insert(rFebGiven)
         db.context.insert(rFebReceived)
         db.context.insert(rMarGiven)
@@ -151,8 +151,8 @@ struct MonthlyDetailViewModelTests {
         db.context.insert(birthdayEvent)
 
         let date = Calendar.current.date(from: DateComponents(year: 2026, month: 5, day: 10))!
-        let r1 = Record(contact: contact, event: weddingEvent, amount: 600, direction: .given, date: date)
-        let r2 = Record(contact: contact, event: birthdayEvent, amount: 400, direction: .given, date: date)
+        let r1 = SampleData.record(contact: contact, event: weddingEvent, amount: 600, direction: .given, date: date)
+        let r2 = SampleData.record(contact: contact, event: birthdayEvent, amount: 400, direction: .given, date: date)
         db.context.insert(r1)
         db.context.insert(r2)
         try db.context.save()
@@ -177,9 +177,9 @@ struct MonthlyDetailViewModelTests {
         let marDate = cal.date(from: DateComponents(year: 2026, month: 3, day: 15))!
         let aprDate = cal.date(from: DateComponents(year: 2026, month: 4, day: 15))!
 
-        let r1 = Record(contact: contact, event: event, amount: 100, direction: .given, date: janDate)
-        let r2 = Record(contact: contact, event: event, amount: 200, direction: .given, date: marDate)
-        let r3 = Record(contact: contact, event: event, amount: 300, direction: .given, date: aprDate)
+        let r1 = SampleData.record(contact: contact, event: event, amount: 100, direction: .given, date: janDate)
+        let r2 = SampleData.record(contact: contact, event: event, amount: 200, direction: .given, date: marDate)
+        let r3 = SampleData.record(contact: contact, event: event, amount: 300, direction: .given, date: aprDate)
         db.context.insert(r1)
         db.context.insert(r2)
         db.context.insert(r3)

@@ -3,8 +3,10 @@ import SwiftData
 
 enum RecordFilter: String, CaseIterable, Hashable {
     case all = "all"
-    case given = "given"
-    case received = "received"
+    case monetary = "monetary"
+    case gift = "gift"
+    case favor = "favor"
+    case banquet = "banquet"
 }
 
 @Observable
@@ -30,25 +32,29 @@ class RecordListViewModel {
                 sortBy: [SortDescriptor(\.date, order: .reverse)]
             )
 
-            if filter == .given {
-                descriptor.predicate = #Predicate<Record> { record in
-                    record.directionRaw == "given"
-                }
-            } else if filter == .received {
-                descriptor.predicate = #Predicate<Record> { record in
-                    record.directionRaw == "received"
-                }
+            switch filter {
+            case .all:
+                break
+            case .monetary:
+                descriptor.predicate = #Predicate<Record> { $0.recordTypeRaw == "monetary" }
+            case .gift:
+                descriptor.predicate = #Predicate<Record> { $0.recordTypeRaw == "gift" }
+            case .favor:
+                descriptor.predicate = #Predicate<Record> { $0.recordTypeRaw == "favor" }
+            case .banquet:
+                descriptor.predicate = #Predicate<Record> { $0.recordTypeRaw == "banquet" }
             }
 
             var records = try context.fetch(descriptor)
 
-            // Apply search filter in memory
+            // 搜索：先匹配联系人/事件名（避免对每条记录解码 kv）；再对剩余记录解析 description
             if !searchText.isEmpty {
                 let query = searchText.lowercased()
                 records = records.filter { record in
                     let contactMatch = (record.contact?.name ?? "").lowercased().contains(query)
                     let eventMatch = (record.event?.name ?? "").lowercased().contains(query)
-                    return contactMatch || eventMatch
+                    if contactMatch || eventMatch { return true }
+                    return record.resolvedDescription.lowercased().contains(query)
                 }
             }
 
@@ -71,10 +77,7 @@ class RecordListViewModel {
     }
 
     private func groupByMonth(_ records: [Record]) -> [String: [Record]] {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "zh_Hans")
-        formatter.dateFormat = "yyyy年M月"
-
+        let formatter = DateFormatters.recordListMonthKey
         var result: [String: [Record]] = [:]
         for record in records {
             let key = formatter.string(from: record.date)
@@ -84,9 +87,6 @@ class RecordListViewModel {
     }
 
     private func parseMonthKey(_ key: String) -> Date {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "zh_Hans")
-        formatter.dateFormat = "yyyy年M月"
-        return formatter.date(from: key) ?? .distantPast
+        DateFormatters.recordListMonthKey.date(from: key) ?? .distantPast
     }
 }

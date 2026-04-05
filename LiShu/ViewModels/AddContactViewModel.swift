@@ -11,6 +11,7 @@ class AddContactViewModel {
     var birthday: Date = .now
     var hasBirthday: Bool = false
     var phone: String = ""
+    var location: String = ""
     var note: String = ""
     var showValidationAlert: Bool = false
     var needsProUpgrade: Bool = false
@@ -28,6 +29,7 @@ class AddContactViewModel {
         birthday = contact.birthday ?? .now
         hasBirthday = contact.birthday != nil
         phone = contact.phone
+        location = contact.location
         note = contact.note
     }
 
@@ -52,6 +54,7 @@ class AddContactViewModel {
             existing.category = selectedCategory?.rawValue ?? ""
             existing.circle = circle
             existing.birthday = hasBirthday ? birthday : nil
+            existing.location = location.trimmingCharacters(in: .whitespacesAndNewlines)
             existing.note = note.trimmingCharacters(in: .whitespaces)
 
             do {
@@ -73,6 +76,7 @@ class AddContactViewModel {
                 category: selectedCategory?.rawValue ?? "",
                 circle: circle,
                 birthday: hasBirthday ? birthday : nil,
+                location: location.trimmingCharacters(in: .whitespacesAndNewlines),
                 note: note.trimmingCharacters(in: .whitespaces)
             )
 

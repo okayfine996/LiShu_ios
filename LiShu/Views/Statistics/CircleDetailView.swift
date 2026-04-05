@@ -280,7 +280,7 @@ struct CircleDetailView: View {
 
     private func memberRow(member: CircleMemberItem, isLast: Bool) -> some View {
         HStack(spacing: 12) {
-            AvatarView(imageData: member.contact.avatar, name: member.contact.name, size: 48)
+            AvatarView(imageData: member.contact.avatar, name: member.contact.name)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(member.contact.name)
@@ -343,14 +343,14 @@ private func makeCircleDetailPreviewContainer() -> ModelContainer? {
     [e1, e2].forEach { ctx.insert($0) }
 
     let records: [Record] = [
-        Record(contact: c1, event: e1, amount: 20000, direction: .received, paymentMethod: .wechat),
-        Record(contact: c1, event: e2, amount: 5000, direction: .given, paymentMethod: .cash),
-        Record(contact: c2, event: e1, amount: 10000, direction: .received, paymentMethod: .alipay),
-        Record(contact: c2, event: e2, amount: 3000, direction: .given, paymentMethod: .wechat),
-        Record(contact: c3, event: e1, amount: 5000, direction: .received, paymentMethod: .cash),
-        Record(contact: c3, event: e2, amount: 2000, direction: .given, paymentMethod: .alipay),
-        Record(contact: c4, event: e1, amount: 3000, direction: .received, paymentMethod: .cash),
-        Record(contact: c4, event: e2, amount: 2000, direction: .given, paymentMethod: .wechat),
+        Record.makeMonetaryRecord(contact: c1, event: e1, amount: 20000, direction: .received, paymentMethod: .wechat),
+        Record.makeMonetaryRecord(contact: c1, event: e2, amount: 5000, direction: .given, paymentMethod: .cash),
+        Record.makeMonetaryRecord(contact: c2, event: e1, amount: 10000, direction: .received, paymentMethod: .alipay),
+        Record.makeMonetaryRecord(contact: c2, event: e2, amount: 3000, direction: .given, paymentMethod: .wechat),
+        Record.makeMonetaryRecord(contact: c3, event: e1, amount: 5000, direction: .received, paymentMethod: .cash),
+        Record.makeMonetaryRecord(contact: c3, event: e2, amount: 2000, direction: .given, paymentMethod: .alipay),
+        Record.makeMonetaryRecord(contact: c4, event: e1, amount: 3000, direction: .received, paymentMethod: .cash),
+        Record.makeMonetaryRecord(contact: c4, event: e2, amount: 2000, direction: .given, paymentMethod: .wechat),
     ]
     records.forEach { ctx.insert($0) }
 
@@ -365,7 +365,7 @@ private func makeCircleDetailPreviewContainer() -> ModelContainer? {
             }
             .modelContainer(container)
         } else {
-            Text("Preview unavailable")
+            Text(String(localized: "common.preview.unavailable"))
         }
     }
 }

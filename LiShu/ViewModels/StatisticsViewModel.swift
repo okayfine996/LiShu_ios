@@ -25,6 +25,13 @@ struct CircleAnalysisItem: Identifiable {
 
 @Observable
 class StatisticsViewModel {
+    struct RelationshipHealthSummary {
+        var close: Int = 0
+        var stable: Int = 0
+        var distant: Int = 0
+        var needsAttention: Int = 0
+    }
+
     var selectedYear: Int = Calendar.current.component(.year, from: Date())
     var availableYears: [Int] = []
     var totalIncome: Double = 0
@@ -36,6 +43,10 @@ class StatisticsViewModel {
     var allRankedContacts: [ContactRankingItem] = []
     var circleAnalysisItems: [CircleAnalysisItem] = []
     var heatmapGrid: [[Int]] = Array(repeating: Array(repeating: 0, count: 4), count: 12)
+    var nonFinancialInteractionCount: Int = 0
+    var recordTypeDistribution: [(type: RecordType, count: Int, percentage: Double)] = []
+    var yearOverYearChangeRate: Double?
+    var relationshipHealthSummary = RelationshipHealthSummary()
     var state: LoadingState<Bool> = .idle
 
     var chartBars: [(label: String, income: Double, expense: Double)] {
@@ -58,6 +69,9 @@ class StatisticsViewModel {
             computeContactRanking(from: allRecords)
             computeCircleAnalysis(from: allRecords)
             computeHeatmapGrid(from: allRecords)
+            computeRecordTypeDistribution(from: allRecords)
+            computeYearOverYearChange(from: allRecords)
+            computeRelationshipHealthSummary()
             state = .loaded(true)
         } catch {
             state = .error(error.localizedDescription)
@@ -70,7 +84,7 @@ class StatisticsViewModel {
     }
 
     var hasData: Bool {
-        totalIncome > 0 || totalExpense > 0
+        totalIncome > 0 || totalExpense > 0 || nonFinancialInteractionCount > 0
     }
 
     var totalRecordCount: Int {
@@ -79,6 +93,10 @@ class StatisticsViewModel {
 
     var contactCount: Int {
         allRankedContacts.count
+    }
+
+    var totalExchangeAmount: Double {
+        totalIncome + totalExpense
     }
 
     // MARK: - Ranking sorted lists
@@ -131,19 +149,21 @@ class StatisticsViewModel {
         let yearRecords = records.filter {
             calendar.component(.year, from: $0.date) == selectedYear
         }
-        totalIncome = yearRecords
+        let monetaryRecords = yearRecords.filter { $0.recordType == .monetary }
+        totalIncome = monetaryRecords
             .filter { $0.direction == .received }
-            .reduce(0.0) { $0 + $1.amount }
-        totalExpense = yearRecords
+            .reduce(0.0) { $0 + $1.monetaryAmount }
+        totalExpense = monetaryRecords
             .filter { $0.direction == .given }
-            .reduce(0.0) { $0 + $1.amount }
+            .reduce(0.0) { $0 + $1.monetaryAmount }
         netValue = totalIncome - totalExpense
+        nonFinancialInteractionCount = yearRecords.filter { $0.recordType != .monetary }.count
     }
 
     private func computeMonthlyData(from records: [Record]) {
         let calendar = Calendar.current
         let yearRecords = records.filter {
-            calendar.component(.year, from: $0.date) == selectedYear
+            calendar.component(.year, from: $0.date) == selectedYear && $0.recordType == .monetary
         }
         var monthly: [(month: Int, income: Double, expense: Double)] = []
         for month in 1...12 {
@@ -152,10 +172,10 @@ class StatisticsViewModel {
             }
             let income = monthRecords
                 .filter { $0.direction == .received }
-                .reduce(0.0) { $0 + $1.amount }
+                .reduce(0.0) { $0 + $1.monetaryAmount }
             let expense = monthRecords
                 .filter { $0.direction == .given }
-                .reduce(0.0) { $0 + $1.amount }
+                .reduce(0.0) { $0 + $1.monetaryAmount }
             monthly.append((month: month, income: income, expense: expense))
         }
         monthlyData = monthly
@@ -164,12 +184,14 @@ class StatisticsViewModel {
     private func computeEventTypeDistribution(from records: [Record]) {
         let calendar = Calendar.current
         let yearRecords = records.filter {
-            calendar.component(.year, from: $0.date) == selectedYear
+            calendar.component(.year, from: $0.date) == selectedYear &&
+            $0.recordType == .monetary &&
+            $0.event != nil
         }
         var typeAmounts: [EventType: Double] = [:]
         for record in yearRecords {
             guard let event = record.event else { continue }
-            typeAmounts[event.type, default: 0] += record.amount
+            typeAmounts[event.type, default: 0] += record.monetaryAmount
         }
         let totalAmount = typeAmounts.values.reduce(0, +)
         eventTypeDistribution = typeAmounts
@@ -188,10 +210,12 @@ class StatisticsViewModel {
             let cid = contact.persistentModelID
             var stats = contactStats[cid] ?? (contact: contact, recordCount: 0, income: 0, expense: 0, lastDate: nil)
             stats.recordCount += 1
-            if record.direction == .received {
-                stats.income += record.amount
-            } else {
-                stats.expense += record.amount
+            if record.recordType == .monetary {
+                if record.direction == .received {
+                    stats.income += record.monetaryAmount
+                } else {
+                    stats.expense += record.monetaryAmount
+                }
             }
             if stats.lastDate == nil || record.date > stats.lastDate! {
                 stats.lastDate = record.date
@@ -201,18 +225,18 @@ class StatisticsViewModel {
         allRankedContacts = contactStats.values
             .map { ContactRankingItem(contact: $0.contact, recordCount: $0.recordCount, income: $0.income, expense: $0.expense, lastRecordDate: $0.lastDate) }
             .sorted { abs($0.netValue) > abs($1.netValue) }
-        topContacts = Array(allRankedContacts.prefix(3))
+        topContacts = Array(allRankedContacts.prefix(5))
     }
 
     private func computeCircleAnalysis(from records: [Record]) {
         let calendar = Calendar.current
         let yearRecords = records.filter {
-            calendar.component(.year, from: $0.date) == selectedYear
+            calendar.component(.year, from: $0.date) == selectedYear && $0.recordType == .monetary
         }
         var circleAmounts: [Int: Double] = [:]
         for record in yearRecords {
             guard let contact = record.contact else { continue }
-            circleAmounts[contact.circle, default: 0] += record.amount
+            circleAmounts[contact.circle, default: 0] += record.monetaryAmount
         }
         let maxAmount = max(circleAmounts.values.max() ?? 1, 1)
         circleAnalysisItems = circleAmounts
@@ -220,6 +244,8 @@ class StatisticsViewModel {
             .map { CircleAnalysisItem(circle: $0.key, name: circleDisplayName($0.key), amount: $0.value, ratio: $0.value / maxAmount) }
     }
 
+    /// Heatmap 统计所有记录类型（含非金额），作为"人情活跃度"展示，与 recordCount 一致。
+    /// 月度柱状图等金额图表仅统计 monetary，两者设计意图不同。
     private func computeHeatmapGrid(from records: [Record]) {
         let calendar = Calendar.current
         let yearRecords = records.filter {
@@ -235,6 +261,67 @@ class StatisticsViewModel {
             }
         }
         heatmapGrid = grid
+    }
+
+    private func computeRecordTypeDistribution(from records: [Record]) {
+        let calendar = Calendar.current
+        let yearRecords = records.filter {
+            calendar.component(.year, from: $0.date) == selectedYear
+        }
+        var typeCounts: [RecordType: Int] = [:]
+        for record in yearRecords {
+            typeCounts[record.recordType, default: 0] += 1
+        }
+        let total = typeCounts.values.reduce(0, +)
+        recordTypeDistribution = typeCounts
+            .map { (type: $0.key, count: $0.value, percentage: total > 0 ? Double($0.value) / Double(total) : 0) }
+            .sorted { $0.count > $1.count }
+    }
+
+    private func computeYearOverYearChange(from records: [Record]) {
+        let calendar = Calendar.current
+        let currentTotal = records
+            .filter {
+                calendar.component(.year, from: $0.date) == selectedYear &&
+                $0.recordType == .monetary
+            }
+            .reduce(0.0) { $0 + $1.monetaryAmount }
+
+        let previousYear = selectedYear - 1
+        let previousTotal = records
+            .filter {
+                calendar.component(.year, from: $0.date) == previousYear &&
+                $0.recordType == .monetary
+            }
+            .reduce(0.0) { $0 + $1.monetaryAmount }
+
+        guard previousTotal > 0 else {
+            yearOverYearChangeRate = nil
+            return
+        }
+        yearOverYearChangeRate = (currentTotal - previousTotal) / previousTotal
+    }
+
+    private func computeRelationshipHealthSummary() {
+        let today = Date()
+        var summary = RelationshipHealthSummary()
+        let calendar = Calendar.current
+
+        for item in allRankedContacts {
+            guard let lastDate = item.lastRecordDate else { continue }
+            let days = calendar.dateComponents([.day], from: lastDate, to: today).day ?? 0
+            switch days {
+            case ...90:
+                summary.close += 1
+            case 91...180:
+                summary.stable += 1
+            case 181...365:
+                summary.distant += 1
+            default:
+                summary.needsAttention += 1
+            }
+        }
+        relationshipHealthSummary = summary
     }
 
     // MARK: - Formatting helpers
@@ -256,6 +343,16 @@ class StatisticsViewModel {
     func formatNetValue(_ value: Double) -> String {
         let prefix = value >= 0 ? "+" : ""
         return prefix + "¥" + formatAmountWithComma(value)
+    }
+
+    func formatPercentageValue(_ value: Double) -> String {
+        String(format: "%.0f%%", value * 100)
+    }
+
+    func formatYearOverYearChange() -> String? {
+        guard let yearOverYearChangeRate else { return nil }
+        let sign = yearOverYearChangeRate >= 0 ? "+" : "-"
+        return String(format: String(localized: "statistics.hero.yoy"), sign, abs(yearOverYearChangeRate) * 100)
     }
 
     func eventTypeIconName(for type: EventType) -> String {

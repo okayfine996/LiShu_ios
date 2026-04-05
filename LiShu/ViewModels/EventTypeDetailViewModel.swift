@@ -9,8 +9,8 @@ class EventTypeDetailViewModel {
     var monthlyDistribution: [Int] = Array(repeating: 0, count: 12)
 
     var totalCount: Int { records.count }
-    var totalExpense: Double { records.filter { $0.direction == .given }.reduce(0) { $0 + $1.amount } }
-    var totalIncome: Double { records.filter { $0.direction == .received }.reduce(0) { $0 + $1.amount } }
+    var totalExpense: Double { records.filter { $0.direction == .given }.reduce(0) { $0 + $1.monetaryAmount } }
+    var totalIncome: Double { records.filter { $0.direction == .received }.reduce(0) { $0 + $1.monetaryAmount } }
     var netValue: Double { totalIncome - totalExpense }
 
     var peakMonth: Int {

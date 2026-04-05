@@ -26,7 +26,7 @@ struct RecordDetailViewModelTests {
         vm.returnedAmountText = "200"
 
         #expect(vm.saveReturn(context: db.context) == true)
-        #expect(record.returnedAmount == 200)
+        #expect(record.resolvedReturnedAmount == 200)
     }
 
     @Test func testSaveReturnZeroAmount() throws {
@@ -83,19 +83,22 @@ struct RecordDetailViewModelTests {
         #expect(records.isEmpty)
     }
 
-    @Test func testFormattedAmount() throws {
+    @Test func testSaveReturnParsesThousandSeparator() throws {
         let db = try TestDB()
         let contact = SampleData.contact()
         let event = SampleData.event()
         db.context.insert(contact)
         db.context.insert(event)
-        let record = SampleData.record(contact: contact, event: event, amount: 1000)
+        let record = SampleData.record(contact: contact, event: event, amount: 5000, returnedAmount: 0)
         db.context.insert(record)
+        try db.context.save()
 
         let vm = RecordDetailViewModel()
         vm.record = record
+        vm.returnedAmountText = "1,000"
 
-        #expect(vm.formattedAmount == "¥1000")
+        #expect(vm.saveReturn(context: db.context) == true)
+        #expect(record.resolvedReturnedAmount == 1000)
     }
 
     @Test func testLoadRecord() throws {
@@ -112,6 +115,6 @@ struct RecordDetailViewModelTests {
         vm.load(id: record.persistentModelID, context: db.context)
 
         #expect(vm.record != nil)
-        #expect(vm.record?.amount == 500)
+        #expect(vm.record?.monetaryAmount == 500)
     }
 }

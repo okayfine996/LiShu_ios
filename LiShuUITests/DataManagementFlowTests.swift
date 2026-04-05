@@ -42,11 +42,8 @@ final class DataManagementFlowTests: BaseUITestCase {
             let csvButton = app.buttons.matching(
                 NSPredicate(format: "label CONTAINS[c] 'CSV' OR label CONTAINS[c] 'csv'")
             ).firstMatch
-            let jsonButton = app.buttons.matching(
-                NSPredicate(format: "label CONTAINS[c] 'JSON' OR label CONTAINS[c] 'json'")
-            ).firstMatch
 
-            let hasExportOptions = csvButton.waitForExistence(timeout: 3) || jsonButton.waitForExistence(timeout: 3)
+            let hasExportOptions = csvButton.waitForExistence(timeout: 3)
             if hasExportOptions {
                 XCTAssertTrue(true, "Export options exist")
             }

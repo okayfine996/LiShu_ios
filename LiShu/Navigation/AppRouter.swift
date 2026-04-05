@@ -17,9 +17,11 @@ enum AppRoute: Hashable {
     case addEvent
     // 统计
     case statistics
-    case eventTypeDetail(EventType, year: Int)
+    case eventTypeComposition(year: Int)
     case netValueRanking(year: Int)
     case circleDetail(Int, year: Int)
+    case recordTypeComposition(year: Int)
+    case heatmapDetail(year: Int)
     // 设置子页
     case proMembership
     case appearanceSettings

@@ -15,3 +15,9 @@ enum TabLabels {
     static let events = "事件"
     static let settings = "设置"
 }
+
+/// 与 `Localizable.xcstrings` zh-Hans 一致；文案变更时请同步
+enum UITestStrings {
+    /// `contact.add.title`
+    static let newContactMenuItem = "新建联系人"
+}

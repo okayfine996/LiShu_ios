@@ -12,19 +12,9 @@ class RecordDetailViewModel {
         record = context.model(for: id) as? Record
     }
 
-    var formattedAmount: String {
-        guard let record else { return "¥0" }
-        return "¥" + String(format: "%.0f", record.amount)
-    }
-
     var formattedReturnAmount: String {
         guard let record else { return "¥0" }
-        return "¥" + String(format: "%.0f", record.returnedAmount)
-    }
-
-    var formattedActualDebt: String {
-        guard let record else { return "¥0" }
-        return "¥" + String(format: "%.0f", record.outstandingAmount)
+        return "¥" + String(format: "%.0f", record.resolvedReturnedAmount)
     }
 
     var formattedDate: String {
@@ -37,14 +27,21 @@ class RecordDetailViewModel {
 
     var directionLabel: String {
         guard let record else { return "" }
-        return record.direction == .given
-            ? String(localized: "record.detail.directionSent")
-            : String(localized: "record.detail.directionReceived")
+        switch (record.recordType, record.direction) {
+        case (.monetary, .given): return String(localized: "record.direction.monetary.given")
+        case (.monetary, .received): return String(localized: "record.direction.monetary.received")
+        case (.gift, .given): return String(localized: "record.direction.gift.given")
+        case (.gift, .received): return String(localized: "record.direction.gift.received")
+        case (.favor, .given): return String(localized: "record.direction.favor.given")
+        case (.favor, .received): return String(localized: "record.direction.favor.received")
+        case (.banquet, .given): return String(localized: "record.direction.banquet.given")
+        case (.banquet, .received): return String(localized: "record.direction.banquet.received")
+        }
     }
 
     var paymentMethodName: String {
         guard let record else { return "" }
-        switch record.paymentMethod {
+        switch record.resolvedPaymentMethod {
         case .cash: return String(localized: "payment.cash")
         case .wechat: return String(localized: "payment.wechat")
         case .alipay: return String(localized: "payment.alipay")
@@ -64,21 +61,27 @@ class RecordDetailViewModel {
         contactRecords.count
     }
 
-    /// Net amount with this contact (received - given)
+    /// Net amount with this contact (received - given), monetary only
     var contactNetAmount: Double {
-        contactRecords.reduce(0) { total, rec in
-            rec.direction == .received ? total + rec.amount : total - rec.amount
+        contactRecords.filter { $0.recordType == .monetary }.reduce(0) { total, rec in
+            rec.direction == .received ? total + rec.monetaryAmount : total - rec.monetaryAmount
         }
+    }
+
+    var shouldShowReturnButton: Bool {
+        guard let record else { return false }
+        return record.isMonetary
     }
 
     // MARK: - Actions
 
     func saveReturn(context: ModelContext) -> Bool {
         guard let record else { return false }
-        guard let returnValue = Double(returnedAmountText), returnValue > 0 else { return false }
+        guard let returnValue = UserEnteredDecimal.parse(returnedAmountText), returnValue > 0 else { return false }
 
-        record.returnedAmount += returnValue
-        record.updateStatus()
+        guard var monetary = record.monetaryData else { return false }
+        monetary.returnedAmount += returnValue
+        record.applyTypeData(.monetary(monetary))
 
         do {
             try context.save()

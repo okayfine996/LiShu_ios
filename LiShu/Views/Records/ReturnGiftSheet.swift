@@ -59,12 +59,12 @@ struct ReturnGiftSheet: View {
     private func recordInfoCard(_ record: Record) -> some View {
         VStack(spacing: 12) {
             HStack(spacing: 12) {
-                AvatarView(imageData: record.contact?.avatar, name: record.contact?.name ?? "", size: 48)
+                AvatarView(imageData: record.contact?.avatar, name: record.contact?.name ?? "")
                 VStack(alignment: .leading, spacing: 4) {
                     Text(record.contact?.name ?? "")
                         .font(DesignSystem.Typography.title3)
                         .foregroundStyle(DesignSystem.Colors.textPrimary)
-                    Text(record.event?.name ?? "")
+                    Text(record.contextDisplayName)
                         .font(DesignSystem.Typography.caption)
                         .foregroundStyle(DesignSystem.Colors.textSecondary)
                 }
@@ -77,18 +77,13 @@ struct ReturnGiftSheet: View {
             HStack(spacing: 8) {
                 amountInfoRow(
                     label: String(localized: "record.detail.giftAmount"),
-                    value: formatAmount(record.amount),
+                    value: formatAmount(record.monetaryAmount),
                     highlighted: false
                 )
                 amountInfoRow(
                     label: String(localized: "record.detail.returnAmount"),
-                    value: formatAmount(record.returnedAmount),
+                    value: formatAmount(record.resolvedReturnedAmount),
                     highlighted: false
-                )
-                amountInfoRow(
-                    label: String(localized: "record.detail.actualDebt"),
-                    value: formatAmount(record.outstandingAmount),
-                    highlighted: true
                 )
             }
         }
@@ -140,10 +135,6 @@ struct ReturnGiftSheet: View {
                 RoundedRectangle(cornerRadius: DesignSystem.Radius.input)
                     .stroke(DesignSystem.Colors.border, lineWidth: 1)
             )
-
-            Text(String(format: String(localized: "record.returnGift.outstandingHint"), formatAmount(record.outstandingAmount)))
-                .font(DesignSystem.Typography.small)
-                .foregroundStyle(DesignSystem.Colors.textTertiary)
         }
     }
 
@@ -163,27 +154,37 @@ struct ReturnGiftSheet: View {
 
     // MARK: - Validation & Save
 
+    /// 尚可记入的退礼上限（礼金 − 已退），不对外展示
+    private func maxAdditionalReturn(for record: Record) -> Double {
+        max(0, record.monetaryAmount - record.resolvedReturnedAmount)
+    }
+
     private func isValid(_ record: Record) -> Bool {
-        guard let value = Double(returnAmountText), value > 0 else { return false }
-        return value <= record.outstandingAmount
+        guard let value = UserEnteredDecimal.parse(returnAmountText), value > 0 else { return false }
+        return value <= maxAdditionalReturn(for: record)
     }
 
     private func performReturn(_ record: Record) {
-        guard let returnValue = Double(returnAmountText), returnValue > 0 else {
+        guard let returnValue = UserEnteredDecimal.parse(returnAmountText), returnValue > 0 else {
             validationError = String(localized: "record.returnGift.amountRequired")
             isShowingErrorAlert = true
             return
         }
-        guard returnValue <= record.outstandingAmount else {
+        guard returnValue <= maxAdditionalReturn(for: record) else {
             validationError = String(localized: "record.returnGift.exceedsOutstanding")
             isShowingErrorAlert = true
             return
         }
 
-        record.returnedAmount += returnValue
-        record.updateStatus()
+        guard var monetary = record.monetaryData else {
+            validationError = String(localized: "record.returnGift.monetaryDataMissing")
+            isShowingErrorAlert = true
+            return
+        }
+        monetary.returnedAmount += returnValue
+        record.applyTypeData(.monetary(monetary))
 
-        if record.status == .settled {
+        if record.hasReturnedGift {
             NotificationManager.shared.cancelReturnGiftReminder(record: record)
         }
 
