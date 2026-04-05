@@ -4,61 +4,13 @@ import Pulse
 import PulseLogHandler
 import SwiftUI
 
-/// Release 可用的网络诊断：静默写入 Pulse 存储、敏感字段脱敏、LRU 上限；控制台由「关于」页暗门唤起。
-///
-/// 说明：
-/// - 目前项目代码中未发现自建 `URLSession` 网络层；因此 Pulse 更适合作为诊断闭环基础设施，
-///   后续若新增 App 自有网络请求，应优先改为 `URLSessionProxy` 或手动注入 `NetworkLogger`。
+/// Release 可用的文本诊断：静默写入 Pulse 存储、LRU 上限；控制台由「关于」页暗门唤起。
 enum PulseDiagnostics {
     nonisolated enum Constants {
         static let storeSizeLimit: Int64 = 30 * 1_000_000
-        static let releaseResponseBodySizeLimit = 128 * 1024
         static let disabledEnvironmentKey = "PULSE_DISABLED"
         static let uiTestingArgument = "--uitesting"
         static let skipOnboardingArgument = "--skip-onboarding"
-
-        static let excludedHosts: Set<String> = [
-            "*.apple.com",
-            "*.icloud.com",
-            "*.mzstatic.com",
-            "*.itunes.apple.com",
-            "*.appstore.com"
-        ]
-
-        static let sensitiveHeaders: Set<String> = [
-            "Authorization",
-            "Cookie",
-            "Set-Cookie",
-            "Proxy-Authorization",
-            "X-API-Key",
-            "X-Auth-Token",
-            "X-Csrf-Token",
-            "X-*"
-        ]
-
-        static let sensitiveQueryItems: Set<String> = [
-            "token",
-            "access_token",
-            "refresh_token",
-            "key",
-            "auth",
-            "code",
-            "password"
-        ]
-
-        static let sensitiveDataFields: Set<String> = [
-            "token",
-            "access_token",
-            "refresh_token",
-            "authorization",
-            "cookie",
-            "password",
-            "phone",
-            "mobile",
-            "email",
-            "idCard",
-            "id_card"
-        ]
     }
 
     private nonisolated static let lock = NSLock()
@@ -76,14 +28,14 @@ enum PulseDiagnostics {
     }
 
     /// 暗门唤起后的支持说明。分享动作仍由 PulseUI 的原生导出能力负责。
-    static nonisolated let supportSummary = "诊断面板会本地保存应用日志与网络日志，并在分享前自动隐藏常见敏感字段。当前网络采集主要覆盖应用自有 URLSession 请求；Apple 托管服务（如 StoreKit、CloudKit）可能不会完整显示。"
+    static nonisolated let supportSummary = "诊断面板会本地保存应用日志，便于排查启动、交互、订阅、导入导出等流程问题。日志不会自动上传，只有在你手动分享时才会导出。"
 
     static nonisolated func makeLogger(label: String) -> Logger {
         configureIfNeeded()
         return Logger(label: label)
     }
 
-    /// 在应用启动早期调用一次；配置 `LoggerStore` 上限与 `NetworkLogger` 脱敏规则。
+    /// 在应用启动早期调用一次；配置 `LoggerStore` 上限并接入统一文本日志。
     static nonisolated func configureIfNeeded(
         arguments: [String] = CommandLine.arguments,
         environment: [String: String] = ProcessInfo.processInfo.environment
@@ -96,10 +48,6 @@ enum PulseDiagnostics {
 
         installSharedLoggerStore()
         bootstrapLoggingSystemIfNeeded()
-        NetworkLogger.shared = NetworkLogger(
-            store: LoggerStore.shared,
-            configuration: makeNetworkLoggerConfiguration()
-        )
         let logger = Logger(label: "diagnostics.pulse")
         logger.info("Pulse diagnostics initialized", metadata: [
             "store_size_limit_mb": .stringConvertible(Constants.storeSizeLimit / 1_000_000)
@@ -116,21 +64,8 @@ enum PulseDiagnostics {
         monitoringEnabled(arguments: arguments, environment: environment)
     }
 
-    static nonisolated func makeNetworkLoggerConfiguration() -> NetworkLogger.Configuration {
-        var configuration = NetworkLogger.Configuration()
-        configuration.excludedHosts = Constants.excludedHosts
-        configuration.sensitiveHeaders = Constants.sensitiveHeaders
-        configuration.sensitiveQueryItems = Constants.sensitiveQueryItems
-        configuration.sensitiveDataFields = Constants.sensitiveDataFields
-        return configuration
-    }
-
     static nonisolated func makeLoggerStoreConfiguration(isDebugBuild: Bool = defaultDebugBuildValue()) -> LoggerStore.Configuration {
-        var configuration = LoggerStore.Configuration(sizeLimit: Constants.storeSizeLimit)
-        if !isDebugBuild {
-            configuration.responseBodySizeLimit = Constants.releaseResponseBodySizeLimit
-        }
-        return configuration
+        LoggerStore.Configuration(sizeLimit: Constants.storeSizeLimit)
     }
 
     static nonisolated func installSharedLoggerStore() {

@@ -36,26 +36,11 @@ struct PulseDiagnosticsTests {
         ))
     }
 
-    @Test("network logger configuration redacts sensitive values")
-    func networkLoggerConfiguration() {
-        let configuration = PulseDiagnostics.makeNetworkLoggerConfiguration()
-
-        #expect(configuration.excludedHosts.contains("*.apple.com"))
-        #expect(configuration.excludedHosts.contains("*.icloud.com"))
-        #expect(configuration.sensitiveHeaders.contains("Authorization"))
-        #expect(configuration.sensitiveHeaders.contains("X-*"))
-        #expect(configuration.sensitiveQueryItems.contains("access_token"))
-        #expect(configuration.sensitiveQueryItems.contains("password"))
-        #expect(configuration.sensitiveDataFields.contains("token"))
-        #expect(configuration.sensitiveDataFields.contains("email"))
-    }
-
-    @Test("release logger store configuration uses capped body storage")
+    @Test("logger store configuration preserves size cap")
     func releaseStoreConfiguration() {
         let configuration = PulseDiagnostics.makeLoggerStoreConfiguration(isDebugBuild: false)
 
         #expect(configuration.sizeLimit == PulseDiagnostics.Constants.storeSizeLimit)
-        #expect(configuration.responseBodySizeLimit == PulseDiagnostics.Constants.releaseResponseBodySizeLimit)
     }
 
     @Test("logging system writes messages into Pulse store")
