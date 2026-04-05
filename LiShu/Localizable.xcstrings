@@ -6005,12 +6005,13 @@
         }
       }
     },
-    "settings.about.version" : {
+    "settings.about.versionWithBuild" : {
+      "comment" : "About screen: marketing version and build number. Format: two %@ in order (version, build).",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "版本 "
+            "value" : "版本 %@（%@）"
           }
         }
       }

@@ -13,6 +13,15 @@ struct AboutView: View {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
     }
 
+    private var appBuildNumber: String {
+        Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
+    }
+
+    private var versionDisplayLine: String {
+        let format = String(localized: "settings.about.versionWithBuild")
+        return String(format: format, locale: Locale.current, arguments: [appVersion, appBuildNumber])
+    }
+
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 24) {
@@ -58,7 +67,7 @@ struct AboutView: View {
                 .font(DesignSystem.Typography.caption)
                 .foregroundStyle(DesignSystem.Colors.textSecondary)
 
-            Text(String(localized: "settings.about.version") + appVersion)
+            Text(versionDisplayLine)
                 .font(DesignSystem.Typography.small)
                 .foregroundStyle(DesignSystem.Colors.textTertiary)
                 .accessibilityIdentifier("about.versionLabel")
@@ -183,7 +192,7 @@ struct AboutView: View {
 
     private func openFeedbackMail() {
         let subject = String(localized: "about.feedback.subject")
-        let version = appVersion
+        let version = "\(appVersion) (\(appBuildNumber))"
         let systemVersion = UIDevice.current.systemVersion
         let device = UIDevice.current.model
         let body = "\n\n---\nApp: \(version)\niOS: \(systemVersion)\nDevice: \(device)"
