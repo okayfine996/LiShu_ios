@@ -1,6 +1,9 @@
 import Foundation
+import Logging
 import Vision
 import UIKit
+
+private nonisolated(unsafe) var ocrLogger: Logger { PulseDiagnostics.makeLogger(label: AppLogLabel.ocr) }
 
 enum OCRConfidence: String, Codable {
     case high
@@ -56,6 +59,10 @@ final class OCRService {
     // MARK: - Public API
 
     func recognizeRecords(from images: [UIImage]) async throws -> [OCRRecordItem] {
+        ocrLogger.notice("Starting OCR recognition", metadata: [
+            "step": .string("recognize_records"),
+            "count": .stringConvertible(images.count)
+        ])
         var allItems: [OCRRecordItem] = []
 
         for image in images {
@@ -64,10 +71,20 @@ final class OCRService {
             allItems.append(contentsOf: items)
         }
 
-        return deduplicateItems(allItems)
+        let items = deduplicateItems(allItems)
+        ocrLogger.notice("Finished OCR recognition", metadata: [
+            "step": .string("recognize_records"),
+            "count": .stringConvertible(items.count),
+            "result": .string("success")
+        ])
+        return items
     }
 
     func recognizeRecordsEnhanced(from images: [UIImage]) async throws -> (items: [OCRRecordItem], isAIEnhanced: Bool) {
+        ocrLogger.notice("Starting enhanced OCR recognition", metadata: [
+            "step": .string("recognize_records_enhanced"),
+            "count": .stringConvertible(images.count)
+        ])
         var allItems: [OCRRecordItem] = []
         var aiCount = 0
 
@@ -83,16 +100,33 @@ final class OCRService {
             }
         }
 
-        return (items: deduplicateItems(allItems), isAIEnhanced: aiCount == images.count && aiCount > 0)
+        let items = deduplicateItems(allItems)
+        let aiEnhanced = aiCount == images.count && aiCount > 0
+        ocrLogger.notice("Finished enhanced OCR recognition", metadata: [
+            "step": .string("recognize_records_enhanced"),
+            "count": .stringConvertible(items.count),
+            "result": .string(aiEnhanced ? "ai_enhanced" : "ocr_only")
+        ])
+        return (items: items, isAIEnhanced: aiEnhanced)
     }
 
     private func tryAIAnalysis(_ lines: [(text: String, confidence: Float)]) async -> [OCRRecordItem]? {
         if #available(iOS 26.0, *) {
             let service = AIAnalysisService.shared
-            guard service.isAvailable else { return nil }
+            guard service.isAvailable else {
+                ocrLogger.info("Skipped AI OCR enhancement", metadata: [
+                    "step": .string("ai_fallback"),
+                    "reason": .string("service_unavailable")
+                ])
+                return nil
+            }
             do {
                 return try await service.analyzeOCRText(lines)
             } catch {
+                ocrLogger.warning("AI OCR enhancement failed", metadata: [
+                    "step": .string("ai_fallback"),
+                    "error": .string(error.localizedDescription)
+                ])
                 return nil
             }
         }
@@ -103,12 +137,20 @@ final class OCRService {
 
     func recognizeText(in image: UIImage) async throws -> [(text: String, confidence: Float)] {
         guard let cgImage = image.cgImage else {
+            ocrLogger.error("OCR image conversion failed", metadata: [
+                "step": .string("vision_recognition"),
+                "reason": .string("invalid_image")
+            ])
             throw OCRError.invalidImage
         }
 
         return try await withCheckedThrowingContinuation { continuation in
             let request = VNRecognizeTextRequest { request, error in
                 if let error {
+                    ocrLogger.error("Vision OCR failed", metadata: [
+                        "step": .string("vision_recognition"),
+                        "error": .string(error.localizedDescription)
+                    ])
                     continuation.resume(throwing: error)
                     return
                 }
@@ -122,6 +164,10 @@ final class OCRService {
                     guard let candidate = observation.topCandidates(1).first else { return nil }
                     return (text: candidate.string, confidence: candidate.confidence)
                 }
+                ocrLogger.info("Vision OCR produced lines", metadata: [
+                    "step": .string("vision_recognition"),
+                    "count": .stringConvertible(lines.count)
+                ])
                 continuation.resume(returning: lines)
             }
 
@@ -221,6 +267,10 @@ final class OCRService {
             }
         }
 
+        ocrLogger.info("Parsed OCR record items", metadata: [
+            "step": .string("parse_record_items"),
+            "count": .stringConvertible(items.count)
+        ])
         return items
     }
 
@@ -275,12 +325,19 @@ final class OCRService {
 
     func deduplicateItems(_ items: [OCRRecordItem]) -> [OCRRecordItem] {
         var seen = Set<String>()
-        return items.filter { item in
+        let result = items.filter { item in
             let key = "\(item.name)_\(Int(item.amount))"
             if seen.contains(key) { return false }
             seen.insert(key)
             return true
         }
+        if result.count != items.count {
+            ocrLogger.info("Deduplicated OCR items", metadata: [
+                "step": .string("deduplicate"),
+                "count": .stringConvertible(items.count - result.count)
+            ])
+        }
+        return result
     }
 }
 

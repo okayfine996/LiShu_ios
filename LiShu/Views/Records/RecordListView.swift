@@ -14,16 +14,29 @@ struct RecordListView: View {
         .background(DesignSystem.Colors.bgPage)
         .navigationTitle(String(localized: "record.list.title"))
         .navigationBarTitleDisplayMode(.large)
+        .trackScreen("records.list")
         .searchable(text: $viewModel.searchText, prompt: String(localized: "record.list.searchPlaceholder"))
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
                     Button {
+                        InteractionLogger.tap(
+                            screen: "records.list",
+                            target: "records.list.addRecord",
+                            route: SheetRoute.addRecord(direction: nil, contactID: nil).logName,
+                            presentation: .sheet
+                        )
                         sheetRoute = .addRecord(direction: nil, contactID: nil)
                     } label: {
                         Label(String(localized: "home.addRecord"), systemImage: "square.and.pencil")
                     }
                     Button {
+                        InteractionLogger.tap(
+                            screen: "records.list",
+                            target: "records.list.ocrImport",
+                            route: "fullScreen.import.ocr",
+                            presentation: .fullScreen
+                        )
                         showOCRImport = true
                     } label: {
                         Label(String(localized: "record.ocr.import"), systemImage: "doc.viewfinder")
@@ -36,6 +49,7 @@ struct RecordListView: View {
             }
         }
         .onAppear {
+            InteractionLogger.screenView("records.list")
             viewModel.load(context: modelContext)
         }
         .onChange(of: viewModel.filter) { _, _ in
@@ -48,6 +62,9 @@ struct RecordListView: View {
             sheetContent(for: route)
         }
         .onChange(of: sheetRoute) { _, newValue in
+            if let newValue {
+                InteractionLogger.sheetPresentation(screen: "records.list", route: newValue.logName, isPresented: true)
+            }
             if newValue == nil {
                 viewModel.load(context: modelContext)
             }
@@ -56,6 +73,9 @@ struct RecordListView: View {
             viewModel.load(context: modelContext)
         }) {
             OCRImportView()
+        }
+        .onChange(of: showOCRImport) { _, newValue in
+            InteractionLogger.fullScreenPresentation(screen: "records.list", route: "fullScreen.import.ocr", isPresented: newValue)
         }
         .alert(String(localized: "common.error"), isPresented: Binding(
             get: { viewModel.deleteError != nil },
@@ -88,6 +108,12 @@ struct RecordListView: View {
                     message: String(localized: "record.list.empty"),
                     actionTitle: String(localized: "home.addRecord"),
                     action: {
+                        InteractionLogger.tap(
+                            screen: "records.list",
+                            target: "records.list.empty.addRecord",
+                            route: SheetRoute.addRecord(direction: nil, contactID: nil).logName,
+                            presentation: .sheet
+                        )
                         sheetRoute = .addRecord(direction: nil, contactID: nil)
                     }
                 )
@@ -119,6 +145,7 @@ struct RecordListView: View {
                             viewModel.filter = .all
                             viewModel.searchText = ""
                         }
+                        InteractionLogger.tap(screen: "records.list", target: "records.list.clearFilters")
                     }
                 )
                 .frame(minHeight: 320)
@@ -153,6 +180,10 @@ struct RecordListView: View {
                         withAnimation(.easeInOut(duration: 0.2)) {
                             viewModel.filter = filter
                         }
+                        InteractionLogger.tap(
+                            screen: "records.list",
+                            target: "records.list.filter.\(filter.rawValue)"
+                        )
                     } label: {
                         Text(filterTitle(filter))
                             .font(DesignSystem.Typography.caption)
@@ -199,18 +230,37 @@ struct RecordListView: View {
                     NavigationLink(value: AppRoute.recordDetail(record.persistentModelID)) {
                         RecordRow(record: record)
                     }
+                    .simultaneousGesture(TapGesture().onEnded {
+                        InteractionLogger.navigation(
+                            screen: "records.list",
+                            target: "records.list.record.\(String(describing: record.persistentModelID))",
+                            route: AppRoute.recordDetail(record.persistentModelID).logName
+                        )
+                    })
                     .buttonStyle(.plain)
                     .background(DesignSystem.Colors.bgSurface)
                     .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
                     .contextMenu {
                         if record.recordType == .monetary, record.direction == .given {
                             Button {
+                                InteractionLogger.contextMenuAction(
+                                    screen: "records.list",
+                                    target: "records.list.returnGift",
+                                    action: .open,
+                                    metadata: ["record_id": String(describing: record.persistentModelID)]
+                                )
                                 sheetRoute = .returnGift(recordID: record.persistentModelID)
                             } label: {
                                 Label(String(localized: "record.detail.returnGift"), systemImage: "gift")
                             }
                         }
                         Button(role: .destructive) {
+                            InteractionLogger.contextMenuAction(
+                                screen: "records.list",
+                                target: "records.list.delete",
+                                action: .delete,
+                                metadata: ["record_id": String(describing: record.persistentModelID)]
+                            )
                             viewModel.deleteRecord(record, context: modelContext)
                         } label: {
                             Label(String(localized: "common.delete"), systemImage: "trash")

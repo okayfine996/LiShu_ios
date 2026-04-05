@@ -1,5 +1,8 @@
 import Foundation
+import Logging
 import SwiftData
+
+private nonisolated(unsafe) var recordsViewModelLogger: Logger { PulseDiagnostics.makeLogger(label: AppLogLabel.recordsViewModel) }
 
 /// 待保存的新增照片（稳定 `id` 供 `ForEach` 使用）
 struct NewRecordPhotoItem: Identifiable, Equatable {
@@ -151,9 +154,18 @@ class AddRecordViewModel {
             let tagRecords = try context.fetch(tagDescriptor)
             let existingTags = Set(tagRecords.map(\.contextTag))
             customDailyTags = existingTags.filter { !Self.builtInDailyTags.contains($0) }.sorted()
+            recordsViewModelLogger.info("Loaded add record dependencies", metadata: [
+                "step": .string("load_data"),
+                "count": .stringConvertible(allContacts.count + allEvents.count),
+                "result": .string("success")
+            ])
         } catch {
             allContacts = []
             allEvents = []
+            recordsViewModelLogger.error("Failed to load add record dependencies", metadata: [
+                "step": .string("load_data"),
+                "error": .string(error.localizedDescription)
+            ])
         }
     }
 
@@ -175,9 +187,18 @@ class AddRecordViewModel {
         if let cID = contactID {
             self.selectedContact = context.model(for: cID) as? Contact
         }
+        recordsViewModelLogger.info("Configured add record context", metadata: [
+            "step": .string("configure"),
+            "contact_id": .string(contactID.map { String(describing: $0) } ?? "none"),
+            "result": .string(direction?.rawValue ?? "unchanged")
+        ])
     }
 
     func configure(with record: Record) {
+        recordsViewModelLogger.info("Configured record editor", metadata: [
+            "step": .string("configure"),
+            "record_id": .string(String(describing: record.persistentModelID))
+        ])
         editingRecord = record
         direction = record.direction
         selectedContact = record.contact
@@ -249,7 +270,13 @@ class AddRecordViewModel {
 
     func save(context: ModelContext) -> Bool {
         guard isValid,
-              let contact = resolveContact(context: context) else { return false }
+              let contact = resolveContact(context: context) else {
+            recordsViewModelLogger.warning("Rejected record save", metadata: [
+                "step": .string("save"),
+                "reason": .string("validation_failed")
+            ])
+            return false
+        }
 
         let event = resolveEvent(context: context)
 
@@ -280,8 +307,19 @@ class AddRecordViewModel {
                 if existing.isMonetary, existing.direction == .given, !existing.hasReturnedGift {
                     NotificationManager.shared.scheduleReturnGiftReminder(record: existing)
                 }
+                recordsViewModelLogger.notice("Saved record", metadata: [
+                    "step": .string("save"),
+                    "record_id": .string(String(describing: existing.persistentModelID)),
+                    "contact_id": .string(String(describing: contact.persistentModelID)),
+                    "result": .string("updated")
+                ])
                 return true
             } catch {
+                recordsViewModelLogger.error("Failed to save record", metadata: [
+                    "step": .string("save"),
+                    "result": .string("updated"),
+                    "error": .string(error.localizedDescription)
+                ])
                 return false
             }
         } else {
@@ -310,8 +348,19 @@ class AddRecordViewModel {
                 if record.isMonetary, record.direction == .given, !record.hasReturnedGift {
                     NotificationManager.shared.scheduleReturnGiftReminder(record: record)
                 }
+                recordsViewModelLogger.notice("Saved record", metadata: [
+                    "step": .string("save"),
+                    "record_id": .string(String(describing: record.persistentModelID)),
+                    "contact_id": .string(String(describing: contact.persistentModelID)),
+                    "result": .string("created")
+                ])
                 return true
             } catch {
+                recordsViewModelLogger.error("Failed to save record", metadata: [
+                    "step": .string("save"),
+                    "result": .string("created"),
+                    "error": .string(error.localizedDescription)
+                ])
                 return false
             }
         }

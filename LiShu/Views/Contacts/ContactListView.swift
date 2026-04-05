@@ -35,16 +35,19 @@ struct ContactListView: View {
         }
         .navigationTitle(navigationTitle)
         .navigationBarTitleDisplayMode(.large)
+        .trackScreen("contacts.list")
         .searchable(text: $viewModel.searchText, prompt: String(localized: "common.search"))
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
                     Button {
+                        InteractionLogger.tap(screen: "contacts.list", target: "contacts.list.add", route: SheetRoute.addContact.logName, presentation: .sheet)
                         presentedSheet = .addContact
                     } label: {
                         Label(String(localized: "contact.add.title"), systemImage: "person.badge.plus")
                     }
                     Button {
+                        InteractionLogger.tap(screen: "contacts.list", target: "contacts.list.batchImport", route: "sheet.contacts.batchImport", presentation: .sheet)
                         showBatchImport = true
                     } label: {
                         Label(String(localized: "contact.batch.import"), systemImage: "person.crop.rectangle.stack")
@@ -79,12 +82,19 @@ struct ContactListView: View {
             }
         }
         .onChange(of: presentedSheet) { _, newValue in
+            if let newValue {
+                InteractionLogger.sheetPresentation(screen: "contacts.list", route: newValue.logName, isPresented: true)
+            }
             if newValue == nil {
                 viewModel.loadContacts(context: modelContext)
             }
         }
         .onAppear {
+            InteractionLogger.screenView("contacts.list")
             viewModel.loadContacts(context: modelContext)
+        }
+        .onChange(of: showBatchImport) { _, newValue in
+            InteractionLogger.sheetPresentation(screen: "contacts.list", route: "sheet.contacts.batchImport", isPresented: newValue)
         }
         .alert(String(localized: "common.error"), isPresented: Binding(
             get: { viewModel.deleteError != nil },
@@ -162,6 +172,13 @@ struct ContactListView: View {
                         netValue: contact.netValue
                     )
                 }
+                .simultaneousGesture(TapGesture().onEnded {
+                    InteractionLogger.navigation(
+                        screen: "contacts.list",
+                        target: "contacts.list.contact.\(String(describing: contact.persistentModelID))",
+                        route: AppRoute.contactDetail(contact.persistentModelID).logName
+                    )
+                })
                 .buttonStyle(.plain)
                 .background(DesignSystem.Colors.bgSurface)
                 .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))

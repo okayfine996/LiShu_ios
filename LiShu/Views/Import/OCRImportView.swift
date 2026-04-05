@@ -29,10 +29,12 @@ struct OCRImportView: View {
             }
             .background(DesignSystem.Colors.bgPage)
             .navigationBarTitleDisplayMode(.inline)
+            .trackScreen("import.ocr.source")
             .toolbar {
                 if case .idle = viewModel.processingState {
                     ToolbarItem(placement: .topBarLeading) {
                         Button(String(localized: "common.cancel")) {
+                            InteractionLogger.tap(screen: "import.ocr.source", target: "import.ocr.cancel")
                             dismiss()
                         }
                         .font(DesignSystem.Typography.body)
@@ -42,6 +44,7 @@ struct OCRImportView: View {
                 if case .error = viewModel.processingState {
                     ToolbarItem(placement: .topBarLeading) {
                         Button(String(localized: "common.cancel")) {
+                            InteractionLogger.tap(screen: "import.ocr.source", target: "import.ocr.error.cancel")
                             dismiss()
                         }
                         .font(DesignSystem.Typography.body)
@@ -58,6 +61,7 @@ struct OCRImportView: View {
         )
         .onChange(of: selectedPhotos) { _, newItems in
             guard !newItems.isEmpty else { return }
+            InteractionLogger.tap(screen: "import.ocr.source", target: "import.ocr.albumSelection", route: "photosPicker")
             loadPhotos(newItems)
         }
         .fullScreenCover(isPresented: $viewModel.isShowingCamera) {
@@ -67,11 +71,17 @@ struct OCRImportView: View {
             }
             .ignoresSafeArea()
         }
+        .onChange(of: viewModel.isShowingCamera) { _, newValue in
+            InteractionLogger.fullScreenPresentation(screen: "import.ocr.source", route: "fullScreen.import.camera", isPresented: newValue)
+        }
         .sheet(isPresented: $showProSheet) {
             NavigationStack {
                 ProMembershipView()
                     .environment(SubscriptionManager.shared)
             }
+        }
+        .onChange(of: showProSheet) { _, newValue in
+            InteractionLogger.sheetPresentation(screen: "import.ocr.source", route: "sheet.settings.proMembership", isPresented: newValue)
         }
     }
 
@@ -100,9 +110,11 @@ struct OCRImportView: View {
                 VStack(spacing: 12) {
                     Button {
                         guard SubscriptionManager.shared.canUseOCR() else {
+                            InteractionLogger.submit(screen: "import.ocr.source", target: "import.ocr.camera", action: .open, result: "blocked", reason: "subscription_limit")
                             showProSheet = true
                             return
                         }
+                        InteractionLogger.tap(screen: "import.ocr.source", target: "import.ocr.camera", route: "fullScreen.import.camera", presentation: .fullScreen)
                         viewModel.isShowingCamera = true
                     } label: {
                         HStack(spacing: 12) {
@@ -119,9 +131,11 @@ struct OCRImportView: View {
 
                     Button {
                         guard SubscriptionManager.shared.canUseOCR() else {
+                            InteractionLogger.submit(screen: "import.ocr.source", target: "import.ocr.album", action: .open, result: "blocked", reason: "subscription_limit")
                             showProSheet = true
                             return
                         }
+                        InteractionLogger.tap(screen: "import.ocr.source", target: "import.ocr.album", route: "photosPicker")
                         showPhotosPicker = true
                     } label: {
                         HStack(spacing: 12) {
@@ -195,6 +209,7 @@ struct OCRImportView: View {
                 .padding(.horizontal, 40)
 
             Button {
+                InteractionLogger.tap(screen: "import.ocr.source", target: "import.ocr.retry")
                 viewModel.clearImages()
             } label: {
                 Text(String(localized: "ocr.error.retry"))

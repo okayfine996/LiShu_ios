@@ -1,5 +1,9 @@
 import Foundation
+import Logging
 import SwiftData
+
+private nonisolated(unsafe) var exportLogger: Logger { PulseDiagnostics.makeLogger(label: AppLogLabel.export) }
+private nonisolated(unsafe) var importLogger: Logger { PulseDiagnostics.makeLogger(label: AppLogLabel.importFlow) }
 
 struct ExportService {
 
@@ -10,6 +14,9 @@ struct ExportService {
         "联系人,事件,事件类型,金额,方向,支付方式,已退金额,日期,记录类型,情分分量,人情描述,备注,礼品名称,礼品估值,帮忙说明,宴请地点,宴请宾客,宴请额外费用"
 
     static func exportCSV(context: ModelContext) throws -> String {
+        exportLogger.notice("Starting CSV export", metadata: [
+            "step": .string("export_csv")
+        ])
         let records = try context.fetch(FetchDescriptor<Record>(
             sortBy: [SortDescriptor(\.date, order: .reverse)]
         ))
@@ -44,7 +51,13 @@ struct ExportService {
             ].joined(separator: ",")
         }
 
-        return ([csvHeader] + rows).joined(separator: "\n")
+        let content = ([csvHeader] + rows).joined(separator: "\n")
+        exportLogger.notice("Finished CSV export", metadata: [
+            "step": .string("export_csv"),
+            "count": .stringConvertible(rows.count),
+            "result": .string("success")
+        ])
+        return content
     }
 
     /// 返回 6 个已 `escapeCSV` 的字段：礼品名称、礼品估值、帮忙说明、宴请地点、宴请宾客、宴请额外费用。
@@ -94,6 +107,10 @@ struct ExportService {
     // MARK: - CSV Import
 
     static func importCSV(url: URL, context: ModelContext) throws -> ImportResult {
+        importLogger.notice("Starting CSV import", metadata: [
+            "step": .string("import_csv"),
+            "source": .string(url.lastPathComponent)
+        ])
         let didStartAccessing = url.startAccessingSecurityScopedResource()
         defer {
             if didStartAccessing {
@@ -104,13 +121,26 @@ struct ExportService {
         let content = try String(contentsOf: url, encoding: .utf8)
         let rows = parseCSVRows(content)
 
-        guard rows.count > 1 else { return ImportResult() }
+        guard rows.count > 1 else {
+            importLogger.warning("CSV import finished without data rows", metadata: [
+                "step": .string("import_csv"),
+                "source": .string(url.lastPathComponent),
+                "reason": .string("empty_rows")
+            ])
+            return ImportResult()
+        }
 
         let headerRow = rows[0]
         let columnIndex = buildCSVColumnIndexMap(headerRow)
         guard columnIndex["联系人"] != nil else {
             var r = ImportResult()
             r.errors = rows.count - 1
+            importLogger.error("CSV import failed validation", metadata: [
+                "step": .string("import_csv"),
+                "source": .string(url.lastPathComponent),
+                "reason": .string("missing_contact_column"),
+                "count": .stringConvertible(r.errors)
+            ])
             return r
         }
 
@@ -120,7 +150,7 @@ struct ExportService {
 
         var result = ImportResult()
 
-        for rawFields in rows.dropFirst() {
+        for (rowIndex, rawFields) in rows.dropFirst().enumerated() {
             if rawFields.allSatisfy({ $0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }) {
                 continue
             }
@@ -130,6 +160,12 @@ struct ExportService {
             let contactName = csvCell(fields, columnIndex: columnIndex, column: "联系人")
             guard !contactName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
                 result.errors += 1
+                importLogger.warning("Skipped CSV row", metadata: [
+                    "step": .string("import_csv"),
+                    "source": .string(url.lastPathComponent),
+                    "reason": .string("missing_contact_name"),
+                    "count": .stringConvertible(rowIndex + 2)
+                ])
                 continue
             }
 
@@ -185,6 +221,12 @@ struct ExportService {
             if recordType.isMonetary {
                 guard amount > 0 else {
                     result.errors += 1
+                    importLogger.warning("Skipped CSV row", metadata: [
+                        "step": .string("import_csv"),
+                        "source": .string(url.lastPathComponent),
+                        "reason": .string("invalid_monetary_amount"),
+                        "count": .stringConvertible(rowIndex + 2)
+                    ])
                     continue
                 }
             } else {
@@ -200,6 +242,12 @@ struct ExportService {
                     amount: amount
                 ) else {
                     result.errors += 1
+                    importLogger.warning("Skipped CSV row", metadata: [
+                        "step": .string("import_csv"),
+                        "source": .string(url.lastPathComponent),
+                        "reason": .string("missing_non_monetary_payload"),
+                        "count": .stringConvertible(rowIndex + 2)
+                    ])
                     continue
                 }
             }
@@ -244,6 +292,13 @@ struct ExportService {
         }
 
         try context.save()
+        importLogger.notice("Finished CSV import", metadata: [
+            "step": .string("import_csv"),
+            "source": .string(url.lastPathComponent),
+            "count": .stringConvertible(result.imported),
+            "result": .string("success"),
+            "errors": .stringConvertible(result.errors)
+        ])
         return result
     }
 
@@ -483,10 +538,20 @@ struct ExportService {
         descriptor.fetchLimit = 1
 
         if let existing = try? context.fetch(descriptor).first {
+            importLogger.info("Reused contact during import", metadata: [
+                "step": .string("find_or_create_contact"),
+                "result": .string("existing"),
+                "contact_id": .string(String(describing: existing.persistentModelID))
+            ])
             return existing
         }
         let contact = Contact(name: trimmed)
         context.insert(contact)
+        importLogger.info("Created contact during import", metadata: [
+            "step": .string("find_or_create_contact"),
+            "result": .string("created"),
+            "target": .string(trimmed)
+        ])
         return contact
     }
 
@@ -498,10 +563,20 @@ struct ExportService {
         descriptor.fetchLimit = 1
 
         if let existing = try? context.fetch(descriptor).first {
+            importLogger.info("Reused event during import", metadata: [
+                "step": .string("find_or_create_event"),
+                "result": .string("existing"),
+                "event_id": .string(String(describing: existing.persistentModelID))
+            ])
             return existing
         }
         let event = Event(name: trimmed, type: type)
         context.insert(event)
+        importLogger.info("Created event during import", metadata: [
+            "step": .string("find_or_create_event"),
+            "result": .string("created"),
+            "target": .string(trimmed)
+        ])
         return event
     }
 

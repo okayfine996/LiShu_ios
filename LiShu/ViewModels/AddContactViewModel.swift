@@ -1,5 +1,8 @@
 import Foundation
+import Logging
 import SwiftData
+
+private nonisolated(unsafe) var contactsViewModelLogger: Logger { PulseDiagnostics.makeLogger(label: AppLogLabel.contactsViewModel) }
 
 @Observable
 class AddContactViewModel {
@@ -21,6 +24,10 @@ class AddContactViewModel {
     }
 
     func configure(with contact: Contact) {
+        contactsViewModelLogger.info("Configured contact editor", metadata: [
+            "step": .string("configure"),
+            "contact_id": .string(String(describing: contact.persistentModelID))
+        ])
         editingContact = contact
         avatar = contact.avatar
         name = contact.name
@@ -36,6 +43,10 @@ class AddContactViewModel {
     func saveContact(context: ModelContext) -> Bool {
         guard isValid else {
             showValidationAlert = true
+            contactsViewModelLogger.warning("Rejected contact save", metadata: [
+                "step": .string("save"),
+                "reason": .string("validation_failed")
+            ])
             return false
         }
 
@@ -43,6 +54,10 @@ class AddContactViewModel {
 
         if editingContact == nil, !SubscriptionManager.shared.canAddContact(context: context) {
             needsProUpgrade = true
+            contactsViewModelLogger.warning("Rejected contact save", metadata: [
+                "step": .string("save"),
+                "reason": .string("subscription_limit")
+            ])
             return false
         }
 
@@ -63,8 +78,18 @@ class AddContactViewModel {
                 if hasBirthday {
                     NotificationManager.shared.scheduleBirthdayReminder(contact: existing)
                 }
+                contactsViewModelLogger.notice("Saved contact", metadata: [
+                    "step": .string("save"),
+                    "contact_id": .string(String(describing: existing.persistentModelID)),
+                    "result": .string("updated")
+                ])
                 return true
             } catch {
+                contactsViewModelLogger.error("Failed to save contact", metadata: [
+                    "step": .string("save"),
+                    "result": .string("updated"),
+                    "error": .string(error.localizedDescription)
+                ])
                 return false
             }
         } else {
@@ -87,8 +112,18 @@ class AddContactViewModel {
                 if hasBirthday {
                     NotificationManager.shared.scheduleBirthdayReminder(contact: contact)
                 }
+                contactsViewModelLogger.notice("Saved contact", metadata: [
+                    "step": .string("save"),
+                    "contact_id": .string(String(describing: contact.persistentModelID)),
+                    "result": .string("created")
+                ])
                 return true
             } catch {
+                contactsViewModelLogger.error("Failed to save contact", metadata: [
+                    "step": .string("save"),
+                    "result": .string("created"),
+                    "error": .string(error.localizedDescription)
+                ])
                 return false
             }
         }

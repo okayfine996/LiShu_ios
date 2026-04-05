@@ -1,5 +1,8 @@
 import SwiftUI
 import SwiftData
+import Logging
+
+private nonisolated(unsafe) var appBootstrapLogger: Logger { PulseDiagnostics.makeLogger(label: AppLogLabel.settings) }
 
 private func ensureApplicationSupportDirectoryExists() {
     guard let url = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else { return }
@@ -43,6 +46,10 @@ struct LiShuApp: App {
 
         let icloudEnabled = AppSettings.shared.icloudSyncEnabled
         let snapshotScreenshot = DemoDataSeeding.isFastlaneSnapshotMode
+        appBootstrapLogger.notice("Initializing application", metadata: [
+            "step": .string("bootstrap"),
+            "result": .string(snapshotScreenshot ? "in_memory_demo" : (icloudEnabled ? "icloud" : "local"))
+        ])
 
         ensureApplicationSupportDirectoryExists()
 
@@ -70,9 +77,14 @@ struct LiShuApp: App {
             sharedModelContainer = try ModelContainer(for: schema, configurations: [config])
             if snapshotScreenshot {
                 DemoDataSeeding.insertSampleData(context: sharedModelContainer.mainContext, attachDemoMedia: true)
+                appBootstrapLogger.info("Inserted demo data", metadata: ["step": .string("demo_seed")])
             }
             RecordTypeStorageNormalizer.runMigrationIfNeeded(context: sharedModelContainer.mainContext)
         } catch {
+            appBootstrapLogger.error("Failed to create model container", metadata: [
+                "step": .string("bootstrap"),
+                "error": .string(error.localizedDescription)
+            ])
             fatalError("Could not create ModelContainer: \(error)")
         }
     }
@@ -95,19 +107,29 @@ struct LiShuApp: App {
             .animation(.easeInOut(duration: 0.4), value: settings.hasSeenOnboarding)
             .preferredColorScheme(resolvedColorScheme)
             .onAppear {
+                InteractionLogger.screenView(showSplash ? "app.splash" : (settings.hasSeenOnboarding ? "app.main" : "app.onboarding"))
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                     showSplash = false
                 }
             }
             .task {
+                appBootstrapLogger.notice("Starting application tasks", metadata: ["step": .string("startup_tasks")])
                 await subscriptionManager.loadProducts()
                 await subscriptionManager.checkEntitlements()
                 if settings.notificationEnabled {
                     let context = sharedModelContainer.mainContext
+                    appBootstrapLogger.info("Rescheduling notifications on startup", metadata: [
+                        "step": .string("startup_tasks"),
+                        "result": .string("notification_reschedule")
+                    ])
                     NotificationManager.shared.rescheduleAll(context: context)
                 }
             }
             .onChange(of: scenePhase) { _, newPhase in
+                appBootstrapLogger.info("Scene phase changed", metadata: [
+                    "step": .string("scene_phase"),
+                    "result": .string(String(describing: newPhase))
+                ])
                 if newPhase == .active {
                     Task {
                         await subscriptionManager.checkEntitlements()

@@ -29,10 +29,12 @@ struct OCRResultView: View {
             String(format: String(localized: "ocr.result.title %lld"), Int64(viewModel.items.count))
         )
         .navigationBarTitleDisplayMode(.inline)
+        .trackScreen("import.ocr.result")
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 Button {
+                    InteractionLogger.tap(screen: "import.ocr.result", target: "import.ocr.result.retake")
                     viewModel.clearImages()
                 } label: {
                     HStack(spacing: 4) {
@@ -47,6 +49,7 @@ struct OCRResultView: View {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     viewModel.toggleSelectAll()
+                    InteractionLogger.tap(screen: "import.ocr.result", target: "import.ocr.result.selectAll")
                 } label: {
                     Text(viewModel.isAllSelected
                          ? String(localized: "ocr.result.deselectAll")
@@ -62,8 +65,15 @@ struct OCRResultView: View {
         .sheet(item: $viewModel.editingItem) { _ in
             OCRCorrectionSheet(viewModel: viewModel)
         }
+        .onChange(of: viewModel.isShowingImportConfig) { _, newValue in
+            InteractionLogger.sheetPresentation(screen: "import.ocr.result", route: "sheet.import.ocrConfig", isPresented: newValue)
+        }
+        .onChange(of: viewModel.editingItem) { _, newValue in
+            InteractionLogger.sheetPresentation(screen: "import.ocr.result", route: "sheet.import.ocrCorrection", isPresented: newValue != nil)
+        }
         .alert(String(localized: "ocr.import.successTitle"), isPresented: $viewModel.importSuccess) {
             Button(String(localized: "common.ok")) {
+                InteractionLogger.alertAction(screen: "import.ocr.result", target: "import.ocr.success", action: .submit, result: "dismiss")
                 dismiss()
             }
         } message: {
@@ -79,6 +89,7 @@ struct OCRResultView: View {
             set: { if !$0 { viewModel.importError = nil } }
         )) {
             Button(String(localized: "common.ok")) {
+                InteractionLogger.alertAction(screen: "import.ocr.result", target: "import.ocr.error", action: .submit, result: "dismiss")
                 viewModel.importError = nil
             }
         } message: {
@@ -174,12 +185,14 @@ struct OCRResultView: View {
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.smallCard))
         .contentShape(Rectangle())
         .onTapGesture {
+            InteractionLogger.tap(screen: "import.ocr.result", target: "import.ocr.result.editRow")
             viewModel.startEditing(item: item)
         }
     }
 
     private func checkboxButton(_ item: OCRRecordItem) -> some View {
         Button {
+            InteractionLogger.tap(screen: "import.ocr.result", target: "import.ocr.result.toggleSelection")
             viewModel.toggleSelection(for: item)
         } label: {
             ZStack {
@@ -320,6 +333,7 @@ struct OCRResultView: View {
             Spacer()
 
             Button {
+                InteractionLogger.submit(screen: "import.ocr.result", target: "import.ocr.result.deleteSelected", action: .delete, result: "submitted", metadata: ["count": String(viewModel.selectedCount)])
                 viewModel.deleteSelected()
             } label: {
                 Text(String(localized: "ocr.delete"))
@@ -332,6 +346,7 @@ struct OCRResultView: View {
             .disabled(viewModel.selectedCount == 0)
 
             Button {
+                InteractionLogger.tap(screen: "import.ocr.result", target: "import.ocr.result.openImportConfig", route: "sheet.import.ocrConfig", presentation: .sheet)
                 viewModel.isShowingImportConfig = true
             } label: {
                 Text(String(localized: "ocr.import.confirm"))
@@ -388,8 +403,12 @@ struct OCRResultView: View {
                 Spacer()
 
                 Button {
+                    InteractionLogger.tap(screen: "import.ocr.result", target: "import.ocr.config.confirm")
                     if viewModel.performImport(context: modelContext) {
+                        InteractionLogger.submit(screen: "import.ocr.result", target: "import.ocr.config.confirm", action: .save, result: "success", metadata: ["count": String(viewModel.selectedCount)])
                         viewModel.isShowingImportConfig = false
+                    } else {
+                        InteractionLogger.submit(screen: "import.ocr.result", target: "import.ocr.config.confirm", action: .save, result: "failed", reason: "import_error")
                     }
                 } label: {
                     if viewModel.isImporting {
@@ -413,6 +432,7 @@ struct OCRResultView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button(String(localized: "common.cancel")) {
+                        InteractionLogger.tap(screen: "import.ocr.result", target: "import.ocr.config.cancel")
                         viewModel.isShowingImportConfig = false
                     }
                     .font(DesignSystem.Typography.body)
@@ -427,6 +447,7 @@ struct OCRResultView: View {
         let isSelected = viewModel.direction == direction
         return Button {
             viewModel.direction = direction
+            InteractionLogger.tap(screen: "import.ocr.result", target: "import.ocr.config.direction.\(direction.rawValue)")
         } label: {
             Text(title)
                 .font(DesignSystem.Typography.caption)

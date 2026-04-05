@@ -80,6 +80,47 @@ struct PulseDiagnosticsTests {
         #expect(PulseDiagnostics.didBootstrapLoggingSystem)
     }
 
+    @Test("ui interaction logger writes structured metadata into Pulse store")
+    func uiInteractionLoggerWritesStructuredMetadata() throws {
+        PulseDiagnostics.configureIfNeeded(arguments: [], environment: [:])
+        LoggerStore.shared.removeAll()
+
+        InteractionLogger.tap(
+            screen: "settings.root",
+            target: "settings.rateApp",
+            route: "app_store_review",
+            presentation: .push,
+            metadata: ["result": "submitted"]
+        )
+
+        let messages = try waitForMessages(label: AppLogLabel.uiInteraction)
+        let message = try #require(messages.last)
+
+        #expect(message.text == "UI interaction")
+        #expect(message.metadata["event_type"] == UILogEventType.tap.rawValue)
+        #expect(message.metadata["screen"] == "settings.root")
+        #expect(message.metadata["target"] == "settings.rateApp")
+        #expect(message.metadata["route"] == "app_store_review")
+        #expect(message.metadata["presentation"] == UILogPresentation.push.rawValue)
+        #expect(message.metadata["result"] == "submitted")
+    }
+
+    @Test("screen view logger writes screen event into Pulse store")
+    func screenViewLoggerWritesStructuredMetadata() throws {
+        PulseDiagnostics.configureIfNeeded(arguments: [], environment: [:])
+        LoggerStore.shared.removeAll()
+
+        InteractionLogger.screenView("records.list", metadata: ["presentation": UILogPresentation.tab.rawValue])
+
+        let messages = try waitForMessages(label: AppLogLabel.uiInteraction)
+        let message = try #require(messages.last)
+
+        #expect(message.metadata["event_type"] == UILogEventType.screenView.rawValue)
+        #expect(message.metadata["screen"] == "records.list")
+        #expect(message.metadata["target"] == "records.list")
+        #expect(message.metadata["action"] == UILogAction.open.rawValue)
+    }
+
     private func waitForMessages(label: String, timeout: TimeInterval = 2.0) throws -> [LoggerMessageEntity] {
         let deadline = Date().addingTimeInterval(timeout)
         while Date() < deadline {

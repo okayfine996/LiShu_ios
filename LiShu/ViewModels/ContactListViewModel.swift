@@ -1,5 +1,8 @@
 import Foundation
+import Logging
 import SwiftData
+
+private nonisolated(unsafe) var contactListLogger: Logger { PulseDiagnostics.makeLogger(label: AppLogLabel.contactsViewModel) }
 
 /// Filter options for contacts by circle level
 enum ContactCircleFilter: String, CaseIterable, Hashable {
@@ -118,19 +121,42 @@ class ContactListViewModel {
             let contacts = try context.fetch(descriptor)
             allContacts = contacts
             state = .loaded(contacts)
+            contactListLogger.notice("Loaded contacts", metadata: [
+                "step": .string("load"),
+                "count": .stringConvertible(contacts.count),
+                "result": .string("success")
+            ])
         } catch {
             state = .error(String(localized: "contact.list.loadError"))
+            contactListLogger.error("Failed to load contacts", metadata: [
+                "step": .string("load"),
+                "error": .string(error.localizedDescription)
+            ])
         }
     }
 
     /// Delete a contact
     func deleteContact(_ contact: Contact, context: ModelContext) {
+        contactListLogger.notice("Deleting contact", metadata: [
+            "step": .string("delete"),
+            "contact_id": .string(String(describing: contact.persistentModelID))
+        ])
         context.delete(contact)
         do {
             try context.save()
+            contactListLogger.notice("Deleted contact", metadata: [
+                "step": .string("delete"),
+                "contact_id": .string(String(describing: contact.persistentModelID)),
+                "result": .string("success")
+            ])
             loadContacts(context: context)
         } catch {
             deleteError = error.localizedDescription
+            contactListLogger.error("Failed to delete contact", metadata: [
+                "step": .string("delete"),
+                "contact_id": .string(String(describing: contact.persistentModelID)),
+                "error": .string(error.localizedDescription)
+            ])
             loadContacts(context: context)
         }
     }
