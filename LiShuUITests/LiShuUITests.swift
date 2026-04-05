@@ -8,7 +8,6 @@
 import XCTest
 
 final class LiShuUITests: XCTestCase {
-
     var app: XCUIApplication!
 
     override func setUpWithError() throws {
@@ -27,7 +26,7 @@ final class LiShuUITests: XCTestCase {
     // MARK: - Add Contact Flow
 
     @MainActor
-    func testAddContactFlow() throws {
+    func testAddContactFlow() {
         // 1. Navigate to Contacts tab
         let contactsTab = app.tabBars.buttons["人脉"]
         XCTAssertTrue(contactsTab.waitForExistence(timeout: 5))
@@ -78,7 +77,7 @@ final class LiShuUITests: XCTestCase {
     // MARK: - Navigation Between Tabs
 
     @MainActor
-    func testTabNavigation() throws {
+    func testTabNavigation() {
         // Verify all tabs are accessible（与 Localizable zh-Hans / UITestConstants.TabLabels 一致）
         let tabs = [TabLabels.home, TabLabels.records, TabLabels.contacts, TabLabels.events, TabLabels.settings]
         for tabName in tabs {

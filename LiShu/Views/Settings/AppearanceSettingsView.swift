@@ -10,25 +10,25 @@ struct AppearanceSettingsView: View {
 
         var icon: String {
             switch self {
-            case .light: return "sun.max.fill"
-            case .dark: return "moon.fill"
-            case .system: return "iphone"
+            case .light: "sun.max.fill"
+            case .dark: "moon.fill"
+            case .system: "iphone"
             }
         }
 
         var title: String {
             switch self {
-            case .light: return String(localized: "settings.appearance.light")
-            case .dark: return String(localized: "settings.appearance.dark")
-            case .system: return String(localized: "settings.appearance.system")
+            case .light: String(localized: "settings.appearance.light")
+            case .dark: String(localized: "settings.appearance.dark")
+            case .system: String(localized: "settings.appearance.system")
             }
         }
 
         var subtitle: String {
             switch self {
-            case .light: return String(localized: "settings.appearance.light.desc")
-            case .dark: return String(localized: "settings.appearance.dark.desc")
-            case .system: return String(localized: "settings.appearance.system.desc")
+            case .light: String(localized: "settings.appearance.light.desc")
+            case .dark: String(localized: "settings.appearance.dark.desc")
+            case .system: String(localized: "settings.appearance.system.desc")
             }
         }
     }

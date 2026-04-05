@@ -1,5 +1,5 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 struct EventDetailView: View {
     @Environment(\.modelContext) private var modelContext
@@ -154,7 +154,7 @@ struct EventDetailView: View {
 
     // MARK: - Summary Cards (2-column)
 
-    private func summaryCards(_ event: Event) -> some View {
+    private func summaryCards(_: Event) -> some View {
         HStack(spacing: 12) {
             // Given amount card
             VStack(spacing: 8) {
@@ -320,11 +320,11 @@ struct EventDetailView: View {
     @ViewBuilder
     private func sheetContent(for route: SheetRoute) -> some View {
         switch route {
-        case .addRecord(let direction, let contactID):
+        case let .addRecord(direction, contactID):
             NavigationStack {
                 AddRecordView(direction: direction, contactID: contactID)
             }
-        case .editEvent(let eID):
+        case let .editEvent(eID):
             NavigationStack {
                 AddEventView(eventID: eID)
             }
@@ -360,15 +360,36 @@ private struct EventDetailPreview: View {
         let event = Event(
             name: "张三的婚礼",
             type: .wedding,
-            date: cal.date(byAdding: .day, value: 3, to: .now)!,
+            date: cal.liShuDateByAddingDays(3),
             location: "北京国贸大酒店",
             note: "提前一天到达，需要帮忙布置场地。记得带红包和礼物。"
         )
         modelContext.insert(event)
 
-        let r1 = Record.makeMonetaryRecord(contact: c1, event: event, amount: 1000, direction: .given, paymentMethod: .wechat, date: cal.date(byAdding: .day, value: -5, to: .now)!)
-        let r2 = Record.makeMonetaryRecord(contact: c2, event: event, amount: 500, direction: .received, paymentMethod: .cash, date: cal.date(byAdding: .day, value: -3, to: .now)!)
-        let r3 = Record.makeMonetaryRecord(contact: c3, event: event, amount: 800, direction: .given, paymentMethod: .alipay, date: cal.date(byAdding: .day, value: -1, to: .now)!)
+        let r1 = Record.makeMonetaryRecord(
+            contact: c1,
+            event: event,
+            amount: 1000,
+            direction: .given,
+            paymentMethod: .wechat,
+            date: cal.liShuDateByAddingDays(-5)
+        )
+        let r2 = Record.makeMonetaryRecord(
+            contact: c2,
+            event: event,
+            amount: 500,
+            direction: .received,
+            paymentMethod: .cash,
+            date: cal.liShuDateByAddingDays(-3)
+        )
+        let r3 = Record.makeMonetaryRecord(
+            contact: c3,
+            event: event,
+            amount: 800,
+            direction: .given,
+            paymentMethod: .alipay,
+            date: cal.liShuDateByAddingDays(-1)
+        )
         [r1, r2, r3].forEach { modelContext.insert($0) }
 
         try? modelContext.save()

@@ -1,12 +1,11 @@
 import Foundation
-import Testing
-import SwiftData
 @testable import LiShu
+import SwiftData
+import Testing
 
 @MainActor
 struct EventDetailViewModelTests {
-
-    @Test func testTotalGivenAndReceived() throws {
+    @Test func totalGivenAndReceived() throws {
         let db = try TestDB()
         let contact1 = SampleData.contact(name: "张三")
         let contact2 = SampleData.contact(name: "李四")
@@ -56,7 +55,7 @@ struct EventDetailViewModelTests {
     @Test func testDaysUntilEvent() throws {
         let db = try TestDB()
         let cal = Calendar.current
-        let futureDate = cal.date(byAdding: .day, value: 7, to: cal.startOfDay(for: .now))!
+        let futureDate = try #require(cal.date(byAdding: .day, value: 7, to: cal.startOfDay(for: .now)))
         let event = SampleData.event(name: "未来事件", date: futureDate)
         db.context.insert(event)
         try db.context.save()
@@ -71,8 +70,8 @@ struct EventDetailViewModelTests {
         let db = try TestDB()
         let cal = Calendar.current
 
-        let futureEvent = SampleData.event(name: "未来", date: cal.date(byAdding: .day, value: 5, to: .now)!)
-        let pastEvent = SampleData.event(name: "过去", date: cal.date(byAdding: .day, value: -5, to: .now)!)
+        let futureEvent = try SampleData.event(name: "未来", date: #require(cal.date(byAdding: .day, value: 5, to: .now)))
+        let pastEvent = try SampleData.event(name: "过去", date: #require(cal.date(byAdding: .day, value: -5, to: .now)))
         db.context.insert(futureEvent)
         db.context.insert(pastEvent)
         try db.context.save()
@@ -86,7 +85,7 @@ struct EventDetailViewModelTests {
         #expect(vm2.isUpcoming == false)
     }
 
-    @Test func testDeleteEventWithoutRecords() throws {
+    @Test func deleteEventWithoutRecords() throws {
         let db = try TestDB()
         let event = SampleData.event(name: "无记录事件")
         db.context.insert(event)
@@ -104,8 +103,8 @@ struct EventDetailViewModelTests {
     @Test func testFormattedDate() throws {
         let db = try TestDB()
         var cal = Calendar.current
-        cal.timeZone = TimeZone(identifier: "Asia/Shanghai")!
-        let date = cal.date(from: DateComponents(year: 2026, month: 3, day: 15))!
+        cal.timeZone = try #require(TimeZone(identifier: "Asia/Shanghai"))
+        let date = try #require(cal.date(from: DateComponents(year: 2026, month: 3, day: 15)))
         let event = SampleData.event(name: "测试", date: date)
         db.context.insert(event)
         try db.context.save()

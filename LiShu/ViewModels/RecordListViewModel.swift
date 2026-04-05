@@ -5,11 +5,11 @@ import SwiftData
 private let recordListLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.recordsViewModel)
 
 enum RecordFilter: String, CaseIterable, Hashable {
-    case all = "all"
-    case monetary = "monetary"
-    case gift = "gift"
-    case favor = "favor"
-    case banquet = "banquet"
+    case all
+    case monetary
+    case gift
+    case favor
+    case banquet
 }
 
 @Observable
@@ -67,13 +67,13 @@ class RecordListViewModel {
                 "step": .string("load"),
                 "count": .stringConvertible(records.count),
                 "result": .string("success"),
-                "reason": .string(filter.rawValue)
+                "reason": .string(filter.rawValue),
             ])
         } catch {
             state = .error(error.localizedDescription)
             recordListLogger.error("Failed to load records", metadata: [
                 "step": .string("load"),
-                "error": .string(error.localizedDescription)
+                "error": .string(error.localizedDescription),
             ])
         }
     }
@@ -81,7 +81,7 @@ class RecordListViewModel {
     func deleteRecord(_ record: Record, context: ModelContext) {
         recordListLogger.notice("Deleting record", metadata: [
             "step": .string("delete"),
-            "record_id": .string(String(describing: record.persistentModelID))
+            "record_id": .string(String(describing: record.persistentModelID)),
         ])
         context.delete(record)
         do {
@@ -89,7 +89,7 @@ class RecordListViewModel {
             recordListLogger.notice("Deleted record", metadata: [
                 "step": .string("delete"),
                 "record_id": .string(String(describing: record.persistentModelID)),
-                "result": .string("success")
+                "result": .string("success"),
             ])
             load(context: context)
         } catch {
@@ -97,7 +97,7 @@ class RecordListViewModel {
             recordListLogger.error("Failed to delete record", metadata: [
                 "step": .string("delete"),
                 "record_id": .string(String(describing: record.persistentModelID)),
-                "error": .string(error.localizedDescription)
+                "error": .string(error.localizedDescription),
             ])
             load(context: context)
         }

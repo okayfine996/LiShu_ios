@@ -1,7 +1,6 @@
 import Foundation
 
 enum ChineseAmountFormatter {
-
     private static let digits = ["零", "壹", "贰", "叁", "肆", "伍", "陆", "柒", "捌", "玖"]
     private static let units = ["", "拾", "佰", "仟"]
     private static let bigUnits = ["", "万", "亿"]
@@ -21,7 +20,7 @@ enum ChineseAmountFormatter {
 
         if integerPart > 0 {
             result = convertInteger(integerPart) + "元"
-            if jiao == 0 && fen == 0 {
+            if jiao == 0, fen == 0 {
                 result += "整"
             } else {
                 if jiao > 0 {
@@ -59,9 +58,9 @@ enum ChineseAmountFormatter {
             remaining /= 10000
 
             let groupStr = convertGroup(group)
-            if groupIndex > 0 && group > 0 {
+            if groupIndex > 0, group > 0 {
                 var part = groupStr + bigUnits[groupIndex]
-                if group < 1000 && remaining > 0 {
+                if group < 1000, remaining > 0 {
                     part = "零" + part
                 }
                 parts.insert(part, at: 0)

@@ -1,7 +1,7 @@
 import Foundation
-import Testing
-import SwiftData
 @testable import LiShu
+import SwiftData
+import Testing
 
 @MainActor
 struct TestDB {
@@ -51,7 +51,15 @@ struct SampleData {
         return record
     }
 
-    static func record(contact: Contact, event: Event? = nil, amount: Double = 500, direction: RecordDirection = .given, returnedAmount: Double = 0, date: Date = .now, relationshipWeight: RelationshipWeight = .reciprocal) -> Record {
+    static func record(
+        contact: Contact,
+        event: Event? = nil,
+        amount: Double = 500,
+        direction: RecordDirection = .given,
+        returnedAmount: Double = 0,
+        date: Date = .now,
+        relationshipWeight: RelationshipWeight = .reciprocal
+    ) -> Record {
         typedRecord(
             contact: contact,
             event: event,
@@ -64,7 +72,15 @@ struct SampleData {
         )
     }
 
-    static func recordGift(contact: Contact, event: Event? = nil, giftName: String = "茶叶礼盒", estimatedValue: Double? = 300, direction: RecordDirection = .given, date: Date = .now, relationshipWeight: RelationshipWeight = .reciprocal) -> Record {
+    static func recordGift(
+        contact: Contact,
+        event: Event? = nil,
+        giftName: String = "茶叶礼盒",
+        estimatedValue: Double? = 300,
+        direction: RecordDirection = .given,
+        date: Date = .now,
+        relationshipWeight: RelationshipWeight = .reciprocal
+    ) -> Record {
         typedRecord(
             contact: contact,
             event: event,
@@ -76,7 +92,14 @@ struct SampleData {
         )
     }
 
-    static func recordFavor(contact: Contact, event: Event? = nil, description: String = "帮忙接送长辈去医院", direction: RecordDirection = .given, date: Date = .now, relationshipWeight: RelationshipWeight = .reciprocal) -> Record {
+    static func recordFavor(
+        contact: Contact,
+        event: Event? = nil,
+        description: String = "帮忙接送长辈去医院",
+        direction: RecordDirection = .given,
+        date: Date = .now,
+        relationshipWeight: RelationshipWeight = .reciprocal
+    ) -> Record {
         typedRecord(
             contact: contact,
             event: event,
@@ -88,7 +111,16 @@ struct SampleData {
         )
     }
 
-    static func recordBanquet(contact: Contact, event: Event? = nil, location: String = "外婆家包厢，中档宴请", attendeeList: String = "主客外还有两位同事陪同", extraCostNotes: String = "席间开了两瓶酒", direction: RecordDirection = .given, date: Date = .now, relationshipWeight: RelationshipWeight = .reciprocal) -> Record {
+    static func recordBanquet(
+        contact: Contact,
+        event: Event? = nil,
+        location: String = "外婆家包厢，中档宴请",
+        attendeeList: String = "主客外还有两位同事陪同",
+        extraCostNotes: String = "席间开了两瓶酒",
+        direction: RecordDirection = .given,
+        date: Date = .now,
+        relationshipWeight: RelationshipWeight = .reciprocal
+    ) -> Record {
         typedRecord(
             contact: contact,
             event: event,
@@ -105,7 +137,7 @@ struct SampleData {
     }
 
     static func batchRecords(count: Int, contact: Contact, event: Event, baseAmount: Double = 100) -> [Record] {
-        (0..<count).map { i in
+        (0 ..< count).map { i in
             typedRecord(
                 contact: contact,
                 event: event,
@@ -113,7 +145,11 @@ struct SampleData {
                 returnedAmount: 0,
                 date: Calendar.current.date(byAdding: .day, value: -i, to: .now) ?? .now,
                 recordType: .monetary,
-                typeData: .monetary(MonetaryData(amount: baseAmount + Double(i), paymentMethod: PaymentMethod.cash.rawValue, returnedAmount: 0))
+                typeData: .monetary(MonetaryData(
+                    amount: baseAmount + Double(i),
+                    paymentMethod: PaymentMethod.cash.rawValue,
+                    returnedAmount: 0
+                ))
             )
         }
     }

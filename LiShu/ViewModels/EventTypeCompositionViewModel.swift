@@ -2,7 +2,10 @@ import Foundation
 import SwiftData
 
 struct EventTypeCompositionItem: Identifiable {
-    var id: EventType { eventType }
+    var id: EventType {
+        eventType
+    }
+
     let eventType: EventType
     let count: Int
     let percentage: Double
@@ -23,7 +26,8 @@ class EventTypeCompositionViewModel {
 
         let calendar = Calendar.current
         guard let startOfYear = calendar.date(from: DateComponents(year: year, month: 1, day: 1)),
-              let endOfYear = calendar.date(from: DateComponents(year: year + 1, month: 1, day: 1)) else {
+              let endOfYear = calendar.date(from: DateComponents(year: year + 1, month: 1, day: 1))
+        else {
             items = []
             return
         }
@@ -32,7 +36,7 @@ class EventTypeCompositionViewModel {
             let descriptor = FetchDescriptor<Record>(
                 predicate: #Predicate<Record> { record in
                     record.date >= startOfYear && record.date < endOfYear &&
-                    record.recordTypeRaw == "monetary"
+                        record.recordTypeRaw == "monetary"
                 },
                 sortBy: [SortDescriptor(\.date, order: .reverse)]
             )

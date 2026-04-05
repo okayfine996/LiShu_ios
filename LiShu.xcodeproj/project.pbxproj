@@ -127,6 +127,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 9A934EBE2F54194E0063349A /* Build configuration list for PBXNativeTarget "LiShu" */;
 			buildPhases = (
+				32C8B5852F822036002E6747 /* Run SwiftLint */,
 				9A934E962F54194D0063349A /* Sources */,
 				9A934E972F54194D0063349A /* Frameworks */,
 				9A934E982F54194D0063349A /* Resources */,
@@ -166,14 +167,14 @@
 			fileSystemSynchronizedGroups = (
 				9A934EAE2F54194E0063349A /* LiShuTests */,
 			);
-				name = LiShuTests;
-				packageProductDependencies = (
-					32C8B5832F822036002E6746 /* Logging */,
-					32C8B5842F822036002E6746 /* Pulse */,
-				);
-				productName = LiShuTests;
-				productReference = 9A934EAB2F54194E0063349A /* LiShuTests.xctest */;
-				productType = "com.apple.product-type.bundle.unit-test";
+			name = LiShuTests;
+			packageProductDependencies = (
+				32C8B5832F822036002E6746 /* Logging */,
+				32C8B5842F822036002E6746 /* Pulse */,
+			);
+			productName = LiShuTests;
+			productReference = 9A934EAB2F54194E0063349A /* LiShuTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
 		};
 		9A934EB42F54194E0063349A /* LiShuUITests */ = {
 			isa = PBXNativeTarget;
@@ -273,6 +274,26 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		32C8B5852F822036002E6747 /* Run SwiftLint */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Run SwiftLint";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "export PATH=\"$PATH:/opt/homebrew/bin:/usr/local/bin\"\ncd \"${SRCROOT}\"\nif command -v swiftlint >/dev/null 2>&1; then\n  swiftlint lint --strict\nelse\n  echo \"warning: SwiftLint not installed; install with: brew install swiftlint\"\nfi\n";
+			showEnvVarsInLog = 0;
+		};
 		9A934EC92F54194E0063349A /* Strip ScreenshotDemo for Release */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
@@ -343,6 +364,7 @@
 				CURRENT_PROJECT_VERSION = 12;
 				DEVELOPMENT_TEAM = QFNEHUV3DG;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = LiShu/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -661,14 +683,6 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		9A934ECA2F54194E0063349A /* XCRemoteSwiftPackageReference "Pulse" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/kean/Pulse";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 5.0.0;
-			};
-		};
 		32C8B57F2F822036002E6746 /* XCRemoteSwiftPackageReference "swift-log" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/apple/swift-log.git";
@@ -680,6 +694,14 @@
 		32C8B5802F822036002E6746 /* XCRemoteSwiftPackageReference "PulseLogHandler" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/kean/PulseLogHandler";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.0.0;
+			};
+		};
+		9A934ECA2F54194E0063349A /* XCRemoteSwiftPackageReference "Pulse" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/kean/Pulse";
 			requirement = {
 				kind = upToNextMajorVersion;
 				minimumVersion = 5.0.0;

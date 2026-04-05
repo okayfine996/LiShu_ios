@@ -5,7 +5,7 @@ import SwiftData
 
 private let subscriptionLogger = PulseDiagnostics.makeLogger(label: "billing.subscription")
 
-struct UsageLimits {
+enum UsageLimits {
     static let freeOCRPerMonth = 3
     static let freeRecordTotal = 20
     static let freeContactTotal = 20
@@ -21,7 +21,9 @@ class SubscriptionManager {
     private(set) var isLoading = false
     var errorMessage: String?
 
-    var isPro: Bool { !purchasedProductIDs.isEmpty }
+    var isPro: Bool {
+        !purchasedProductIDs.isEmpty
+    }
 
     @ObservationIgnored private var updateListenerTask: Task<Void, Error>?
     @ObservationIgnored private var expirationCheckTask: Task<Void, Never>?
@@ -31,14 +33,22 @@ class SubscriptionManager {
     static let lifetimeID = "com.finefine.LiShu.pro.lifetime.v2"
 
     private let productIDs: Set<String> = [
-        monthlyID, yearlyID, lifetimeID
+        monthlyID, yearlyID, lifetimeID,
     ]
 
     // MARK: - Sorted products for display
 
-    var monthlyProduct: Product? { products.first { $0.id == Self.monthlyID } }
-    var yearlyProduct: Product? { products.first { $0.id == Self.yearlyID } }
-    var lifetimeProduct: Product? { products.first { $0.id == Self.lifetimeID } }
+    var monthlyProduct: Product? {
+        products.first { $0.id == Self.monthlyID }
+    }
+
+    var yearlyProduct: Product? {
+        products.first { $0.id == Self.yearlyID }
+    }
+
+    var lifetimeProduct: Product? {
+        products.first { $0.id == Self.lifetimeID }
+    }
 
     // MARK: - Current subscription info
 
@@ -58,7 +68,8 @@ class SubscriptionManager {
         get async {
             for await result in Transaction.currentEntitlements {
                 if let transaction = try? result.payloadValue,
-                   transaction.productID != Self.lifetimeID {
+                   transaction.productID != Self.lifetimeID
+                {
                     return transaction.expirationDate
                 }
             }
@@ -95,12 +106,12 @@ class SubscriptionManager {
             products = try await Product.products(for: productIDs)
             if products.isEmpty {
                 subscriptionLogger.warning("StoreKit returned no products", metadata: [
-                    "expected_product_ids": .string(productIDs.sorted().joined(separator: ","))
+                    "expected_product_ids": .string(productIDs.sorted().joined(separator: ",")),
                 ])
             } else {
                 subscriptionLogger.info("StoreKit products loaded", metadata: [
                     "count": .stringConvertible(products.count),
-                    "product_ids": .string(products.map(\.id).sorted().joined(separator: ","))
+                    "product_ids": .string(products.map(\.id).sorted().joined(separator: ",")),
                 ])
             }
         } catch {
@@ -112,35 +123,35 @@ class SubscriptionManager {
             }
             if let skError = error as? StoreKitError {
                 switch skError {
-                case .networkError(let urlError):
+                case let .networkError(urlError):
                     subscriptionLogger.error("StoreKit product load failed", metadata: [
                         "reason": .string("network_error"),
-                        "error": .string(urlError.localizedDescription)
+                        "error": .string(urlError.localizedDescription),
                     ])
-                case .systemError(let underlying):
+                case let .systemError(underlying):
                     subscriptionLogger.error("StoreKit product load failed", metadata: [
                         "reason": .string("system_error"),
-                        "error": .string(String(describing: underlying))
+                        "error": .string(String(describing: underlying)),
                     ])
                 case .notAvailableInStorefront:
                     subscriptionLogger.warning("StoreKit products unavailable in storefront")
                 case .notEntitled:
                     subscriptionLogger.error("StoreKit product load failed", metadata: [
-                        "reason": .string("not_entitled")
+                        "reason": .string("not_entitled"),
                     ])
                 case .userCancelled, .unknown, .unsupported:
                     subscriptionLogger.error("StoreKit product load failed", metadata: [
-                        "reason": .string(String(describing: skError))
+                        "reason": .string(String(describing: skError)),
                     ])
                 @unknown default:
                     subscriptionLogger.error("StoreKit product load failed", metadata: [
                         "reason": .string("unknown_default"),
-                        "error": .string(String(describing: skError))
+                        "error": .string(String(describing: skError)),
                     ])
                 }
             } else {
                 subscriptionLogger.error("StoreKit product load failed", metadata: [
-                    "error": .string(String(describing: error))
+                    "error": .string(String(describing: error)),
                 ])
             }
         }
@@ -153,41 +164,41 @@ class SubscriptionManager {
         isLoading = true
         errorMessage = nil
         subscriptionLogger.notice("Starting purchase", metadata: [
-            "product_id": .string(product.id)
+            "product_id": .string(product.id),
         ])
 
         do {
             let result = try await product.purchase()
 
             switch result {
-            case .success(let verification):
+            case let .success(verification):
                 let transaction = try checkVerified(verification)
                 purchasedProductIDs.insert(transaction.productID)
                 await transaction.finish()
                 isLoading = false
                 subscriptionLogger.notice("Purchase completed", metadata: [
-                    "product_id": .string(transaction.productID)
+                    "product_id": .string(transaction.productID),
                 ])
                 return true
 
             case .userCancelled:
                 isLoading = false
                 subscriptionLogger.info("Purchase cancelled by user", metadata: [
-                    "product_id": .string(product.id)
+                    "product_id": .string(product.id),
                 ])
                 return false
 
             case .pending:
                 isLoading = false
                 subscriptionLogger.notice("Purchase pending", metadata: [
-                    "product_id": .string(product.id)
+                    "product_id": .string(product.id),
                 ])
                 return false
 
             @unknown default:
                 isLoading = false
                 subscriptionLogger.warning("Purchase returned unknown result", metadata: [
-                    "product_id": .string(product.id)
+                    "product_id": .string(product.id),
                 ])
                 return false
             }
@@ -196,7 +207,7 @@ class SubscriptionManager {
             isLoading = false
             subscriptionLogger.error("Purchase failed", metadata: [
                 "product_id": .string(product.id),
-                "error": .string(error.localizedDescription)
+                "error": .string(error.localizedDescription),
             ])
             return false
         }
@@ -213,12 +224,12 @@ class SubscriptionManager {
             try await AppStore.sync()
             await checkEntitlements()
             subscriptionLogger.notice("Purchase restore finished", metadata: [
-                "active_product_count": .stringConvertible(purchasedProductIDs.count)
+                "active_product_count": .stringConvertible(purchasedProductIDs.count),
             ])
         } catch {
             errorMessage = error.localizedDescription
             subscriptionLogger.error("Purchase restore failed", metadata: [
-                "error": .string(error.localizedDescription)
+                "error": .string(error.localizedDescription),
             ])
         }
 
@@ -235,7 +246,7 @@ class SubscriptionManager {
             if let transaction = try? checkVerified(result) {
                 activeIDs.insert(transaction.productID)
                 if let exp = transaction.expirationDate {
-                    if nearestExpiration == nil || exp < nearestExpiration! {
+                    if nearestExpiration.map({ exp < $0 }) ?? true {
                         nearestExpiration = exp
                     }
                 }
@@ -247,7 +258,7 @@ class SubscriptionManager {
         subscriptionLogger.debug("Entitlements refreshed", metadata: [
             "active_product_count": .stringConvertible(activeIDs.count),
             "active_product_ids": .string(activeIDs.sorted().joined(separator: ",")),
-            "nearest_expiration": .string(nearestExpiration.map { ISO8601DateFormatter().string(from: $0) } ?? "none")
+            "nearest_expiration": .string(nearestExpiration.map { ISO8601DateFormatter().string(from: $0) } ?? "none"),
         ])
     }
 
@@ -276,7 +287,7 @@ class SubscriptionManager {
             for await result in Transaction.updates {
                 if let transaction = try? result.payloadValue {
                     subscriptionLogger.notice("Transaction update received", metadata: [
-                        "product_id": .string(transaction.productID)
+                        "product_id": .string(transaction.productID),
                     ])
                     await transaction.finish()
                 }
@@ -289,9 +300,9 @@ class SubscriptionManager {
 
     private func checkVerified<T>(_ result: VerificationResult<T>) throws -> T {
         switch result {
-        case .unverified(_, let error):
+        case let .unverified(_, error):
             throw error
-        case .verified(let value):
+        case let .verified(value):
             return value
         }
     }
@@ -299,9 +310,9 @@ class SubscriptionManager {
     // MARK: - Debug
 
     #if DEBUG
-    func debugClearPurchases() {
-        purchasedProductIDs.removeAll()
-    }
+        func debugClearPurchases() {
+            purchasedProductIDs.removeAll()
+        }
     #endif
 
     // MARK: - Usage Limits

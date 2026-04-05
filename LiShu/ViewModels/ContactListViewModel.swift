@@ -6,26 +6,26 @@ private let contactListLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.c
 
 /// Filter options for contacts by circle level
 enum ContactCircleFilter: String, CaseIterable, Hashable {
-    case all = "all"
-    case family = "family"
-    case relative = "relative"
-    case social = "social"
+    case all
+    case family
+    case relative
+    case social
 
     var title: String {
         switch self {
-        case .all: return String(localized: "contact.filter.all")
-        case .family: return String(localized: "contact.filter.family")
-        case .relative: return String(localized: "contact.filter.relative")
-        case .social: return String(localized: "contact.filter.social")
+        case .all: String(localized: "contact.filter.all")
+        case .family: String(localized: "contact.filter.family")
+        case .relative: String(localized: "contact.filter.relative")
+        case .social: String(localized: "contact.filter.social")
         }
     }
 
     var relationshipCategory: RelationshipCategory? {
         switch self {
-        case .all: return nil
-        case .family: return .family
-        case .relative: return .relative
-        case .social: return .social
+        case .all: nil
+        case .family: .family
+        case .relative: .relative
+        case .social: .social
         }
     }
 }
@@ -61,7 +61,7 @@ class ContactListViewModel {
             let query = searchText.lowercased()
             result = result.filter {
                 $0.name.lowercased().contains(query) ||
-                $0.relation.lowercased().contains(query)
+                    $0.relation.lowercased().contains(query)
             }
         }
 
@@ -124,13 +124,13 @@ class ContactListViewModel {
             contactListLogger.notice("Loaded contacts", metadata: [
                 "step": .string("load"),
                 "count": .stringConvertible(contacts.count),
-                "result": .string("success")
+                "result": .string("success"),
             ])
         } catch {
             state = .error(String(localized: "contact.list.loadError"))
             contactListLogger.error("Failed to load contacts", metadata: [
                 "step": .string("load"),
-                "error": .string(error.localizedDescription)
+                "error": .string(error.localizedDescription),
             ])
         }
     }
@@ -139,7 +139,7 @@ class ContactListViewModel {
     func deleteContact(_ contact: Contact, context: ModelContext) {
         contactListLogger.notice("Deleting contact", metadata: [
             "step": .string("delete"),
-            "contact_id": .string(String(describing: contact.persistentModelID))
+            "contact_id": .string(String(describing: contact.persistentModelID)),
         ])
         context.delete(contact)
         do {
@@ -147,7 +147,7 @@ class ContactListViewModel {
             contactListLogger.notice("Deleted contact", metadata: [
                 "step": .string("delete"),
                 "contact_id": .string(String(describing: contact.persistentModelID)),
-                "result": .string("success")
+                "result": .string("success"),
             ])
             loadContacts(context: context)
         } catch {
@@ -155,7 +155,7 @@ class ContactListViewModel {
             contactListLogger.error("Failed to delete contact", metadata: [
                 "step": .string("delete"),
                 "contact_id": .string(String(describing: contact.persistentModelID)),
-                "error": .string(error.localizedDescription)
+                "error": .string(error.localizedDescription),
             ])
             loadContacts(context: context)
         }

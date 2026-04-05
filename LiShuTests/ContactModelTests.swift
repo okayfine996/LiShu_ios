@@ -4,14 +4,13 @@
 //
 
 import Foundation
-import Testing
-import SwiftData
 @testable import LiShu
+import SwiftData
+import Testing
 
 @MainActor
 struct ContactModelTests {
-
-    @Test func testDefaultValues() throws {
+    @Test func defaultValues() throws {
         let db = try TestDB()
         let contact = Contact(name: "测试")
         db.context.insert(contact)
@@ -42,7 +41,7 @@ struct ContactModelTests {
         #expect(contact.netValue == receivedNet - givenNet)
     }
 
-    @Test func testCascadeDeleteRemovesRecords() throws {
+    @Test func cascadeDeleteRemovesRecords() throws {
         let db = try TestDB()
         let contact = SampleData.contact(name: "待删除")
         let event = SampleData.event()
@@ -64,7 +63,7 @@ struct ContactModelTests {
         #expect(try db.context.fetchCount(FetchDescriptor<Record>()) == 0)
     }
 
-    @Test func testTotalGivenAndReceived() throws {
+    @Test func totalGivenAndReceived() throws {
         let db = try TestDB()
         let contact = SampleData.contact()
         let event1 = SampleData.event(name: "婚礼1")

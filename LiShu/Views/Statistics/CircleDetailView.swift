@@ -1,5 +1,5 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 struct CircleDetailView: View {
     @Environment(\.modelContext) private var modelContext
@@ -16,7 +16,7 @@ struct CircleDetailView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             case .loaded:
                 mainContent
-            case .error(let message):
+            case let .error(message):
                 ErrorStateView(message: message) {
                     viewModel.load(circle: circle, year: year, context: modelContext)
                 }
@@ -320,7 +320,6 @@ struct CircleDetailView: View {
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
         .opacity(isLast && viewModel.members.count > 3 ? 0.8 : 1.0)
     }
-
 }
 
 // MARK: - Preview

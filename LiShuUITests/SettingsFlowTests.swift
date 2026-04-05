@@ -1,9 +1,8 @@
 import XCTest
 
 final class SettingsFlowTests: BaseUITestCase {
-
     @MainActor
-    func testSettingsNavigation() throws {
+    func testSettingsNavigation() {
         let settingsTab = app.tabBars.buttons[TabLabels.settings]
         XCTAssertTrue(settingsTab.waitForExistence(timeout: 5))
         settingsTab.tap()
@@ -24,7 +23,7 @@ final class SettingsFlowTests: BaseUITestCase {
     }
 
     @MainActor
-    func testAboutPage() throws {
+    func testAboutPage() {
         let settingsTab = app.tabBars.buttons[TabLabels.settings]
         XCTAssertTrue(settingsTab.waitForExistence(timeout: 5))
         settingsTab.tap()
@@ -44,13 +43,19 @@ final class SettingsFlowTests: BaseUITestCase {
             XCTAssertTrue(versionText.waitForExistence(timeout: 3), "About page should show version info")
 
             let versionLabel = app.staticTexts["about.versionLabel"]
-            XCTAssertTrue(versionLabel.waitForExistence(timeout: 3), "Version label should expose an accessibility identifier for diagnostics")
-            for _ in 0..<7 {
+            XCTAssertTrue(
+                versionLabel.waitForExistence(timeout: 3),
+                "Version label should expose an accessibility identifier for diagnostics"
+            )
+            for _ in 0 ..< 7 {
                 versionLabel.tap()
             }
 
             let diagnosticsButton = app.buttons["about.openDiagnosticsConsole"]
-            XCTAssertFalse(diagnosticsButton.waitForExistence(timeout: 1), "UI testing mode should keep the hidden diagnostics entry unavailable")
+            XCTAssertFalse(
+                diagnosticsButton.waitForExistence(timeout: 1),
+                "UI testing mode should keep the hidden diagnostics entry unavailable"
+            )
 
             app.navigationBars.buttons.firstMatch.tap()
         }

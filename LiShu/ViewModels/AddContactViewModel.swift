@@ -9,7 +9,7 @@ class AddContactViewModel {
     var editingContact: Contact?
     var avatar: Data?
     var name: String = ""
-    var selectedCategory: RelationshipCategory? = nil
+    var selectedCategory: RelationshipCategory?
     var selectedTag: String = ""
     var birthday: Date = .now
     var hasBirthday: Bool = false
@@ -26,7 +26,7 @@ class AddContactViewModel {
     func configure(with contact: Contact) {
         contactsViewModelLogger.info("Configured contact editor", metadata: [
             "step": .string("configure"),
-            "contact_id": .string(String(describing: contact.persistentModelID))
+            "contact_id": .string(String(describing: contact.persistentModelID)),
         ])
         editingContact = contact
         avatar = contact.avatar
@@ -45,7 +45,7 @@ class AddContactViewModel {
             showValidationAlert = true
             contactsViewModelLogger.warning("Rejected contact save", metadata: [
                 "step": .string("save"),
-                "reason": .string("validation_failed")
+                "reason": .string("validation_failed"),
             ])
             return false
         }
@@ -56,7 +56,7 @@ class AddContactViewModel {
             needsProUpgrade = true
             contactsViewModelLogger.warning("Rejected contact save", metadata: [
                 "step": .string("save"),
-                "reason": .string("subscription_limit")
+                "reason": .string("subscription_limit"),
             ])
             return false
         }
@@ -81,14 +81,14 @@ class AddContactViewModel {
                 contactsViewModelLogger.notice("Saved contact", metadata: [
                     "step": .string("save"),
                     "contact_id": .string(String(describing: existing.persistentModelID)),
-                    "result": .string("updated")
+                    "result": .string("updated"),
                 ])
                 return true
             } catch {
                 contactsViewModelLogger.error("Failed to save contact", metadata: [
                     "step": .string("save"),
                     "result": .string("updated"),
-                    "error": .string(error.localizedDescription)
+                    "error": .string(error.localizedDescription),
                 ])
                 return false
             }
@@ -115,14 +115,14 @@ class AddContactViewModel {
                 contactsViewModelLogger.notice("Saved contact", metadata: [
                     "step": .string("save"),
                     "contact_id": .string(String(describing: contact.persistentModelID)),
-                    "result": .string("created")
+                    "result": .string("created"),
                 ])
                 return true
             } catch {
                 contactsViewModelLogger.error("Failed to save contact", metadata: [
                     "step": .string("save"),
                     "result": .string("created"),
-                    "error": .string(error.localizedDescription)
+                    "error": .string(error.localizedDescription),
                 ])
                 return false
             }

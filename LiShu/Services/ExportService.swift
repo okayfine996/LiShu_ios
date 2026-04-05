@@ -5,8 +5,7 @@ import SwiftData
 private let exportLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.export)
 private let importLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.importFlow)
 
-struct ExportService {
-
+enum ExportService {
     // MARK: - CSV Export
 
     /// 表头：`备注` 后为 6 列类型平铺字段，不含 `kvData`；不含退礼展示用「状态」列。
@@ -15,7 +14,7 @@ struct ExportService {
 
     static func exportCSV(context: ModelContext) throws -> String {
         exportLogger.notice("Starting CSV export", metadata: [
-            "step": .string("export_csv")
+            "step": .string("export_csv"),
         ])
         let records = try context.fetch(FetchDescriptor<Record>(
             sortBy: [SortDescriptor(\.date, order: .reverse)]
@@ -55,7 +54,7 @@ struct ExportService {
         exportLogger.notice("Finished CSV export", metadata: [
             "step": .string("export_csv"),
             "count": .stringConvertible(rows.count),
-            "result": .string("success")
+            "result": .string("success"),
         ])
         return content
     }
@@ -68,11 +67,10 @@ struct ExportService {
         case .gift:
             let g = record.giftData
             let name = g?.giftName ?? ""
-            let estStr: String
-            if let est = g?.estimatedValue {
-                estStr = String(format: "%.2f", est)
+            let estStr = if let est = g?.estimatedValue {
+                String(format: "%.2f", est)
             } else {
-                estStr = ""
+                ""
             }
             return [
                 escapeCSV(name),
@@ -109,7 +107,7 @@ struct ExportService {
     static func importCSV(url: URL, context: ModelContext) throws -> ImportResult {
         importLogger.notice("Starting CSV import", metadata: [
             "step": .string("import_csv"),
-            "source": .string(url.lastPathComponent)
+            "source": .string(url.lastPathComponent),
         ])
         let didStartAccessing = url.startAccessingSecurityScopedResource()
         defer {
@@ -125,7 +123,7 @@ struct ExportService {
             importLogger.warning("CSV import finished without data rows", metadata: [
                 "step": .string("import_csv"),
                 "source": .string(url.lastPathComponent),
-                "reason": .string("empty_rows")
+                "reason": .string("empty_rows"),
             ])
             return ImportResult()
         }
@@ -139,13 +137,13 @@ struct ExportService {
                 "step": .string("import_csv"),
                 "source": .string(url.lastPathComponent),
                 "reason": .string("missing_contact_column"),
-                "count": .stringConvertible(r.errors)
+                "count": .stringConvertible(r.errors),
             ])
             return r
         }
 
         let hasRecordTypeColumn = columnIndex["记录类型"] != nil
-        /// 仅在表头含「记录类型」且存在任一类型平铺列名时，按平铺列参与 Gift/Favor/Banquet 组装。
+        // 仅在表头含「记录类型」且存在任一类型平铺列名时，按平铺列参与 Gift/Favor/Banquet 组装。
         let hasFlatTypeData = hasRecordTypeColumn && csvImportHasFlatTypeColumns(columnIndex)
 
         var result = ImportResult()
@@ -164,7 +162,7 @@ struct ExportService {
                     "step": .string("import_csv"),
                     "source": .string(url.lastPathComponent),
                     "reason": .string("missing_contact_name"),
-                    "count": .stringConvertible(rowIndex + 2)
+                    "count": .stringConvertible(rowIndex + 2),
                 ])
                 continue
             }
@@ -181,12 +179,12 @@ struct ExportService {
             let relationshipWeight: RelationshipWeight
             let favorDescription: String
             let note: String
-            var giftName: String = ""
-            var giftEstimatedValueStr: String = ""
-            var favorHelp: String = ""
-            var banquetLocation: String = ""
-            var banquetAttendees: String = ""
-            var banquetExtra: String = ""
+            var giftName = ""
+            var giftEstimatedValueStr = ""
+            var favorHelp = ""
+            var banquetLocation = ""
+            var banquetAttendees = ""
+            var banquetExtra = ""
 
             if !hasRecordTypeColumn {
                 recordType = .monetary
@@ -225,7 +223,7 @@ struct ExportService {
                         "step": .string("import_csv"),
                         "source": .string(url.lastPathComponent),
                         "reason": .string("invalid_monetary_amount"),
-                        "count": .stringConvertible(rowIndex + 2)
+                        "count": .stringConvertible(rowIndex + 2),
                     ])
                     continue
                 }
@@ -246,7 +244,7 @@ struct ExportService {
                         "step": .string("import_csv"),
                         "source": .string(url.lastPathComponent),
                         "reason": .string("missing_non_monetary_payload"),
-                        "count": .stringConvertible(rowIndex + 2)
+                        "count": .stringConvertible(rowIndex + 2),
                     ])
                     continue
                 }
@@ -297,7 +295,7 @@ struct ExportService {
             "source": .string(url.lastPathComponent),
             "count": .stringConvertible(result.imported),
             "result": .string("success"),
-            "errors": .stringConvertible(result.errors)
+            "errors": .stringConvertible(result.errors),
         ])
         return result
     }
@@ -394,17 +392,16 @@ struct ExportService {
                 name = h
             }
             let estFromFlat = UserEnteredDecimal.parse(giftEstStr)
-            let estimatedValue: Double?
-            if hasFlatColumns {
+            let estimatedValue: Double? = if hasFlatColumns {
                 if let v = estFromFlat, v > 0 {
-                    estimatedValue = v
+                    v
                 } else if amount > 0 {
-                    estimatedValue = amount
+                    amount
                 } else {
-                    estimatedValue = nil
+                    nil
                 }
             } else {
-                estimatedValue = amount > 0 ? amount : nil
+                amount > 0 ? amount : nil
             }
             return .gift(GiftData(giftName: name, estimatedValue: estimatedValue))
         case .favor:
@@ -441,7 +438,7 @@ struct ExportService {
             case "\"":
                 if inQuotes {
                     let next = line.index(after: index)
-                    if next < line.endIndex && line[next] == "\"" {
+                    if next < line.endIndex, line[next] == "\"" {
                         current.append("\"")
                         index = next
                     } else {
@@ -479,7 +476,7 @@ struct ExportService {
         }
 
         func commitRow() {
-            if row.count == 1 && row[0].isEmpty {
+            if row.count == 1, row[0].isEmpty {
                 row.removeAll()
                 return
             }
@@ -494,7 +491,7 @@ struct ExportService {
             case "\"":
                 if inQuotes {
                     let next = content.index(after: index)
-                    if next < content.endIndex && content[next] == "\"" {
+                    if next < content.endIndex, content[next] == "\"" {
                         field.append("\"")
                         index = next
                     } else {
@@ -512,7 +509,7 @@ struct ExportService {
                 commitRow()
                 if ch == "\r" {
                     let next = content.index(after: index)
-                    if next < content.endIndex && content[next] == "\n" {
+                    if next < content.endIndex, content[next] == "\n" {
                         index = next
                     }
                 }
@@ -541,7 +538,7 @@ struct ExportService {
             importLogger.info("Reused contact during import", metadata: [
                 "step": .string("find_or_create_contact"),
                 "result": .string("existing"),
-                "contact_id": .string(String(describing: existing.persistentModelID))
+                "contact_id": .string(String(describing: existing.persistentModelID)),
             ])
             return existing
         }
@@ -550,7 +547,7 @@ struct ExportService {
         importLogger.info("Created contact during import", metadata: [
             "step": .string("find_or_create_contact"),
             "result": .string("created"),
-            "target": .string(trimmed)
+            "target": .string(trimmed),
         ])
         return contact
     }
@@ -566,7 +563,7 @@ struct ExportService {
             importLogger.info("Reused event during import", metadata: [
                 "step": .string("find_or_create_event"),
                 "result": .string("existing"),
-                "event_id": .string(String(describing: existing.persistentModelID))
+                "event_id": .string(String(describing: existing.persistentModelID)),
             ])
             return existing
         }
@@ -575,7 +572,7 @@ struct ExportService {
         importLogger.info("Created event during import", metadata: [
             "step": .string("find_or_create_event"),
             "result": .string("created"),
-            "target": .string(trimmed)
+            "target": .string(trimmed),
         ])
         return event
     }
@@ -669,8 +666,8 @@ enum ImportError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .accessDenied: return String(localized: "import.error.accessDenied")
-        case .invalidFormat: return String(localized: "import.error.invalidFormat")
+        case .accessDenied: String(localized: "import.error.accessDenied")
+        case .invalidFormat: String(localized: "import.error.invalidFormat")
         }
     }
 }
@@ -680,8 +677,8 @@ enum ImportError: LocalizedError {
 private extension RecordDirection {
     var csvValue: String {
         switch self {
-        case .given: return String(localized: "record.direction.given")
-        case .received: return String(localized: "record.direction.received")
+        case .given: String(localized: "record.direction.given")
+        case .received: String(localized: "record.direction.received")
         }
     }
 }
@@ -689,9 +686,9 @@ private extension RecordDirection {
 private extension PaymentMethod {
     var csvValue: String {
         switch self {
-        case .cash: return String(localized: "payment.cash")
-        case .wechat: return String(localized: "payment.wechat")
-        case .alipay: return String(localized: "payment.alipay")
+        case .cash: String(localized: "payment.cash")
+        case .wechat: String(localized: "payment.wechat")
+        case .alipay: String(localized: "payment.alipay")
         }
     }
 }

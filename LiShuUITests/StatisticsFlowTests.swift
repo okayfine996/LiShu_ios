@@ -1,9 +1,8 @@
 import XCTest
 
 final class StatisticsFlowTests: BaseUITestCase {
-
     @MainActor
-    func testStatisticsViewDisplay() throws {
+    func testStatisticsViewDisplay() {
         let homeTab = app.tabBars.buttons[TabLabels.home]
         XCTAssertTrue(homeTab.waitForExistence(timeout: 5))
         homeTab.tap()
@@ -30,7 +29,7 @@ final class StatisticsFlowTests: BaseUITestCase {
     }
 
     @MainActor
-    func testHomeSummaryCardExists() throws {
+    func testHomeSummaryCardExists() {
         let homeTab = app.tabBars.buttons[TabLabels.home]
         XCTAssertTrue(homeTab.waitForExistence(timeout: 5))
         homeTab.tap()
@@ -44,7 +43,7 @@ final class StatisticsFlowTests: BaseUITestCase {
     }
 
     @MainActor
-    func testHomeUpcomingEventsSection() throws {
+    func testHomeUpcomingEventsSection() {
         let homeTab = app.tabBars.buttons[TabLabels.home]
         XCTAssertTrue(homeTab.waitForExistence(timeout: 5))
         homeTab.tap()
@@ -59,7 +58,7 @@ final class StatisticsFlowTests: BaseUITestCase {
     }
 
     @MainActor
-    func testHomeRecentRecordsSection() throws {
+    func testHomeRecentRecordsSection() {
         let homeTab = app.tabBars.buttons[TabLabels.home]
         XCTAssertTrue(homeTab.waitForExistence(timeout: 5))
         homeTab.tap()
@@ -74,7 +73,7 @@ final class StatisticsFlowTests: BaseUITestCase {
     }
 
     @MainActor
-    func testAllFiveTabsAccessible() throws {
+    func testAllFiveTabsAccessible() {
         let tabNames = [TabLabels.home, TabLabels.records, TabLabels.contacts, TabLabels.events, TabLabels.settings]
         for name in tabNames {
             let tab = app.tabBars.buttons[name]

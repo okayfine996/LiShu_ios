@@ -1,30 +1,29 @@
 import Foundation
-import Testing
-import SwiftData
 @testable import LiShu
+import SwiftData
+import Testing
 
 @MainActor
 struct AddEventViewModelTests {
-
-    @Test func testIsValidWithEmptyName() {
+    @Test func isValidWithEmptyName() {
         let vm = AddEventViewModel()
         vm.name = ""
         #expect(vm.isValid == false)
     }
 
-    @Test func testIsValidWithWhitespaceName() {
+    @Test func isValidWithWhitespaceName() {
         let vm = AddEventViewModel()
         vm.name = "   \n  "
         #expect(vm.isValid == false)
     }
 
-    @Test func testIsValidWithValidName() {
+    @Test func isValidWithValidName() {
         let vm = AddEventViewModel()
         vm.name = "春节聚会"
         #expect(vm.isValid == true)
     }
 
-    @Test func testSaveNewEvent() throws {
+    @Test func saveNewEvent() throws {
         let db = try TestDB()
         let vm = AddEventViewModel()
         vm.name = "张三的婚礼"
@@ -44,7 +43,7 @@ struct AddEventViewModelTests {
         #expect(events[0].note == "提前准备红包")
     }
 
-    @Test func testSaveInvalidReturnsFalse() throws {
+    @Test func saveInvalidReturnsFalse() throws {
         let db = try TestDB()
         let vm = AddEventViewModel()
         vm.name = ""
@@ -55,9 +54,9 @@ struct AddEventViewModelTests {
         #expect(events.isEmpty)
     }
 
-    @Test func testConfigureWithEvent() throws {
+    @Test func configureWithEvent() throws {
         let db = try TestDB()
-        let event = Event(name: "生日宴", type: .birthday, date: Date(timeIntervalSince1970: 1700000000), location: "上海", note: "备注")
+        let event = Event(name: "生日宴", type: .birthday, date: Date(timeIntervalSince1970: 1_700_000_000), location: "上海", note: "备注")
         event.coverImage = Data([0x01, 0x02])
         db.context.insert(event)
         try db.context.save()
@@ -73,7 +72,7 @@ struct AddEventViewModelTests {
         #expect(vm.coverImageData == Data([0x01, 0x02]))
     }
 
-    @Test func testSaveEditMode() throws {
+    @Test func saveEditMode() throws {
         let db = try TestDB()
         let event = Event(name: "旧名称", type: .wedding, location: "旧地点")
         db.context.insert(event)

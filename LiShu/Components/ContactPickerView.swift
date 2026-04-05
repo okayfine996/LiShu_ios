@@ -1,19 +1,19 @@
-import SwiftUI
-import ContactsUI
 import Contacts
+import ContactsUI
+import SwiftUI
 
 struct ContactPickerView: UIViewControllerRepresentable {
     var onSelect: (String, String) -> Void
     var onCancel: () -> Void
 
-    func makeUIViewController(context: Context) -> ContactPickerHostingController {
+    func makeUIViewController(context _: Context) -> ContactPickerHostingController {
         let hosting = ContactPickerHostingController()
         hosting.onSelect = onSelect
         hosting.onCancel = onCancel
         return hosting
     }
 
-    func updateUIViewController(_ uiViewController: ContactPickerHostingController, context: Context) {}
+    func updateUIViewController(_: ContactPickerHostingController, context _: Context) {}
 }
 
 final class ContactPickerHostingController: UIViewController, CNContactPickerDelegate {

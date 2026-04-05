@@ -3,7 +3,7 @@ import SwiftUI
 /// 环形图 + 右侧列表的统计卡片，用于事件分布、人情构成等场景。
 struct DonutDistributionCard<Rows: View>: View {
     let title: String
-    var titleSystemImage: String? = nil
+    var titleSystemImage: String?
     /// 为 `false` 时标题由外层区段展示（与环形图内容分离）。
     var showsTitleHeader: Bool = true
     let emptyMessage: String
@@ -14,7 +14,7 @@ struct DonutDistributionCard<Rows: View>: View {
     /// 人情构成等场景中心为大数字时使用 `true`，事件分布等场景为 `false`。
     var centerMainUsesLargeValueStyle: Bool = false
     /// 环形图外圈可点击跳转时传入（如事件分布点击进占比最高类型）。
-    var donutNavigationRoute: AppRoute? = nil
+    var donutNavigationRoute: AppRoute?
     @ViewBuilder let rows: () -> Rows
 
     private let donutSize: CGFloat = 140

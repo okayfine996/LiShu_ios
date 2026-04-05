@@ -4,14 +4,13 @@
 //
 
 import Foundation
-import Testing
-import SwiftData
 @testable import LiShu
+import SwiftData
+import Testing
 
 @MainActor
 struct RecordModelTests {
-
-    @Test func testUpdateStatusOpen() throws {
+    @Test func updateStatusOpen() throws {
         let db = try TestDB()
         let contact = SampleData.contact()
         let event = SampleData.event()
@@ -24,7 +23,7 @@ struct RecordModelTests {
         #expect(record.hasReturnedGift == false)
     }
 
-    @Test func testUpdateStatusPartial() throws {
+    @Test func updateStatusPartial() throws {
         let db = try TestDB()
         let contact = SampleData.contact()
         let event = SampleData.event()
@@ -37,7 +36,7 @@ struct RecordModelTests {
         #expect(record.hasReturnedGift == true)
     }
 
-    @Test func testUpdateStatusSettled() throws {
+    @Test func updateStatusSettled() throws {
         let db = try TestDB()
         let contact = SampleData.contact()
         let event = SampleData.event()
@@ -50,7 +49,7 @@ struct RecordModelTests {
         #expect(record.hasReturnedGift == true)
     }
 
-    @Test func testDirectionComputedProperty() throws {
+    @Test func directionComputedProperty() throws {
         let db = try TestDB()
         let contact = SampleData.contact()
         let event = SampleData.event()
@@ -66,7 +65,7 @@ struct RecordModelTests {
         #expect(record.directionRaw == "received")
     }
 
-    @Test func testPaymentMethodComputedProperty() throws {
+    @Test func paymentMethodComputedProperty() throws {
         let db = try TestDB()
         let contact = SampleData.contact()
         let event = SampleData.event()
@@ -77,11 +76,15 @@ struct RecordModelTests {
         db.context.insert(record)
 
         #expect(record.resolvedPaymentMethod == .cash)
-        record.applyTypeData(.monetary(MonetaryData(amount: record.monetaryAmount, paymentMethod: PaymentMethod.wechat.rawValue, returnedAmount: record.returnedAmount)))
+        record.applyTypeData(.monetary(MonetaryData(
+            amount: record.monetaryAmount,
+            paymentMethod: PaymentMethod.wechat.rawValue,
+            returnedAmount: record.returnedAmount
+        )))
         #expect(record.resolvedPaymentMethod == .wechat)
     }
 
-    @Test func testRelationshipWeightComputedProperty() throws {
+    @Test func relationshipWeightComputedProperty() throws {
         let db = try TestDB()
         let contact = SampleData.contact()
         let event = SampleData.event()
@@ -97,7 +100,7 @@ struct RecordModelTests {
         #expect(record.relationshipWeightRaw == "profound")
     }
 
-    @Test func testRecordPhotoRelationship() throws {
+    @Test func recordPhotoRelationship() throws {
         let db = try TestDB()
         let contact = SampleData.contact()
         let event = SampleData.event()
@@ -116,7 +119,7 @@ struct RecordModelTests {
         #expect(record.photos?.count == 2)
     }
 
-    @Test func testRecordCascadeDeleteRemovesPhotos() throws {
+    @Test func recordCascadeDeleteRemovesPhotos() throws {
         let db = try TestDB()
         let contact = SampleData.contact()
         let event = SampleData.event()
@@ -138,7 +141,7 @@ struct RecordModelTests {
         #expect(try db.context.fetchCount(FetchDescriptor<RecordPhoto>()) == 0)
     }
 
-    @Test func testInitReflectsHasReturnedGiftViaUpdateStatus() throws {
+    @Test func initReflectsHasReturnedGiftViaUpdateStatus() throws {
         let db = try TestDB()
         let contact = SampleData.contact()
         let event = SampleData.event()
@@ -151,7 +154,7 @@ struct RecordModelTests {
         #expect(record.hasReturnedGift == true)
     }
 
-    @Test func testBanquetResolvedDescriptionPrefersLocation() throws {
+    @Test func banquetResolvedDescriptionPrefersLocation() throws {
         let db = try TestDB()
         let contact = SampleData.contact()
         db.context.insert(contact)
@@ -174,7 +177,7 @@ struct RecordModelTests {
         #expect(record.banquetData?.attendeeList == "主客与两位长辈")
     }
 
-    @Test func testResolvedDisplayAmountUnknownRecordTypeRawUsesColumnWhenKVAmountZero() throws {
+    @Test func resolvedDisplayAmountUnknownRecordTypeRawUsesColumnWhenKVAmountZero() throws {
         let db = try TestDB()
         let contact = SampleData.contact()
         let event = SampleData.event()
@@ -192,7 +195,7 @@ struct RecordModelTests {
         #expect(record.resolvedDisplayAmount == 888)
     }
 
-    @Test func testResolvedDisplayAmountMonetaryRecordTypeRawUsesColumnWhenKVAmountZero() throws {
+    @Test func resolvedDisplayAmountMonetaryRecordTypeRawUsesColumnWhenKVAmountZero() throws {
         let db = try TestDB()
         let contact = SampleData.contact()
         let event = SampleData.event()
@@ -210,13 +213,13 @@ struct RecordModelTests {
         #expect(record.resolvedDisplayAmount == 888)
     }
 
-    @Test func testUserEnteredDecimalParsesCommas() {
+    @Test func userEnteredDecimalParsesCommas() {
         #expect(UserEnteredDecimal.parse("1,234.5") == 1234.5)
         #expect(UserEnteredDecimal.parse("1，000") == 1000)
         #expect(UserEnteredDecimal.parse("  500  ") == 500)
     }
 
-    @Test func testRecordTypeStorageNormalizerTrimsWhitespace() throws {
+    @Test func recordTypeStorageNormalizerTrimsWhitespace() throws {
         let db = try TestDB()
         let contact = SampleData.contact()
         db.context.insert(contact)

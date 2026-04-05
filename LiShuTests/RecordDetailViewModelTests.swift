@@ -4,14 +4,13 @@
 //
 
 import Foundation
-import Testing
-import SwiftData
 @testable import LiShu
+import SwiftData
+import Testing
 
 @MainActor
 struct RecordDetailViewModelTests {
-
-    @Test func testSaveReturnSuccess() throws {
+    @Test func saveReturnSuccess() throws {
         let db = try TestDB()
         let contact = SampleData.contact()
         let event = SampleData.event()
@@ -29,7 +28,7 @@ struct RecordDetailViewModelTests {
         #expect(record.resolvedReturnedAmount == 200)
     }
 
-    @Test func testSaveReturnZeroAmount() throws {
+    @Test func saveReturnZeroAmount() throws {
         let db = try TestDB()
         let contact = SampleData.contact()
         let event = SampleData.event()
@@ -46,7 +45,7 @@ struct RecordDetailViewModelTests {
         #expect(vm.saveReturn(context: db.context) == false)
     }
 
-    @Test func testSaveReturnInvalidText() throws {
+    @Test func saveReturnInvalidText() throws {
         let db = try TestDB()
         let contact = SampleData.contact()
         let event = SampleData.event()
@@ -83,7 +82,7 @@ struct RecordDetailViewModelTests {
         #expect(records.isEmpty)
     }
 
-    @Test func testSaveReturnParsesThousandSeparator() throws {
+    @Test func saveReturnParsesThousandSeparator() throws {
         let db = try TestDB()
         let contact = SampleData.contact()
         let event = SampleData.event()
@@ -101,7 +100,7 @@ struct RecordDetailViewModelTests {
         #expect(record.resolvedReturnedAmount == 1000)
     }
 
-    @Test func testLoadRecord() throws {
+    @Test func loadRecord() throws {
         let db = try TestDB()
         let contact = SampleData.contact()
         let event = SampleData.event()

@@ -1,5 +1,5 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 import UniformTypeIdentifiers
 
 struct DataManagementView: View {
@@ -181,7 +181,10 @@ struct DataManagementView: View {
         do {
             let tempDir = FileManager.default.temporaryDirectory
             let fileName = "lishu_export_\(dateSuffix()).csv"
-            let data = try ExportService.exportCSV(context: modelContext).data(using: String.Encoding.utf8)!
+            guard let data = try ExportService.exportCSV(context: modelContext).data(using: .utf8) else {
+                exportError = String(localized: "settings.data.export_encoding_failed")
+                return
+            }
             let fileURL = tempDir.appendingPathComponent(fileName)
             try data.write(to: fileURL)
             shareURL = fileURL
@@ -210,7 +213,7 @@ struct DataManagementView: View {
 
     private func handleCSVImport(_ result: Result<[URL], Error>) {
         switch result {
-        case .success(let urls):
+        case let .success(urls):
             guard let url = urls.first else { return }
             do {
                 let res = try ExportService.importCSV(url: url, context: modelContext)
@@ -232,7 +235,7 @@ struct DataManagementView: View {
             } catch {
                 exportError = error.localizedDescription
             }
-        case .failure(let error):
+        case let .failure(error):
             exportError = error.localizedDescription
         }
     }

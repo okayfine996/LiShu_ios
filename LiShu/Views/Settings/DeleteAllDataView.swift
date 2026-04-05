@@ -1,5 +1,5 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 struct DeleteAllDataView: View {
     @Environment(\.dismiss) private var dismiss

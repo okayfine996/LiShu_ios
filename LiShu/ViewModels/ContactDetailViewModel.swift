@@ -4,7 +4,9 @@ import SwiftData
 struct TypeCountItem: Identifiable {
     let type: RecordType
     let count: Int
-    var id: String { type.rawValue }
+    var id: String {
+        type.rawValue
+    }
 }
 
 @Observable
@@ -104,25 +106,26 @@ class ContactDetailViewModel {
 
     func balanceLevelText(_ level: BalanceLevel) -> String {
         switch level {
-        case .excellent: return String(localized: "contact.detail.balance.excellent")
-        case .good: return String(localized: "contact.detail.balance.good")
-        case .fair: return String(localized: "contact.detail.balance.fair")
-        case .poor: return String(localized: "contact.detail.balance.poor")
+        case .excellent: String(localized: "contact.detail.balance.excellent")
+        case .good: String(localized: "contact.detail.balance.good")
+        case .fair: String(localized: "contact.detail.balance.fair")
+        case .poor: String(localized: "contact.detail.balance.poor")
         }
     }
 
     func balanceDescription(_ level: BalanceLevel) -> String {
         switch level {
-        case .excellent: return String(localized: "contact.detail.balance.excellent.desc")
-        case .good: return String(localized: "contact.detail.balance.good.desc")
-        case .fair: return String(localized: "contact.detail.balance.fair.desc")
-        case .poor: return String(localized: "contact.detail.balance.poor.desc")
+        case .excellent: String(localized: "contact.detail.balance.excellent.desc")
+        case .good: String(localized: "contact.detail.balance.good.desc")
+        case .fair: String(localized: "contact.detail.balance.fair.desc")
+        case .poor: String(localized: "contact.detail.balance.poor.desc")
         }
     }
 
     func circleLabel(_ level: Int) -> String {
         let name = circleText(level)
-        return String(localized: "contact.detail.circlePrefix") + " \(level) " + String(localized: "contact.detail.circleSuffix") + " · " + name
+        return String(localized: "contact.detail.circlePrefix") + " \(level) " + String(localized: "contact.detail.circleSuffix") + " · " +
+            name
     }
 
     // MARK: - Formatted Values
@@ -144,10 +147,10 @@ class ContactDetailViewModel {
 
     func circleText(_ level: Int) -> String {
         switch level {
-        case 1: return String(localized: "contact.filter.family")
-        case 2: return String(localized: "contact.filter.relative")
-        case 3: return String(localized: "contact.filter.social")
-        default: return String(localized: "contact.filter.other")
+        case 1: String(localized: "contact.filter.family")
+        case 2: String(localized: "contact.filter.relative")
+        case 3: String(localized: "contact.filter.social")
+        default: String(localized: "contact.filter.other")
         }
     }
 }

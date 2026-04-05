@@ -35,10 +35,15 @@ struct SettingsView: View {
             isPresented: $showRestartAlert
         ) {
             Button(String(localized: "common.ok")) {
-                InteractionLogger.alertAction(screen: "settings.root", target: "settings.icloud.restart", action: .submit, result: "restart")
+                InteractionLogger.alertAction(
+                    screen: "settings.root",
+                    target: "settings.icloud.restart",
+                    action: .submit,
+                    result: "restart"
+                )
                 exit(0)
             }
-            Button(String(localized: "common.cancel"), role: .cancel) { }
+            Button(String(localized: "common.cancel"), role: .cancel) {}
         } message: {
             Text(String(localized: "settings.icloudSync.restartMessage"))
         }
@@ -144,7 +149,11 @@ struct SettingsView: View {
                     settingsRow(icon: "paintpalette.fill", title: String(localized: "settings.appearance"))
                 }
                 .simultaneousGesture(TapGesture().onEnded {
-                    InteractionLogger.navigation(screen: "settings.root", target: "settings.appearance", route: AppRoute.appearanceSettings.logName)
+                    InteractionLogger.navigation(
+                        screen: "settings.root",
+                        target: "settings.appearance",
+                        route: AppRoute.appearanceSettings.logName
+                    )
                 })
                 .buttonStyle(.plain)
 
@@ -154,7 +163,11 @@ struct SettingsView: View {
                     settingsRow(icon: "bell.fill", title: String(localized: "settings.notifications"))
                 }
                 .simultaneousGesture(TapGesture().onEnded {
-                    InteractionLogger.navigation(screen: "settings.root", target: "settings.notifications", route: AppRoute.notificationSettings.logName)
+                    InteractionLogger.navigation(
+                        screen: "settings.root",
+                        target: "settings.notifications",
+                        route: AppRoute.notificationSettings.logName
+                    )
                 })
                 .buttonStyle(.plain)
             }
@@ -174,7 +187,11 @@ struct SettingsView: View {
                     settingsRow(icon: "arrow.up.arrow.down.circle.fill", title: String(localized: "settings.importExport"))
                 }
                 .simultaneousGesture(TapGesture().onEnded {
-                    InteractionLogger.navigation(screen: "settings.root", target: "settings.dataManagement", route: AppRoute.dataManagement.logName)
+                    InteractionLogger.navigation(
+                        screen: "settings.root",
+                        target: "settings.dataManagement",
+                        route: AppRoute.dataManagement.logName
+                    )
                 })
                 .buttonStyle(.plain)
 
@@ -186,8 +203,13 @@ struct SettingsView: View {
                     isOn: Binding(
                         get: { settings.icloudSyncEnabled },
                         set: { newValue in
-                            if newValue && !subscriptionManager.isPro {
-                                InteractionLogger.toggle(screen: "settings.root", target: "settings.icloudSync", isOn: false, metadata: ["reason": "subscription_limit"])
+                            if newValue, !subscriptionManager.isPro {
+                                InteractionLogger.toggle(
+                                    screen: "settings.root",
+                                    target: "settings.icloudSync",
+                                    isOn: false,
+                                    metadata: ["reason": "subscription_limit"]
+                                )
                                 showProSheet = true
                             } else {
                                 settings.icloudSyncEnabled = newValue

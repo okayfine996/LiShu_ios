@@ -5,7 +5,9 @@ struct HeatmapInsightItem: Identifiable {
     let monthIndex: Int
     let count: Int
 
-    var id: Int { monthIndex }
+    var id: Int {
+        monthIndex
+    }
 }
 
 @Observable
@@ -38,7 +40,7 @@ final class HeatmapDetailViewModel {
 
     func heatmapOpacity(_ count: Int) -> Double {
         if count == 0 { return 0.05 }
-        let maxCount = max(Double(heatmapGrid.flatMap { $0 }.max() ?? 1), 1)
+        let maxCount = max(Double(heatmapGrid.flatMap(\.self).max() ?? 1), 1)
         return min(0.1 + Double(count) / maxCount * 0.7, 0.8)
     }
 
@@ -81,7 +83,7 @@ final class HeatmapDetailViewModel {
             let month = calendar.component(.month, from: record.date) - 1
             let day = calendar.component(.day, from: record.date)
             let week = min((day - 1) / 7, 3)
-            if month >= 0 && month < 12 {
+            if month >= 0, month < 12 {
                 grid[month][week] += 1
             }
         }
@@ -102,10 +104,9 @@ final class HeatmapDetailViewModel {
         var monthCounts = Array(repeating: 0, count: 12)
         for record in yearRecords(from: records) {
             let m = calendar.component(.month, from: record.date) - 1
-            if m >= 0 && m < 12 { monthCounts[m] += 1 }
+            if m >= 0, m < 12 { monthCounts[m] += 1 }
         }
         let ranked = monthCounts.enumerated().sorted { $0.element > $1.element }
         insights = ranked.prefix(2).filter { $0.element > 0 }.map { HeatmapInsightItem(monthIndex: $0.offset, count: $0.element) }
     }
-
 }

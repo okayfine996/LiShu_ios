@@ -5,7 +5,7 @@ struct ShareSheet: UIViewControllerRepresentable {
     let url: URL
     var onDismiss: (() -> Void)?
 
-    func makeUIViewController(context: Context) -> UIActivityViewController {
+    func makeUIViewController(context _: Context) -> UIActivityViewController {
         let vc = UIActivityViewController(
             activityItems: [url],
             applicationActivities: nil
@@ -16,5 +16,5 @@ struct ShareSheet: UIViewControllerRepresentable {
         return vc
     }
 
-    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
+    func updateUIViewController(_: UIActivityViewController, context _: Context) {}
 }

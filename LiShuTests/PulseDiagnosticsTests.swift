@@ -1,11 +1,10 @@
 import Foundation
+@testable import LiShu
 import Logging
 import Pulse
 import Testing
-@testable import LiShu
 
 struct PulseDiagnosticsTests {
-
     @Test("monitoring enabled by default")
     func monitoringEnabledByDefault() {
         #expect(PulseDiagnostics.monitoringEnabled(arguments: [], environment: [:]))
@@ -52,7 +51,7 @@ struct PulseDiagnosticsTests {
         logger.logLevel = .trace
         logger.notice("Pulse logging integration works", metadata: [
             "feature": .string("text_logs"),
-            "count": .string("1")
+            "count": .string("1"),
         ])
 
         let messages = try waitForMessages(label: "tests.pulse")

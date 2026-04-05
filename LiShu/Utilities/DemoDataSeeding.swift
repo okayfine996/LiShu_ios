@@ -5,7 +5,6 @@ import UIKit
 /// 调试菜单与 App Store 截图（`-FASTLANE_SNAPSHOT`）共用的示例数据；截图模式下使用内存库并调用 `insertSampleData`。
 @MainActor
 enum DemoDataSeeding {
-
     static var isFastlaneSnapshotMode: Bool {
         CommandLine.arguments.contains("-FASTLANE_SNAPSHOT")
     }
@@ -44,7 +43,7 @@ enum DemoDataSeeding {
     private enum ScreenshotDemoBundle {
         /// 与 `screenshot_demo_avatar_01` … `screenshot_demo_avatar_16.png` 对应；缺省按索引回退程序化头像。
         static let avatarResourceCount = 16
-        /// 与 `screenshot_demo_scene_<EventType.rawValue>.png` 对应（共 13 种事件场景）。
+        // 与 `screenshot_demo_scene_<EventType.rawValue>.png` 对应（共 13 种事件场景）。
 
         static func sceneResourceName(for eventType: EventType) -> String {
             "screenshot_demo_scene_\(eventType.rawValue)"
@@ -62,12 +61,14 @@ enum DemoDataSeeding {
             let subdirs = ["ScreenshotDemo", "Resources/ScreenshotDemo"]
             for sub in subdirs {
                 if let url = Bundle.main.url(forResource: name, withExtension: "png", subdirectory: sub),
-                   let data = try? Data(contentsOf: url), !data.isEmpty {
+                   let data = try? Data(contentsOf: url), !data.isEmpty
+                {
                     return data
                 }
             }
             if let url = Bundle.main.url(forResource: name, withExtension: "png"),
-               let data = try? Data(contentsOf: url), !data.isEmpty {
+               let data = try? Data(contentsOf: url), !data.isEmpty
+            {
                 return data
             }
             return nil
@@ -118,11 +119,10 @@ enum DemoDataSeeding {
         for record in records {
             guard let event = record.event else { continue }
             let name = ScreenshotDemoBundle.sceneResourceName(for: event.type)
-            let data: Data
-            if let png = ScreenshotDemoBundle.pngData(named: name) {
-                data = png
+            let data: Data = if let png = ScreenshotDemoBundle.pngData(named: name) {
+                png
             } else {
-                data = DemoImageFactory.scenePhotoJPEGData(seed: event.type.rawValue.hashValue)
+                DemoImageFactory.scenePhotoJPEGData(seed: event.type.rawValue.hashValue)
             }
             let photo = RecordPhoto(record: record, imageData: data)
             context.insert(photo)
@@ -269,37 +269,37 @@ enum DemoDataSeeding {
 
     private static func demoEventTitle(for type: EventType) -> String {
         switch type {
-        case .wedding: return "张伟的婚礼"
-        case .engagement: return "表妹订婚酒"
-        case .funeral: return "陈明之父丧事"
-        case .birth: return "刘芳宝宝满月"
-        case .birthday: return "吴刚生日聚餐"
-        case .longevity: return "李娜六十大寿"
-        case .festival: return "春节聚会"
-        case .property: return "王强乔迁新居"
-        case .education: return "黄杰孩子升学宴"
-        case .business: return "朋友新店开业"
-        case .promotion: return "同事晋升答谢"
-        case .visit: return "探望生病长辈"
-        case .other: return "其它往来记事"
+        case .wedding: "张伟的婚礼"
+        case .engagement: "表妹订婚酒"
+        case .funeral: "陈明之父丧事"
+        case .birth: "刘芳宝宝满月"
+        case .birthday: "吴刚生日聚餐"
+        case .longevity: "李娜六十大寿"
+        case .festival: "春节聚会"
+        case .property: "王强乔迁新居"
+        case .education: "黄杰孩子升学宴"
+        case .business: "朋友新店开业"
+        case .promotion: "同事晋升答谢"
+        case .visit: "探望生病长辈"
+        case .other: "其它往来记事"
         }
     }
 
     private static func demoEventLocation(for type: EventType) -> String {
         switch type {
-        case .wedding: return "北京国贸大酒店"
-        case .engagement: return "杭州"
-        case .funeral: return "深圳南山殡仪馆"
-        case .birth: return "广州天河"
-        case .birthday: return "北京三里屯"
-        case .longevity: return "上海外滩花园"
-        case .festival: return "老家"
-        case .property: return "上海浦东"
-        case .education: return "重庆解放碑"
-        case .business: return "深圳南山"
-        case .promotion: return "北京国贸"
-        case .visit: return "本地医院"
-        case .other: return "本地"
+        case .wedding: "北京国贸大酒店"
+        case .engagement: "杭州"
+        case .funeral: "深圳南山殡仪馆"
+        case .birth: "广州天河"
+        case .birthday: "北京三里屯"
+        case .longevity: "上海外滩花园"
+        case .festival: "老家"
+        case .property: "上海浦东"
+        case .education: "重庆解放碑"
+        case .business: "深圳南山"
+        case .promotion: "北京国贸"
+        case .visit: "本地医院"
+        case .other: "本地"
         }
     }
 
@@ -617,7 +617,6 @@ enum DemoDataSeeding {
 // MARK: - Image factory
 
 private enum DemoImageFactory {
-
     static func avatarJPEGData(initial: String, background: UIColor, size: CGFloat) -> Data {
         let renderer = UIGraphicsImageRenderer(size: CGSize(width: size, height: size))
         let image = renderer.image { ctx in

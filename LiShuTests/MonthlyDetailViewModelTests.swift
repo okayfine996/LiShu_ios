@@ -1,12 +1,11 @@
 import Foundation
-import Testing
-import SwiftData
 @testable import LiShu
+import SwiftData
+import Testing
 
 @MainActor
 struct MonthlyDetailViewModelTests {
-
-    @Test func testLoadMonthlyRecords() throws {
+    @Test func loadMonthlyRecords() throws {
         let db = try TestDB()
         let contact = SampleData.contact()
         let event = SampleData.event()
@@ -14,8 +13,8 @@ struct MonthlyDetailViewModelTests {
         db.context.insert(event)
 
         let cal = Calendar.current
-        let marchDate = cal.date(from: DateComponents(year: 2026, month: 3, day: 10))!
-        let aprilDate = cal.date(from: DateComponents(year: 2026, month: 4, day: 5))!
+        let marchDate = try #require(cal.date(from: DateComponents(year: 2026, month: 3, day: 10)))
+        let aprilDate = try #require(cal.date(from: DateComponents(year: 2026, month: 4, day: 5)))
 
         let r1 = SampleData.record(contact: contact, event: event, amount: 500, direction: .given, date: marchDate)
         let r2 = SampleData.record(contact: contact, event: event, amount: 300, direction: .received, date: marchDate)
@@ -32,7 +31,7 @@ struct MonthlyDetailViewModelTests {
         #expect(vm.period.year == 2026)
     }
 
-    @Test func testMonthlyIncomeAndExpense() throws {
+    @Test func monthlyIncomeAndExpense() throws {
         let db = try TestDB()
         let contact = SampleData.contact()
         let event = SampleData.event()
@@ -40,7 +39,7 @@ struct MonthlyDetailViewModelTests {
         db.context.insert(event)
 
         let cal = Calendar.current
-        let date = cal.date(from: DateComponents(year: 2026, month: 6, day: 15))!
+        let date = try #require(cal.date(from: DateComponents(year: 2026, month: 6, day: 15)))
 
         let given1 = SampleData.record(contact: contact, event: event, amount: 500, direction: .given, date: date)
         let given2 = SampleData.record(contact: contact, event: event, amount: 300, direction: .given, date: date)
@@ -58,7 +57,7 @@ struct MonthlyDetailViewModelTests {
         #expect(vm.netAmount == 200)
     }
 
-    @Test func testFormattedValues() {
+    @Test func formattedValues() {
         let vm = MonthlyDetailViewModel()
         vm.period = .month(year: 2026, month: 3)
         vm.records = []
@@ -81,18 +80,18 @@ struct MonthlyDetailViewModelTests {
         #expect(title.contains("8"))
     }
 
-    @Test func testStatsPeriodMonthRange() {
+    @Test func statsPeriodMonthRange() {
         let month = StatsPeriod.month(year: 2026, month: 3)
-        #expect(month.monthRange == 3...3)
+        #expect(month.monthRange == 3 ... 3)
 
         let quarter = StatsPeriod.quarter(year: 2026, quarter: 2)
-        #expect(quarter.monthRange == 4...6)
+        #expect(quarter.monthRange == 4 ... 6)
     }
 
-    @Test func testStatsPeriodPrevious() {
+    @Test func statsPeriodPrevious() {
         let jan = StatsPeriod.month(year: 2026, month: 1)
         let prev = jan.previous
-        if case .month(let y, let m) = prev {
+        if case let .month(y, m) = prev {
             #expect(y == 2025)
             #expect(m == 12)
         } else {
@@ -101,7 +100,7 @@ struct MonthlyDetailViewModelTests {
 
         let q1 = StatsPeriod.quarter(year: 2026, quarter: 1)
         let prevQ = q1.previous
-        if case .quarter(let y, let q) = prevQ {
+        if case let .quarter(y, q) = prevQ {
             #expect(y == 2025)
             #expect(q == 4)
         } else {
@@ -109,7 +108,7 @@ struct MonthlyDetailViewModelTests {
         }
     }
 
-    @Test func testIncomeTrendAndExpenseTrend() throws {
+    @Test func incomeTrendAndExpenseTrend() throws {
         let db = try TestDB()
         let contact = SampleData.contact()
         let event = SampleData.event()
@@ -117,8 +116,8 @@ struct MonthlyDetailViewModelTests {
         db.context.insert(event)
 
         let cal = Calendar.current
-        let febDate = cal.date(from: DateComponents(year: 2026, month: 2, day: 15))!
-        let marDate = cal.date(from: DateComponents(year: 2026, month: 3, day: 15))!
+        let febDate = try #require(cal.date(from: DateComponents(year: 2026, month: 2, day: 15)))
+        let marDate = try #require(cal.date(from: DateComponents(year: 2026, month: 3, day: 15)))
 
         let rFebGiven = SampleData.record(contact: contact, event: event, amount: 200, direction: .given, date: febDate)
         let rFebReceived = SampleData.record(contact: contact, event: event, amount: 100, direction: .received, date: febDate)
@@ -150,7 +149,7 @@ struct MonthlyDetailViewModelTests {
         db.context.insert(weddingEvent)
         db.context.insert(birthdayEvent)
 
-        let date = Calendar.current.date(from: DateComponents(year: 2026, month: 5, day: 10))!
+        let date = try #require(Calendar.current.date(from: DateComponents(year: 2026, month: 5, day: 10)))
         let r1 = SampleData.record(contact: contact, event: weddingEvent, amount: 600, direction: .given, date: date)
         let r2 = SampleData.record(contact: contact, event: birthdayEvent, amount: 400, direction: .given, date: date)
         db.context.insert(r1)
@@ -165,7 +164,7 @@ struct MonthlyDetailViewModelTests {
         #expect(vm.eventTypeSlices[0].type == .wedding)
     }
 
-    @Test func testQuarterLoad() throws {
+    @Test func quarterLoad() throws {
         let db = try TestDB()
         let contact = SampleData.contact()
         let event = SampleData.event()
@@ -173,9 +172,9 @@ struct MonthlyDetailViewModelTests {
         db.context.insert(event)
 
         let cal = Calendar.current
-        let janDate = cal.date(from: DateComponents(year: 2026, month: 1, day: 15))!
-        let marDate = cal.date(from: DateComponents(year: 2026, month: 3, day: 15))!
-        let aprDate = cal.date(from: DateComponents(year: 2026, month: 4, day: 15))!
+        let janDate = try #require(cal.date(from: DateComponents(year: 2026, month: 1, day: 15)))
+        let marDate = try #require(cal.date(from: DateComponents(year: 2026, month: 3, day: 15)))
+        let aprDate = try #require(cal.date(from: DateComponents(year: 2026, month: 4, day: 15)))
 
         let r1 = SampleData.record(contact: contact, event: event, amount: 100, direction: .given, date: janDate)
         let r2 = SampleData.record(contact: contact, event: event, amount: 200, direction: .given, date: marDate)

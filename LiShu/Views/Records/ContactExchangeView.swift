@@ -1,5 +1,5 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 struct ContactExchangeView: View {
     @Environment(\.modelContext) private var modelContext
@@ -58,7 +58,7 @@ struct ContactExchangeView: View {
                             .background(DesignSystem.Colors.primary.opacity(0.1))
                             .clipShape(Capsule())
 
-                        if !contact.category.isEmpty && contact.category != contact.relation {
+                        if !contact.category.isEmpty, contact.category != contact.relation {
                             Text(contact.category)
                                 .font(DesignSystem.Typography.small)
                                 .fontWeight(.semibold)
@@ -218,7 +218,7 @@ struct ContactExchangeView: View {
                             LinearGradient(
                                 colors: [
                                     DesignSystem.Colors.primary.opacity(0.4),
-                                    DesignSystem.Colors.primary.opacity(0.1)
+                                    DesignSystem.Colors.primary.opacity(0.1),
                                 ],
                                 startPoint: .top,
                                 endPoint: .bottom
@@ -300,9 +300,30 @@ private func makeExchangePreviewContainer() -> ModelContainer? {
     [e1, e2, e3, e4].forEach { ctx.insert($0) }
 
     let records: [Record] = [
-        Record.makeMonetaryRecord(contact: contact, event: e1, amount: 1200, direction: .given, note: "用于UI设计外包首笔款项", date: .previewDate(2025, 10, 24)),
-        Record.makeMonetaryRecord(contact: contact, event: e2, amount: 2500, direction: .received, note: "已通过微信转账确认收妥", date: .previewDate(2025, 10, 15)),
-        Record.makeMonetaryRecord(contact: contact, event: e3, amount: 500, direction: .given, note: "送出的书籍与咖啡卡", date: .previewDate(2025, 9, 28)),
+        Record.makeMonetaryRecord(
+            contact: contact,
+            event: e1,
+            amount: 1200,
+            direction: .given,
+            note: "用于UI设计外包首笔款项",
+            date: .previewDate(2025, 10, 24)
+        ),
+        Record.makeMonetaryRecord(
+            contact: contact,
+            event: e2,
+            amount: 2500,
+            direction: .received,
+            note: "已通过微信转账确认收妥",
+            date: .previewDate(2025, 10, 15)
+        ),
+        Record.makeMonetaryRecord(
+            contact: contact,
+            event: e3,
+            amount: 500,
+            direction: .given,
+            note: "送出的书籍与咖啡卡",
+            date: .previewDate(2025, 9, 28)
+        ),
         Record.makeMonetaryRecord(contact: contact, event: e4, amount: 800, direction: .given, date: .previewDate(2025, 8, 10)),
         Record.makeMonetaryRecord(contact: contact, event: e2, amount: 1000, direction: .received, date: .previewDate(2025, 7, 1)),
     ]
@@ -321,7 +342,8 @@ private extension Date {
     Group {
         if let container = makeExchangePreviewContainer(),
            let contacts = try? container.mainContext.fetch(FetchDescriptor<Contact>()),
-           let first = contacts.first {
+           let first = contacts.first
+        {
             NavigationStack {
                 ContactExchangeView(contactID: first.persistentModelID)
             }

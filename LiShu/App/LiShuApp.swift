@@ -1,6 +1,6 @@
-import SwiftUI
-import SwiftData
 import Logging
+import SwiftData
+import SwiftUI
 
 private let appBootstrapLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.appBootstrap)
 
@@ -20,9 +20,9 @@ struct LiShuApp: App {
 
     private var resolvedColorScheme: ColorScheme? {
         switch settings.colorScheme {
-        case "light": return .light
-        case "dark": return .dark
-        default: return nil
+        case "light": .light
+        case "dark": .dark
+        default: nil
         }
     }
 
@@ -48,27 +48,26 @@ struct LiShuApp: App {
         let snapshotScreenshot = DemoDataSeeding.isFastlaneSnapshotMode
         appBootstrapLogger.notice("Initializing application", metadata: [
             "step": .string("bootstrap"),
-            "result": .string(snapshotScreenshot ? "in_memory_demo" : (icloudEnabled ? "icloud" : "local"))
+            "result": .string(snapshotScreenshot ? "in_memory_demo" : (icloudEnabled ? "icloud" : "local")),
         ])
 
         ensureApplicationSupportDirectoryExists()
 
         do {
-            let config: ModelConfiguration
-            if snapshotScreenshot {
-                config = ModelConfiguration(
+            let config = if snapshotScreenshot {
+                ModelConfiguration(
                     schema: schema,
                     isStoredInMemoryOnly: true,
                     cloudKitDatabase: .none
                 )
             } else if icloudEnabled {
-                config = ModelConfiguration(
+                ModelConfiguration(
                     schema: schema,
                     isStoredInMemoryOnly: false,
                     cloudKitDatabase: .private("iCloud.com.finefine.LiShu")
                 )
             } else {
-                config = ModelConfiguration(
+                ModelConfiguration(
                     schema: schema,
                     isStoredInMemoryOnly: false,
                     cloudKitDatabase: .none
@@ -83,7 +82,7 @@ struct LiShuApp: App {
         } catch {
             appBootstrapLogger.error("Failed to create model container", metadata: [
                 "step": .string("bootstrap"),
-                "error": .string(error.localizedDescription)
+                "error": .string(error.localizedDescription),
             ])
             fatalError("Could not create ModelContainer: \(error)")
         }
@@ -128,7 +127,7 @@ struct LiShuApp: App {
                     let context = sharedModelContainer.mainContext
                     appBootstrapLogger.info("Rescheduling notifications on startup", metadata: [
                         "step": .string("startup_tasks"),
-                        "result": .string("notification_reschedule")
+                        "result": .string("notification_reschedule"),
                     ])
                     NotificationManager.shared.rescheduleAll(context: context)
                 }
@@ -136,7 +135,7 @@ struct LiShuApp: App {
             .onChange(of: scenePhase) { _, newPhase in
                 appBootstrapLogger.info("Scene phase changed", metadata: [
                     "step": .string("scene_phase"),
-                    "result": .string(String(describing: newPhase))
+                    "result": .string(String(describing: newPhase)),
                 ])
                 if newPhase == .active {
                     Task {

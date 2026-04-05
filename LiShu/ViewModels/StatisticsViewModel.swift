@@ -10,9 +10,17 @@ struct ContactRankingItem: Identifiable {
     let expense: Double
     let lastRecordDate: Date?
 
-    var id: PersistentIdentifier { contact.persistentModelID }
-    var netValue: Double { income - expense }
-    var totalAmount: Double { income + expense }
+    var id: PersistentIdentifier {
+        contact.persistentModelID
+    }
+
+    var netValue: Double {
+        income - expense
+    }
+
+    var totalAmount: Double {
+        income + expense
+    }
 }
 
 struct CircleAnalysisItem: Identifiable {
@@ -117,16 +125,16 @@ class StatisticsViewModel {
 
     func circleDisplayName(_ circle: Int) -> String {
         switch circle {
-        case 1: return String(localized: "statistics.circle.family")
-        case 2: return String(localized: "statistics.circle.close")
-        case 3: return String(localized: "statistics.circle.social")
-        default: return String(localized: "statistics.circle.other")
+        case 1: String(localized: "statistics.circle.family")
+        case 2: String(localized: "statistics.circle.close")
+        case 3: String(localized: "statistics.circle.social")
+        default: String(localized: "statistics.circle.other")
         }
     }
 
     func heatmapOpacity(_ count: Int) -> Double {
         if count == 0 { return 0.05 }
-        let maxCount = max(Double(heatmapGrid.flatMap { $0 }.max() ?? 1), 1)
+        let maxCount = max(Double(heatmapGrid.flatMap(\.self).max() ?? 1), 1)
         return min(0.1 + Double(count) / maxCount * 0.7, 0.8)
     }
 
@@ -166,7 +174,7 @@ class StatisticsViewModel {
             calendar.component(.year, from: $0.date) == selectedYear && $0.recordType == .monetary
         }
         var monthly: [(month: Int, income: Double, expense: Double)] = []
-        for month in 1...12 {
+        for month in 1 ... 12 {
             let monthRecords = yearRecords.filter {
                 calendar.component(.month, from: $0.date) == month
             }
@@ -185,8 +193,8 @@ class StatisticsViewModel {
         let calendar = Calendar.current
         let yearRecords = records.filter {
             calendar.component(.year, from: $0.date) == selectedYear &&
-            $0.recordType == .monetary &&
-            $0.event != nil
+                $0.recordType == .monetary &&
+                $0.event != nil
         }
         var typeAmounts: [EventType: Double] = [:]
         for record in yearRecords {
@@ -204,7 +212,8 @@ class StatisticsViewModel {
         let yearRecords = records.filter {
             calendar.component(.year, from: $0.date) == selectedYear
         }
-        var contactStats: [PersistentIdentifier: (contact: Contact, recordCount: Int, income: Double, expense: Double, lastDate: Date?)] = [:]
+        var contactStats: [PersistentIdentifier: (contact: Contact, recordCount: Int, income: Double, expense: Double, lastDate: Date?)] =
+            [:]
         for record in yearRecords {
             guard let contact = record.contact else { continue }
             let cid = contact.persistentModelID
@@ -217,13 +226,19 @@ class StatisticsViewModel {
                     stats.expense += record.monetaryAmount
                 }
             }
-            if stats.lastDate == nil || record.date > stats.lastDate! {
+            if stats.lastDate.map({ record.date > $0 }) ?? true {
                 stats.lastDate = record.date
             }
             contactStats[cid] = stats
         }
         allRankedContacts = contactStats.values
-            .map { ContactRankingItem(contact: $0.contact, recordCount: $0.recordCount, income: $0.income, expense: $0.expense, lastRecordDate: $0.lastDate) }
+            .map { ContactRankingItem(
+                contact: $0.contact,
+                recordCount: $0.recordCount,
+                income: $0.income,
+                expense: $0.expense,
+                lastRecordDate: $0.lastDate
+            ) }
             .sorted { abs($0.netValue) > abs($1.netValue) }
         topContacts = Array(allRankedContacts.prefix(5))
     }
@@ -256,7 +271,7 @@ class StatisticsViewModel {
             let month = calendar.component(.month, from: record.date) - 1
             let day = calendar.component(.day, from: record.date)
             let week = min((day - 1) / 7, 3)
-            if month >= 0 && month < 12 {
+            if month >= 0, month < 12 {
                 grid[month][week] += 1
             }
         }
@@ -283,7 +298,7 @@ class StatisticsViewModel {
         let currentTotal = records
             .filter {
                 calendar.component(.year, from: $0.date) == selectedYear &&
-                $0.recordType == .monetary
+                    $0.recordType == .monetary
             }
             .reduce(0.0) { $0 + $1.monetaryAmount }
 
@@ -291,7 +306,7 @@ class StatisticsViewModel {
         let previousTotal = records
             .filter {
                 calendar.component(.year, from: $0.date) == previousYear &&
-                $0.recordType == .monetary
+                    $0.recordType == .monetary
             }
             .reduce(0.0) { $0 + $1.monetaryAmount }
 
@@ -313,9 +328,9 @@ class StatisticsViewModel {
             switch days {
             case ...90:
                 summary.close += 1
-            case 91...180:
+            case 91 ... 180:
                 summary.stable += 1
-            case 181...365:
+            case 181 ... 365:
                 summary.distant += 1
             default:
                 summary.needsAttention += 1

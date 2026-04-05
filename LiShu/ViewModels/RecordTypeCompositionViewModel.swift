@@ -23,7 +23,8 @@ class RecordTypeCompositionViewModel {
 
         let calendar = Calendar.current
         guard let startOfYear = calendar.date(from: DateComponents(year: year, month: 1, day: 1)),
-              let endOfYear = calendar.date(from: DateComponents(year: year + 1, month: 1, day: 1)) else {
+              let endOfYear = calendar.date(from: DateComponents(year: year + 1, month: 1, day: 1))
+        else {
             items = []
             return
         }
@@ -61,11 +62,10 @@ class RecordTypeCompositionViewModel {
                 }
 
                 let isMonetaryAggregate = (type == .monetary || type == .gift)
-                let aggregateValue: Double
-                if isMonetaryAggregate {
-                    aggregateValue = typeRecords.reduce(0) { $0 + $1.resolvedDisplayAmount }
+                let aggregateValue: Double = if isMonetaryAggregate {
+                    typeRecords.reduce(0) { $0 + $1.resolvedDisplayAmount }
                 } else {
-                    aggregateValue = Double(typeRecords.count)
+                    Double(typeRecords.count)
                 }
 
                 return RecordTypeCompositionItem(
@@ -93,10 +93,10 @@ class RecordTypeCompositionViewModel {
 
     func recordTypeColor(for index: Int) -> (primary: Bool, opacity: Double) {
         switch index {
-        case 0: return (true, 1.0)
-        case 1: return (true, 0.55)
-        case 2: return (false, 0.5)
-        default: return (false, 0.7)
+        case 0: (true, 1.0)
+        case 1: (true, 0.55)
+        case 2: (false, 0.5)
+        default: (false, 0.7)
         }
     }
 }

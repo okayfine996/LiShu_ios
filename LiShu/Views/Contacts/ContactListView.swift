@@ -1,5 +1,5 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 struct ContactListView: View {
     @Environment(\.modelContext) private var modelContext
@@ -16,7 +16,7 @@ struct ContactListView: View {
                 switch viewModel.state {
                 case .idle, .loading:
                     ProgressView()
-                case .loaded(let contacts) where contacts.isEmpty:
+                case let .loaded(contacts) where contacts.isEmpty:
                     EmptyStateView(
                         icon: "person.2.fill",
                         message: String(localized: "contact.list.empty"),
@@ -25,7 +25,7 @@ struct ContactListView: View {
                     )
                 case .loaded:
                     contactListContent
-                case .error(let message):
+                case let .error(message):
                     ErrorStateView(
                         message: message,
                         retryAction: { viewModel.loadContacts(context: modelContext) }
@@ -41,13 +41,23 @@ struct ContactListView: View {
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
                     Button {
-                        InteractionLogger.tap(screen: "contacts.list", target: "contacts.list.add", route: SheetRoute.addContact.logName, presentation: .sheet)
+                        InteractionLogger.tap(
+                            screen: "contacts.list",
+                            target: "contacts.list.add",
+                            route: SheetRoute.addContact.logName,
+                            presentation: .sheet
+                        )
                         presentedSheet = .addContact
                     } label: {
                         Label(String(localized: "contact.add.title"), systemImage: "person.badge.plus")
                     }
                     Button {
-                        InteractionLogger.tap(screen: "contacts.list", target: "contacts.list.batchImport", route: "sheet.contacts.batchImport", presentation: .sheet)
+                        InteractionLogger.tap(
+                            screen: "contacts.list",
+                            target: "contacts.list.batchImport",
+                            route: "sheet.contacts.batchImport",
+                            presentation: .sheet
+                        )
                         showBatchImport = true
                     } label: {
                         Label(String(localized: "contact.batch.import"), systemImage: "person.crop.rectangle.stack")
@@ -73,7 +83,7 @@ struct ContactListView: View {
                 NavigationStack {
                     AddContactView()
                 }
-            case .editContact(let contactID):
+            case let .editContact(contactID):
                 NavigationStack {
                     AddContactView(contactID: contactID)
                 }

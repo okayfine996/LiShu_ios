@@ -2,7 +2,7 @@ import SwiftUI
 
 struct ErrorStateView: View {
     let message: String
-    var retryAction: (() -> Void)? = nil
+    var retryAction: (() -> Void)?
 
     var body: some View {
         VStack(spacing: 16) {

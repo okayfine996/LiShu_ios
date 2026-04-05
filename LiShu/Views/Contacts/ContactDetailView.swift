@@ -1,5 +1,5 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 struct ContactDetailView: View {
     @Environment(\.modelContext) private var modelContext
@@ -52,11 +52,11 @@ struct ContactDetailView: View {
         }
         .sheet(item: $presentedSheet) { route in
             switch route {
-            case .addRecord(let direction, let contactID):
+            case let .addRecord(direction, contactID):
                 NavigationStack {
                     AddRecordView(direction: direction, contactID: contactID)
                 }
-            case .editContact(let id):
+            case let .editContact(id):
                 NavigationStack {
                     AddContactView(contactID: id)
                 }
@@ -158,11 +158,11 @@ struct ContactDetailView: View {
 
     private func pageIndicator(current: Int) -> some View {
         HStack(spacing: 6) {
-            ForEach(0..<2, id: \.self) { index in
+            ForEach(0 ..< 2, id: \.self) { index in
                 Circle()
                     .fill(index == current
-                          ? DesignSystem.Colors.primary
-                          : DesignSystem.Colors.border)
+                        ? DesignSystem.Colors.primary
+                        : DesignSystem.Colors.border)
                     .frame(width: 6, height: 6)
             }
         }
@@ -615,10 +615,10 @@ struct ContactDetailView: View {
 
     private func typeTagColor(_ type: RecordType) -> Color {
         switch type {
-        case .monetary: return DesignSystem.Colors.primary
-        case .gift: return DesignSystem.Colors.accentGold
-        case .favor: return DesignSystem.Colors.textSecondary
-        case .banquet: return DesignSystem.Colors.textTertiary
+        case .monetary: DesignSystem.Colors.primary
+        case .gift: DesignSystem.Colors.accentGold
+        case .favor: DesignSystem.Colors.textSecondary
+        case .banquet: DesignSystem.Colors.textTertiary
         }
     }
 }
@@ -649,7 +649,7 @@ private func makeContactDetailPreviewContainer() -> (container: ModelContainer, 
     let weddingEvent = Event(
         name: "参加张三婚礼",
         type: .wedding,
-        date: cal.date(from: DateComponents(year: 2025, month: 2, day: 15))!,
+        date: cal.liShuDate(year: 2025, month: 2, day: 15),
         location: "西湖国宾馆"
     )
     context.insert(weddingEvent)
@@ -659,7 +659,7 @@ private func makeContactDetailPreviewContainer() -> (container: ModelContainer, 
         contact: contact,
         event: weddingEvent,
         direction: .given,
-        date: cal.date(from: DateComponents(year: 2025, month: 2, day: 15))!,
+        date: cal.liShuDate(year: 2025, month: 2, day: 15),
         recordType: .monetary
     )
     r1.applyTypeData(.monetary(MonetaryData(amount: 1000, paymentMethod: "wechat")))
@@ -670,7 +670,7 @@ private func makeContactDetailPreviewContainer() -> (container: ModelContainer, 
     let r2 = Record(
         contact: contact,
         direction: .received,
-        date: cal.date(from: DateComponents(year: 2025, month: 1, day: 8))!,
+        date: cal.liShuDate(year: 2025, month: 1, day: 8),
         recordType: .favor
     )
     r2.applyTypeData(.favor(FavorData(description: "帮忙挂号")))
@@ -682,7 +682,7 @@ private func makeContactDetailPreviewContainer() -> (container: ModelContainer, 
     let r3 = Record(
         contact: contact,
         direction: .given,
-        date: cal.date(from: DateComponents(year: 2024, month: 12, day: 22))!,
+        date: cal.liShuDate(year: 2024, month: 12, day: 22),
         recordType: .gift
     )
     r3.applyTypeData(.gift(GiftData(giftName: "手工点心和茶叶", estimatedValue: 300)))
@@ -694,7 +694,7 @@ private func makeContactDetailPreviewContainer() -> (container: ModelContainer, 
     let r4 = Record(
         contact: contact,
         direction: .given,
-        date: cal.date(from: DateComponents(year: 2024, month: 10, day: 5))!,
+        date: cal.liShuDate(year: 2024, month: 10, day: 5),
         recordType: .banquet
     )
     r4.applyTypeData(.banquet(BanquetData(location: "老杭帮菜馆", attendeeList: "张敬轩、李伟、王芳")))
@@ -706,7 +706,7 @@ private func makeContactDetailPreviewContainer() -> (container: ModelContainer, 
     let birthdayEvent = Event(
         name: "我的生日",
         type: .birthday,
-        date: cal.date(from: DateComponents(year: 2024, month: 8, day: 18))!
+        date: cal.liShuDate(year: 2024, month: 8, day: 18)
     )
     context.insert(birthdayEvent)
 
@@ -714,7 +714,7 @@ private func makeContactDetailPreviewContainer() -> (container: ModelContainer, 
         contact: contact,
         event: birthdayEvent,
         direction: .received,
-        date: cal.date(from: DateComponents(year: 2024, month: 8, day: 18))!,
+        date: cal.liShuDate(year: 2024, month: 8, day: 18),
         recordType: .monetary
     )
     r5.applyTypeData(.monetary(MonetaryData(amount: 520, paymentMethod: "wechat")))
@@ -725,7 +725,7 @@ private func makeContactDetailPreviewContainer() -> (container: ModelContainer, 
     let r6 = Record(
         contact: contact,
         direction: .received,
-        date: cal.date(from: DateComponents(year: 2024, month: 6, day: 1))!,
+        date: cal.liShuDate(year: 2024, month: 6, day: 1),
         recordType: .favor
     )
     r6.applyTypeData(.favor(FavorData(description: "帮忙搬家")))
@@ -737,7 +737,7 @@ private func makeContactDetailPreviewContainer() -> (container: ModelContainer, 
     let r7 = Record(
         contact: contact,
         direction: .received,
-        date: cal.date(from: DateComponents(year: 2024, month: 4, day: 10))!,
+        date: cal.liShuDate(year: 2024, month: 4, day: 10),
         recordType: .gift
     )
     r7.applyTypeData(.gift(GiftData(giftName: "北京稻香村糕点", estimatedValue: 150)))

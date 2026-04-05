@@ -1,0 +1,9 @@
+# Unit tests: allow common XCT patterns; keep line length aligned with repo.
+only_rules:
+  - line_length
+
+line_length:
+  warning: 140
+  error: 200
+  ignores_urls: true
+  ignores_comments: true

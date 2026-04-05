@@ -1,5 +1,5 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
@@ -33,26 +33,26 @@ struct HomeView: View {
         }
         #if DEBUG
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Menu {
-                    Button {
-                        DebugDataGenerator.generateSampleData(context: modelContext)
-                        viewModel.load(context: modelContext)
-                    } label: {
-                        Label(String(localized: "debug.generateSampleData"), systemImage: "plus.circle")
-                    }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        Button {
+                            DebugDataGenerator.generateSampleData(context: modelContext)
+                            viewModel.load(context: modelContext)
+                        } label: {
+                            Label(String(localized: "debug.generateSampleData"), systemImage: "plus.circle")
+                        }
 
-                    Button(role: .destructive) {
-                        DebugDataGenerator.clearAllData(context: modelContext)
-                        viewModel.load(context: modelContext)
+                        Button(role: .destructive) {
+                            DebugDataGenerator.clearAllData(context: modelContext)
+                            viewModel.load(context: modelContext)
+                        } label: {
+                            Label(String(localized: "debug.clearAllData"), systemImage: "trash")
+                        }
                     } label: {
-                        Label(String(localized: "debug.clearAllData"), systemImage: "trash")
+                        Image(systemName: "ladybug.fill")
                     }
-                } label: {
-                    Image(systemName: "ladybug.fill")
                 }
             }
-        }
         #endif
     }
 
@@ -388,21 +388,21 @@ struct HomeView: View {
     private func eventGradientColors(_ type: EventType) -> [Color] {
         switch type {
         case .wedding, .engagement:
-            return [DesignSystem.Colors.primary.opacity(0.3), DesignSystem.Colors.primary.opacity(0.1)]
+            [DesignSystem.Colors.primary.opacity(0.3), DesignSystem.Colors.primary.opacity(0.1)]
         case .birthday, .longevity:
-            return [DesignSystem.Colors.accentGold.opacity(0.3), DesignSystem.Colors.accentGold.opacity(0.1)]
+            [DesignSystem.Colors.accentGold.opacity(0.3), DesignSystem.Colors.accentGold.opacity(0.1)]
         case .education, .promotion:
-            return [DesignSystem.Colors.primary.opacity(0.2), DesignSystem.Colors.accentGold.opacity(0.15)]
+            [DesignSystem.Colors.primary.opacity(0.2), DesignSystem.Colors.accentGold.opacity(0.15)]
         case .funeral, .visit:
-            return [DesignSystem.Colors.textSecondary.opacity(0.2), DesignSystem.Colors.textSecondary.opacity(0.1)]
+            [DesignSystem.Colors.textSecondary.opacity(0.2), DesignSystem.Colors.textSecondary.opacity(0.1)]
         case .festival:
-            return [DesignSystem.Colors.primary.opacity(0.25), DesignSystem.Colors.accentGold.opacity(0.2)]
+            [DesignSystem.Colors.primary.opacity(0.25), DesignSystem.Colors.accentGold.opacity(0.2)]
         case .property, .business:
-            return [DesignSystem.Colors.accentGold.opacity(0.25), DesignSystem.Colors.primary.opacity(0.15)]
+            [DesignSystem.Colors.accentGold.opacity(0.25), DesignSystem.Colors.primary.opacity(0.15)]
         case .birth:
-            return [DesignSystem.Colors.primary.opacity(0.2), DesignSystem.Colors.primary.opacity(0.08)]
+            [DesignSystem.Colors.primary.opacity(0.2), DesignSystem.Colors.primary.opacity(0.08)]
         case .other:
-            return [DesignSystem.Colors.textSecondary.opacity(0.15), DesignSystem.Colors.bgCard]
+            [DesignSystem.Colors.textSecondary.opacity(0.15), DesignSystem.Colors.bgCard]
         }
     }
 
@@ -413,7 +413,7 @@ struct HomeView: View {
     @ViewBuilder
     private func sheetContent(for route: SheetRoute) -> some View {
         switch route {
-        case .addRecord(let direction, let contactID):
+        case let .addRecord(direction, contactID):
             NavigationStack {
                 AddRecordView(direction: direction, contactID: contactID)
             }
@@ -425,19 +425,19 @@ struct HomeView: View {
             NavigationStack {
                 AddEventView()
             }
-        case .editContact(let contactID):
+        case let .editContact(contactID):
             NavigationStack {
                 AddContactView(contactID: contactID)
             }
-        case .editEvent(let eventID):
+        case let .editEvent(eventID):
             NavigationStack {
                 AddEventView(eventID: eventID)
             }
-        case .editRecord(let recordID):
+        case let .editRecord(recordID):
             NavigationStack {
                 AddRecordView(recordID: recordID)
             }
-        case .returnGift(let recordID):
+        case let .returnGift(recordID):
             NavigationStack {
                 ReturnGiftSheet(recordID: recordID)
             }
@@ -464,15 +464,36 @@ private func makeHomePreviewContainer() -> ModelContainer? {
     [c1, c2, c3].forEach { ctx.insert($0) }
 
     let cal = Calendar.current
-    let e1 = Event(name: "表哥的婚礼", type: .wedding, date: cal.date(byAdding: .day, value: 3, to: .now)!, location: "北京")
-    let e2 = Event(name: "小李的30岁生日", type: .birthday, date: cal.date(byAdding: .day, value: 7, to: .now)!, location: "上海")
-    let e3 = Event(name: "硕士毕业", type: .education, date: cal.date(byAdding: .day, value: 14, to: .now)!, location: "广州")
+    let e1 = Event(name: "表哥的婚礼", type: .wedding, date: cal.liShuDateByAddingDays(3), location: "北京")
+    let e2 = Event(name: "小李的30岁生日", type: .birthday, date: cal.liShuDateByAddingDays(7), location: "上海")
+    let e3 = Event(name: "硕士毕业", type: .education, date: cal.liShuDateByAddingDays(14), location: "广州")
     [e1, e2, e3].forEach { ctx.insert($0) }
 
     let r1 = Record.makeMonetaryRecord(contact: c1, event: e1, amount: 500, direction: .given, paymentMethod: .wechat, date: .now)
-    let r2 = Record.makeMonetaryRecord(contact: c2, event: e2, amount: 200, direction: .given, paymentMethod: .cash, date: cal.date(byAdding: .day, value: -1, to: .now)!)
-    let r3 = Record.makeMonetaryRecord(contact: c3, event: e1, amount: 350, direction: .given, paymentMethod: .alipay, date: cal.date(byAdding: .day, value: -3, to: .now)!)
-    let r4 = Record.makeMonetaryRecord(contact: c1, event: e2, amount: 600, direction: .received, paymentMethod: .wechat, date: cal.date(byAdding: .day, value: -10, to: .now)!)
+    let r2 = Record.makeMonetaryRecord(
+        contact: c2,
+        event: e2,
+        amount: 200,
+        direction: .given,
+        paymentMethod: .cash,
+        date: cal.liShuDateByAddingDays(-1)
+    )
+    let r3 = Record.makeMonetaryRecord(
+        contact: c3,
+        event: e1,
+        amount: 350,
+        direction: .given,
+        paymentMethod: .alipay,
+        date: cal.liShuDateByAddingDays(-3)
+    )
+    let r4 = Record.makeMonetaryRecord(
+        contact: c1,
+        event: e2,
+        amount: 600,
+        direction: .received,
+        paymentMethod: .wechat,
+        date: cal.liShuDateByAddingDays(-10)
+    )
     [r1, r2, r3, r4].forEach { ctx.insert($0) }
 
     return container

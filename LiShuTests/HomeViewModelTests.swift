@@ -4,14 +4,13 @@
 //
 
 import Foundation
-import Testing
-import SwiftData
 @testable import LiShu
+import SwiftData
+import Testing
 
 @MainActor
 struct HomeViewModelTests {
-
-    @Test func testLoadEmptyDatabase() throws {
+    @Test func loadEmptyDatabase() throws {
         let db = try TestDB()
         let vm = HomeViewModel()
         vm.load(context: db.context)
@@ -22,7 +21,7 @@ struct HomeViewModelTests {
         #expect(vm.recordCount == 0)
     }
 
-    @Test func testLoadWithRecords() throws {
+    @Test func loadWithRecords() throws {
         let db = try TestDB()
         let vm = HomeViewModel()
         let calendar = Calendar.current
@@ -51,13 +50,13 @@ struct HomeViewModelTests {
         #expect(vm.yearlyExpense == 500)
     }
 
-    @Test func testFormattedIncomeUnder10000() throws {
+    @Test func formattedIncomeUnder10000() {
         let vm = HomeViewModel()
         vm.yearlyIncome = 5000
         #expect(vm.formattedIncome == "¥5000")
     }
 
-    @Test func testFormattedIncomeOver10000() throws {
+    @Test func formattedIncomeOver10000() {
         let vm = HomeViewModel()
         vm.yearlyIncome = 15000
         #expect(vm.formattedIncome == "¥1.5万")
@@ -70,7 +69,7 @@ struct HomeViewModelTests {
         db.context.insert(contact)
         db.context.insert(event)
 
-        for i in 0..<10 {
+        for i in 0 ..< 10 {
             let record = SampleData.record(contact: contact, event: event)
             record.date = Calendar.current.date(byAdding: .day, value: -i, to: Date()) ?? Date()
             db.context.insert(record)

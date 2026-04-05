@@ -10,8 +10,8 @@
 import XCTest
 
 final class AppStoreScreenshotTests: XCTestCase {
-
-    /// 须与主 App Target 的 `PRODUCT_BUNDLE_IDENTIFIER` 一致。命令行 `xcodebuild test`/snapshot 下无参 `XCUIApplication()` 可能误绑定为 UITest bundle，导致 launch 报 FBSApplicationLibrary nil。
+    /// 须与主 App Target 的 `PRODUCT_BUNDLE_IDENTIFIER` 一致。命令行 `xcodebuild test`/snapshot 下无参 `XCUIApplication()` 可能误绑定为 UITest bundle，导致
+    /// launch 报 FBSApplicationLibrary nil。
     private static let hostAppBundleIdentifier = "com.finefine.LiShu"
 
     private var app: XCUIApplication!
@@ -37,7 +37,7 @@ final class AppStoreScreenshotTests: XCTestCase {
         try super.tearDownWithError()
     }
 
-    func testCaptureAppStoreScreenshots() throws {
+    func testCaptureAppStoreScreenshots() {
         captureHome()
         captureRecords()
         captureContacts()

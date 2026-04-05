@@ -1,11 +1,10 @@
 import Foundation
-import Testing
-import SwiftData
 @testable import LiShu
+import SwiftData
+import Testing
 
 @MainActor
 struct OCRImportViewModelTests {
-
     private func makeItems() -> [OCRRecordItem] {
         [
             OCRRecordItem(name: "张三", amount: 500, amountText: "500", confidence: .high),
@@ -14,7 +13,7 @@ struct OCRImportViewModelTests {
         ]
     }
 
-    @Test func testSelectedItems() {
+    @Test func selectedItems() {
         let vm = OCRImportViewModel()
         vm.items = makeItems()
 
@@ -40,7 +39,7 @@ struct OCRImportViewModelTests {
         #expect(vm.items[0].isSelected == true)
     }
 
-    @Test func testSelectAllDeselectAll() {
+    @Test func selectAllDeselectAll() {
         let vm = OCRImportViewModel()
         vm.items = makeItems()
 
@@ -74,7 +73,7 @@ struct OCRImportViewModelTests {
         #expect(vm.items[0].name == "李四")
     }
 
-    @Test func testUpdateNameAndAmount() {
+    @Test func updateNameAndAmount() {
         let vm = OCRImportViewModel()
         vm.items = makeItems()
         let id = vm.items[0].id
@@ -89,7 +88,7 @@ struct OCRImportViewModelTests {
         #expect(vm.items[0].amount == 1200)
     }
 
-    @Test func testCanImportAndPerformImport() throws {
+    @Test func canImportAndPerformImport() throws {
         let db = try TestDB()
         let vm = OCRImportViewModel()
         vm.items = makeItems()
@@ -107,7 +106,7 @@ struct OCRImportViewModelTests {
         #expect(contacts.count == 3)
     }
 
-    @Test func testPerformImportDeduplicatesNewContactsByName() throws {
+    @Test func performImportDeduplicatesNewContactsByName() throws {
         let db = try TestDB()
         let vm = OCRImportViewModel()
         vm.items = [
@@ -127,7 +126,7 @@ struct OCRImportViewModelTests {
 
     // MARK: - Edit EventName
 
-    @Test func testStartEditingSetsEventName() {
+    @Test func startEditingSetsEventName() {
         let vm = OCRImportViewModel()
         let weddingName = EventType.wedding.displayName
         vm.items = [
@@ -138,7 +137,7 @@ struct OCRImportViewModelTests {
         #expect(vm.editEventName == weddingName)
     }
 
-    @Test func testSaveEditingWritesBackEventName() {
+    @Test func saveEditingWritesBackEventName() {
         let vm = OCRImportViewModel()
         vm.items = [
             OCRRecordItem(name: "张三", amount: 500, amountText: "500", confidence: .high),
@@ -154,7 +153,7 @@ struct OCRImportViewModelTests {
 
     // MARK: - canImport
 
-    @Test func testCanImportOnlyDependsOnSelection() {
+    @Test func canImportOnlyDependsOnSelection() {
         let vm = OCRImportViewModel()
         vm.items = makeItems()
 
@@ -169,7 +168,7 @@ struct OCRImportViewModelTests {
 
     // MARK: - performImport creates events per record
 
-    @Test func testPerformImportCreatesEventsPerRecord() throws {
+    @Test func performImportCreatesEventsPerRecord() throws {
         let db = try TestDB()
         let vm = OCRImportViewModel()
 

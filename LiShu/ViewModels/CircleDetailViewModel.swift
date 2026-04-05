@@ -7,9 +7,17 @@ struct CircleMemberItem: Identifiable {
     let expense: Double
     let lastRecordDate: Date?
 
-    var id: PersistentIdentifier { contact.persistentModelID }
-    var netValue: Double { income - expense }
-    var totalAmount: Double { income + expense }
+    var id: PersistentIdentifier {
+        contact.persistentModelID
+    }
+
+    var netValue: Double {
+        income - expense
+    }
+
+    var totalAmount: Double {
+        income + expense
+    }
 }
 
 @Observable
@@ -98,28 +106,28 @@ class CircleDetailViewModel {
 
     func circleDisplayName(_ circle: Int) -> String {
         switch circle {
-        case 1: return String(localized: "statistics.circle.family")
-        case 2: return String(localized: "statistics.circle.close")
-        case 3: return String(localized: "statistics.circle.social")
-        default: return String(localized: "statistics.circle.other")
+        case 1: String(localized: "statistics.circle.family")
+        case 2: String(localized: "statistics.circle.close")
+        case 3: String(localized: "statistics.circle.social")
+        default: String(localized: "statistics.circle.other")
         }
     }
 
     private func circleSystemIcon(_ circle: Int) -> String {
         switch circle {
-        case 1: return "figure.2.and.child.holdinghands"
-        case 2: return "person.2"
-        case 3: return "building.2"
-        default: return "person.3"
+        case 1: "figure.2.and.child.holdinghands"
+        case 2: "person.2"
+        case 3: "building.2"
+        default: "person.3"
         }
     }
 
     private func circleCloseness(_ circle: Int) -> String {
         switch circle {
-        case 1: return String(localized: "circle.detail.closeness.high")
-        case 2: return String(localized: "circle.detail.closeness.medium")
-        case 3: return String(localized: "circle.detail.closeness.low")
-        default: return String(localized: "circle.detail.closeness.general")
+        case 1: String(localized: "circle.detail.closeness.high")
+        case 2: String(localized: "circle.detail.closeness.medium")
+        case 3: String(localized: "circle.detail.closeness.low")
+        default: String(localized: "circle.detail.closeness.general")
         }
     }
 

@@ -21,7 +21,7 @@ class AddEventViewModel {
     func configure(with event: Event) {
         eventsViewModelLogger.info("Configured event editor", metadata: [
             "step": .string("configure"),
-            "event_id": .string(String(describing: event.persistentModelID))
+            "event_id": .string(String(describing: event.persistentModelID)),
         ])
         editingEvent = event
         name = event.name
@@ -36,7 +36,7 @@ class AddEventViewModel {
         guard isValid else {
             eventsViewModelLogger.warning("Rejected event save", metadata: [
                 "step": .string("save"),
-                "reason": .string("validation_failed")
+                "reason": .string("validation_failed"),
             ])
             return false
         }
@@ -56,14 +56,14 @@ class AddEventViewModel {
                 eventsViewModelLogger.notice("Saved event", metadata: [
                     "step": .string("save"),
                     "event_id": .string(String(describing: existing.persistentModelID)),
-                    "result": .string("updated")
+                    "result": .string("updated"),
                 ])
                 return true
             } catch {
                 eventsViewModelLogger.error("Failed to save event", metadata: [
                     "step": .string("save"),
                     "result": .string("updated"),
-                    "error": .string(error.localizedDescription)
+                    "error": .string(error.localizedDescription),
                 ])
                 return false
             }
@@ -84,14 +84,14 @@ class AddEventViewModel {
                 eventsViewModelLogger.notice("Saved event", metadata: [
                     "step": .string("save"),
                     "event_id": .string(String(describing: event.persistentModelID)),
-                    "result": .string("created")
+                    "result": .string("created"),
                 ])
                 return true
             } catch {
                 eventsViewModelLogger.error("Failed to save event", metadata: [
                     "step": .string("save"),
                     "result": .string("created"),
-                    "error": .string(error.localizedDescription)
+                    "error": .string(error.localizedDescription),
                 ])
                 return false
             }

@@ -18,25 +18,25 @@ enum PulseDiagnostics {
     private(set) nonisolated(unsafe) static var didBootstrapLoggingSystem = false
 
     /// 是否启用自动拦截与存储。关闭方式：`PULSE_DISABLED=1` 环境变量，或 UI 测试 `--uitesting`。
-    static nonisolated var isMonitoringEnabled: Bool {
+    nonisolated static var isMonitoringEnabled: Bool {
         monitoringEnabled(arguments: CommandLine.arguments, environment: ProcessInfo.processInfo.environment)
     }
 
     /// 是否允许通过暗门打开 Pulse 控制台（UI 测试时关闭，避免误触干扰自动化）。
-    static nonisolated var isHiddenConsoleAvailable: Bool {
+    nonisolated static var isHiddenConsoleAvailable: Bool {
         hiddenConsoleAvailable(arguments: CommandLine.arguments, environment: ProcessInfo.processInfo.environment)
     }
 
     /// 暗门唤起后的支持说明。分享动作仍由 PulseUI 的原生导出能力负责。
-    static nonisolated let supportSummary = "诊断面板会本地保存应用日志，便于排查启动、交互、订阅、导入导出等流程问题。日志不会自动上传，只有在你手动分享时才会导出。"
+    nonisolated static let supportSummary = "诊断面板会本地保存应用日志，便于排查启动、交互、订阅、导入导出等流程问题。日志不会自动上传，只有在你手动分享时才会导出。"
 
-    static nonisolated func makeLogger(label: String) -> Logger {
+    nonisolated static func makeLogger(label: String) -> Logger {
         configureIfNeeded()
         return Logger(label: label)
     }
 
     /// 在应用启动早期调用一次；配置 `LoggerStore` 上限并接入统一文本日志。
-    static nonisolated func configureIfNeeded(
+    nonisolated static func configureIfNeeded(
         arguments: [String] = CommandLine.arguments,
         environment: [String: String] = ProcessInfo.processInfo.environment
     ) {
@@ -51,25 +51,25 @@ enum PulseDiagnostics {
         bootstrapLoggingSystemIfNeeded()
         let logger = Logger(label: "diagnostics.pulse")
         logger.info("Pulse diagnostics initialized", metadata: [
-            "store_size_limit_mb": .stringConvertible(Constants.storeSizeLimit / 1_000_000)
+            "store_size_limit_mb": .stringConvertible(Constants.storeSizeLimit / 1_000_000),
         ])
     }
 
-    static nonisolated func monitoringEnabled(arguments: [String], environment: [String: String]) -> Bool {
+    nonisolated static func monitoringEnabled(arguments: [String], environment: [String: String]) -> Bool {
         if arguments.contains(Constants.uiTestingArgument) { return false }
         if environment[Constants.disabledEnvironmentKey] == "1" { return false }
         return true
     }
 
-    static nonisolated func hiddenConsoleAvailable(arguments: [String], environment: [String: String]) -> Bool {
+    nonisolated static func hiddenConsoleAvailable(arguments: [String], environment: [String: String]) -> Bool {
         monitoringEnabled(arguments: arguments, environment: environment)
     }
 
-    static nonisolated func makeLoggerStoreConfiguration(isDebugBuild: Bool = defaultDebugBuildValue()) -> LoggerStore.Configuration {
+    nonisolated static func makeLoggerStoreConfiguration(isDebugBuild _: Bool = defaultDebugBuildValue()) -> LoggerStore.Configuration {
         LoggerStore.Configuration(sizeLimit: Constants.storeSizeLimit)
     }
 
-    static nonisolated func installSharedLoggerStore() {
+    nonisolated static func installSharedLoggerStore() {
         let storeURL = pulseStorePackageURL()
         do {
             let configuration = makeLoggerStoreConfiguration()
@@ -81,12 +81,12 @@ enum PulseDiagnostics {
             LoggerStore.shared = store
         } catch {
             #if DEBUG
-            assertionFailure("Pulse LoggerStore init failed: \(error)")
+                assertionFailure("Pulse LoggerStore init failed: \(error)")
             #endif
         }
     }
 
-    static nonisolated func bootstrapLoggingSystemIfNeeded() {
+    nonisolated static func bootstrapLoggingSystemIfNeeded() {
         guard !didBootstrapLoggingSystem else { return }
         LoggingSystem.bootstrap { label in
             PersistentLogHandler(label: label, store: LoggerStore.shared)
@@ -95,27 +95,30 @@ enum PulseDiagnostics {
     }
 
     /// 与 Pulse 内部默认路径一致（`Library/Logs/com.github.kean.logger/current.pulse`），避免重复占用空间。
-    static nonisolated func pulseStorePackageURL() -> URL {
-        let base = FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask).first!
+    nonisolated static func pulseStorePackageURL() -> URL {
+        guard let libraryRoot = FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask).first else {
+            return URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("current.pulse")
+        }
+        let base = libraryRoot
             .appendingPathComponent("Logs/com.github.kean.logger", isDirectory: true)
         try? FileManager.default.createDirectory(at: base, withIntermediateDirectories: true)
         return base.appendingPathComponent("current.pulse", isDirectory: true)
     }
 
-    static nonisolated func defaultDebugBuildValue() -> Bool {
+    nonisolated static func defaultDebugBuildValue() -> Bool {
         #if DEBUG
-        true
+            true
         #else
-        false
+            false
         #endif
     }
 
     #if DEBUG
-    static nonisolated func resetForTesting() {
-        lock.lock()
-        didConfigure = false
-        lock.unlock()
-    }
+        nonisolated static func resetForTesting() {
+            lock.lock()
+            didConfigure = false
+            lock.unlock()
+        }
     #endif
 }
 
@@ -136,10 +139,10 @@ nonisolated enum AppLogLabel {
 
 nonisolated enum UILogEventType: String {
     case screenView = "screen_view"
-    case tap = "tap"
-    case toggle = "toggle"
+    case tap
+    case toggle
     case tabSwitch = "tab_switch"
-    case navigation = "navigation"
+    case navigation
     case sheetPresent = "sheet_present"
     case sheetDismiss = "sheet_dismiss"
     case alertPresent = "alert_present"
@@ -182,7 +185,13 @@ nonisolated enum InteractionLogger {
         )
     }
 
-    static func tap(screen: String, target: String, route: String? = nil, presentation: UILogPresentation? = nil, metadata: [String: String] = [:]) {
+    static func tap(
+        screen: String,
+        target: String,
+        route: String? = nil,
+        presentation: UILogPresentation? = nil,
+        metadata: [String: String] = [:]
+    ) {
         log(
             eventType: .tap,
             screen: screen,
@@ -217,7 +226,13 @@ nonisolated enum InteractionLogger {
         )
     }
 
-    static func navigation(screen: String, target: String, route: String, presentation: UILogPresentation = .push, metadata: [String: String] = [:]) {
+    static func navigation(
+        screen: String,
+        target: String,
+        route: String,
+        presentation: UILogPresentation = .push,
+        metadata: [String: String] = [:]
+    ) {
         log(
             eventType: .navigation,
             screen: screen,
@@ -286,7 +301,14 @@ nonisolated enum InteractionLogger {
         )
     }
 
-    static func submit(screen: String, target: String, action: UILogAction, result: String? = nil, reason: String? = nil, metadata: [String: String] = [:]) {
+    static func submit(
+        screen: String,
+        target: String,
+        action: UILogAction,
+        result: String? = nil,
+        reason: String? = nil,
+        metadata: [String: String] = [:]
+    ) {
         var enrichedMetadata = metadata
         enrichedMetadata["result"] = result
         enrichedMetadata["reason"] = reason
@@ -312,7 +334,7 @@ nonisolated enum InteractionLogger {
             "event_type": .string(eventType.rawValue),
             "screen": .string(screen),
             "target": .string(target),
-            "action": .string(action.rawValue)
+            "action": .string(action.rawValue),
         ]
         if let route {
             payload["route"] = .string(route)

@@ -4,14 +4,13 @@
 //
 
 import Foundation
-import Testing
-import SwiftData
 @testable import LiShu
+import SwiftData
+import Testing
 
 @MainActor
 struct AddRecordViewModelTests {
-
-    @Test func testIsValidMissingContact() throws {
+    @Test func isValidMissingContact() throws {
         let db = try TestDB()
         let vm = AddRecordViewModel()
         vm.loadData(context: db.context)
@@ -25,7 +24,7 @@ struct AddRecordViewModelTests {
         #expect(vm.isValid == false)
     }
 
-    @Test func testIsValidMissingEvent() throws {
+    @Test func isValidMissingEvent() throws {
         let db = try TestDB()
         let vm = AddRecordViewModel()
         vm.loadData(context: db.context)
@@ -39,7 +38,7 @@ struct AddRecordViewModelTests {
         #expect(vm.isValid == false)
     }
 
-    @Test func testIsValidZeroAmount() throws {
+    @Test func isValidZeroAmount() throws {
         let db = try TestDB()
         let vm = AddRecordViewModel()
         vm.loadData(context: db.context)
@@ -55,7 +54,7 @@ struct AddRecordViewModelTests {
         #expect(vm.isValid == false)
     }
 
-    @Test func testIsValidAllSet() throws {
+    @Test func isValidAllSet() throws {
         let db = try TestDB()
         let vm = AddRecordViewModel()
         vm.loadData(context: db.context)
@@ -89,7 +88,7 @@ struct AddRecordViewModelTests {
         #expect(vm.filteredContacts.map(\.name).sorted() == ["张三", "张伟"])
     }
 
-    @Test func testSaveNewRecord() throws {
+    @Test func saveNewRecord() throws {
         let db = try TestDB()
         let contact = SampleData.contact()
         let event = SampleData.event()
@@ -111,7 +110,7 @@ struct AddRecordViewModelTests {
         #expect(records[0].monetaryAmount == 800)
     }
 
-    @Test func testSaveEditMode() throws {
+    @Test func saveEditMode() throws {
         let db = try TestDB()
         let contact = SampleData.contact()
         let event = SampleData.event()
@@ -134,7 +133,7 @@ struct AddRecordViewModelTests {
         #expect(records[0].monetaryAmount == 600)
     }
 
-    @Test func testSaveBanquetRecord() throws {
+    @Test func saveBanquetRecord() throws {
         let db = try TestDB()
         let contact = SampleData.contact()
         let event = SampleData.event()

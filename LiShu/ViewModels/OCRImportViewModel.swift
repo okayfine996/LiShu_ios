@@ -7,7 +7,6 @@ private let ocrImportLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.ocr
 
 @Observable
 class OCRImportViewModel {
-
     // MARK: - Image Management
 
     var capturedImages: [UIImage] = []
@@ -68,7 +67,7 @@ class OCRImportViewModel {
         capturedImages.append(image)
         ocrImportLogger.info("Added OCR source image", metadata: [
             "step": .string("image_input"),
-            "count": .stringConvertible(capturedImages.count)
+            "count": .stringConvertible(capturedImages.count),
         ])
     }
 
@@ -78,7 +77,7 @@ class OCRImportViewModel {
         processingState = .idle
         isAIEnhanced = false
         ocrImportLogger.notice("Cleared OCR import state", metadata: [
-            "step": .string("clear_images")
+            "step": .string("clear_images"),
         ])
     }
 
@@ -88,7 +87,7 @@ class OCRImportViewModel {
         guard !capturedImages.isEmpty else { return }
         ocrImportLogger.notice("Processing OCR images", metadata: [
             "step": .string("process_images"),
-            "count": .stringConvertible(capturedImages.count)
+            "count": .stringConvertible(capturedImages.count),
         ])
 
         await MainActor.run {
@@ -108,7 +107,7 @@ class OCRImportViewModel {
                 ocrImportLogger.notice("Processed OCR images", metadata: [
                     "step": .string("process_images"),
                     "count": .stringConvertible(result.items.count),
-                    "result": .string(result.isAIEnhanced ? "ai_enhanced" : "ocr_only")
+                    "result": .string(result.isAIEnhanced ? "ai_enhanced" : "ocr_only"),
                 ])
             }
         } catch {
@@ -117,7 +116,7 @@ class OCRImportViewModel {
                 processingState = .error(error.localizedDescription)
                 ocrImportLogger.error("Failed to process OCR images", metadata: [
                     "step": .string("process_images"),
-                    "error": .string(error.localizedDescription)
+                    "error": .string(error.localizedDescription),
                 ])
             }
         }
@@ -130,7 +129,7 @@ class OCRImportViewModel {
         items[index].isSelected.toggle()
         ocrImportLogger.info("Toggled OCR item selection", metadata: [
             "step": .string("selection"),
-            "result": .string(items[index].isSelected ? "selected" : "deselected")
+            "result": .string(items[index].isSelected ? "selected" : "deselected"),
         ])
     }
 
@@ -154,7 +153,7 @@ class OCRImportViewModel {
         }
         ocrImportLogger.info("Toggled OCR select all", metadata: [
             "step": .string("selection"),
-            "count": .stringConvertible(selectedCount)
+            "count": .stringConvertible(selectedCount),
         ])
     }
 
@@ -192,7 +191,7 @@ class OCRImportViewModel {
         editEventName = item.eventName
         ocrImportLogger.info("Started editing OCR item", metadata: [
             "step": .string("edit_item"),
-            "target": .string(item.name)
+            "target": .string(item.name),
         ])
     }
 
@@ -218,7 +217,7 @@ class OCRImportViewModel {
         self.editingItem = nil
         ocrImportLogger.notice("Saved OCR item edits", metadata: [
             "step": .string("edit_item"),
-            "result": .string("success")
+            "result": .string("success"),
         ])
     }
 
@@ -251,7 +250,7 @@ class OCRImportViewModel {
         isImporting = true
         ocrImportLogger.notice("Starting OCR import", metadata: [
             "step": .string("perform_import"),
-            "count": .stringConvertible(itemsToImport.count)
+            "count": .stringConvertible(itemsToImport.count),
         ])
 
         do {
@@ -287,7 +286,11 @@ class OCRImportViewModel {
                     direction: direction,
                     date: item.date
                 )
-                record.applyTypeData(.monetary(MonetaryData(amount: item.amount, paymentMethod: PaymentMethod.cash.rawValue, returnedAmount: 0)))
+                record.applyTypeData(.monetary(MonetaryData(
+                    amount: item.amount,
+                    paymentMethod: PaymentMethod.cash.rawValue,
+                    returnedAmount: 0
+                )))
                 context.insert(record)
             }
 
@@ -297,7 +300,7 @@ class OCRImportViewModel {
             ocrImportLogger.notice("Finished OCR import", metadata: [
                 "step": .string("perform_import"),
                 "count": .stringConvertible(itemsToImport.count),
-                "result": .string("success")
+                "result": .string("success"),
             ])
             return true
         } catch {
@@ -305,7 +308,7 @@ class OCRImportViewModel {
             importError = error.localizedDescription
             ocrImportLogger.error("Failed OCR import", metadata: [
                 "step": .string("perform_import"),
-                "error": .string(error.localizedDescription)
+                "error": .string(error.localizedDescription),
             ])
             return false
         }

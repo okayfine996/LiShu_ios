@@ -8,9 +8,10 @@
 import XCTest
 
 class BaseUITestCase: XCTestCase {
-
     var app: XCUIApplication!
-    var defaultLaunchArguments: [String] { ["--uitesting"] }
+    var defaultLaunchArguments: [String] {
+        ["--uitesting"]
+    }
 
     /// 子类可重写（如 App Store 截图）：在 `launch()` 前调用 `setupSnapshot(app)` 等。
     func configureApplicationBeforeLaunch() throws {}

@@ -85,7 +85,6 @@ struct OCRCorrectionSheet: View {
                 RoundedRectangle(cornerRadius: DesignSystem.Radius.input)
                     .stroke(DesignSystem.Colors.border, lineWidth: 1)
             )
-
         }
     }
 

@@ -1,0 +1,6 @@
+# LiShu — align with AGENTS.md (4-space indent)
+--swiftversion 6
+--indent 4
+--tabwidth 4
+--smarttabs disabled
+--maxwidth 140

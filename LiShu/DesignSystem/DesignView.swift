@@ -260,11 +260,11 @@ private struct ComponentsSection: View {
                 .foregroundColor(DesignSystem.Colors.textSecondary)
 
             HStack(spacing: 12) {
-                Button("Primary") { }
+                Button("Primary") {}
                     .buttonStyle(PrimaryButtonStyle())
-                Button("Secondary") { }
+                Button("Secondary") {}
                     .buttonStyle(SecondaryButtonStyle())
-                Button("Ghost") { }
+                Button("Ghost") {}
                     .buttonStyle(GhostButtonStyle())
             }
         }
@@ -435,16 +435,11 @@ private struct SectionHeader: View {
 // MARK: - Preview
 
 #Preview {
-    
-        DesignSystemView()
-            .preferredColorScheme(.light)
-    
+    DesignSystemView()
+        .preferredColorScheme(.light)
 }
 
-
 #Preview {
-    
-        DesignSystemView()
-            .preferredColorScheme(.dark)
-    
+    DesignSystemView()
+        .preferredColorScheme(.dark)
 }

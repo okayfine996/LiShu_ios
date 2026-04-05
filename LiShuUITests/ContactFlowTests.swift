@@ -1,9 +1,8 @@
 import XCTest
 
 final class ContactFlowTests: BaseUITestCase {
-
     @MainActor
-    func testContactListSearch() throws {
+    func testContactListSearch() {
         createContact(name: "搜索测试人")
 
         let contactsTab = app.tabBars.buttons[TabLabels.contacts]
@@ -15,7 +14,7 @@ final class ContactFlowTests: BaseUITestCase {
     }
 
     @MainActor
-    func testContactDetail() throws {
+    func testContactDetail() {
         createContact(name: "详情测试人")
 
         let contactsTab = app.tabBars.buttons[TabLabels.contacts]
@@ -32,7 +31,7 @@ final class ContactFlowTests: BaseUITestCase {
     }
 
     @MainActor
-    func testEditContact() throws {
+    func testEditContact() {
         createContact(name: "编辑前名字")
 
         let contactsTab = app.tabBars.buttons[TabLabels.contacts]
@@ -66,7 +65,7 @@ final class ContactFlowTests: BaseUITestCase {
     }
 
     @MainActor
-    func testDeleteContact() throws {
+    func testDeleteContact() {
         createContact(name: "待删联系人")
 
         let contactsTab = app.tabBars.buttons[TabLabels.contacts]
@@ -96,7 +95,7 @@ final class ContactFlowTests: BaseUITestCase {
     }
 
     @MainActor
-    func testContactListNavigationBar() throws {
+    func testContactListNavigationBar() {
         let contactsTab = app.tabBars.buttons[TabLabels.contacts]
         XCTAssertTrue(contactsTab.waitForExistence(timeout: 5))
         contactsTab.tap()
@@ -109,12 +108,12 @@ final class ContactFlowTests: BaseUITestCase {
 
 extension XCUIElement {
     func clearAndTypeText(_ text: String) {
-        guard let stringValue = self.value as? String else {
-            self.typeText(text)
+        guard let stringValue = value as? String else {
+            typeText(text)
             return
         }
         let deleteString = String(repeating: XCUIKeyboardKey.delete.rawValue, count: stringValue.count)
-        self.typeText(deleteString)
-        self.typeText(text)
+        typeText(deleteString)
+        typeText(text)
     }
 }

@@ -1,13 +1,12 @@
 import Foundation
-import Testing
-import SwiftData
 @testable import LiShu
+import SwiftData
+import Testing
 
 @MainActor
 struct EventTypeDetailViewModelTests {
-
     @Test("load records by event type and year")
-    func testLoadRecordsByEventType() throws {
+    func loadRecordsByEventType() throws {
         let db = try TestDB()
         let contact = SampleData.contact()
         let weddingEvent = SampleData.event(name: "婚礼A", type: .wedding)
@@ -17,8 +16,8 @@ struct EventTypeDetailViewModelTests {
         db.context.insert(birthdayEvent)
 
         let cal = Calendar.current
-        let date2026 = cal.date(from: DateComponents(year: 2026, month: 6, day: 15))!
-        let date2025 = cal.date(from: DateComponents(year: 2025, month: 6, day: 15))!
+        let date2026 = try #require(cal.date(from: DateComponents(year: 2026, month: 6, day: 15)))
+        let date2025 = try #require(cal.date(from: DateComponents(year: 2025, month: 6, day: 15)))
 
         let r1 = SampleData.record(contact: contact, event: weddingEvent, amount: 1000, date: date2026)
         let r2 = SampleData.record(contact: contact, event: weddingEvent, amount: 500, date: date2026)
@@ -39,14 +38,14 @@ struct EventTypeDetailViewModelTests {
     }
 
     @Test("totalExpense and totalIncome computed from filtered records")
-    func testTotalExpenseAndIncome() throws {
+    func totalExpenseAndIncome() throws {
         let db = try TestDB()
         let contact = SampleData.contact()
         let event = SampleData.event(type: .birthday)
         db.context.insert(contact)
         db.context.insert(event)
 
-        let date = Calendar.current.date(from: DateComponents(year: 2026, month: 3, day: 10))!
+        let date = try #require(Calendar.current.date(from: DateComponents(year: 2026, month: 3, day: 10)))
         let r1 = SampleData.record(contact: contact, event: event, amount: 500, direction: .given, date: date)
         let r2 = SampleData.record(contact: contact, event: event, amount: 300, direction: .received, date: date)
         db.context.insert(r1)
@@ -70,9 +69,9 @@ struct EventTypeDetailViewModelTests {
         db.context.insert(event)
 
         let cal = Calendar.current
-        let jan = cal.date(from: DateComponents(year: 2026, month: 1, day: 5))!
-        let mar1 = cal.date(from: DateComponents(year: 2026, month: 3, day: 10))!
-        let mar2 = cal.date(from: DateComponents(year: 2026, month: 3, day: 20))!
+        let jan = try #require(cal.date(from: DateComponents(year: 2026, month: 1, day: 5)))
+        let mar1 = try #require(cal.date(from: DateComponents(year: 2026, month: 3, day: 10)))
+        let mar2 = try #require(cal.date(from: DateComponents(year: 2026, month: 3, day: 20)))
 
         let r1 = SampleData.record(contact: contact, event: event, amount: 100, date: jan)
         let r2 = SampleData.record(contact: contact, event: event, amount: 200, date: mar1)
@@ -86,9 +85,9 @@ struct EventTypeDetailViewModelTests {
         vm.load(eventType: .wedding, year: 2026, context: db.context)
 
         #expect(vm.monthlyDistribution.count == 12)
-        #expect(vm.monthlyDistribution[0] == 1)  // January
-        #expect(vm.monthlyDistribution[2] == 2)  // March
-        #expect(vm.monthlyDistribution[5] == 0)  // June
+        #expect(vm.monthlyDistribution[0] == 1) // January
+        #expect(vm.monthlyDistribution[2] == 2) // March
+        #expect(vm.monthlyDistribution[5] == 0) // June
     }
 
     @Test("peakMonth returns index of busiest month, -1 when empty")
@@ -103,9 +102,9 @@ struct EventTypeDetailViewModelTests {
         db.context.insert(event)
 
         let cal = Calendar.current
-        let jan = cal.date(from: DateComponents(year: 2026, month: 1, day: 5))!
-        let jun1 = cal.date(from: DateComponents(year: 2026, month: 6, day: 10))!
-        let jun2 = cal.date(from: DateComponents(year: 2026, month: 6, day: 20))!
+        let jan = try #require(cal.date(from: DateComponents(year: 2026, month: 1, day: 5)))
+        let jun1 = try #require(cal.date(from: DateComponents(year: 2026, month: 6, day: 10)))
+        let jun2 = try #require(cal.date(from: DateComponents(year: 2026, month: 6, day: 20)))
 
         let r1 = SampleData.record(contact: contact, event: event, amount: 100, date: jan)
         let r2 = SampleData.record(contact: contact, event: event, amount: 200, date: jun1)
@@ -140,7 +139,7 @@ struct EventTypeDetailViewModelTests {
     }
 
     @Test("formatAmount and formatNetValue produce correct output")
-    func testFormatAmountAndNetValue() {
+    func formatAmountAndNetValue() {
         let vm = EventTypeDetailViewModel()
         let amount = vm.formatAmount(12345)
         #expect(amount.hasPrefix("¥"))

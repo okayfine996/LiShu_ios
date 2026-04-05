@@ -15,8 +15,8 @@ struct NewRecordPhotoItem: Identifiable, Equatable {
 }
 
 enum RecordContextSelection: String, CaseIterable {
-    case event = "event"
-    case daily = "daily"
+    case event
+    case daily
 }
 
 @Observable
@@ -87,14 +87,14 @@ class AddRecordViewModel {
         let hasContact = selectedContact != nil
         let hasEvent = selectedEvent != nil
         guard hasContact else { return false }
-        if contextSelection == .event && !hasEvent {
+        if contextSelection == .event, !hasEvent {
             return false
         }
         switch recordType {
-        case .monetary:  return (UserEnteredDecimal.parse(monetaryAmount) ?? 0) > 0
-        case .gift:      return !giftName.trimmingCharacters(in: .whitespaces).isEmpty
-        case .favor:     return !favorDesc.trimmingCharacters(in: .whitespaces).isEmpty
-        case .banquet:   return !banquetLocation.trimmingCharacters(in: .whitespaces).isEmpty
+        case .monetary: return (UserEnteredDecimal.parse(monetaryAmount) ?? 0) > 0
+        case .gift: return !giftName.trimmingCharacters(in: .whitespaces).isEmpty
+        case .favor: return !favorDesc.trimmingCharacters(in: .whitespaces).isEmpty
+        case .banquet: return !banquetLocation.trimmingCharacters(in: .whitespaces).isEmpty
         }
     }
 
@@ -104,14 +104,14 @@ class AddRecordViewModel {
 
     var confirmButtonTitle: String {
         switch (recordType, direction) {
-        case (.monetary, .given): return String(localized: "record.confirm.monetary.given")
-        case (.monetary, .received): return String(localized: "record.confirm.monetary.received")
-        case (.gift, .given): return String(localized: "record.confirm.gift.given")
-        case (.gift, .received): return String(localized: "record.confirm.gift.received")
-        case (.favor, .given): return String(localized: "record.confirm.favor.given")
-        case (.favor, .received): return String(localized: "record.confirm.favor.received")
-        case (.banquet, .given): return String(localized: "record.confirm.banquet.given")
-        case (.banquet, .received): return String(localized: "record.confirm.banquet.received")
+        case (.monetary, .given): String(localized: "record.confirm.monetary.given")
+        case (.monetary, .received): String(localized: "record.confirm.monetary.received")
+        case (.gift, .given): String(localized: "record.confirm.gift.given")
+        case (.gift, .received): String(localized: "record.confirm.gift.received")
+        case (.favor, .given): String(localized: "record.confirm.favor.given")
+        case (.favor, .received): String(localized: "record.confirm.favor.received")
+        case (.banquet, .given): String(localized: "record.confirm.banquet.given")
+        case (.banquet, .received): String(localized: "record.confirm.banquet.received")
         }
     }
 
@@ -123,14 +123,14 @@ class AddRecordViewModel {
 
     func directionTitle(for direction: RecordDirection) -> String {
         switch (recordType, direction) {
-        case (.monetary, .given): return String(localized: "record.direction.monetary.given")
-        case (.monetary, .received): return String(localized: "record.direction.monetary.received")
-        case (.gift, .given): return String(localized: "record.direction.gift.given")
-        case (.gift, .received): return String(localized: "record.direction.gift.received")
-        case (.favor, .given): return String(localized: "record.direction.favor.given")
-        case (.favor, .received): return String(localized: "record.direction.favor.received")
-        case (.banquet, .given): return String(localized: "record.direction.banquet.given")
-        case (.banquet, .received): return String(localized: "record.direction.banquet.received")
+        case (.monetary, .given): String(localized: "record.direction.monetary.given")
+        case (.monetary, .received): String(localized: "record.direction.monetary.received")
+        case (.gift, .given): String(localized: "record.direction.gift.given")
+        case (.gift, .received): String(localized: "record.direction.gift.received")
+        case (.favor, .given): String(localized: "record.direction.favor.given")
+        case (.favor, .received): String(localized: "record.direction.favor.received")
+        case (.banquet, .given): String(localized: "record.direction.banquet.given")
+        case (.banquet, .received): String(localized: "record.direction.banquet.received")
         }
     }
 
@@ -157,14 +157,14 @@ class AddRecordViewModel {
             recordsViewModelLogger.info("Loaded add record dependencies", metadata: [
                 "step": .string("load_data"),
                 "count": .stringConvertible(allContacts.count + allEvents.count),
-                "result": .string("success")
+                "result": .string("success"),
             ])
         } catch {
             allContacts = []
             allEvents = []
             recordsViewModelLogger.error("Failed to load add record dependencies", metadata: [
                 "step": .string("load_data"),
-                "error": .string(error.localizedDescription)
+                "error": .string(error.localizedDescription),
             ])
         }
     }
@@ -172,7 +172,7 @@ class AddRecordViewModel {
     func addCustomTag() {
         let trimmed = customTagInput.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
-        if !customDailyTags.contains(trimmed) && !Self.builtInDailyTags.contains(trimmed) {
+        if !customDailyTags.contains(trimmed), !Self.builtInDailyTags.contains(trimmed) {
             customDailyTags.append(trimmed)
         }
         selectedDailyTag = trimmed
@@ -185,19 +185,19 @@ class AddRecordViewModel {
             self.direction = dir
         }
         if let cID = contactID {
-            self.selectedContact = context.model(for: cID) as? Contact
+            selectedContact = context.model(for: cID) as? Contact
         }
         recordsViewModelLogger.info("Configured add record context", metadata: [
             "step": .string("configure"),
             "contact_id": .string(contactID.map { String(describing: $0) } ?? "none"),
-            "result": .string(direction?.rawValue ?? "unchanged")
+            "result": .string(direction?.rawValue ?? "unchanged"),
         ])
     }
 
     func configure(with record: Record) {
         recordsViewModelLogger.info("Configured record editor", metadata: [
             "step": .string("configure"),
-            "record_id": .string(String(describing: record.persistentModelID))
+            "record_id": .string(String(describing: record.persistentModelID)),
         ])
         editingRecord = record
         direction = record.direction
@@ -211,19 +211,19 @@ class AddRecordViewModel {
         relationshipWeight = record.relationshipWeight
 
         switch record.resolvedTypeData {
-        case .monetary(let d):
+        case let .monetary(d):
             monetaryAmount = d.amount == Double(Int(d.amount)) ? String(Int(d.amount)) : String(d.amount)
             monetaryPaymentMethod = PaymentMethod(rawValue: d.paymentMethod) ?? .cash
-        case .gift(let d):
+        case let .gift(d):
             giftName = d.giftName
             if let v = d.estimatedValue {
                 giftEstimatedValue = v == Double(Int(v)) ? String(Int(v)) : String(v)
             } else {
                 giftEstimatedValue = ""
             }
-        case .favor(let d):
+        case let .favor(d):
             favorDesc = d.description
-        case .banquet(let d):
+        case let .banquet(d):
             banquetLocation = d.location
             banquetAttendeeList = d.attendeeList
             banquetExtraCostNotes = d.extraCostNotes
@@ -261,7 +261,7 @@ class AddRecordViewModel {
         selectedContact
     }
 
-    private func resolveEvent(context: ModelContext) -> Event? {
+    private func resolveEvent(context _: ModelContext) -> Event? {
         guard contextSelection == .event else {
             return nil
         }
@@ -270,10 +270,11 @@ class AddRecordViewModel {
 
     func save(context: ModelContext) -> Bool {
         guard isValid,
-              let contact = resolveContact(context: context) else {
+              let contact = resolveContact(context: context)
+        else {
             recordsViewModelLogger.warning("Rejected record save", metadata: [
                 "step": .string("save"),
-                "reason": .string("validation_failed")
+                "reason": .string("validation_failed"),
             ])
             return false
         }
@@ -311,14 +312,14 @@ class AddRecordViewModel {
                     "step": .string("save"),
                     "record_id": .string(String(describing: existing.persistentModelID)),
                     "contact_id": .string(String(describing: contact.persistentModelID)),
-                    "result": .string("updated")
+                    "result": .string("updated"),
                 ])
                 return true
             } catch {
                 recordsViewModelLogger.error("Failed to save record", metadata: [
                     "step": .string("save"),
                     "result": .string("updated"),
-                    "error": .string(error.localizedDescription)
+                    "error": .string(error.localizedDescription),
                 ])
                 return false
             }
@@ -352,14 +353,14 @@ class AddRecordViewModel {
                     "step": .string("save"),
                     "record_id": .string(String(describing: record.persistentModelID)),
                     "contact_id": .string(String(describing: contact.persistentModelID)),
-                    "result": .string("created")
+                    "result": .string("created"),
                 ])
                 return true
             } catch {
                 recordsViewModelLogger.error("Failed to save record", metadata: [
                     "step": .string("save"),
                     "result": .string("created"),
-                    "error": .string(error.localizedDescription)
+                    "error": .string(error.localizedDescription),
                 ])
                 return false
             }

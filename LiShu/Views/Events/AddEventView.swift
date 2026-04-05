@@ -1,6 +1,6 @@
-import SwiftUI
-import SwiftData
 import PhotosUI
+import SwiftData
+import SwiftUI
 
 struct AddEventView: View {
     @Environment(\.modelContext) private var modelContext

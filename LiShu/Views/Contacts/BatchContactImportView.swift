@@ -14,7 +14,7 @@ struct PhoneContactItem: Identifiable {
     }
 
     static func normalizePhone(_ phone: String) -> String {
-        phone.filter { $0.isNumber }
+        phone.filter(\.isNumber)
     }
 }
 
@@ -42,7 +42,7 @@ final class BatchContactImportViewModel {
         let query = searchText.lowercased()
         return allItems.filter {
             $0.displayName.lowercased().contains(query) ||
-            $0.phone.contains(query)
+                $0.phone.contains(query)
         }
     }
 
@@ -83,7 +83,7 @@ final class BatchContactImportViewModel {
         let keys: [CNKeyDescriptor] = [
             CNContactGivenNameKey as CNKeyDescriptor,
             CNContactFamilyNameKey as CNKeyDescriptor,
-            CNContactPhoneNumbersKey as CNKeyDescriptor
+            CNContactPhoneNumbersKey as CNKeyDescriptor,
         ]
         let request = CNContactFetchRequest(keysToFetch: keys)
         var items: [PhoneContactItem] = []
@@ -172,7 +172,7 @@ final class BatchContactImportViewModel {
             return false
         }
         let afterCount = currentCount + toImport.count
-        if afterCount > 20 && !SubscriptionManager.shared.isPro {
+        if afterCount > 20, !SubscriptionManager.shared.isPro {
             showProSheet = true
             return false
         }
@@ -243,11 +243,11 @@ struct BatchContactImportView: View {
                 .foregroundStyle(DesignSystem.Colors.textSecondary)
             }
             ToolbarItem(placement: .primaryAction) {
-                if viewModel.accessState == .granted && !viewModel.selectableItems.isEmpty {
+                if viewModel.accessState == .granted, !viewModel.selectableItems.isEmpty {
                     Button(viewModel.isAllSelectableSelected
                         ? String(localized: "contact.import.deselectAll")
-                        : String(localized: "contact.import.selectAll")
-                    ) {
+                        : String(localized: "contact.import.selectAll"))
+                    {
                         if viewModel.isAllSelectableSelected {
                             viewModel.deselectAll()
                         } else {

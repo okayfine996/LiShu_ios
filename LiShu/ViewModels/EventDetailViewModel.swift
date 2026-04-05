@@ -35,7 +35,7 @@ class EventDetailViewModel {
 
     var relatedContacts: [Contact] {
         guard let event else { return [] }
-        let contacts = (event.records ?? []).compactMap { $0.contact }
+        let contacts = (event.records ?? []).compactMap(\.contact)
         var seen = Set<PersistentIdentifier>()
         return contacts.filter { seen.insert($0.persistentModelID).inserted }
     }

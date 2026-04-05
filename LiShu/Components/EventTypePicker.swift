@@ -44,37 +44,37 @@ struct EventTypePicker: View {
 extension EventType {
     var iconName: String {
         switch self {
-        case .wedding: return "heart.fill"
-        case .engagement: return "heart.circle.fill"
-        case .funeral: return "leaf.fill"
-        case .birth: return "figure.and.child.holdinghands"
-        case .birthday: return "gift.fill"
-        case .longevity: return "birthday.cake.fill"
-        case .festival: return "sparkles"
-        case .property: return "house.fill"
-        case .education: return "graduationcap.fill"
-        case .business: return "storefront.fill"
-        case .promotion: return "star.fill"
-        case .visit: return "cross.case.fill"
-        case .other: return "square.grid.2x2.fill"
+        case .wedding: "heart.fill"
+        case .engagement: "heart.circle.fill"
+        case .funeral: "leaf.fill"
+        case .birth: "figure.and.child.holdinghands"
+        case .birthday: "gift.fill"
+        case .longevity: "birthday.cake.fill"
+        case .festival: "sparkles"
+        case .property: "house.fill"
+        case .education: "graduationcap.fill"
+        case .business: "storefront.fill"
+        case .promotion: "star.fill"
+        case .visit: "cross.case.fill"
+        case .other: "square.grid.2x2.fill"
         }
     }
 
     var displayName: String {
         switch self {
-        case .wedding: return String(localized: "event.type.wedding")
-        case .engagement: return String(localized: "event.type.engagement")
-        case .funeral: return String(localized: "event.type.funeral")
-        case .birth: return String(localized: "event.type.birth")
-        case .birthday: return String(localized: "event.type.birthday")
-        case .longevity: return String(localized: "event.type.longevity")
-        case .festival: return String(localized: "event.type.festival")
-        case .property: return String(localized: "event.type.property")
-        case .education: return String(localized: "event.type.education")
-        case .business: return String(localized: "event.type.business")
-        case .promotion: return String(localized: "event.type.promotion")
-        case .visit: return String(localized: "event.type.visit")
-        case .other: return String(localized: "event.type.other")
+        case .wedding: String(localized: "event.type.wedding")
+        case .engagement: String(localized: "event.type.engagement")
+        case .funeral: String(localized: "event.type.funeral")
+        case .birth: String(localized: "event.type.birth")
+        case .birthday: String(localized: "event.type.birthday")
+        case .longevity: String(localized: "event.type.longevity")
+        case .festival: String(localized: "event.type.festival")
+        case .property: String(localized: "event.type.property")
+        case .education: String(localized: "event.type.education")
+        case .business: String(localized: "event.type.business")
+        case .promotion: String(localized: "event.type.promotion")
+        case .visit: String(localized: "event.type.visit")
+        case .other: String(localized: "event.type.other")
         }
     }
 }

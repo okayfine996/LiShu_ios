@@ -1,0 +1,18 @@
+# Staged Swift only: format first, then lint (requires: brew install swiftformat swiftlint pre-commit)
+repos:
+  - repo: local
+    hooks:
+      - id: swiftformat
+        name: SwiftFormat
+        language: system
+        entry: swiftformat --config .swiftformat
+        types: [swift]
+        pass_filenames: true
+        files: ^(LiShu|LiShuTests|LiShuUITests)/
+      - id: swiftlint
+        name: SwiftLint
+        language: system
+        entry: swiftlint lint --strict
+        types: [swift]
+        pass_filenames: true
+        files: ^(LiShu|LiShuTests|LiShuUITests)/

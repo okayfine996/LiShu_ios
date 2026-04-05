@@ -1,5 +1,5 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 struct EventListView: View {
     @Environment(\.modelContext) private var modelContext
@@ -13,7 +13,7 @@ struct EventListView: View {
                 case .idle, .loading:
                     ProgressView()
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
-                case .loaded(let events) where events.isEmpty:
+                case let .loaded(events) where events.isEmpty:
                     EmptyStateView(
                         icon: "calendar",
                         message: String(localized: "event.list.empty"),
@@ -24,7 +24,7 @@ struct EventListView: View {
                     )
                 case .loaded:
                     eventListContent
-                case .error(let message):
+                case let .error(message):
                     ErrorStateView(message: message) {
                         viewModel.load(context: modelContext)
                     }
@@ -39,7 +39,12 @@ struct EventListView: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
-                    InteractionLogger.tap(screen: "events.list", target: "events.list.add", route: SheetRoute.addEvent.logName, presentation: .sheet)
+                    InteractionLogger.tap(
+                        screen: "events.list",
+                        target: "events.list.add",
+                        route: SheetRoute.addEvent.logName,
+                        presentation: .sheet
+                    )
                     sheetRoute = .addEvent
                 } label: {
                     Image(systemName: "plus")
@@ -252,16 +257,34 @@ private func makeEventListPreviewContainer() -> ModelContainer? {
     [c1, c2].forEach { ctx.insert($0) }
 
     let cal = Calendar.current
-    let e1 = Event(name: "张三的婚礼", type: .wedding, date: cal.date(byAdding: .day, value: 3, to: .now)!, location: "北京国贸大酒店")
-    let e2 = Event(name: "李四生日宴", type: .birthday, date: cal.date(byAdding: .day, value: 10, to: .now)!, location: "上海外滩")
-    let e3 = Event(name: "小明毕业典礼", type: .education, date: cal.date(byAdding: .day, value: 21, to: .now)!, location: "广州大学")
-    let e4 = Event(name: "春节聚会", type: .festival, date: cal.date(byAdding: .month, value: -2, to: .now)!, location: "老家")
-    let e5 = Event(name: "王五乔迁", type: .property, date: cal.date(byAdding: .month, value: -3, to: .now)!, location: "深圳南山")
+    let e1 = Event(name: "张三的婚礼", type: .wedding, date: cal.liShuDateByAddingDays(3), location: "北京国贸大酒店")
+    let e2 = Event(name: "李四生日宴", type: .birthday, date: cal.liShuDateByAddingDays(10), location: "上海外滩")
+    let e3 = Event(name: "小明毕业典礼", type: .education, date: cal.liShuDateByAddingDays(21), location: "广州大学")
+    let e4 = Event(name: "春节聚会", type: .festival, date: cal.liShuDateByAddingMonths(-2), location: "老家")
+    let e5 = Event(name: "王五乔迁", type: .property, date: cal.liShuDateByAddingMonths(-3), location: "深圳南山")
     [e1, e2, e3, e4, e5].forEach { ctx.insert($0) }
 
-    let r1 = Record.makeMonetaryRecord(contact: c1, event: e4, amount: 500, direction: .given, date: cal.date(byAdding: .month, value: -2, to: .now)!)
-    let r2 = Record.makeMonetaryRecord(contact: c2, event: e4, amount: 300, direction: .received, date: cal.date(byAdding: .month, value: -2, to: .now)!)
-    let r3 = Record.makeMonetaryRecord(contact: c1, event: e5, amount: 1000, direction: .given, date: cal.date(byAdding: .month, value: -3, to: .now)!)
+    let r1 = Record.makeMonetaryRecord(
+        contact: c1,
+        event: e4,
+        amount: 500,
+        direction: .given,
+        date: cal.liShuDateByAddingMonths(-2)
+    )
+    let r2 = Record.makeMonetaryRecord(
+        contact: c2,
+        event: e4,
+        amount: 300,
+        direction: .received,
+        date: cal.liShuDateByAddingMonths(-2)
+    )
+    let r3 = Record.makeMonetaryRecord(
+        contact: c1,
+        event: e5,
+        amount: 1000,
+        direction: .given,
+        date: cal.liShuDateByAddingMonths(-3)
+    )
     [r1, r2, r3].forEach { ctx.insert($0) }
 
     return container

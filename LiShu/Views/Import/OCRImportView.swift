@@ -1,6 +1,6 @@
-import SwiftUI
-import SwiftData
 import PhotosUI
+import SwiftData
+import SwiftUI
 
 struct OCRImportView: View {
     @Environment(\.dismiss) private var dismiss
@@ -23,7 +23,7 @@ struct OCRImportView: View {
                     processingView
                 case .loaded:
                     OCRResultView(viewModel: viewModel)
-                case .error(let message):
+                case let .error(message):
                     errorView(message)
                 }
             }
@@ -110,11 +110,22 @@ struct OCRImportView: View {
                 VStack(spacing: 12) {
                     Button {
                         guard SubscriptionManager.shared.canUseOCR() else {
-                            InteractionLogger.submit(screen: "import.ocr.source", target: "import.ocr.camera", action: .open, result: "blocked", reason: "subscription_limit")
+                            InteractionLogger.submit(
+                                screen: "import.ocr.source",
+                                target: "import.ocr.camera",
+                                action: .open,
+                                result: "blocked",
+                                reason: "subscription_limit"
+                            )
                             showProSheet = true
                             return
                         }
-                        InteractionLogger.tap(screen: "import.ocr.source", target: "import.ocr.camera", route: "fullScreen.import.camera", presentation: .fullScreen)
+                        InteractionLogger.tap(
+                            screen: "import.ocr.source",
+                            target: "import.ocr.camera",
+                            route: "fullScreen.import.camera",
+                            presentation: .fullScreen
+                        )
                         viewModel.isShowingCamera = true
                     } label: {
                         HStack(spacing: 12) {
@@ -131,7 +142,13 @@ struct OCRImportView: View {
 
                     Button {
                         guard SubscriptionManager.shared.canUseOCR() else {
-                            InteractionLogger.submit(screen: "import.ocr.source", target: "import.ocr.album", action: .open, result: "blocked", reason: "subscription_limit")
+                            InteractionLogger.submit(
+                                screen: "import.ocr.source",
+                                target: "import.ocr.album",
+                                action: .open,
+                                result: "blocked",
+                                reason: "subscription_limit"
+                            )
                             showProSheet = true
                             return
                         }
@@ -173,8 +190,8 @@ struct OCRImportView: View {
             }
 
             Text(viewModel.isAIEnhanced
-                 ? String(localized: "ocr.ai.processing")
-                 : String(localized: "ocr.import.processing"))
+                ? String(localized: "ocr.ai.processing")
+                : String(localized: "ocr.import.processing"))
                 .font(DesignSystem.Typography.body)
                 .foregroundStyle(DesignSystem.Colors.textSecondary)
 
@@ -231,7 +248,8 @@ struct OCRImportView: View {
             var images: [UIImage] = []
             for item in items {
                 if let data = try? await item.loadTransferable(type: Data.self),
-                   let image = UIImage(data: data) {
+                   let image = UIImage(data: data)
+                {
                     images.append(image)
                 }
             }

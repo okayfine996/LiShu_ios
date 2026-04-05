@@ -110,7 +110,6 @@ struct PrivacyPolicyView: View {
             Text(policy.updateDate)
                 .font(DesignSystem.Typography.small)
                 .foregroundStyle(DesignSystem.Colors.textTertiary)
-
         }
         .frame(maxWidth: .infinity)
         .padding(.top, 8)

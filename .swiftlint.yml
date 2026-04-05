@@ -1,0 +1,22 @@
+# LiShu — baseline SwiftLint: start with minimal rules; expand later via only_rules → opt_in_rules.
+included:
+  - LiShu
+  - LiShuTests
+  - LiShuUITests
+
+excluded:
+  - .build
+  - DerivedData
+
+only_rules:
+  - line_length
+  - force_unwrapping
+
+line_length:
+  warning: 140
+  error: 200
+  ignores_urls: true
+  ignores_comments: true
+
+force_unwrapping:
+  severity: warning

@@ -1,7 +1,7 @@
 import Foundation
 import Logging
-import Vision
 import UIKit
+import Vision
 
 private let ocrLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.ocr)
 
@@ -38,13 +38,13 @@ struct OCRRecordItem: Identifiable {
         eventType: EventType = .other,
         eventName: String = String(localized: "event.type.other")
     ) {
-        self.id = UUID()
+        id = UUID()
         self.name = name
         self.amount = amount
         self.amountText = amountText
         self.confidence = confidence
         self.warningType = warningType
-        self.isSelected = true
+        isSelected = true
         self.date = date
         self.eventType = eventType
         self.eventName = eventName
@@ -52,7 +52,6 @@ struct OCRRecordItem: Identifiable {
 }
 
 final class OCRService {
-
     static let shared = OCRService()
     private init() {}
 
@@ -61,7 +60,7 @@ final class OCRService {
     func recognizeRecords(from images: [UIImage]) async throws -> [OCRRecordItem] {
         ocrLogger.notice("Starting OCR recognition", metadata: [
             "step": .string("recognize_records"),
-            "count": .stringConvertible(images.count)
+            "count": .stringConvertible(images.count),
         ])
         var allItems: [OCRRecordItem] = []
 
@@ -75,7 +74,7 @@ final class OCRService {
         ocrLogger.notice("Finished OCR recognition", metadata: [
             "step": .string("recognize_records"),
             "count": .stringConvertible(items.count),
-            "result": .string("success")
+            "result": .string("success"),
         ])
         return items
     }
@@ -83,7 +82,7 @@ final class OCRService {
     func recognizeRecordsEnhanced(from images: [UIImage]) async throws -> (items: [OCRRecordItem], isAIEnhanced: Bool) {
         ocrLogger.notice("Starting enhanced OCR recognition", metadata: [
             "step": .string("recognize_records_enhanced"),
-            "count": .stringConvertible(images.count)
+            "count": .stringConvertible(images.count),
         ])
         var allItems: [OCRRecordItem] = []
         var aiCount = 0
@@ -105,7 +104,7 @@ final class OCRService {
         ocrLogger.notice("Finished enhanced OCR recognition", metadata: [
             "step": .string("recognize_records_enhanced"),
             "count": .stringConvertible(items.count),
-            "result": .string(aiEnhanced ? "ai_enhanced" : "ocr_only")
+            "result": .string(aiEnhanced ? "ai_enhanced" : "ocr_only"),
         ])
         return (items: items, isAIEnhanced: aiEnhanced)
     }
@@ -116,7 +115,7 @@ final class OCRService {
             guard service.isAvailable else {
                 ocrLogger.info("Skipped AI OCR enhancement", metadata: [
                     "step": .string("ai_fallback"),
-                    "reason": .string("service_unavailable")
+                    "reason": .string("service_unavailable"),
                 ])
                 return nil
             }
@@ -125,7 +124,7 @@ final class OCRService {
             } catch {
                 ocrLogger.warning("AI OCR enhancement failed", metadata: [
                     "step": .string("ai_fallback"),
-                    "error": .string(error.localizedDescription)
+                    "error": .string(error.localizedDescription),
                 ])
                 return nil
             }
@@ -139,7 +138,7 @@ final class OCRService {
         guard let cgImage = image.cgImage else {
             ocrLogger.error("OCR image conversion failed", metadata: [
                 "step": .string("vision_recognition"),
-                "reason": .string("invalid_image")
+                "reason": .string("invalid_image"),
             ])
             throw OCRError.invalidImage
         }
@@ -149,7 +148,7 @@ final class OCRService {
                 if let error {
                     ocrLogger.error("Vision OCR failed", metadata: [
                         "step": .string("vision_recognition"),
-                        "error": .string(error.localizedDescription)
+                        "error": .string(error.localizedDescription),
                     ])
                     continuation.resume(throwing: error)
                     return
@@ -166,7 +165,7 @@ final class OCRService {
                 }
                 ocrLogger.info("Vision OCR produced lines", metadata: [
                     "step": .string("vision_recognition"),
-                    "count": .stringConvertible(lines.count)
+                    "count": .stringConvertible(lines.count),
                 ])
                 continuation.resume(returning: lines)
             }
@@ -236,7 +235,8 @@ final class OCRService {
             let eventName = eventType.displayName
 
             if let match = nameAmountRegex?.firstMatch(in: text, range: fullRange),
-               match.numberOfRanges >= 3 {
+               match.numberOfRanges >= 3
+            {
                 let name = nsText.substring(with: match.range(at: 1))
                 let rawAmount = nsText.substring(with: match.range(at: 2))
                 if let item = buildItem(
@@ -252,7 +252,8 @@ final class OCRService {
             }
 
             if let match = amountNameRegex?.firstMatch(in: text, range: fullRange),
-               match.numberOfRanges >= 3 {
+               match.numberOfRanges >= 3
+            {
                 let rawAmount = nsText.substring(with: match.range(at: 1))
                 let name = nsText.substring(with: match.range(at: 2))
                 if let item = buildItem(
@@ -269,7 +270,7 @@ final class OCRService {
 
         ocrLogger.info("Parsed OCR record items", metadata: [
             "step": .string("parse_record_items"),
-            "count": .stringConvertible(items.count)
+            "count": .stringConvertible(items.count),
         ])
         return items
     }
@@ -290,7 +291,7 @@ final class OCRService {
         let confidence: OCRConfidence
         var warningType: WarningType?
 
-        if visionConfidence >= 0.8 && isReasonableAmount(amount) {
+        if visionConfidence >= 0.8, isReasonableAmount(amount) {
             confidence = .high
         } else if visionConfidence >= 0.5 {
             confidence = .medium
@@ -334,7 +335,7 @@ final class OCRService {
         if result.count != items.count {
             ocrLogger.info("Deduplicated OCR items", metadata: [
                 "step": .string("deduplicate"),
-                "count": .stringConvertible(items.count - result.count)
+                "count": .stringConvertible(items.count - result.count),
             ])
         }
         return result
@@ -348,9 +349,9 @@ enum OCRError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidImage:
-            return String(localized: "ocr.error.invalidImage")
-        case .recognitionFailed(let msg):
-            return msg
+            String(localized: "ocr.error.invalidImage")
+        case let .recognitionFailed(msg):
+            msg
         }
     }
 }

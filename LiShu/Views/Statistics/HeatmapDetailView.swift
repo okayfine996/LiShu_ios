@@ -1,5 +1,5 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 /// 人情热力详情：年度人情矩阵与高峰洞察（参考 Stitch 稿）。
 struct HeatmapDetailView: View {
@@ -19,7 +19,7 @@ struct HeatmapDetailView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             case .loaded:
                 mainScroll
-            case .error(let message):
+            case let .error(message):
                 ErrorStateView(message: message) {
                     viewModel.load(context: modelContext)
                 }
@@ -75,7 +75,7 @@ struct HeatmapDetailView: View {
             }
 
             LazyVGrid(columns: monthMatrixGridColumns, spacing: DesignSystem.Spacing.block) {
-                ForEach(0..<12, id: \.self) { month in
+                ForEach(0 ..< 12, id: \.self) { month in
                     monthMiniGrid(month: month)
                 }
             }
@@ -107,7 +107,7 @@ struct HeatmapDetailView: View {
                 .minimumScaleFactor(0.85)
 
             LazyVGrid(columns: monthMiniCellColumns, spacing: DesignSystem.Spacing.dense) {
-                ForEach(0..<4, id: \.self) { week in
+                ForEach(0 ..< 4, id: \.self) { week in
                     RoundedRectangle(cornerRadius: DesignSystem.Radius.chartBar)
                         .fill(
                             DesignSystem.Colors.primary.opacity(
@@ -161,7 +161,10 @@ struct HeatmapDetailView: View {
                 ZStack {
                     Circle()
                         .fill(DesignSystem.Colors.primary.opacity(0.1))
-                        .frame(width: DesignSystem.Layout.rankBadgeSize + DesignSystem.Spacing.dense, height: DesignSystem.Layout.rankBadgeSize + DesignSystem.Spacing.dense)
+                        .frame(
+                            width: DesignSystem.Layout.rankBadgeSize + DesignSystem.Spacing.dense,
+                            height: DesignSystem.Layout.rankBadgeSize + DesignSystem.Spacing.dense
+                        )
                     Image(systemName: "sparkles")
                         .font(DesignSystem.Typography.caption)
                         .foregroundStyle(DesignSystem.Colors.primary)
@@ -203,7 +206,7 @@ private func makeHeatmapDetailPreviewContainer() -> ModelContainer? {
     let y = cal.component(.year, from: .now)
 
     func day(_ year: Int, _ month: Int, _ day: Int) -> Date {
-        cal.date(from: DateComponents(year: year, month: month, day: day))!
+        cal.liShuDate(year: year, month: month, day: day)
     }
 
     let names = ["王志刚", "李美玲", "陈悦", "赵强", "刘洋", "周敏", "吴磊", "孙丽"]
@@ -220,14 +223,14 @@ private func makeHeatmapDetailPreviewContainer() -> ModelContainer? {
     /// 每月固定落在不同「周」的日期（2 月不超过 28 日），避免预览数据挤在同一月。
     func daysSpreadInMonth(_ month: Int) -> [Int] {
         switch month {
-        case 2: return [3, 8, 15, 22, 27]
-        case 4, 6, 9, 11: return [2, 9, 16, 23, 29]
-        default: return [2, 9, 16, 23, 30]
+        case 2: [3, 8, 15, 22, 27]
+        case 4, 6, 9, 11: [2, 9, 16, 23, 29]
+        default: [2, 9, 16, 23, 30]
         }
     }
 
     // 上一年：每月 1 笔，同比基数分散在 12 个月
-    for month in 1...12 {
+    for month in 1 ... 12 {
         records.append(
             Record.makeMonetaryRecord(
                 contact: contacts[month % contacts.count],
@@ -241,7 +244,7 @@ private func makeHeatmapDetailPreviewContainer() -> ModelContainer? {
     }
 
     // 当年：每月相同笔数，日期落在不同周，热力尽量铺满且各月接近
-    for month in 1...12 {
+    for month in 1 ... 12 {
         for (i, d) in daysSpreadInMonth(month).enumerated() {
             records.append(
                 Record.makeMonetaryRecord(

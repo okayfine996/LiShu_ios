@@ -1,5 +1,5 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 /// A reusable inline picker with search, selection list, and optional inline-create mode.
 /// Used for both contact and event selection in AddRecordView.
@@ -236,16 +236,16 @@ extension InlinePickerField where CreateExtraContent == EmptyView {
         self.searchPlaceholder = searchPlaceholder
         self.emptyText = emptyText
         self.newButtonTitle = newButtonTitle
-        self._selectedItem = selectedItem
-        self._isShowingPicker = isShowingPicker
-        self._searchText = searchText
-        self._isCreatingNew = isCreatingNew
+        _selectedItem = selectedItem
+        _isShowingPicker = isShowingPicker
+        _searchText = searchText
+        _isCreatingNew = isCreatingNew
         self.items = items
         self.filteredItems = filteredItems
         self.itemName = itemName
         self.itemIcon = itemIcon
         self.onToggleCreate = onToggleCreate
         self.createContent = createContent
-        self.createExtraContent = { EmptyView() }
+        createExtraContent = { EmptyView() }
     }
 }

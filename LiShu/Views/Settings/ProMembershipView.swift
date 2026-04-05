@@ -1,5 +1,5 @@
-import SwiftUI
 import StoreKit
+import SwiftUI
 
 struct ProMembershipView: View {
     @Environment(\.dismiss) private var dismiss
@@ -29,7 +29,7 @@ struct ProMembershipView: View {
         .navigationTitle(String(localized: "pro.title"))
         .navigationBarTitleDisplayMode(.inline)
         .task {
-            if subscriptionManager.products.isEmpty && !subscriptionManager.isPro {
+            if subscriptionManager.products.isEmpty, !subscriptionManager.isPro {
                 await subscriptionManager.reloadProducts()
             }
         }
@@ -172,7 +172,7 @@ struct ProMembershipView: View {
                 .font(DesignSystem.Typography.title3)
                 .foregroundStyle(DesignSystem.Colors.textPrimary)
 
-            if subscriptionManager.products.isEmpty && subscriptionManager.isLoading {
+            if subscriptionManager.products.isEmpty, subscriptionManager.isLoading {
                 ProgressView()
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 20)
@@ -272,7 +272,8 @@ struct ProMembershipView: View {
                         .fontWeight(.bold)
 
                     if product.type == .autoRenewable,
-                       let period = product.subscription?.subscriptionPeriod {
+                       let period = product.subscription?.subscriptionPeriod
+                    {
                         Text(periodUnitText(period))
                             .font(DesignSystem.Typography.small)
                             .foregroundStyle(DesignSystem.Colors.textTertiary)
@@ -407,12 +408,12 @@ struct ProMembershipView: View {
             }
 
             #if DEBUG
-            Button(String(localized: "DEBUG: 清除购买状态")) {
-                subscriptionManager.debugClearPurchases()
-            }
-            .font(DesignSystem.Typography.small)
-            .foregroundStyle(.red)
-            .padding(.top, 8)
+                Button(String(localized: "DEBUG: 清除购买状态")) {
+                    subscriptionManager.debugClearPurchases()
+                }
+                .font(DesignSystem.Typography.small)
+                .foregroundStyle(.red)
+                .padding(.top, 8)
             #endif
         }
         .frame(maxWidth: .infinity)

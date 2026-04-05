@@ -1,20 +1,20 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 enum AppTab: String, CaseIterable {
-    case home = "home"
-    case records = "records"
-    case contacts = "contacts"
-    case events = "events"
-    case settings = "settings"
+    case home
+    case records
+    case contacts
+    case events
+    case settings
 
     var screenName: String {
         switch self {
-        case .home: return "home.dashboard"
-        case .records: return "records.list"
-        case .contacts: return "contacts.list"
-        case .events: return "events.list"
-        case .settings: return "settings.root"
+        case .home: "home.dashboard"
+        case .records: "records.list"
+        case .contacts: "contacts.list"
+        case .events: "events.list"
+        case .settings: "settings.root"
         }
     }
 }
@@ -121,37 +121,37 @@ struct MainTabView: View {
     @ViewBuilder
     private func routeDestination(_ route: AppRoute) -> some View {
         switch route {
-        case .recordDetail(let id):
+        case let .recordDetail(id):
             RecordDetailView(recordID: id)
-        case .addRecord(let direction, let contactID):
+        case let .addRecord(direction, contactID):
             AddRecordView(direction: direction, contactID: contactID)
-        case .monthlyDetail(let year, let month):
+        case let .monthlyDetail(year, month):
             MonthlyDetailView(period: .month(year: year, month: month))
-        case .periodDetail(let period):
+        case let .periodDetail(period):
             MonthlyDetailView(period: period)
-        case .contactExchange(let id):
+        case let .contactExchange(id):
             ContactExchangeView(contactID: id)
-        case .contactDetail(let id):
+        case let .contactDetail(id):
             ContactDetailView(contactID: id)
         case .addContact:
             AddContactView()
         case .eventList:
             EventListView()
-        case .eventDetail(let id):
+        case let .eventDetail(id):
             EventDetailView(eventID: id)
         case .addEvent:
             AddEventView()
         case .statistics:
             StatisticsView()
-        case .eventTypeComposition(let year):
+        case let .eventTypeComposition(year):
             CompositionDetailView(mode: .eventTypes(year: year))
-        case .netValueRanking(let year):
+        case let .netValueRanking(year):
             NetValueRankingView(year: year)
-        case .circleDetail(let circle, let year):
+        case let .circleDetail(circle, year):
             CircleDetailView(circle: circle, year: year)
-        case .recordTypeComposition(let year):
+        case let .recordTypeComposition(year):
             CompositionDetailView(mode: .recordTypes(year: year))
-        case .heatmapDetail(let year):
+        case let .heatmapDetail(year):
             HeatmapDetailView(year: year)
         case .proMembership:
             ProMembershipView()
@@ -177,7 +177,7 @@ struct MainTabView: View {
     @ViewBuilder
     private func sheetContent(for route: SheetRoute) -> some View {
         switch route {
-        case .addRecord(let direction, let contactID):
+        case let .addRecord(direction, contactID):
             NavigationStack {
                 AddRecordView(direction: direction, contactID: contactID)
             }
@@ -189,19 +189,19 @@ struct MainTabView: View {
             NavigationStack {
                 AddEventView()
             }
-        case .editContact(let contactID):
+        case let .editContact(contactID):
             NavigationStack {
                 AddContactView(contactID: contactID)
             }
-        case .editEvent(let eventID):
+        case let .editEvent(eventID):
             NavigationStack {
                 AddEventView(eventID: eventID)
             }
-        case .editRecord(let recordID):
+        case let .editRecord(recordID):
             NavigationStack {
                 AddRecordView(recordID: recordID)
             }
-        case .returnGift(let recordID):
+        case let .returnGift(recordID):
             NavigationStack {
                 ReturnGiftSheet(recordID: recordID)
             }

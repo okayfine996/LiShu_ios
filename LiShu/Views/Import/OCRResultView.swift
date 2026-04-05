@@ -1,5 +1,5 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 struct OCRResultView: View {
     @Environment(\.dismiss) private var dismiss
@@ -24,11 +24,20 @@ struct OCRResultView: View {
                 InteractionLogger.sheetPresentation(screen: "import.ocr.result", route: "sheet.import.ocrConfig", isPresented: newValue)
             }
             .onChange(of: viewModel.editingItem?.id) { _, newValue in
-                InteractionLogger.sheetPresentation(screen: "import.ocr.result", route: "sheet.import.ocrCorrection", isPresented: newValue != nil)
+                InteractionLogger.sheetPresentation(
+                    screen: "import.ocr.result",
+                    route: "sheet.import.ocrCorrection",
+                    isPresented: newValue != nil
+                )
             }
             .alert(String(localized: "ocr.import.successTitle"), isPresented: $viewModel.importSuccess) {
                 Button(String(localized: "common.ok")) {
-                    InteractionLogger.alertAction(screen: "import.ocr.result", target: "import.ocr.success", action: .submit, result: "dismiss")
+                    InteractionLogger.alertAction(
+                        screen: "import.ocr.result",
+                        target: "import.ocr.success",
+                        action: .submit,
+                        result: "dismiss"
+                    )
                     dismiss()
                 }
             } message: {
@@ -36,7 +45,12 @@ struct OCRResultView: View {
             }
             .alert(String(localized: "common.error"), isPresented: importErrorBinding) {
                 Button(String(localized: "common.ok")) {
-                    InteractionLogger.alertAction(screen: "import.ocr.result", target: "import.ocr.error", action: .submit, result: "dismiss")
+                    InteractionLogger.alertAction(
+                        screen: "import.ocr.result",
+                        target: "import.ocr.error",
+                        action: .submit,
+                        result: "dismiss"
+                    )
                     viewModel.importError = nil
                 }
             } message: {
@@ -140,8 +154,8 @@ struct OCRResultView: View {
                     Int64(viewModel.lowConfidenceCount)
                 )
             )
-                .font(DesignSystem.Typography.caption)
-                .foregroundStyle(DesignSystem.Colors.textPrimary)
+            .font(DesignSystem.Typography.caption)
+            .foregroundStyle(DesignSystem.Colors.textPrimary)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 10)
@@ -292,11 +306,11 @@ struct OCRResultView: View {
     private func warningText(_ type: WarningType?) -> String {
         switch type {
         case .needsVerification:
-            return String(localized: "ocr.result.needsVerification")
+            String(localized: "ocr.result.needsVerification")
         case .suspiciousAmount:
-            return String(localized: "ocr.result.suspiciousAmount")
+            String(localized: "ocr.result.suspiciousAmount")
         case nil:
-            return String(localized: "ocr.result.needsVerification")
+            String(localized: "ocr.result.needsVerification")
         }
     }
 
@@ -313,9 +327,9 @@ struct OCRResultView: View {
 
     private func amountColor(_ item: OCRRecordItem) -> Color {
         switch item.confidence {
-        case .high: return DesignSystem.Colors.primary
-        case .medium: return DesignSystem.Colors.accentGold
-        case .low: return DesignSystem.Colors.textSecondary
+        case .high: DesignSystem.Colors.primary
+        case .medium: DesignSystem.Colors.accentGold
+        case .low: DesignSystem.Colors.textSecondary
         }
     }
 
@@ -354,13 +368,19 @@ struct OCRResultView: View {
                     Int64(viewModel.selectedCount)
                 )
             )
-                .font(DesignSystem.Typography.caption)
-                .foregroundStyle(DesignSystem.Colors.textSecondary)
+            .font(DesignSystem.Typography.caption)
+            .foregroundStyle(DesignSystem.Colors.textSecondary)
 
             Spacer()
 
             Button {
-                InteractionLogger.submit(screen: "import.ocr.result", target: "import.ocr.result.deleteSelected", action: .delete, result: "submitted", metadata: ["count": String(viewModel.selectedCount)])
+                InteractionLogger.submit(
+                    screen: "import.ocr.result",
+                    target: "import.ocr.result.deleteSelected",
+                    action: .delete,
+                    result: "submitted",
+                    metadata: ["count": String(viewModel.selectedCount)]
+                )
                 viewModel.deleteSelected()
             } label: {
                 Text(String(localized: "ocr.delete"))
@@ -373,7 +393,12 @@ struct OCRResultView: View {
             .disabled(viewModel.selectedCount == 0)
 
             Button {
-                InteractionLogger.tap(screen: "import.ocr.result", target: "import.ocr.result.openImportConfig", route: "sheet.import.ocrConfig", presentation: .sheet)
+                InteractionLogger.tap(
+                    screen: "import.ocr.result",
+                    target: "import.ocr.result.openImportConfig",
+                    route: "sheet.import.ocrConfig",
+                    presentation: .sheet
+                )
                 viewModel.isShowingImportConfig = true
             } label: {
                 Text(String(localized: "ocr.import.confirm"))
@@ -423,8 +448,8 @@ struct OCRResultView: View {
                             formatAmount(total)
                         )
                     )
-                        .font(DesignSystem.Typography.body)
-                        .foregroundStyle(DesignSystem.Colors.textPrimary)
+                    .font(DesignSystem.Typography.body)
+                    .foregroundStyle(DesignSystem.Colors.textPrimary)
                 }
 
                 Spacer()
@@ -432,10 +457,22 @@ struct OCRResultView: View {
                 Button {
                     InteractionLogger.tap(screen: "import.ocr.result", target: "import.ocr.config.confirm")
                     if viewModel.performImport(context: modelContext) {
-                        InteractionLogger.submit(screen: "import.ocr.result", target: "import.ocr.config.confirm", action: .save, result: "success", metadata: ["count": String(viewModel.selectedCount)])
+                        InteractionLogger.submit(
+                            screen: "import.ocr.result",
+                            target: "import.ocr.config.confirm",
+                            action: .save,
+                            result: "success",
+                            metadata: ["count": String(viewModel.selectedCount)]
+                        )
                         viewModel.isShowingImportConfig = false
                     } else {
-                        InteractionLogger.submit(screen: "import.ocr.result", target: "import.ocr.config.confirm", action: .save, result: "failed", reason: "import_error")
+                        InteractionLogger.submit(
+                            screen: "import.ocr.result",
+                            target: "import.ocr.config.confirm",
+                            action: .save,
+                            result: "failed",
+                            reason: "import_error"
+                        )
                     }
                 } label: {
                     if viewModel.isImporting {
@@ -498,7 +535,14 @@ struct OCRResultView: View {
         let vm = OCRImportViewModel()
         vm.items = [
             OCRRecordItem(name: "张三", amount: 500, amountText: "500", confidence: .high, eventName: "婚礼"),
-            OCRRecordItem(name: "李四", amount: 200, amountText: "200", confidence: .medium, warningType: .needsVerification, eventName: "婚礼"),
+            OCRRecordItem(
+                name: "李四",
+                amount: 200,
+                amountText: "200",
+                confidence: .medium,
+                warningType: .needsVerification,
+                eventName: "婚礼"
+            ),
             OCRRecordItem(name: "王五", amount: 1000, amountText: "1,000", confidence: .high, eventName: "生日"),
             OCRRecordItem(name: "赵六", amount: 300, amountText: "300", confidence: .high),
             OCRRecordItem(name: "陈七", amount: 5020, amountText: "5,0?0", confidence: .medium, warningType: .suspiciousAmount),
@@ -508,7 +552,7 @@ struct OCRResultView: View {
         vm.processingState = .loaded(vm.items)
         return vm
     }())
-    .modelContainer(for: [Contact.self, Record.self, Event.self], inMemory: true)
+        .modelContainer(for: [Contact.self, Record.self, Event.self], inMemory: true)
 }
 
 #Preview("AI Enhanced") {
@@ -523,5 +567,5 @@ struct OCRResultView: View {
         vm.processingState = .loaded(vm.items)
         return vm
     }())
-    .modelContainer(for: [Contact.self, Record.self, Event.self], inMemory: true)
+        .modelContainer(for: [Contact.self, Record.self, Event.self], inMemory: true)
 }

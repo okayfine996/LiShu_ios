@@ -17,7 +17,7 @@ enum RecordTypeStorageNormalizer {
             recordTypeStorageLogger.notice("Record type normalization finished")
         } catch {
             recordTypeStorageLogger.error("Record type normalization failed", metadata: [
-                "error": .string(error.localizedDescription)
+                "error": .string(error.localizedDescription),
             ])
         }
     }

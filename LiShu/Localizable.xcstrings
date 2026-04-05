@@ -6171,6 +6171,22 @@
         }
       }
     },
+    "settings.data.export_encoding_failed" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Could not encode export data as UTF-8."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法将导出内容编码为 UTF-8。"
+          }
+        }
+      }
+    },
     "settings.data.exportExcel" : {
       "extractionState" : "stale",
       "localizations" : {

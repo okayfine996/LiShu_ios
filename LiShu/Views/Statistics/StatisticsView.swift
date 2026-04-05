@@ -1,12 +1,12 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 struct StatisticsView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(SubscriptionManager.self) private var subscriptionManager
     @State private var viewModel = StatisticsViewModel()
     @State private var sheetRoute: SheetRoute?
-    
+
     private var shouldLockProContent: Bool {
         if ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1" {
             return false
@@ -27,7 +27,7 @@ struct StatisticsView: View {
                 )
             case .loaded:
                 statisticsContent
-            case .error(let message):
+            case let .error(message):
                 ErrorStateView(message: message) {
                     viewModel.loadData(context: modelContext)
                 }
@@ -112,7 +112,6 @@ struct StatisticsView: View {
         }
     }
 
-    @ViewBuilder
     private func statisticsSectionHeader(
         systemImage: String,
         title: String,
@@ -135,7 +134,6 @@ struct StatisticsView: View {
     }
 
     /// 与环形图等大卡风格一致的「空状态」底（圈层 / 排行等无数据时）。
-    @ViewBuilder
     private func statisticsEmptyStateCard(@ViewBuilder content: () -> some View) -> some View {
         content()
             .frame(maxWidth: .infinity, alignment: .center)
@@ -480,60 +478,60 @@ struct StatisticsView: View {
 
     private func donutOpacity(for index: Int) -> Double {
         switch index {
-        case 0: return 1.0
-        case 1: return 0.6
-        case 2: return 0.3
-        default: return 0.1
+        case 0: 1.0
+        case 1: 0.6
+        case 2: 0.3
+        default: 0.1
         }
     }
 
     // MARK: - Heatmap（暂不展示，整段注释保留）
 
     /*
-    private var heatmapOuterSection: some View {
-        VStack(alignment: .leading, spacing: DesignSystem.Spacing.block) {
-            statisticsSectionHeader(systemImage: "square.grid.3x3.fill", title: String(localized: "statistics.heatmap.title")) {
-            }
-            heatmapCard
-        }
-    }
+     private var heatmapOuterSection: some View {
+         VStack(alignment: .leading, spacing: DesignSystem.Spacing.block) {
+             statisticsSectionHeader(systemImage: "square.grid.3x3.fill", title: String(localized: "statistics.heatmap.title")) {
+             }
+             heatmapCard
+         }
+     }
 
-    private var heatmapCard: some View {
-        VStack(alignment: .leading, spacing: DesignSystem.Spacing.block) {
-            HStack(spacing: DesignSystem.Spacing.dense) {
-                ForEach(0..<12, id: \.self) { month in
-                    VStack(spacing: DesignSystem.Spacing.dense) {
-                        ForEach(0..<4, id: \.self) { week in
-                            RoundedRectangle(cornerRadius: DesignSystem.Radius.chartBar)
-                                .fill(DesignSystem.Colors.primary.opacity(
-                                    viewModel.heatmapOpacity(viewModel.heatmapGrid[month][week])
-                                ))
-                                .aspectRatio(1, contentMode: .fit)
-                        }
-                    }
-                }
-            }
+     private var heatmapCard: some View {
+         VStack(alignment: .leading, spacing: DesignSystem.Spacing.block) {
+             HStack(spacing: DesignSystem.Spacing.dense) {
+                 ForEach(0..<12, id: \.self) { month in
+                     VStack(spacing: DesignSystem.Spacing.dense) {
+                         ForEach(0..<4, id: \.self) { week in
+                             RoundedRectangle(cornerRadius: DesignSystem.Radius.chartBar)
+                                 .fill(DesignSystem.Colors.primary.opacity(
+                                     viewModel.heatmapOpacity(viewModel.heatmapGrid[month][week])
+                                 ))
+                                 .aspectRatio(1, contentMode: .fit)
+                         }
+                     }
+                 }
+             }
 
-            HStack(spacing: DesignSystem.Spacing.dense) {
-                ForEach(0..<12, id: \.self) { m in
-                    Text("\(m + 1)")
-                        .font(DesignSystem.Typography.small)
-                        .foregroundStyle(DesignSystem.Colors.textTertiary)
-                        .frame(maxWidth: .infinity)
-                }
-            }
+             HStack(spacing: DesignSystem.Spacing.dense) {
+                 ForEach(0..<12, id: \.self) { m in
+                     Text("\(m + 1)")
+                         .font(DesignSystem.Typography.small)
+                         .foregroundStyle(DesignSystem.Colors.textTertiary)
+                         .frame(maxWidth: .infinity)
+                 }
+             }
 
-            HeatmapLegendRow()
-        }
-        .padding(DesignSystem.Spacing.cardPadding)
-        .background(DesignSystem.Colors.bgSurface)
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
-        .overlay(
-            RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
-                .stroke(DesignSystem.Colors.primary.opacity(0.05), lineWidth: 1)
-        )
-    }
-    */
+             HeatmapLegendRow()
+         }
+         .padding(DesignSystem.Spacing.cardPadding)
+         .background(DesignSystem.Colors.bgSurface)
+         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+         .overlay(
+             RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
+                 .stroke(DesignSystem.Colors.primary.opacity(0.05), lineWidth: 1)
+         )
+     }
+     */
 
     private var recordTypeCompositionCard: some View {
         DonutDistributionCard(
@@ -575,7 +573,6 @@ struct StatisticsView: View {
         return segments
     }
 
-    @ViewBuilder
     private func donutDistributionListRow(
         swatchColor: Color,
         title: String,
@@ -605,10 +602,10 @@ struct StatisticsView: View {
 
     private func recordTypeColor(for index: Int) -> Color {
         switch index {
-        case 0: return DesignSystem.Colors.primary
-        case 1: return DesignSystem.Colors.primary.opacity(0.55)
-        case 2: return DesignSystem.Colors.textTertiary.opacity(0.5)
-        default: return DesignSystem.Colors.textPrimary.opacity(0.7)
+        case 0: DesignSystem.Colors.primary
+        case 1: DesignSystem.Colors.primary.opacity(0.55)
+        case 2: DesignSystem.Colors.textTertiary.opacity(0.5)
+        default: DesignSystem.Colors.textPrimary.opacity(0.7)
         }
     }
 
@@ -790,7 +787,6 @@ struct StatisticsView: View {
         }
         .buttonStyle(.plain)
     }
-
 }
 
 // MARK: - Preview
@@ -809,21 +805,77 @@ private func makeStatisticsPreviewContainer() -> ModelContainer? {
     let c3 = Contact(name: "张三", relation: "大学同学", circle: 3)
     [c1, c2, c3].forEach { ctx.insert($0) }
 
-    let e1 = Event(name: "结婚喜宴", type: .wedding, date: cal.date(from: DateComponents(year: thisYear, month: 1, day: 15))!)
-    let e2 = Event(name: "添丁满月", type: .birth, date: cal.date(from: DateComponents(year: thisYear, month: 2, day: 10))!)
-    let e3 = Event(name: "生日祝寿", type: .birthday, date: cal.date(from: DateComponents(year: thisYear, month: 5, day: 20))!)
-    let e4 = Event(name: "乔迁新居", type: .property, date: cal.date(from: DateComponents(year: thisYear, month: 8, day: 5))!)
+    let e1 = Event(name: "结婚喜宴", type: .wedding, date: cal.liShuDate(year: thisYear, month: 1, day: 15))
+    let e2 = Event(name: "添丁满月", type: .birth, date: cal.liShuDate(year: thisYear, month: 2, day: 10))
+    let e3 = Event(name: "生日祝寿", type: .birthday, date: cal.liShuDate(year: thisYear, month: 5, day: 20))
+    let e4 = Event(name: "乔迁新居", type: .property, date: cal.liShuDate(year: thisYear, month: 8, day: 5))
     [e1, e2, e3, e4].forEach { ctx.insert($0) }
 
     let records: [Record] = [
-        Record.makeMonetaryRecord(contact: c1, event: e1, amount: 30000, direction: .received, paymentMethod: .wechat, date: cal.date(from: DateComponents(year: thisYear, month: 1, day: 15))!),
-        Record.makeMonetaryRecord(contact: c1, event: e2, amount: 5000, direction: .given, paymentMethod: .cash, date: cal.date(from: DateComponents(year: thisYear, month: 2, day: 10))!),
-        Record.makeMonetaryRecord(contact: c2, event: e1, amount: 28000, direction: .received, paymentMethod: .alipay, date: cal.date(from: DateComponents(year: thisYear, month: 1, day: 16))!),
-        Record.makeMonetaryRecord(contact: c2, event: e3, amount: 12000, direction: .received, paymentMethod: .cash, date: cal.date(from: DateComponents(year: thisYear, month: 5, day: 20))!),
-        Record.makeMonetaryRecord(contact: c3, event: e1, amount: 20000, direction: .given, paymentMethod: .wechat, date: cal.date(from: DateComponents(year: thisYear, month: 1, day: 15))!),
-        Record.makeMonetaryRecord(contact: c3, event: e3, amount: 8000, direction: .given, paymentMethod: .cash, date: cal.date(from: DateComponents(year: thisYear, month: 5, day: 20))!),
-        Record.makeMonetaryRecord(contact: c1, event: e4, amount: 5000, direction: .received, paymentMethod: .wechat, date: cal.date(from: DateComponents(year: thisYear, month: 8, day: 5))!),
-        Record.makeMonetaryRecord(contact: c3, event: e4, amount: 3000, direction: .given, paymentMethod: .alipay, date: cal.date(from: DateComponents(year: thisYear, month: 8, day: 5))!),
+        Record.makeMonetaryRecord(
+            contact: c1,
+            event: e1,
+            amount: 30000,
+            direction: .received,
+            paymentMethod: .wechat,
+            date: cal.liShuDate(year: thisYear, month: 1, day: 15)
+        ),
+        Record.makeMonetaryRecord(
+            contact: c1,
+            event: e2,
+            amount: 5000,
+            direction: .given,
+            paymentMethod: .cash,
+            date: cal.liShuDate(year: thisYear, month: 2, day: 10)
+        ),
+        Record.makeMonetaryRecord(
+            contact: c2,
+            event: e1,
+            amount: 28000,
+            direction: .received,
+            paymentMethod: .alipay,
+            date: cal.liShuDate(year: thisYear, month: 1, day: 16)
+        ),
+        Record.makeMonetaryRecord(
+            contact: c2,
+            event: e3,
+            amount: 12000,
+            direction: .received,
+            paymentMethod: .cash,
+            date: cal.liShuDate(year: thisYear, month: 5, day: 20)
+        ),
+        Record.makeMonetaryRecord(
+            contact: c3,
+            event: e1,
+            amount: 20000,
+            direction: .given,
+            paymentMethod: .wechat,
+            date: cal.liShuDate(year: thisYear, month: 1, day: 15)
+        ),
+        Record.makeMonetaryRecord(
+            contact: c3,
+            event: e3,
+            amount: 8000,
+            direction: .given,
+            paymentMethod: .cash,
+            date: cal.liShuDate(year: thisYear, month: 5, day: 20)
+        ),
+        Record.makeMonetaryRecord(
+            contact: c1,
+            event: e4,
+            amount: 5000,
+            direction: .received,
+            paymentMethod: .wechat,
+            date: cal.liShuDate(year: thisYear, month: 8, day: 5)
+        ),
+        Record.makeMonetaryRecord(
+            contact: c3,
+            event: e4,
+            amount: 3000,
+            direction: .given,
+            paymentMethod: .alipay,
+            date: cal.liShuDate(year: thisYear, month: 8, day: 5)
+        ),
     ]
     records.forEach { ctx.insert($0) }
 

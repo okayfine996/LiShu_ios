@@ -17,8 +17,8 @@ class EventListViewModel {
         guard !trimmed.isEmpty else { return events }
         return events.filter {
             $0.name.localizedCaseInsensitiveContains(trimmed)
-            || $0.location.localizedCaseInsensitiveContains(trimmed)
-            || $0.type.displayName.localizedCaseInsensitiveContains(trimmed)
+                || $0.location.localizedCaseInsensitiveContains(trimmed)
+                || $0.type.displayName.localizedCaseInsensitiveContains(trimmed)
         }
     }
 
@@ -59,13 +59,13 @@ class EventListViewModel {
             eventListLogger.notice("Loaded events", metadata: [
                 "step": .string("load"),
                 "count": .stringConvertible(events.count),
-                "result": .string("success")
+                "result": .string("success"),
             ])
         } catch {
             state = .error(error.localizedDescription)
             eventListLogger.error("Failed to load events", metadata: [
                 "step": .string("load"),
-                "error": .string(error.localizedDescription)
+                "error": .string(error.localizedDescription),
             ])
         }
     }
@@ -76,7 +76,7 @@ class EventListViewModel {
             eventListLogger.warning("Blocked event deletion", metadata: [
                 "step": .string("delete"),
                 "event_id": .string(String(describing: event.persistentModelID)),
-                "reason": .string("has_records")
+                "reason": .string("has_records"),
             ])
             return
         }
@@ -86,7 +86,7 @@ class EventListViewModel {
             eventListLogger.notice("Deleted event", metadata: [
                 "step": .string("delete"),
                 "event_id": .string(String(describing: event.persistentModelID)),
-                "result": .string("success")
+                "result": .string("success"),
             ])
             load(context: context)
         } catch {
@@ -94,7 +94,7 @@ class EventListViewModel {
             eventListLogger.error("Failed to delete event", metadata: [
                 "step": .string("delete"),
                 "event_id": .string(String(describing: event.persistentModelID)),
-                "error": .string(error.localizedDescription)
+                "error": .string(error.localizedDescription),
             ])
             load(context: context)
         }

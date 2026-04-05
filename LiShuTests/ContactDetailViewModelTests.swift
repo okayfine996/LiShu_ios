@@ -1,12 +1,11 @@
 import Foundation
-import Testing
-import SwiftData
 @testable import LiShu
+import SwiftData
+import Testing
 
 @MainActor
 struct ContactDetailViewModelTests {
-
-    @Test func testLoadContact() throws {
+    @Test func loadContact() throws {
         let db = try TestDB()
         let contact = SampleData.contact(name: "张三")
         db.context.insert(contact)
@@ -28,8 +27,8 @@ struct ContactDetailViewModelTests {
         db.context.insert(event)
 
         let cal = Calendar.current
-        let oldDate = cal.date(byAdding: .day, value: -10, to: .now)!
-        let newDate = cal.date(byAdding: .day, value: -1, to: .now)!
+        let oldDate = try #require(cal.date(byAdding: .day, value: -10, to: .now))
+        let newDate = try #require(cal.date(byAdding: .day, value: -1, to: .now))
 
         let oldRecord = SampleData.record(contact: contact, event: event, amount: 100, direction: .given, date: oldDate)
         let newRecord = SampleData.record(contact: contact, event: event, amount: 200, direction: .given, date: newDate)
@@ -61,7 +60,7 @@ struct ContactDetailViewModelTests {
         #expect(contacts.isEmpty)
     }
 
-    @Test func testFormatAmountAndNetValue() {
+    @Test func formatAmountAndNetValue() {
         let vm = ContactDetailViewModel()
 
         #expect(vm.formatAmount(1200) == "¥1200")

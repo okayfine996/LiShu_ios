@@ -49,7 +49,7 @@ final class Contact {
         self.birthday = birthday
         self.location = location
         self.note = note
-        self.createdAt = .now
+        createdAt = .now
     }
 
     /// 人情净值 = 收到总额 - 送出总额（扣除退礼），仅统计金额类型

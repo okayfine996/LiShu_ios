@@ -1,5 +1,5 @@
-import SwiftUI
 import PulseUI
+import SwiftUI
 
 struct AboutView: View {
     @State private var showPulseConsole = false

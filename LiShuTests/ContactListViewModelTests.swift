@@ -1,11 +1,10 @@
 import Foundation
-import Testing
-import SwiftData
 @testable import LiShu
+import SwiftData
+import Testing
 
 @MainActor
 struct ContactListViewModelTests {
-
     @Test("load returns 3 contacts in state")
     func testLoadContacts() throws {
         let db = try TestDB()
@@ -21,7 +20,7 @@ struct ContactListViewModelTests {
         vm.loadContacts(context: db.context)
 
         #expect(vm.state.value != nil)
-        #expect(vm.state.value!.count == 3)
+        #expect(vm.state.value?.count == 3)
     }
 
     @Test("totalCount reflects all loaded contacts")
@@ -42,7 +41,7 @@ struct ContactListViewModelTests {
     }
 
     @Test("searchText filters contacts by name")
-    func testSearchFilter() throws {
+    func searchFilter() throws {
         let db = try TestDB()
         let c1 = SampleData.contact(name: "张三")
         let c2 = SampleData.contact(name: "李四")
@@ -55,11 +54,11 @@ struct ContactListViewModelTests {
         vm.searchText = "张"
 
         #expect(vm.filteredContacts.count == 1)
-        #expect(vm.filteredContacts.first!.name == "张三")
+        #expect(vm.filteredContacts.first?.name == "张三")
     }
 
     @Test("selectedFilter=family shows only 家人 contacts")
-    func testCircleFilter() throws {
+    func circleFilter() throws {
         let db = try TestDB()
         let c1 = SampleData.contact(name: "张三", category: "家人")
         let c2 = SampleData.contact(name: "李四", category: "社会")
@@ -72,7 +71,7 @@ struct ContactListViewModelTests {
         vm.selectedFilter = .family
 
         #expect(vm.filteredContacts.count == 1)
-        #expect(vm.filteredContacts.first!.category == "家人")
+        #expect(vm.filteredContacts.first?.category == "家人")
     }
 
     @Test("groupedContacts groups by category")
@@ -93,10 +92,10 @@ struct ContactListViewModelTests {
         #expect(groups.count >= 2)
         let familyGroup = groups.first { $0.id == "家人" }
         #expect(familyGroup != nil)
-        #expect(familyGroup!.contacts.count == 2)
+        #expect(familyGroup?.contacts.count == 2)
         let socialGroup = groups.first { $0.id == "社会" }
         #expect(socialGroup != nil)
-        #expect(socialGroup!.contacts.count == 1)
+        #expect(socialGroup?.contacts.count == 1)
     }
 
     @Test("deleteContact decreases count")

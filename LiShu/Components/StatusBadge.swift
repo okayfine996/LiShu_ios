@@ -21,39 +21,39 @@ struct StatusBadge: View {
     private var statusText: String {
         switch badge {
         case .received:
-            return String(localized: "record.status.received")
+            String(localized: "record.status.received")
         case .notReturned:
-            return String(localized: "record.returnGift.notReturned")
+            String(localized: "record.returnGift.notReturned")
         case .returned:
-            return String(localized: "record.returnGift.returned")
+            String(localized: "record.returnGift.returned")
         case .omitted:
-            return ""
+            ""
         }
     }
 
     private var statusColor: Color {
         switch badge {
         case .received:
-            return DesignSystem.Colors.accentGold
+            DesignSystem.Colors.accentGold
         case .notReturned:
-            return DesignSystem.Colors.primary
+            DesignSystem.Colors.primary
         case .returned:
-            return DesignSystem.Colors.accentGold
+            DesignSystem.Colors.accentGold
         case .omitted:
-            return DesignSystem.Colors.textSecondary
+            DesignSystem.Colors.textSecondary
         }
     }
 
     private var statusBackground: Color {
         switch badge {
         case .received:
-            return DesignSystem.Colors.accentGold.opacity(0.12)
+            DesignSystem.Colors.accentGold.opacity(0.12)
         case .notReturned:
-            return DesignSystem.Colors.primary.opacity(0.12)
+            DesignSystem.Colors.primary.opacity(0.12)
         case .returned:
-            return DesignSystem.Colors.accentGold.opacity(0.12)
+            DesignSystem.Colors.accentGold.opacity(0.12)
         case .omitted:
-            return Color.clear
+            Color.clear
         }
     }
 }

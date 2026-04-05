@@ -1,6 +1,6 @@
-import SwiftUI
-import SwiftData
 import PhotosUI
+import SwiftData
+import SwiftUI
 
 struct AddRecordView: View {
     @Environment(\.modelContext) private var modelContext
@@ -26,7 +26,8 @@ struct AddRecordView: View {
     var body: some View {
         addRecordScrollView
             .background(DesignSystem.Colors.bgPage)
-            .navigationTitle(viewModel.editingRecord != nil ? String(localized: "record.edit.title") : String(localized: "record.add.navTitle"))
+            .navigationTitle(viewModel
+                .editingRecord != nil ? String(localized: "record.edit.title") : String(localized: "record.add.navTitle"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { addRecordToolbarContent }
             .onAppear(perform: onAppear)
@@ -429,7 +430,6 @@ struct AddRecordView: View {
             .padding(4)
             .background(DesignSystem.Colors.bgInput)
             .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.input))
-
         }
     }
 
@@ -479,7 +479,8 @@ struct AddRecordView: View {
                 )
                 .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.tag))
                 .shadow(
-                    color: viewModel.direction == dir ? DesignSystem.Colors.primary.opacity(DesignSystem.Effects.selectedShadowOpacity) : .clear,
+                    color: viewModel.direction == dir ? DesignSystem.Colors.primary
+                        .opacity(DesignSystem.Effects.selectedShadowOpacity) : .clear,
                     radius: DesignSystem.Effects.selectedShadowRadius,
                     y: DesignSystem.Effects.selectedShadowYOffset
                 )
@@ -549,7 +550,8 @@ struct AddRecordView: View {
                 )
                 .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.tag))
                 .shadow(
-                    color: viewModel.contextSelection == selection ? DesignSystem.Colors.primary.opacity(DesignSystem.Effects.selectedShadowOpacity) : .clear,
+                    color: viewModel.contextSelection == selection ? DesignSystem.Colors.primary
+                        .opacity(DesignSystem.Effects.selectedShadowOpacity) : .clear,
                     radius: DesignSystem.Effects.selectedShadowRadius,
                     y: DesignSystem.Effects.selectedShadowYOffset
                 )
@@ -562,10 +564,10 @@ struct AddRecordView: View {
     @ViewBuilder
     private var typeSpecificSection: some View {
         switch viewModel.recordType {
-        case .monetary:  monetaryFormSection
-        case .gift:      giftFormSection
-        case .favor:     favorFormSection
-        case .banquet:   banquetFormSection
+        case .monetary: monetaryFormSection
+        case .gift: giftFormSection
+        case .favor: favorFormSection
+        case .banquet: banquetFormSection
         }
     }
 
@@ -697,6 +699,7 @@ struct AddRecordView: View {
     }
 
     // MARK: - Banquet Form
+
     private var banquetFormSection: some View {
         VStack(spacing: 16) {
             formField(
@@ -837,11 +840,16 @@ struct AddRecordView: View {
     private func selectedEventCard(_ event: Event) -> some View {
         HStack(spacing: 12) {
             HStack(spacing: 12) {
-                EventCoverView(coverImage: event.coverImage, eventType: event.type, size: 52, placeholderBackground: DesignSystem.Colors.bgSurface)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: DesignSystem.Radius.input)
-                            .stroke(DesignSystem.Colors.border, lineWidth: 1)
-                    )
+                EventCoverView(
+                    coverImage: event.coverImage,
+                    eventType: event.type,
+                    size: 52,
+                    placeholderBackground: DesignSystem.Colors.bgSurface
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: DesignSystem.Radius.input)
+                        .stroke(DesignSystem.Colors.border, lineWidth: 1)
+                )
 
                 VStack(alignment: .leading, spacing: 6) {
                     Text(event.name)
@@ -1021,7 +1029,8 @@ struct AddRecordView: View {
                     HStack(spacing: 4) {
                         Image(systemName: viewModel.isCreatingCustomTag ? "xmark" : "plus")
                             .font(.system(size: 11, weight: .semibold))
-                        Text(viewModel.isCreatingCustomTag ? String(localized: "common.cancel") : String(localized: "record.add.dailyTag.custom"))
+                        Text(viewModel
+                            .isCreatingCustomTag ? String(localized: "common.cancel") : String(localized: "record.add.dailyTag.custom"))
                             .font(DesignSystem.Typography.small)
                     }
                     .foregroundStyle(DesignSystem.Colors.primary)
@@ -1297,9 +1306,9 @@ struct AddRecordView: View {
 
     private func paymentMethodName(_ method: PaymentMethod) -> String {
         switch method {
-        case .cash: return String(localized: "payment.cash")
-        case .wechat: return String(localized: "payment.wechat")
-        case .alipay: return String(localized: "payment.alipay")
+        case .cash: String(localized: "payment.cash")
+        case .wechat: String(localized: "payment.wechat")
+        case .alipay: String(localized: "payment.alipay")
         }
     }
 }
@@ -1323,21 +1332,48 @@ private func makeAddRecordPreviewContainer() -> ModelContainer? {
     let c6 = Contact(name: "孙八", relation: "客户", category: "社交", circle: 3)
     [c1, c2, c3, c4, c5, c6].forEach { ctx.insert($0) }
 
-    let e1 = Event(name: "表哥的婚礼", type: .wedding, date: cal.date(byAdding: .day, value: 5, to: now)!, location: "家乡酒店")
-    let e2 = Event(name: "小李30岁生日", type: .birthday, date: cal.date(byAdding: .day, value: 12, to: now)!, location: "上海")
-    let e3 = Event(name: "硕士毕业典礼", type: .education, date: cal.date(byAdding: .day, value: 20, to: now)!, location: "广州")
-    let e4 = Event(name: "春节拜年", type: .festival, date: cal.date(byAdding: .month, value: -1, to: now)!, location: "老家")
-    let e5 = Event(name: "王总乔迁", type: .property, date: cal.date(byAdding: .day, value: -5, to: now)!, location: "深圳")
-    let e6 = Event(name: "爷爷丧事", type: .funeral, date: cal.date(byAdding: .month, value: -2, to: now)!, location: "县城")
-    let e7 = Event(name: "新店开业", type: .business, date: cal.date(byAdding: .day, value: 30, to: now)!, location: "杭州")
+    let e1 = Event(name: "表哥的婚礼", type: .wedding, date: cal.liShuDateByAddingDays(5, to: now), location: "家乡酒店")
+    let e2 = Event(name: "小李30岁生日", type: .birthday, date: cal.liShuDateByAddingDays(12, to: now), location: "上海")
+    let e3 = Event(name: "硕士毕业典礼", type: .education, date: cal.liShuDateByAddingDays(20, to: now), location: "广州")
+    let e4 = Event(name: "春节拜年", type: .festival, date: cal.liShuDateByAddingMonths(-1, to: now), location: "老家")
+    let e5 = Event(name: "王总乔迁", type: .property, date: cal.liShuDateByAddingDays(-5, to: now), location: "深圳")
+    let e6 = Event(name: "爷爷丧事", type: .funeral, date: cal.liShuDateByAddingMonths(-2, to: now), location: "县城")
+    let e7 = Event(name: "新店开业", type: .business, date: cal.liShuDateByAddingDays(30, to: now), location: "杭州")
     [e1, e2, e3, e4, e5, e6, e7].forEach { ctx.insert($0) }
 
     let r1 = Record.makeMonetaryRecord(contact: c1, event: e1, amount: 800, direction: .given, paymentMethod: .wechat, date: now)
-    let r2 = Record.makeMonetaryRecord(contact: c2, event: e2, amount: 600, direction: .given, paymentMethod: .cash, date: cal.date(byAdding: .day, value: -2, to: now)!)
-    let r3 = Record.makeMonetaryRecord(contact: c3, event: e4, amount: 500, direction: .received, paymentMethod: .alipay, date: cal.date(byAdding: .month, value: -1, to: now)!)
-    let r4 = Record.makeMonetaryRecord(contact: c4, event: nil, amount: 200, direction: .given, paymentMethod: .wechat, date: cal.date(byAdding: .day, value: -3, to: now)!)
+    let r2 = Record.makeMonetaryRecord(
+        contact: c2,
+        event: e2,
+        amount: 600,
+        direction: .given,
+        paymentMethod: .cash,
+        date: cal.liShuDateByAddingDays(-2, to: now)
+    )
+    let r3 = Record.makeMonetaryRecord(
+        contact: c3,
+        event: e4,
+        amount: 500,
+        direction: .received,
+        paymentMethod: .alipay,
+        date: cal.liShuDateByAddingMonths(-1, to: now)
+    )
+    let r4 = Record.makeMonetaryRecord(
+        contact: c4,
+        event: nil,
+        amount: 200,
+        direction: .given,
+        paymentMethod: .wechat,
+        date: cal.liShuDateByAddingDays(-3, to: now)
+    )
     r4.contextTag = "年会凑份"
-    let r5 = Record.makeMonetaryRecord(contact: c5, event: nil, amount: 100, direction: .given, date: cal.date(byAdding: .day, value: -10, to: now)!)
+    let r5 = Record.makeMonetaryRecord(
+        contact: c5,
+        event: nil,
+        amount: 100,
+        direction: .given,
+        date: cal.liShuDateByAddingDays(-10, to: now)
+    )
     r5.contextTag = "社区互助"
     [r1, r2, r3, r4, r5].forEach { ctx.insert($0) }
 

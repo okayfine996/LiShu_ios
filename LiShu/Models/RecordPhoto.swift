@@ -15,6 +15,6 @@ final class RecordPhoto {
     init(record: Record, imageData: Data) {
         self.record = record
         self.imageData = imageData
-        self.createdAt = .now
+        createdAt = .now
     }
 }

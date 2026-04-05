@@ -300,7 +300,7 @@ struct OnboardingView: View {
     private var pageIndicatorAndAction: some View {
         VStack(spacing: 20) {
             HStack(spacing: 8) {
-                ForEach(0..<totalPages, id: \.self) { index in
+                ForEach(0 ..< totalPages, id: \.self) { index in
                     Circle()
                         .fill(
                             index == currentPage

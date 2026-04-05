@@ -1,13 +1,12 @@
 import Foundation
-import Testing
-import SwiftData
 @testable import LiShu
+import SwiftData
+import Testing
 
 @MainActor
 struct StatisticsViewModelTests {
-
     @Test("load empty database hasData=false, totals=0")
-    func testLoadEmptyDatabase() throws {
+    func loadEmptyDatabase() throws {
         let db = try TestDB()
         let vm = StatisticsViewModel()
         vm.loadData(context: db.context)
@@ -19,7 +18,7 @@ struct StatisticsViewModelTests {
     }
 
     @Test("load with records computes totalIncome/totalExpense/netValue")
-    func testLoadWithData() throws {
+    func loadWithData() throws {
         let db = try TestDB()
         let cal = Calendar.current
         let currentYear = cal.component(.year, from: Date())
@@ -27,7 +26,7 @@ struct StatisticsViewModelTests {
         comps.year = currentYear
         comps.month = 6
         comps.day = 15
-        let recordDate = cal.date(from: comps)!
+        let recordDate = try #require(cal.date(from: comps))
 
         let c = SampleData.contact(name: "张三")
         let e = SampleData.event()
@@ -56,10 +55,10 @@ struct StatisticsViewModelTests {
         comps.year = currentYear
         comps.month = 3
         comps.day = 10
-        let marDate = cal.date(from: comps)!
+        let marDate = try #require(cal.date(from: comps))
         comps.month = 6
         comps.day = 20
-        let junDate = cal.date(from: comps)!
+        let junDate = try #require(cal.date(from: comps))
 
         let c = SampleData.contact(name: "张三")
         let e = SampleData.event()
@@ -96,7 +95,7 @@ struct StatisticsViewModelTests {
         comps.year = currentYear
         comps.month = 6
         comps.day = 15
-        let recordDate = cal.date(from: comps)!
+        let recordDate = try #require(cal.date(from: comps))
 
         let c = SampleData.contact(name: "张三")
         let e1 = SampleData.event(type: .wedding)
@@ -121,10 +120,10 @@ struct StatisticsViewModelTests {
         let birthday = dist.first { $0.type == .birthday }
         #expect(wedding != nil)
         #expect(birthday != nil)
-        #expect(wedding!.amount == 600)
-        #expect(wedding!.percentage == 0.6)
-        #expect(birthday!.amount == 400)
-        #expect(birthday!.percentage == 0.4)
+        #expect(wedding?.amount == 600)
+        #expect(wedding?.percentage == 0.6)
+        #expect(birthday?.amount == 400)
+        #expect(birthday?.percentage == 0.4)
     }
 
     @Test("topContacts has 5, allRankedContacts has 5")
@@ -136,7 +135,7 @@ struct StatisticsViewModelTests {
         comps.year = currentYear
         comps.month = 6
         comps.day = 15
-        let recordDate = cal.date(from: comps)!
+        let recordDate = try #require(cal.date(from: comps))
 
         let c1 = SampleData.contact(name: "张三")
         let c2 = SampleData.contact(name: "李四")
@@ -144,7 +143,9 @@ struct StatisticsViewModelTests {
         let c4 = SampleData.contact(name: "赵六")
         let c5 = SampleData.contact(name: "孙七")
         let e = SampleData.event()
-        for c in [c1, c2, c3, c4, c5] { db.context.insert(c) }
+        for c in [c1, c2, c3, c4, c5] {
+            db.context.insert(c)
+        }
         db.context.insert(e)
         for c in [c1, c2, c3, c4, c5] {
             let r = SampleData.record(contact: c, event: e, amount: 100, direction: .given, returnedAmount: 0, date: recordDate)
@@ -167,12 +168,12 @@ struct StatisticsViewModelTests {
         comps2025.year = 2025
         comps2025.month = 6
         comps2025.day = 15
-        let date2025 = cal.date(from: comps2025)!
+        let date2025 = try #require(cal.date(from: comps2025))
         var comps2026 = DateComponents()
         comps2026.year = 2026
         comps2026.month = 6
         comps2026.day = 15
-        let date2026 = cal.date(from: comps2026)!
+        let date2026 = try #require(cal.date(from: comps2026))
 
         let c = SampleData.contact(name: "张三")
         let e = SampleData.event()
@@ -198,14 +199,14 @@ struct StatisticsViewModelTests {
     }
 
     @Test("formatAmount: 5000 -> 5000, 15000 -> 1.5W")
-    func testFormatAmount() throws {
+    func testFormatAmount() {
         let vm = StatisticsViewModel()
         #expect(vm.formatAmount(5000) == "5000")
         #expect(vm.formatAmount(15000) == "1.5W")
     }
 
     @Test("formatNetValue: 1000 -> +¥1,000, -500 -> correct negative format")
-    func testFormatNetValue() throws {
+    func testFormatNetValue() {
         let vm = StatisticsViewModel()
         let positive = vm.formatNetValue(1000)
         #expect(positive.contains("+"))
@@ -226,13 +227,15 @@ struct StatisticsViewModelTests {
         comps.year = currentYear
         comps.month = 6
         comps.day = 15
-        let recordDate = cal.date(from: comps)!
+        let recordDate = try #require(cal.date(from: comps))
 
         let c1 = SampleData.contact(name: "低")
         let c2 = SampleData.contact(name: "高")
         let c3 = SampleData.contact(name: "中")
         let e = SampleData.event()
-        for c in [c1, c2, c3] { db.context.insert(c) }
+        for c in [c1, c2, c3] {
+            db.context.insert(c)
+        }
         db.context.insert(e)
         let r1 = SampleData.record(contact: c1, event: e, amount: 100, direction: .received, returnedAmount: 0, date: recordDate)
         let r2 = SampleData.record(contact: c2, event: e, amount: 500, direction: .received, returnedAmount: 0, date: recordDate)
@@ -272,7 +275,7 @@ struct StatisticsViewModelTests {
     }
 
     @Test("hasData: only non-financial records in year counts as has data")
-    func testHasDataNonFinancialOnly() throws {
+    func hasDataNonFinancialOnly() throws {
         let db = try TestDB()
         let c = SampleData.contact(name: "仅礼品")
         let e = SampleData.event()

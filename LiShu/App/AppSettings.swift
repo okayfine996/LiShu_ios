@@ -16,8 +16,6 @@ class AppSettings {
         static let hasSeenOnboarding = "hasSeenOnboarding"
         static let colorScheme = "colorScheme"
 
-
-
         static let icloudSyncEnabled = "icloudSyncEnabled"
         static let notificationEnabled = "notificationEnabled"
         static let eventReminder = "eventReminder"
@@ -40,7 +38,7 @@ class AppSettings {
             appSettingsLogger.notice("Updated app setting", metadata: [
                 "action": .string("set"),
                 "target": .string("onboarding.seen"),
-                "result": .string(newValue ? "true" : "false")
+                "result": .string(newValue ? "true" : "false"),
             ])
         }
     }
@@ -54,7 +52,7 @@ class AppSettings {
             appSettingsLogger.notice("Updated app setting", metadata: [
                 "action": .string("set"),
                 "target": .string("appearance.color_scheme"),
-                "result": .string(newValue)
+                "result": .string(newValue),
             ])
         }
     }
@@ -70,7 +68,7 @@ class AppSettings {
             appSettingsLogger.notice("Updated app setting", metadata: [
                 "action": .string("set"),
                 "target": .string("storage.icloud_sync"),
-                "result": .string(newValue ? "enabled" : "disabled")
+                "result": .string(newValue ? "enabled" : "disabled"),
             ])
         }
     }
@@ -84,7 +82,7 @@ class AppSettings {
             appSettingsLogger.notice("Updated app setting", metadata: [
                 "action": .string("set"),
                 "target": .string("notifications.enabled"),
-                "result": .string(newValue ? "enabled" : "disabled")
+                "result": .string(newValue ? "enabled" : "disabled"),
             ])
         }
     }
@@ -96,7 +94,7 @@ class AppSettings {
             appSettingsLogger.notice("Updated app setting", metadata: [
                 "action": .string("set"),
                 "target": .string("notifications.event_reminder"),
-                "result": .string(newValue ? "enabled" : "disabled")
+                "result": .string(newValue ? "enabled" : "disabled"),
             ])
         }
     }
@@ -108,7 +106,7 @@ class AppSettings {
             appSettingsLogger.notice("Updated app setting", metadata: [
                 "action": .string("set"),
                 "target": .string("notifications.return_gift_reminder"),
-                "result": .string(newValue ? "enabled" : "disabled")
+                "result": .string(newValue ? "enabled" : "disabled"),
             ])
         }
     }
@@ -120,7 +118,7 @@ class AppSettings {
             appSettingsLogger.notice("Updated app setting", metadata: [
                 "action": .string("set"),
                 "target": .string("notifications.birthday_reminder"),
-                "result": .string(newValue ? "enabled" : "disabled")
+                "result": .string(newValue ? "enabled" : "disabled"),
             ])
         }
     }
@@ -134,7 +132,7 @@ class AppSettings {
             appSettingsLogger.info("Updated app setting", metadata: [
                 "action": .string("set"),
                 "target": .string("ocr.usage_count"),
-                "result": .stringConvertible(newValue)
+                "result": .stringConvertible(newValue),
             ])
         }
     }
@@ -146,7 +144,7 @@ class AppSettings {
             appSettingsLogger.info("Updated app setting", metadata: [
                 "action": .string("set"),
                 "target": .string("ocr.usage_month"),
-                "result": .stringConvertible(newValue)
+                "result": .stringConvertible(newValue),
             ])
         }
     }
@@ -158,7 +156,7 @@ class AppSettings {
             appSettingsLogger.info("Updated app setting", metadata: [
                 "action": .string("set"),
                 "target": .string("ocr.usage_year"),
-                "result": .stringConvertible(newValue)
+                "result": .stringConvertible(newValue),
             ])
         }
     }
@@ -172,7 +170,7 @@ class AppSettings {
             appSettingsLogger.notice("Updated app setting", metadata: [
                 "action": .string("set"),
                 "target": .string("notifications.device_token"),
-                "result": .string(newValue == nil ? "cleared" : "updated")
+                "result": .string(newValue == nil ? "cleared" : "updated"),
             ])
         }
     }
