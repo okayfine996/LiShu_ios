@@ -47,14 +47,14 @@ class RecordListViewModel {
 
             var records = try context.fetch(descriptor)
 
-            // Apply search filter in memory
+            // 搜索：先匹配联系人/事件名（避免对每条记录解码 kv）；再对剩余记录解析 description
             if !searchText.isEmpty {
                 let query = searchText.lowercased()
                 records = records.filter { record in
                     let contactMatch = (record.contact?.name ?? "").lowercased().contains(query)
                     let eventMatch = (record.event?.name ?? "").lowercased().contains(query)
-                    let favorMatch = record.resolvedDescription.lowercased().contains(query)
-                    return contactMatch || eventMatch || favorMatch
+                    if contactMatch || eventMatch { return true }
+                    return record.resolvedDescription.lowercased().contains(query)
                 }
             }
 
@@ -77,10 +77,7 @@ class RecordListViewModel {
     }
 
     private func groupByMonth(_ records: [Record]) -> [String: [Record]] {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "zh_Hans")
-        formatter.dateFormat = "yyyy年M月"
-
+        let formatter = DateFormatters.recordListMonthKey
         var result: [String: [Record]] = [:]
         for record in records {
             let key = formatter.string(from: record.date)
@@ -90,9 +87,6 @@ class RecordListViewModel {
     }
 
     private func parseMonthKey(_ key: String) -> Date {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "zh_Hans")
-        formatter.dateFormat = "yyyy年M月"
-        return formatter.date(from: key) ?? .distantPast
+        DateFormatters.recordListMonthKey.date(from: key) ?? .distantPast
     }
 }

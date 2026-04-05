@@ -54,14 +54,12 @@ final class Contact {
 
     /// 人情净值 = 收到总额 - 送出总额（扣除退礼），仅统计金额类型
     var netValue: Double {
-        let recs = (records ?? []).filter { $0.recordType == .monetary }
-        let received = recs
-            .filter { $0.direction == .received }
-            .reduce(0.0) { $0 + $1.monetaryAmount - $1.resolvedReturnedAmount }
-        let given = recs
-            .filter { $0.direction == .given }
-            .reduce(0.0) { $0 + $1.monetaryAmount - $1.resolvedReturnedAmount }
-        return received - given
+        (records ?? [])
+            .filter { $0.recordType == .monetary }
+            .reduce(0.0) { acc, r in
+                let net = r.monetaryAmount - r.resolvedReturnedAmount
+                return acc + (r.direction == .received ? net : -net)
+            }
     }
 
     /// 累计送出金额，仅统计金额类型

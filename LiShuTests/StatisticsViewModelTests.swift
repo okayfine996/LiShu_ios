@@ -270,4 +270,23 @@ struct StatisticsViewModelTests {
         vm.loadData(context: db.context)
         #expect(vm.hasData == true)
     }
+
+    @Test("hasData: only non-financial records in year counts as has data")
+    func testHasDataNonFinancialOnly() throws {
+        let db = try TestDB()
+        let c = SampleData.contact(name: "仅礼品")
+        let e = SampleData.event()
+        let gift = SampleData.recordGift(contact: c, event: e, giftName: "礼盒")
+        db.context.insert(c)
+        db.context.insert(e)
+        db.context.insert(gift)
+        try db.context.save()
+
+        let vm = StatisticsViewModel()
+        vm.loadData(context: db.context)
+        #expect(vm.hasData == true)
+        #expect(vm.nonFinancialInteractionCount == 1)
+        #expect(vm.totalIncome == 0)
+        #expect(vm.totalExpense == 0)
+    }
 }

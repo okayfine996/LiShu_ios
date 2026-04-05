@@ -231,8 +231,7 @@ struct RecordDetailView: View {
 
     @ViewBuilder
     private func favorDescriptionSection(_ record: Record) -> some View {
-        if record.isMonetary { EmptyView() }
-        else {
+        if !record.isMonetary {
             let typeData = record.resolvedTypeData
             VStack(alignment: .leading, spacing: 12) {
                 HStack(spacing: 6) {
@@ -464,49 +463,49 @@ struct RecordDetailView: View {
     @ViewBuilder
     private func contactHistorySection(_ record: Record) -> some View {
         if let contact = record.contact {
-        VStack(alignment: .leading, spacing: 10) {
-            Text(String(format: String(localized: "record.detail.contactHistory"), contact.name))
-                .font(DesignSystem.Typography.caption)
-                .foregroundStyle(DesignSystem.Colors.textSecondary)
-                .fontWeight(.semibold)
-                .padding(.leading, 4)
+            VStack(alignment: .leading, spacing: 10) {
+                Text(String(format: String(localized: "record.detail.contactHistory"), contact.name))
+                    .font(DesignSystem.Typography.caption)
+                    .foregroundStyle(DesignSystem.Colors.textSecondary)
+                    .fontWeight(.semibold)
+                    .padding(.leading, 4)
 
-            NavigationLink(value: AppRoute.contactDetail(contact.persistentModelID)) {
-                HStack(spacing: 12) {
-                    AvatarView(imageData: contact.avatar, name: contact.name)
+                NavigationLink(value: AppRoute.contactDetail(contact.persistentModelID)) {
+                    HStack(spacing: 12) {
+                        AvatarView(imageData: contact.avatar, name: contact.name)
 
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(String(localized: "record.detail.historySummary"))
-                            .font(DesignSystem.Typography.caption)
-                            .foregroundStyle(DesignSystem.Colors.textPrimary)
-                            .fontWeight(.semibold)
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(String(localized: "record.detail.historySummary"))
+                                .font(DesignSystem.Typography.caption)
+                                .foregroundStyle(DesignSystem.Colors.textPrimary)
+                                .fontWeight(.semibold)
 
-                        Text(String(
-                            format: String(localized: "record.detail.historyDetail"),
-                            viewModel.contactRecordCount,
-                            formatAmount(viewModel.contactNetAmount)
-                        ))
-                        .font(DesignSystem.Typography.small)
-                        .foregroundStyle(DesignSystem.Colors.textSecondary)
+                            Text(String(
+                                format: String(localized: "record.detail.historyDetail"),
+                                viewModel.contactRecordCount,
+                                formatAmount(viewModel.contactNetAmount)
+                            ))
+                            .font(DesignSystem.Typography.small)
+                            .foregroundStyle(DesignSystem.Colors.textSecondary)
+                        }
+
+                        Spacer()
+
+                        Text(String(localized: "record.detail.viewAll"))
+                            .font(DesignSystem.Typography.small)
+                            .foregroundStyle(DesignSystem.Colors.primary)
+
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 12))
+                            .foregroundStyle(DesignSystem.Colors.textTertiary)
                     }
-
-                    Spacer()
-
-                    Text(String(localized: "record.detail.viewAll"))
-                        .font(DesignSystem.Typography.small)
-                        .foregroundStyle(DesignSystem.Colors.primary)
-
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 12))
-                        .foregroundStyle(DesignSystem.Colors.textTertiary)
+                    .padding(14)
+                    .contentShape(Rectangle())
+                    .background(DesignSystem.Colors.bgSurface)
+                    .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
                 }
-                .padding(14)
-                .contentShape(Rectangle())
-                .background(DesignSystem.Colors.bgSurface)
-                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
-        }
         }
     }
 

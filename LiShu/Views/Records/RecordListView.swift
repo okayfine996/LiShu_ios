@@ -197,29 +197,18 @@ struct RecordListView: View {
             if let records = viewModel.state.value?[monthKey] {
                 ForEach(records) { record in
                     NavigationLink(value: AppRoute.recordDetail(record.persistentModelID)) {
-                        RecordRow(
-                            avatar: record.contact?.avatar,
-                            contactName: record.contact?.name ?? "",
-                            eventName: record.event?.name ?? "",
-                            amount: record.resolvedDisplayAmount,
-                            direction: record.direction,
-                            date: record.date,
-                            recordType: record.recordType,
-                            favorDescription: record.resolvedDescription,
-                            paymentMethodRaw: record.resolvedPaymentMethod.rawValue,
-                            kvData: record.kvData,
-                            contextTag: record.contextTag,
-                            returnedAmount: record.resolvedReturnedAmount
-                        )
+                        RecordRow(record: record)
                     }
                     .buttonStyle(.plain)
                     .background(DesignSystem.Colors.bgSurface)
                     .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
                     .contextMenu {
-                        Button {
-                            sheetRoute = .returnGift(recordID: record.persistentModelID)
-                        } label: {
-                            Label(String(localized: "record.detail.returnGift"), systemImage: "gift")
+                        if record.recordType == .monetary, record.direction == .given {
+                            Button {
+                                sheetRoute = .returnGift(recordID: record.persistentModelID)
+                            } label: {
+                                Label(String(localized: "record.detail.returnGift"), systemImage: "gift")
+                            }
                         }
                         Button(role: .destructive) {
                             viewModel.deleteRecord(record, context: modelContext)

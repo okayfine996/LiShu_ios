@@ -1424,8 +1424,10 @@
     "Corner Radius: 20pt" : {
 
     },
+    "DEBUG: 清除购买状态" : {
+
+    },
     "debug.clearAllData" : {
-      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1436,7 +1438,6 @@
       }
     },
     "debug.generateSampleData" : {
-      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1447,7 +1448,6 @@
       }
     },
     "debug.notification.clearAll" : {
-      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1458,7 +1458,6 @@
       }
     },
     "debug.notification.pending" : {
-      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1469,7 +1468,6 @@
       }
     },
     "debug.notification.sent" : {
-      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1480,7 +1478,6 @@
       }
     },
     "debug.notification.test.all" : {
-      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1491,7 +1488,6 @@
       }
     },
     "debug.notification.test.birthday" : {
-      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1502,7 +1498,6 @@
       }
     },
     "debug.notification.test.event" : {
-      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1513,7 +1508,6 @@
       }
     },
     "debug.notification.test.returnGift" : {
-      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {

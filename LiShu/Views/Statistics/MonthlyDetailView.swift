@@ -228,20 +228,7 @@ struct MonthlyDetailView: View {
                     ForEach(viewModel.records) { record in
                         if let contact = record.contact, let event = record.event {
                             NavigationLink(value: AppRoute.contactExchange(contact.persistentModelID)) {
-                                RecordRow(
-                                    avatar: contact.avatar,
-                                    contactName: contact.name,
-                                    eventName: event.name,
-                                    amount: record.resolvedDisplayAmount,
-                                    direction: record.direction,
-                                    date: record.date,
-                                    recordType: record.recordType,
-                                    favorDescription: record.resolvedDescription,
-                                    paymentMethodRaw: record.resolvedPaymentMethod.rawValue,
-                                    kvData: record.kvData,
-                                    contextTag: record.contextTag,
-                                    returnedAmount: record.resolvedReturnedAmount
-                                )
+                                RecordRow(record: record)
                         }
                         .buttonStyle(.plain)
                         .background(DesignSystem.Colors.bgSurface)

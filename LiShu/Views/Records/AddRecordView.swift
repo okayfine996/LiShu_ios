@@ -24,86 +24,99 @@ struct AddRecordView: View {
     }
 
     var body: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(spacing: DesignSystem.Spacing.section) {
-                contactIdentitySection
-                recordTypeGrid
-                contextSelectionSection
-                if viewModel.contextSelection == .event {
-                    eventSection
-                } else {
-                    dailyTagSection
-                }
-                interactionFormSection
-                relationshipWeightSection
-                dateSection
-                photosSection
-                notesSection
-                confirmButton
-            }
-            .padding(.horizontal, 20)
-            .padding(.top, DesignSystem.Spacing.block)
-            .padding(.bottom, 32)
-        }
-        .background(DesignSystem.Colors.bgPage)
-        .navigationTitle(viewModel.editingRecord != nil ? String(localized: "record.edit.title") : String(localized: "record.add.navTitle"))
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                Button {
-                    dismiss()
-                } label: {
-                    Image(systemName: "xmark")
-                        .foregroundStyle(DesignSystem.Colors.textPrimary)
-                }
-                .accessibilityIdentifier("record.add.closeButton")
-            }
-
-            ToolbarItem(placement: .topBarTrailing) {
-                Button(String(localized: "common.save")) {
-                    saveRecord()
-                }
-                .foregroundStyle(viewModel.isValid ? DesignSystem.Colors.primary : DesignSystem.Colors.textTertiary)
-                .disabled(!viewModel.isValid)
-                .accessibilityIdentifier("record.add.saveButton")
-            }
-        }
-        .onAppear {
-            viewModel.loadData(context: modelContext)
-            if let recordID, let record = modelContext.model(for: recordID) as? Record {
-                viewModel.configure(with: record)
-            } else {
-                viewModel.configure(direction: direction, contactID: contactID, context: modelContext)
-            }
-        }
-        .onChange(of: selectedPhotoItems) { _, newItems in
-            Task {
-                var loaded: [Data] = []
-                for item in newItems {
-                    if let data = try? await item.loadTransferable(type: Data.self), !data.isEmpty {
-                        loaded.append(data)
+        addRecordScrollView
+            .background(DesignSystem.Colors.bgPage)
+            .navigationTitle(viewModel.editingRecord != nil ? String(localized: "record.edit.title") : String(localized: "record.add.navTitle"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { addRecordToolbarContent }
+            .onAppear(perform: onAppear)
+            .onChange(of: selectedPhotoItems) { _, newItems in
+                Task {
+                    var loaded: [NewRecordPhotoItem] = []
+                    for item in newItems {
+                        if let data = try? await item.loadTransferable(type: Data.self), !data.isEmpty {
+                            loaded.append(NewRecordPhotoItem(id: UUID(), data: data))
+                        }
+                    }
+                    await MainActor.run {
+                        viewModel.newPhotoItems = loaded
                     }
                 }
-                await MainActor.run {
-                    viewModel.newPhotoData = loaded
+            }
+            .sheet(isPresented: $showProSheet) {
+                NavigationStack {
+                    ProMembershipView()
+                        .environment(SubscriptionManager.shared)
                 }
             }
-        }
-        .sheet(isPresented: $showProSheet) {
-            NavigationStack {
-                ProMembershipView()
-                    .environment(SubscriptionManager.shared)
+            .sheet(isPresented: $showAddEventSheet, onDismiss: refreshEventsAfterCreation) {
+                NavigationStack {
+                    AddEventView()
+                }
             }
-        }
-        .sheet(isPresented: $showAddEventSheet, onDismiss: refreshEventsAfterCreation) {
-            NavigationStack {
-                AddEventView()
+            .sheet(isPresented: $showAddContactSheet, onDismiss: refreshContactsAfterAddSheet) {
+                NavigationStack {
+                    AddContactView()
+                }
             }
+    }
+
+    private var addRecordScrollView: some View {
+        ScrollView(showsIndicators: false) {
+            addRecordFormStack
+                .padding(.horizontal, 20)
+                .padding(.top, DesignSystem.Spacing.block)
+                .padding(.bottom, 32)
         }
-        .sheet(isPresented: $showAddContactSheet, onDismiss: refreshContactsAfterAddSheet) {
-            NavigationStack {
-                AddContactView()
+    }
+
+    private var addRecordFormStack: some View {
+        VStack(spacing: DesignSystem.Spacing.section) {
+            contactIdentitySection
+            recordTypeGrid
+            contextSelectionSection
+            if viewModel.contextSelection == .event {
+                eventSection
+            } else {
+                dailyTagSection
             }
+            interactionFormSection
+            relationshipWeightSection
+            dateSection
+            photosSection
+            notesSection
+            confirmButton
+        }
+    }
+
+    @ToolbarContentBuilder
+    private var addRecordToolbarContent: some ToolbarContent {
+        ToolbarItem(placement: .topBarLeading) {
+            Button {
+                dismiss()
+            } label: {
+                Image(systemName: "xmark")
+                    .foregroundStyle(DesignSystem.Colors.textPrimary)
+            }
+            .accessibilityIdentifier("record.add.closeButton")
+        }
+
+        ToolbarItem(placement: .topBarTrailing) {
+            Button(String(localized: "common.save")) {
+                saveRecord()
+            }
+            .foregroundStyle(viewModel.isValid ? DesignSystem.Colors.primary : DesignSystem.Colors.textTertiary)
+            .disabled(!viewModel.isValid)
+            .accessibilityIdentifier("record.add.saveButton")
+        }
+    }
+
+    private func onAppear() {
+        viewModel.loadData(context: modelContext)
+        if let recordID, let record = modelContext.model(for: recordID) as? Record {
+            viewModel.configure(with: record)
+        } else {
+            viewModel.configure(direction: direction, contactID: contactID, context: modelContext)
         }
     }
 
@@ -1149,8 +1162,8 @@ struct AddRecordView: View {
     }
 
     private var newPhotoThumbnails: some View {
-        ForEach(Array(viewModel.newPhotoData.enumerated()), id: \.offset) { _, data in
-            photoThumbnail(imageData: data)
+        ForEach(viewModel.newPhotoItems) { item in
+            photoThumbnail(imageData: item.data)
         }
     }
 

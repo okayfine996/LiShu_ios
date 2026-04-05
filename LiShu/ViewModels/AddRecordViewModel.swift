@@ -1,6 +1,16 @@
 import Foundation
 import SwiftData
 
+/// 待保存的新增照片（稳定 `id` 供 `ForEach` 使用）
+struct NewRecordPhotoItem: Identifiable, Equatable {
+    let id: UUID
+    let data: Data
+
+    static func == (lhs: NewRecordPhotoItem, rhs: NewRecordPhotoItem) -> Bool {
+        lhs.id == rhs.id
+    }
+}
+
 enum RecordContextSelection: String, CaseIterable {
     case event = "event"
     case daily = "daily"
@@ -18,7 +28,7 @@ class AddRecordViewModel {
     var contactSearchText: String = ""
     var isShowingContactPicker: Bool = false
     /// Pending photo data from PhotosPicker, converted to RecordPhoto on save
-    var newPhotoData: [Data] = []
+    var newPhotoItems: [NewRecordPhotoItem] = []
 
     var recordType: RecordType = .monetary
     var relationshipWeight: RelationshipWeight = .reciprocal
@@ -133,13 +143,13 @@ class AddRecordViewModel {
             )
             allEvents = try context.fetch(eventDescriptor)
 
-            // 加载已有记录中的自定义标签
-            let recordDescriptor = FetchDescriptor<Record>()
-            let allRecords = try context.fetch(recordDescriptor)
-            let existingTags = Set(allRecords.compactMap { r -> String? in
-                let tag = r.contextTag
-                return tag.isEmpty ? nil : tag
-            })
+            // 加载已有记录中的自定义标签（仅拉取 contextTag 非空的行，避免全表扫描）
+            var tagDescriptor = FetchDescriptor<Record>(
+                predicate: #Predicate<Record> { !$0.contextTag.isEmpty }
+            )
+            tagDescriptor.propertiesToFetch = [\.contextTag]
+            let tagRecords = try context.fetch(tagDescriptor)
+            let existingTags = Set(tagRecords.map(\.contextTag))
             customDailyTags = existingTags.filter { !Self.builtInDailyTags.contains($0) }.sorted()
         } catch {
             allContacts = []
@@ -258,11 +268,11 @@ class AddRecordViewModel {
             existing.contextTag = resolvedTag
             existing.applyTypeData(typeData)
 
-            for data in newPhotoData {
-                let photo = RecordPhoto(record: existing, imageData: data)
+            for item in newPhotoItems {
+                let photo = RecordPhoto(record: existing, imageData: item.data)
                 context.insert(photo)
             }
-            newPhotoData = []
+            newPhotoItems = []
 
             do {
                 try context.save()
@@ -289,11 +299,11 @@ class AddRecordViewModel {
 
             context.insert(record)
 
-            for data in newPhotoData {
-                let photo = RecordPhoto(record: record, imageData: data)
+            for item in newPhotoItems {
+                let photo = RecordPhoto(record: record, imageData: item.data)
                 context.insert(photo)
             }
-            newPhotoData = []
+            newPhotoItems = []
 
             do {
                 try context.save()

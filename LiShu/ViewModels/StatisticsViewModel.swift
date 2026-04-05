@@ -84,7 +84,7 @@ class StatisticsViewModel {
     }
 
     var hasData: Bool {
-        totalIncome > 0 || totalExpense > 0
+        totalIncome > 0 || totalExpense > 0 || nonFinancialInteractionCount > 0
     }
 
     var totalRecordCount: Int {

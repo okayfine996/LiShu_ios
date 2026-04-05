@@ -2,23 +2,11 @@ import SwiftUI
 import SwiftData
 
 struct RecordRow: View {
-    let avatar: Data?
-    let contactName: String
-    let eventName: String
-    let amount: Double
-    let direction: RecordDirection
-    let date: Date
-    var recordType: RecordType = .monetary
-    var favorDescription: String = ""
-    var paymentMethodRaw: String = "cash"
-    var kvData: String = "{}"
-    var contextTag: String = ""
-    /// 金额类已退礼金额（与 `Record.resolvedReturnedAmount` 一致，用于 kv 缺字段时的展示回退）
-    var returnedAmount: Double = 0
+    let record: Record
 
     var body: some View {
         HStack(spacing: 12) {
-            AvatarView(imageData: avatar, name: contactName)
+            AvatarView(imageData: record.contact?.avatar, name: contactName)
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(contactName)
@@ -26,7 +14,7 @@ struct RecordRow: View {
                     .fontWeight(.semibold)
                     .foregroundStyle(DesignSystem.Colors.textPrimary)
 
-                Text(contextName)
+                Text(record.contextDisplayName)
                     .font(DesignSystem.Typography.small)
                     .foregroundStyle(DesignSystem.Colors.textSecondary)
 
@@ -37,7 +25,7 @@ struct RecordRow: View {
 
             Spacer()
 
-            if recordType.isMonetary {
+            if record.recordType.isMonetary {
                 Text(amountText)
                     .font(DesignSystem.Typography.body)
                     .fontWeight(.semibold)
@@ -45,16 +33,16 @@ struct RecordRow: View {
             } else {
                 VStack(alignment: .trailing, spacing: 2) {
                     HStack(spacing: 4) {
-                        Text(recordType.iconEmoji)
+                        Text(record.recordType.iconEmoji)
                             .font(DesignSystem.Typography.caption)
-                        Text(displayDescription)
+                        Text(record.resolvedDescription)
                             .font(DesignSystem.Typography.caption)
                             .foregroundStyle(DesignSystem.Colors.textPrimary)
                             .lineLimit(1)
                             .truncationMode(.tail)
                     }
                     .frame(maxWidth: 140, alignment: .trailing)
-                    if resolvedAmount > 0 {
+                    if record.resolvedDisplayAmount > 0 {
                         Text(amountText)
                             .font(DesignSystem.Typography.small)
                             .foregroundStyle(DesignSystem.Colors.textTertiary)
@@ -67,94 +55,41 @@ struct RecordRow: View {
         .contentShape(Rectangle())
     }
 
-    private var resolvedTypeData: RecordTypeData {
-        guard let data = kvData.data(using: .utf8) else {
-            return legacyTypeData
-        }
-
-        let decoder = JSONDecoder()
-        switch recordType {
-        case .monetary:
-            guard var d = try? decoder.decode(MonetaryData.self, from: data) else {
-                return legacyTypeData
-            }
-            if d.returnedAmount == 0, returnedAmount > 0 {
-                d.returnedAmount = returnedAmount
-            }
-            return .monetary(d)
-        case .gift:
-            return (try? decoder.decode(GiftData.self, from: data)).map { .gift($0) } ?? legacyTypeData
-        case .favor:
-            return (try? decoder.decode(FavorData.self, from: data)).map { .favor($0) } ?? legacyTypeData
-        case .banquet:
-            return (try? decoder.decode(BanquetData.self, from: data)).map { .banquet($0) } ?? legacyTypeData
-        }
-    }
-
-    private var legacyTypeData: RecordTypeData {
-        switch recordType {
-        case .monetary:
-            return .monetary(MonetaryData(amount: amount, paymentMethod: paymentMethodRaw, returnedAmount: returnedAmount))
-        case .gift:
-            return .gift(GiftData(giftName: favorDescription, estimatedValue: amount > 0 ? amount : nil))
-        case .favor:
-            return .favor(FavorData(description: favorDescription))
-        case .banquet:
-            return .banquet(BanquetData(location: favorDescription))
-        }
-    }
-
-    private var displayDescription: String {
-        switch resolvedTypeData {
-        case .monetary:
-            return ""
-        case .gift(let data):
-            return data.giftName
-        case .favor(let data):
-            return data.description
-        case .banquet(let data):
-            if !data.location.isEmpty { return data.location }
-            return data.attendeeList
-        }
-    }
-
-    private var resolvedAmount: Double {
-        switch resolvedTypeData {
-        case .monetary(let data):
-            return data.amount
-        case .gift(let data):
-            return data.estimatedValue ?? 0
-        case .favor:
-            return 0
-        case .banquet:
-            return 0
-        }
+    private var contactName: String {
+        record.contact?.name ?? ""
     }
 
     private var amountText: String {
-        let prefix = direction == .received ? "+ " : "- "
+        let prefix = record.direction == .received ? "+ " : "- "
+        let value = record.resolvedDisplayAmount
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
         formatter.maximumFractionDigits = 0
-        let formatted = formatter.string(from: NSNumber(value: resolvedAmount)) ?? String(format: "%.0f", resolvedAmount)
+        let formatted = formatter.string(from: NSNumber(value: value)) ?? String(format: "%.0f", value)
         return prefix + "¥" + formatted
     }
 
     private var amountColor: Color {
-        direction == .received
+        record.direction == .received
             ? DesignSystem.Colors.accentGold
             : DesignSystem.Colors.primary
     }
 
     private var dateText: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "M月d日"
-        return formatter.string(from: date)
+        DateFormatters.monthDayCurrentLocale.string(from: record.date)
     }
+}
 
-    private var contextName: String {
-        if !eventName.isEmpty { return eventName }
-        if !contextTag.isEmpty { return contextTag }
-        return String(localized: "record.context.daily")
-    }
+#Preview("Record row") {
+    let schema = Schema([Contact.self, Event.self, Record.self, RecordPhoto.self])
+    let container = try! ModelContainer(for: schema, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+    let context = ModelContext(container)
+    let contact = Contact(name: "张三")
+    let event = Event(name: "婚礼", type: .wedding, date: .now)
+    context.insert(contact)
+    context.insert(event)
+    let record = Record.makeMonetaryRecord(contact: contact, event: event, amount: 800, direction: .received)
+    context.insert(record)
+    return RecordRow(record: record)
+        .modelContainer(container)
 }

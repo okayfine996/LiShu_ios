@@ -264,20 +264,7 @@ struct EventDetailView: View {
                 VStack(spacing: 0) {
                     ForEach(sortedRecords) { record in
                         NavigationLink(value: AppRoute.recordDetail(record.persistentModelID)) {
-                            RecordRow(
-                                avatar: record.contact?.avatar,
-                                contactName: record.contact?.name ?? "",
-                                eventName: event.name,
-                                amount: record.resolvedDisplayAmount,
-                                direction: record.direction,
-                                date: record.date,
-                                recordType: record.recordType,
-                                favorDescription: record.resolvedDescription,
-                                paymentMethodRaw: record.resolvedPaymentMethod.rawValue,
-                                kvData: record.kvData,
-                                contextTag: record.contextTag,
-                                returnedAmount: record.resolvedReturnedAmount
-                            )
+                            RecordRow(record: record)
                         }
                         .buttonStyle(.plain)
 
