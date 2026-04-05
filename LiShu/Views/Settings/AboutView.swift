@@ -4,6 +4,8 @@ import PulseUI
 struct AboutView: View {
     @State private var showPulseConsole = false
     @State private var showDiagnosticsGuide = false
+    /// Set with「打开诊断控制台」; cleared in `onDismiss` so the console sheet presents after the guide finishes dismissing.
+    @State private var pendingPulseConsoleAfterGuideDismiss = false
     @State private var diagnosticsTapCount = 0
     @State private var diagnosticsTapResetTask: DispatchWorkItem?
 
@@ -26,7 +28,12 @@ struct AboutView: View {
         .background(DesignSystem.Colors.bgPage)
         .navigationTitle(String(localized: "settings.about"))
         .navigationBarTitleDisplayMode(.inline)
-        .sheet(isPresented: $showDiagnosticsGuide) {
+        .sheet(isPresented: $showDiagnosticsGuide, onDismiss: {
+            if pendingPulseConsoleAfterGuideDismiss {
+                pendingPulseConsoleAfterGuideDismiss = false
+                showPulseConsole = true
+            }
+        }) {
             diagnosticsGuideSheet
         }
         .sheet(isPresented: $showPulseConsole) {
@@ -94,8 +101,8 @@ struct AboutView: View {
                     )
 
                     Button {
+                        pendingPulseConsoleAfterGuideDismiss = true
                         showDiagnosticsGuide = false
-                        showPulseConsole = true
                     } label: {
                         Text("打开诊断控制台")
                             .font(DesignSystem.Typography.body)
