@@ -58,21 +58,9 @@ struct PulseDiagnosticsTests {
         #expect(configuration.responseBodySizeLimit == PulseDiagnostics.Constants.releaseResponseBodySizeLimit)
     }
 
-    @Test("debug builds are the only default unsafe-proxy environment")
-    func unsafeProxyEnvironmentGate() {
-        #if DEBUG
-        #expect(PulseDiagnostics.shouldInstallUnsafeProxy(environment: [:]))
-        #else
-        #expect(!PulseDiagnostics.shouldInstallUnsafeProxy(environment: [:]))
-        #expect(PulseDiagnostics.shouldInstallUnsafeProxy(
-            environment: [PulseDiagnostics.Constants.unsafeProxyEnvironmentKey: "1"]
-        ))
-        #endif
-    }
-
     @Test("logging system writes messages into Pulse store")
     func loggingSystemWritesMessages() throws {
-        PulseDiagnostics.configureIfNeeded(arguments: [], environment: [:], installUnsafeProxy: false)
+        PulseDiagnostics.configureIfNeeded(arguments: [], environment: [:])
         LoggerStore.shared.removeAll()
 
         var logger = Logger(label: "tests.pulse")

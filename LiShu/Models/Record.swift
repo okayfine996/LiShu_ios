@@ -2,7 +2,7 @@ import Foundation
 import Logging
 import SwiftData
 
-private let recordKVDataLogger = Logger(label: "storage.record-kv")
+private nonisolated(unsafe) var recordKVDataLogger: Logger { PulseDiagnostics.makeLogger(label: "storage.record-kv") }
 
 /// 往来记录（一笔送礼或收礼）
 @Model
@@ -252,23 +252,23 @@ enum RecordTypeData {
     case banquet(BanquetData)
 }
 
-struct MonetaryData: Codable {
+nonisolated struct MonetaryData: Codable {
     var amount: Double = 0
     var paymentMethod: String = "cash"
     /// 已退礼金额（真源在 kvData；列仅作旧数据回退）
     var returnedAmount: Double = 0
 }
 
-struct GiftData: Codable {
+nonisolated struct GiftData: Codable {
     var giftName: String = ""
     var estimatedValue: Double?
 }
 
-struct FavorData: Codable {
+nonisolated struct FavorData: Codable {
     var description: String = ""
 }
 
-struct BanquetData: Codable {
+nonisolated struct BanquetData: Codable {
     var location: String = ""
     var attendeeList: String = ""
     var extraCostNotes: String = ""

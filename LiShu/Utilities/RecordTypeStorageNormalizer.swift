@@ -2,7 +2,7 @@ import Foundation
 import Logging
 import SwiftData
 
-private let recordTypeStorageLogger = Logger(label: "storage.record-type")
+private nonisolated(unsafe) var recordTypeStorageLogger: Logger { PulseDiagnostics.makeLogger(label: "storage.record-type") }
 
 /// 将 `recordTypeRaw` 规范为 `RecordType` 的 canonical rawValue，使 `#Predicate { $0.recordTypeRaw == "…" }` 与业务解析一致。
 enum RecordTypeStorageNormalizer {

@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		32C8B56E2F822036002E6746 /* Pulse in Frameworks */ = {isa = PBXBuildFile; productRef = 9A934ECB2F54194E0063349A /* Pulse */; };
-		32C8B56F2F822036002E6746 /* PulseProxy in Frameworks */ = {isa = PBXBuildFile; productRef = 9A934ECC2F54194E0063349A /* PulseProxy */; };
 		32C8B5702F822036002E6746 /* PulseUI in Frameworks */ = {isa = PBXBuildFile; productRef = 9A934ECD2F54194E0063349A /* PulseUI */; };
 		32C8B5712F822036002E6746 /* Logging in Frameworks */ = {isa = PBXBuildFile; productRef = 32C8B5812F822036002E6746 /* Logging */; };
 		32C8B5722F822036002E6746 /* PulseLogHandler in Frameworks */ = {isa = PBXBuildFile; productRef = 32C8B5822F822036002E6746 /* PulseLogHandler */; };
@@ -77,7 +76,6 @@
 				32C8B5722F822036002E6746 /* PulseLogHandler in Frameworks */,
 				32C8B5712F822036002E6746 /* Logging in Frameworks */,
 				32C8B5702F822036002E6746 /* PulseUI in Frameworks */,
-				32C8B56F2F822036002E6746 /* PulseProxy in Frameworks */,
 				32C8B56E2F822036002E6746 /* Pulse in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -144,7 +142,6 @@
 				32C8B5812F822036002E6746 /* Logging */,
 				9A934ECB2F54194E0063349A /* Pulse */,
 				32C8B5822F822036002E6746 /* PulseLogHandler */,
-				9A934ECC2F54194E0063349A /* PulseProxy */,
 				9A934ECD2F54194E0063349A /* PulseUI */,
 			);
 			productName = LiShu;
@@ -707,11 +704,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 9A934ECA2F54194E0063349A /* XCRemoteSwiftPackageReference "Pulse" */;
 			productName = Pulse;
-		};
-		9A934ECC2F54194E0063349A /* PulseProxy */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 9A934ECA2F54194E0063349A /* XCRemoteSwiftPackageReference "Pulse" */;
-			productName = PulseProxy;
 		};
 		9A934ECD2F54194E0063349A /* PulseUI */ = {
 			isa = XCSwiftPackageProductDependency;
