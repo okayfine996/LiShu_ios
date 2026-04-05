@@ -80,13 +80,11 @@ class AddContactViewModel {
         }
 
         if let existing = editingContact {
-            BusinessDataLogger.entityQuery(
+            BusinessDataLogger.entityMutation(
                 domain: "contact",
                 screen: "contacts.form",
                 operation: "update_attempt",
-                searchText: "",
-                filters: [:],
-                sort: "",
+                payload: draftPayload,
                 results: [draftPayload]
             )
             existing.name = name.trimmingCharacters(in: .whitespaces)
@@ -105,13 +103,11 @@ class AddContactViewModel {
                 if hasBirthday {
                     NotificationManager.shared.scheduleBirthdayReminder(contact: existing)
                 }
-                BusinessDataLogger.entityQuery(
+                BusinessDataLogger.entityMutation(
                     domain: "contact",
                     screen: "contacts.form",
                     operation: "update",
-                    searchText: "",
-                    filters: [:],
-                    sort: "",
+                    payload: draftPayload,
                     results: [existing.logPayload()]
                 )
                 contactsViewModelLogger.notice("Saved contact", metadata: [
@@ -121,14 +117,11 @@ class AddContactViewModel {
                 ])
                 return true
             } catch {
-                BusinessDataLogger.entityQuery(
+                BusinessDataLogger.entityMutation(
                     domain: "contact",
                     screen: "contacts.form",
                     operation: "update_failed",
-                    searchText: "",
-                    filters: [:],
-                    sort: "",
-                    results: [draftPayload],
+                    payload: draftPayload,
                     error: error.localizedDescription
                 )
                 contactsViewModelLogger.error("Failed to save contact", metadata: [
@@ -139,13 +132,11 @@ class AddContactViewModel {
                 return false
             }
         } else {
-            BusinessDataLogger.entityQuery(
+            BusinessDataLogger.entityMutation(
                 domain: "contact",
                 screen: "contacts.form",
                 operation: "create_attempt",
-                searchText: "",
-                filters: [:],
-                sort: "",
+                payload: draftPayload,
                 results: [draftPayload]
             )
             let contact = Contact(
@@ -167,13 +158,11 @@ class AddContactViewModel {
                 if hasBirthday {
                     NotificationManager.shared.scheduleBirthdayReminder(contact: contact)
                 }
-                BusinessDataLogger.entityQuery(
+                BusinessDataLogger.entityMutation(
                     domain: "contact",
                     screen: "contacts.form",
                     operation: "create",
-                    searchText: "",
-                    filters: [:],
-                    sort: "",
+                    payload: draftPayload,
                     results: [contact.logPayload()]
                 )
                 contactsViewModelLogger.notice("Saved contact", metadata: [
@@ -183,14 +172,11 @@ class AddContactViewModel {
                 ])
                 return true
             } catch {
-                BusinessDataLogger.entityQuery(
+                BusinessDataLogger.entityMutation(
                     domain: "contact",
                     screen: "contacts.form",
                     operation: "create_failed",
-                    searchText: "",
-                    filters: [:],
-                    sort: "",
-                    results: [draftPayload],
+                    payload: draftPayload,
                     error: error.localizedDescription
                 )
                 contactsViewModelLogger.error("Failed to save contact", metadata: [

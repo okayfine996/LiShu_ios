@@ -168,6 +168,44 @@ struct PulseDiagnosticsTests {
         #expect(message.metadata["raw_results"] == "[]")
     }
 
+    @Test("business entity mutation logger uses mutation semantics")
+    func businessEntityMutationLoggerUsesMutationSemantics() throws {
+        PulseDiagnostics.configureIfNeeded(arguments: [], environment: [:])
+        LoggerStore.shared.removeAll()
+
+        let payload = ContactLogPayload(
+            id: "contact-1",
+            name: "赵六",
+            phone: "",
+            relation: "朋友",
+            category: "social",
+            circle: 3,
+            birthday: nil,
+            location: "",
+            note: "",
+            avatarPresent: false,
+            recordCount: 0,
+            createdAt: .now
+        )
+
+        BusinessDataLogger.entityMutation(
+            domain: "contact",
+            screen: "contacts.form",
+            operation: "create",
+            payload: payload,
+            results: [payload]
+        )
+
+        let messages = try waitForMessages(label: AppLogLabel.dataMutation)
+        let message = try #require(messages.last)
+
+        #expect(message.text == "Business entity mutation")
+        #expect(message.metadata["event_type"] == "entity_mutation")
+        #expect(message.metadata["domain"] == "contact")
+        #expect(message.metadata["operation"] == "create")
+        #expect(message.metadata["raw_results"]?.contains("\"name\":\"赵六\"") == true)
+    }
+
     @MainActor
     @Test("detailed diagnostics export includes business metadata payloads")
     func detailedDiagnosticsExportIncludesBusinessMetadataPayloads() throws {

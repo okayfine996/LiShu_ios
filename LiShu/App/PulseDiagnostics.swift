@@ -126,6 +126,7 @@ nonisolated enum AppLogLabel {
     static let appBootstrap = "app.bootstrap"
     static let uiInteraction = "ui.interaction"
     static let dataRecord = "data.record"
+    static let dataMutation = "data.mutation"
     static let dataQuery = "data.query"
     static let dataOCR = "data.ocr"
     static let settings = "settings.app"

@@ -57,13 +57,11 @@ class AddEventViewModel {
         }
 
         if let existing = editingEvent {
-            BusinessDataLogger.entityQuery(
+            BusinessDataLogger.entityMutation(
                 domain: "event",
                 screen: "events.form",
                 operation: "update_attempt",
-                searchText: "",
-                filters: [:],
-                sort: "",
+                payload: draftPayload,
                 results: [draftPayload]
             )
             existing.name = name.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -77,13 +75,11 @@ class AddEventViewModel {
                 try context.save()
                 NotificationManager.shared.cancelEventReminder(event: existing)
                 NotificationManager.shared.scheduleEventReminder(event: existing)
-                BusinessDataLogger.entityQuery(
+                BusinessDataLogger.entityMutation(
                     domain: "event",
                     screen: "events.form",
                     operation: "update",
-                    searchText: "",
-                    filters: [:],
-                    sort: "",
+                    payload: draftPayload,
                     results: [existing.logPayload()]
                 )
                 eventsViewModelLogger.notice("Saved event", metadata: [
@@ -93,14 +89,11 @@ class AddEventViewModel {
                 ])
                 return true
             } catch {
-                BusinessDataLogger.entityQuery(
+                BusinessDataLogger.entityMutation(
                     domain: "event",
                     screen: "events.form",
                     operation: "update_failed",
-                    searchText: "",
-                    filters: [:],
-                    sort: "",
-                    results: [draftPayload],
+                    payload: draftPayload,
                     error: error.localizedDescription
                 )
                 eventsViewModelLogger.error("Failed to save event", metadata: [
@@ -111,13 +104,11 @@ class AddEventViewModel {
                 return false
             }
         } else {
-            BusinessDataLogger.entityQuery(
+            BusinessDataLogger.entityMutation(
                 domain: "event",
                 screen: "events.form",
                 operation: "create_attempt",
-                searchText: "",
-                filters: [:],
-                sort: "",
+                payload: draftPayload,
                 results: [draftPayload]
             )
             let event = Event(
@@ -133,13 +124,11 @@ class AddEventViewModel {
             do {
                 try context.save()
                 NotificationManager.shared.scheduleEventReminder(event: event)
-                BusinessDataLogger.entityQuery(
+                BusinessDataLogger.entityMutation(
                     domain: "event",
                     screen: "events.form",
                     operation: "create",
-                    searchText: "",
-                    filters: [:],
-                    sort: "",
+                    payload: draftPayload,
                     results: [event.logPayload()]
                 )
                 eventsViewModelLogger.notice("Saved event", metadata: [
@@ -149,14 +138,11 @@ class AddEventViewModel {
                 ])
                 return true
             } catch {
-                BusinessDataLogger.entityQuery(
+                BusinessDataLogger.entityMutation(
                     domain: "event",
                     screen: "events.form",
                     operation: "create_failed",
-                    searchText: "",
-                    filters: [:],
-                    sort: "",
-                    results: [draftPayload],
+                    payload: draftPayload,
                     error: error.localizedDescription
                 )
                 eventsViewModelLogger.error("Failed to save event", metadata: [

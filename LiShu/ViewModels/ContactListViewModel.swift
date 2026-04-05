@@ -39,9 +39,14 @@ struct ContactGroup: Identifiable {
 
 @Observable
 class ContactListViewModel {
+    private enum Logging {
+        static let searchDebounceInterval: TimeInterval = 0.35
+    }
+
     var state: LoadingState<[Contact]> = .idle
     var selectedFilter: ContactCircleFilter = .all {
         didSet {
+            cancelPendingSearchLog()
             logCurrentQueryIfAvailable(operation: "filter_change")
         }
     }
@@ -49,12 +54,13 @@ class ContactListViewModel {
     var deleteError: String?
     var searchText: String = "" {
         didSet {
-            logCurrentQueryIfAvailable(operation: "search_change")
+            scheduleSearchQueryLog()
         }
     }
 
     /// All contacts loaded from SwiftData
     private var allContacts: [Contact] = []
+    private var pendingSearchLogWorkItem: DispatchWorkItem?
 
     /// Filtered contacts based on current filter and search
     var filteredContacts: [Contact] {
@@ -130,6 +136,7 @@ class ContactListViewModel {
             let contacts = try context.fetch(descriptor)
             allContacts = contacts
             state = .loaded(contacts)
+            cancelPendingSearchLog()
             logCurrentQueryIfAvailable(operation: "load")
             contactListLogger.notice("Loaded contacts", metadata: [
                 "step": .string("load"),
@@ -165,13 +172,11 @@ class ContactListViewModel {
         context.delete(contact)
         do {
             try context.save()
-            BusinessDataLogger.entityQuery(
+            BusinessDataLogger.entityMutation(
                 domain: "contact",
                 screen: "contacts.list",
                 operation: "delete",
-                searchText: "",
-                filters: ["contact_id": deletedPayload.id],
-                sort: "",
+                payload: deletedPayload,
                 results: [deletedPayload]
             )
             contactListLogger.notice("Deleted contact", metadata: [
@@ -182,14 +187,11 @@ class ContactListViewModel {
             loadContacts(context: context)
         } catch {
             deleteError = error.localizedDescription
-            BusinessDataLogger.entityQuery(
+            BusinessDataLogger.entityMutation(
                 domain: "contact",
                 screen: "contacts.list",
                 operation: "delete_failed",
-                searchText: "",
-                filters: ["contact_id": deletedPayload.id],
-                sort: "",
-                results: [ContactLogPayload](),
+                payload: deletedPayload,
                 error: error.localizedDescription
             )
             contactListLogger.error("Failed to delete contact", metadata: [
@@ -201,8 +203,30 @@ class ContactListViewModel {
         }
     }
 
+    deinit {
+        cancelPendingSearchLog()
+    }
+
+    private func scheduleSearchQueryLog() {
+        guard case .loaded = state else { return }
+        let workItem = DispatchWorkItem { [weak self] in
+            self?.logCurrentQueryIfAvailable(operation: "search_change")
+        }
+        cancelPendingSearchLog()
+        pendingSearchLogWorkItem = workItem
+        DispatchQueue.main.asyncAfter(deadline: .now() + Logging.searchDebounceInterval, execute: workItem)
+    }
+
+    private func cancelPendingSearchLog() {
+        pendingSearchLogWorkItem?.cancel()
+        pendingSearchLogWorkItem = nil
+    }
+
     private func logCurrentQueryIfAvailable(operation: String) {
         guard case .loaded = state else { return }
+        if operation != "search_change" {
+            cancelPendingSearchLog()
+        }
         BusinessDataLogger.entityQuery(
             domain: "contact",
             screen: "contacts.list",

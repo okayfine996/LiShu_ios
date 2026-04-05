@@ -6,22 +6,28 @@ private let eventListLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.eve
 
 @Observable
 class EventListViewModel {
+    private enum Logging {
+        static let searchDebounceInterval: TimeInterval = 0.35
+    }
+
     var state: LoadingState<[Event]> = .idle
     var selectedTypeFilter: EventType? {
         didSet {
+            cancelPendingSearchLog()
             logCurrentQueryIfAvailable(operation: "filter_change")
         }
     }
 
     var searchText: String = "" {
         didSet {
-            logCurrentQueryIfAvailable(operation: "search_change")
+            scheduleSearchQueryLog()
         }
     }
 
     var deleteError: String?
 
     private var allEvents: [Event] = []
+    private var pendingSearchLogWorkItem: DispatchWorkItem?
 
     private var searchedEvents: [Event] {
         let events = allEvents
@@ -69,6 +75,7 @@ class EventListViewModel {
             let events = try context.fetch(descriptor)
             allEvents = events
             state = .loaded(events)
+            cancelPendingSearchLog()
             logCurrentQueryIfAvailable(operation: "load")
             eventListLogger.notice("Loaded events", metadata: [
                 "step": .string("load"),
@@ -108,13 +115,11 @@ class EventListViewModel {
         context.delete(event)
         do {
             try context.save()
-            BusinessDataLogger.entityQuery(
+            BusinessDataLogger.entityMutation(
                 domain: "event",
                 screen: "events.list",
                 operation: "delete",
-                searchText: "",
-                filters: ["event_id": deletedPayload.id],
-                sort: "",
+                payload: deletedPayload,
                 results: [deletedPayload]
             )
             eventListLogger.notice("Deleted event", metadata: [
@@ -125,14 +130,11 @@ class EventListViewModel {
             load(context: context)
         } catch {
             deleteError = error.localizedDescription
-            BusinessDataLogger.entityQuery(
+            BusinessDataLogger.entityMutation(
                 domain: "event",
                 screen: "events.list",
                 operation: "delete_failed",
-                searchText: "",
-                filters: ["event_id": deletedPayload.id],
-                sort: "",
-                results: [EventLogPayload](),
+                payload: deletedPayload,
                 error: error.localizedDescription
             )
             eventListLogger.error("Failed to delete event", metadata: [
@@ -159,8 +161,30 @@ class EventListViewModel {
         return formatter.string(from: date)
     }
 
+    deinit {
+        cancelPendingSearchLog()
+    }
+
+    private func scheduleSearchQueryLog() {
+        guard case .loaded = state else { return }
+        let workItem = DispatchWorkItem { [weak self] in
+            self?.logCurrentQueryIfAvailable(operation: "search_change")
+        }
+        cancelPendingSearchLog()
+        pendingSearchLogWorkItem = workItem
+        DispatchQueue.main.asyncAfter(deadline: .now() + Logging.searchDebounceInterval, execute: workItem)
+    }
+
+    private func cancelPendingSearchLog() {
+        pendingSearchLogWorkItem?.cancel()
+        pendingSearchLogWorkItem = nil
+    }
+
     private func logCurrentQueryIfAvailable(operation: String) {
         guard case .loaded = state else { return }
+        if operation != "search_change" {
+            cancelPendingSearchLog()
+        }
         let results = filteredUpcomingEvents + filteredPastEvents
         BusinessDataLogger.entityQuery(
             domain: "event",

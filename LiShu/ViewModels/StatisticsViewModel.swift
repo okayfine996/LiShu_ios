@@ -70,10 +70,11 @@ class StatisticsViewModel {
         state = .loading
         do {
             let allRecords = try context.fetch(FetchDescriptor<Record>())
-            let yearRecords = allRecords.filter {
-                Calendar.current.component(.year, from: $0.date) == selectedYear
-            }
             computeAvailableYears(from: allRecords)
+            let normalizedYear = selectedYear
+            let yearRecords = allRecords.filter {
+                Calendar.current.component(.year, from: $0.date) == normalizedYear
+            }
             computeYearlyStats(from: allRecords)
             computeMonthlyData(from: allRecords)
             computeEventTypeDistribution(from: allRecords)
@@ -88,7 +89,7 @@ class StatisticsViewModel {
                 screen: "statistics.overview",
                 operation: "load",
                 searchText: "",
-                filters: ["year": String(selectedYear)],
+                filters: ["year": String(normalizedYear)],
                 sort: "date_desc",
                 records: yearRecords
             )
