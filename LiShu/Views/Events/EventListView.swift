@@ -245,6 +245,7 @@ struct EventListView: View {
     }
 }
 
+@MainActor
 private func makeEventListPreviewContainer() -> ModelContainer? {
     guard let container = try? ModelContainer(
         for: Contact.self, Record.self, Event.self,

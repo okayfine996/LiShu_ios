@@ -153,6 +153,7 @@ struct NetValueRankingView: View {
 
 // MARK: - Preview
 
+@MainActor
 private func makeNetValueRankingPreviewContainer() -> ModelContainer? {
     guard let container = try? ModelContainer(
         for: Contact.self, Record.self, Event.self,

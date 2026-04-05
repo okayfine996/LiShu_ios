@@ -46,6 +46,7 @@ class AddEventViewModel {
         coverImageData = event.coverImage
     }
 
+    @MainActor
     func save(context: ModelContext) -> Bool {
         guard isValid else {
             eventsViewModelLogger.warning("Rejected event save", metadata: [

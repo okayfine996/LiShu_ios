@@ -625,6 +625,7 @@ struct ContactDetailView: View {
 
 // MARK: - Preview
 
+@MainActor
 private func makeContactDetailPreviewContainer() -> (container: ModelContainer, contactID: PersistentIdentifier)? {
     guard let container = try? ModelContainer(
         for: Contact.self,

@@ -5,25 +5,33 @@ enum DiagnosticsExportService {
     enum ExportFormat {
         case detailedText
         case jsonLines
+
+        var fileExtension: String {
+            switch self {
+            case .detailedText:
+                "log"
+            case .jsonLines:
+                "jsonl"
+            }
+        }
     }
 
     @MainActor
     static func exportDetailedLogs(store: LoggerStore = .shared) throws -> URL {
         let messages = try store.messages()
-
-        let fileURL = FileManager.default.temporaryDirectory
-            .appendingPathComponent("lishu_diagnostics_detailed_\(timestampSuffix()).log")
+        let archiveName = archiveBaseName()
+        let fileURL = plaintextFileURL(for: .detailedText, archiveName: archiveName)
 
         let content = messages.map(format(message:)).joined(separator: "\n\n")
         try content.write(to: fileURL, atomically: true, encoding: .utf8)
-        return fileURL
+        return try DiagnosticsArchiveService.archiveFile(at: fileURL, archiveName: archiveName)
     }
 
     @MainActor
     static func exportDetailedJSONLines(store: LoggerStore = .shared) throws -> URL {
         let messages = try store.messages()
-        let fileURL = FileManager.default.temporaryDirectory
-            .appendingPathComponent("lishu_diagnostics_detailed_\(timestampSuffix()).jsonl")
+        let archiveName = archiveBaseName()
+        let fileURL = plaintextFileURL(for: .jsonLines, archiveName: archiveName)
 
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
@@ -43,7 +51,7 @@ enum DiagnosticsExportService {
         }
 
         try lines.joined(separator: "\n").write(to: fileURL, atomically: true, encoding: .utf8)
-        return fileURL
+        return try DiagnosticsArchiveService.archiveFile(at: fileURL, archiveName: archiveName)
     }
 
     @MainActor
@@ -123,6 +131,15 @@ enum DiagnosticsExportService {
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.dateFormat = "HH:mm:ss.SSS"
         return formatter.string(from: date)
+    }
+
+    static func archiveBaseName(suffix: String = timestampSuffix()) -> String {
+        "\(DiagnosticsExportConstants.archiveFilePrefix)_\(suffix)"
+    }
+
+    static func plaintextFileURL(for format: ExportFormat, archiveName: String) -> URL {
+        FileManager.default.temporaryDirectory
+            .appendingPathComponent("\(archiveName).\(format.fileExtension)")
     }
 
     private static func timestampSuffix() -> String {

@@ -367,6 +367,7 @@ struct CompositionDetailView: View {
 
 // MARK: - Preview
 
+@MainActor
 private func makeCompositionDetailPreviewContainer() -> ModelContainer? {
     guard let container = try? ModelContainer(
         for: Contact.self, Record.self, Event.self,

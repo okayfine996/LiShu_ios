@@ -5,6 +5,7 @@ import UserNotifications
 private let appLifecycleLogger = PulseDiagnostics.makeLogger(label: "app.lifecycle")
 private let notificationsLogger = PulseDiagnostics.makeLogger(label: "notifications.apns")
 
+@MainActor
 class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
     func application(
         _: UIApplication,

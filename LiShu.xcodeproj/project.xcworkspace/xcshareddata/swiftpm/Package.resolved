@@ -1,5 +1,5 @@
 {
-  "originHash" : "dc9f383be95f05f5f569aee9c6a2cb0a1446f1f41aa8c2e65814b9fcd5d0a55e",
+  "originHash" : "711d43f08653ccf3d034caa8c081aee496a907f7ba077ec810f2e9a439a1ea93",
   "pins" : [
     {
       "identity" : "pulse",
@@ -26,6 +26,15 @@
       "state" : {
         "revision" : "8c0f217f01000dd30f60d6e536569ad4e74291f9",
         "version" : "1.11.0"
+      }
+    },
+    {
+      "identity" : "ziparchive",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/ZipArchive/ZipArchive.git",
+      "state" : {
+        "revision" : "df35718ea19a94e015b91dc4881dee028ce4cdba",
+        "version" : "2.6.0"
       }
     }
   ],

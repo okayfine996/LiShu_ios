@@ -4,6 +4,7 @@ import Logging
 import Pulse
 import SwiftData
 import Testing
+import ZipArchive
 
 struct PulseDiagnosticsTests {
     @Test("monitoring enabled by default")
@@ -190,13 +191,19 @@ struct PulseDiagnosticsTests {
 
         _ = try waitForMessages(label: AppLogLabel.dataQuery)
         let fileURL = try DiagnosticsExportService.exportDetailedLogs()
-        let content = try String(contentsOf: fileURL, encoding: .utf8)
+        #expect(fileURL.pathExtension == "zip")
+
+        let extractedFileURL = try unzipDiagnosticsArchive(at: fileURL)
+        let content = try String(contentsOf: extractedFileURL, encoding: .utf8)
 
         #expect(content.contains("Metadata"))
         #expect(content.contains("query_input:"))
         #expect(content.contains("\"searchText\" : \"李\""))
         #expect(content.contains("raw_results:"))
         #expect(content.contains("\"name\" : \"李四\""))
+        let plaintextURL = plaintextSiblingURL(for: fileURL, extension: "log")
+        #expect(!FileManager.default.fileExists(atPath: plaintextURL.path))
+        try? FileManager.default.removeItem(at: extractedFileURL.deletingLastPathComponent())
         try? FileManager.default.removeItem(at: fileURL)
     }
 
@@ -223,12 +230,18 @@ struct PulseDiagnosticsTests {
 
         _ = try waitForMessages(label: AppLogLabel.dataQuery)
         let fileURL = try DiagnosticsExportService.exportDetailedJSONLines()
-        let content = try String(contentsOf: fileURL, encoding: .utf8)
+        #expect(fileURL.pathExtension == "zip")
+
+        let extractedFileURL = try unzipDiagnosticsArchive(at: fileURL)
+        let content = try String(contentsOf: extractedFileURL, encoding: .utf8)
 
         #expect(content.contains("\"message\":\"Business query\""))
         #expect(content.contains("\"rawLabel\":\"data.query\""))
         #expect(content.contains("\"searchText\":\"王\""))
         #expect(content.contains("\"name\":\"王五\""))
+        let plaintextURL = plaintextSiblingURL(for: fileURL, extension: "jsonl")
+        #expect(!FileManager.default.fileExists(atPath: plaintextURL.path))
+        try? FileManager.default.removeItem(at: extractedFileURL.deletingLastPathComponent())
         try? FileManager.default.removeItem(at: fileURL)
     }
 
@@ -242,5 +255,29 @@ struct PulseDiagnosticsTests {
             Thread.sleep(forTimeInterval: 0.05)
         }
         return try LoggerStore.shared.allMessages().filter { $0.label == label }
+    }
+
+    private func unzipDiagnosticsArchive(at archiveURL: URL) throws -> URL {
+        let destinationURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: destinationURL, withIntermediateDirectories: true)
+
+        let success = SSZipArchive.unzipFile(
+            atPath: archiveURL.path,
+            toDestination: destinationURL.path,
+            overwrite: true,
+            password: DiagnosticsExportConstants.archivePassword
+        )
+        #expect(success)
+
+        let extractedFiles = try FileManager.default.contentsOfDirectory(
+            at: destinationURL,
+            includingPropertiesForKeys: nil
+        )
+        return try #require(extractedFiles.first)
+    }
+
+    private func plaintextSiblingURL(for archiveURL: URL, extension fileExtension: String) -> URL {
+        archiveURL.deletingPathExtension().appendingPathExtension(fileExtension)
     }
 }

@@ -53,6 +53,7 @@ class EventDetailViewModel {
         return event.date >= Calendar.current.startOfDay(for: Date())
     }
 
+    @MainActor
     func deleteEvent(context: ModelContext) -> Bool {
         guard let event else { return false }
         guard (event.records ?? []).isEmpty else { return false }

@@ -61,6 +61,7 @@ class ContactDetailViewModel {
     }
 
     /// Delete the current contact. Returns true if successful.
+    @MainActor
     func deleteContact(context: ModelContext) -> Bool {
         guard let contact else { return false }
         NotificationManager.shared.cancelBirthdayReminder(contact: contact)

@@ -57,6 +57,7 @@ class AddContactViewModel {
         note = contact.note
     }
 
+    @MainActor
     func saveContact(context: ModelContext) -> Bool {
         guard isValid else {
             showValidationAlert = true

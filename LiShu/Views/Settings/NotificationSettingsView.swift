@@ -1,6 +1,7 @@
 import SwiftData
 import SwiftUI
 
+@MainActor
 struct NotificationSettingsView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(AppSettings.self) private var settings

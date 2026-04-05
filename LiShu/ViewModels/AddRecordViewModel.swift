@@ -285,6 +285,7 @@ class AddRecordViewModel {
         )
     }
 
+    @MainActor
     func save(context: ModelContext) -> Bool {
         guard isValid,
               let contact = resolveContact(context: context)
