@@ -1,6 +1,9 @@
 import Foundation
+import Logging
 import StoreKit
 import SwiftData
+
+private let subscriptionLogger = PulseDiagnostics.makeLogger(label: "billing.subscription")
 
 struct UsageLimits {
     static let freeOCRPerMonth = 3
@@ -80,6 +83,7 @@ class SubscriptionManager {
     func reloadProducts() async {
         products = []
         errorMessage = nil
+        subscriptionLogger.notice("Reloading StoreKit products")
         await loadProducts()
     }
 
@@ -89,13 +93,16 @@ class SubscriptionManager {
         errorMessage = nil
         do {
             products = try await Product.products(for: productIDs)
-            #if DEBUG
             if products.isEmpty {
-                print("[LiShu] StoreKit: 加载到 0 个产品，请检查：1) Scheme 是否关联了 LiShu.storekit；2) 模拟器优先测试；3) 真机需网络连接 Apple 服务器")
+                subscriptionLogger.warning("StoreKit returned no products", metadata: [
+                    "expected_product_ids": .string(productIDs.sorted().joined(separator: ","))
+                ])
             } else {
-                print("[LiShu] StoreKit: 成功加载 \(products.count) 个产品")
+                subscriptionLogger.info("StoreKit products loaded", metadata: [
+                    "count": .stringConvertible(products.count),
+                    "product_ids": .string(products.map(\.id).sorted().joined(separator: ","))
+                ])
             }
-            #endif
         } catch {
             // 网络类错误给用户更友好的提示
             if let skError = error as? StoreKitError, case .networkError = skError {
@@ -103,25 +110,39 @@ class SubscriptionManager {
             } else {
                 errorMessage = error.localizedDescription
             }
-            #if DEBUG
-            print("[LiShu] StoreKit 加载失败: \(error)")
             if let skError = error as? StoreKitError {
                 switch skError {
                 case .networkError(let urlError):
-                    print("[LiShu] 网络错误: \(urlError.localizedDescription) — 请检查网络连接、关闭 VPN/代理后重试")
+                    subscriptionLogger.error("StoreKit product load failed", metadata: [
+                        "reason": .string("network_error"),
+                        "error": .string(urlError.localizedDescription)
+                    ])
                 case .systemError(let underlying):
-                    print("[LiShu] 系统错误: \(underlying)")
+                    subscriptionLogger.error("StoreKit product load failed", metadata: [
+                        "reason": .string("system_error"),
+                        "error": .string(String(describing: underlying))
+                    ])
                 case .notAvailableInStorefront:
-                    print("[LiShu] 产品在当前地区不可用")
+                    subscriptionLogger.warning("StoreKit products unavailable in storefront")
                 case .notEntitled:
-                    print("[LiShu] 应用缺少 In-App Purchase 权限，请在 Xcode Signing 中启用")
+                    subscriptionLogger.error("StoreKit product load failed", metadata: [
+                        "reason": .string("not_entitled")
+                    ])
                 case .userCancelled, .unknown, .unsupported:
-                    print("[LiShu] StoreKit 错误: \(skError)")
+                    subscriptionLogger.error("StoreKit product load failed", metadata: [
+                        "reason": .string(String(describing: skError))
+                    ])
                 @unknown default:
-                    print("[LiShu] StoreKit 错误: \(skError)")
+                    subscriptionLogger.error("StoreKit product load failed", metadata: [
+                        "reason": .string("unknown_default"),
+                        "error": .string(String(describing: skError))
+                    ])
                 }
+            } else {
+                subscriptionLogger.error("StoreKit product load failed", metadata: [
+                    "error": .string(String(describing: error))
+                ])
             }
-            #endif
         }
         isLoading = false
     }
@@ -131,6 +152,9 @@ class SubscriptionManager {
     func purchase(_ product: Product) async -> Bool {
         isLoading = true
         errorMessage = nil
+        subscriptionLogger.notice("Starting purchase", metadata: [
+            "product_id": .string(product.id)
+        ])
 
         do {
             let result = try await product.purchase()
@@ -141,23 +165,39 @@ class SubscriptionManager {
                 purchasedProductIDs.insert(transaction.productID)
                 await transaction.finish()
                 isLoading = false
+                subscriptionLogger.notice("Purchase completed", metadata: [
+                    "product_id": .string(transaction.productID)
+                ])
                 return true
 
             case .userCancelled:
                 isLoading = false
+                subscriptionLogger.info("Purchase cancelled by user", metadata: [
+                    "product_id": .string(product.id)
+                ])
                 return false
 
             case .pending:
                 isLoading = false
+                subscriptionLogger.notice("Purchase pending", metadata: [
+                    "product_id": .string(product.id)
+                ])
                 return false
 
             @unknown default:
                 isLoading = false
+                subscriptionLogger.warning("Purchase returned unknown result", metadata: [
+                    "product_id": .string(product.id)
+                ])
                 return false
             }
         } catch {
             errorMessage = error.localizedDescription
             isLoading = false
+            subscriptionLogger.error("Purchase failed", metadata: [
+                "product_id": .string(product.id),
+                "error": .string(error.localizedDescription)
+            ])
             return false
         }
     }
@@ -167,12 +207,19 @@ class SubscriptionManager {
     func restorePurchases() async {
         isLoading = true
         errorMessage = nil
+        subscriptionLogger.notice("Starting purchase restore")
 
         do {
             try await AppStore.sync()
             await checkEntitlements()
+            subscriptionLogger.notice("Purchase restore finished", metadata: [
+                "active_product_count": .stringConvertible(purchasedProductIDs.count)
+            ])
         } catch {
             errorMessage = error.localizedDescription
+            subscriptionLogger.error("Purchase restore failed", metadata: [
+                "error": .string(error.localizedDescription)
+            ])
         }
 
         isLoading = false
@@ -197,6 +244,11 @@ class SubscriptionManager {
 
         purchasedProductIDs = activeIDs
         scheduleExpirationRecheck(at: nearestExpiration)
+        subscriptionLogger.debug("Entitlements refreshed", metadata: [
+            "active_product_count": .stringConvertible(activeIDs.count),
+            "active_product_ids": .string(activeIDs.sorted().joined(separator: ",")),
+            "nearest_expiration": .string(nearestExpiration.map { ISO8601DateFormatter().string(from: $0) } ?? "none")
+        ])
     }
 
     private func scheduleExpirationRecheck(at date: Date?) {
@@ -212,6 +264,7 @@ class SubscriptionManager {
         expirationCheckTask = Task { [weak self] in
             try? await Task.sleep(for: .seconds(delay))
             guard !Task.isCancelled else { return }
+            subscriptionLogger.debug("Running scheduled entitlement refresh")
             await self?.checkEntitlements()
         }
     }
@@ -222,6 +275,9 @@ class SubscriptionManager {
         Task.detached { [weak self] in
             for await result in Transaction.updates {
                 if let transaction = try? result.payloadValue {
+                    subscriptionLogger.notice("Transaction update received", metadata: [
+                        "product_id": .string(transaction.productID)
+                    ])
                     await transaction.finish()
                 }
                 await self?.checkEntitlements()

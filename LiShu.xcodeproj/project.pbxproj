@@ -6,6 +6,15 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		32C8B56E2F822036002E6746 /* Pulse in Frameworks */ = {isa = PBXBuildFile; productRef = 9A934ECB2F54194E0063349A /* Pulse */; };
+		32C8B5702F822036002E6746 /* PulseUI in Frameworks */ = {isa = PBXBuildFile; productRef = 9A934ECD2F54194E0063349A /* PulseUI */; };
+		32C8B5712F822036002E6746 /* Logging in Frameworks */ = {isa = PBXBuildFile; productRef = 32C8B5812F822036002E6746 /* Logging */; };
+		32C8B5722F822036002E6746 /* PulseLogHandler in Frameworks */ = {isa = PBXBuildFile; productRef = 32C8B5822F822036002E6746 /* PulseLogHandler */; };
+		32C8B5732F822036002E6746 /* Logging in Frameworks */ = {isa = PBXBuildFile; productRef = 32C8B5832F822036002E6746 /* Logging */; };
+		32C8B5742F822036002E6746 /* Pulse in Frameworks */ = {isa = PBXBuildFile; productRef = 32C8B5842F822036002E6746 /* Pulse */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		9A934EAC2F54194E0063349A /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -65,6 +74,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				32C8B5722F822036002E6746 /* PulseLogHandler in Frameworks */,
+				32C8B5712F822036002E6746 /* Logging in Frameworks */,
+				32C8B5702F822036002E6746 /* PulseUI in Frameworks */,
+				32C8B56E2F822036002E6746 /* Pulse in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -72,6 +85,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				32C8B5742F822036002E6746 /* Pulse in Frameworks */,
+				32C8B5732F822036002E6746 /* Logging in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -126,6 +141,10 @@
 			);
 			name = LiShu;
 			packageProductDependencies = (
+				32C8B5812F822036002E6746 /* Logging */,
+				9A934ECB2F54194E0063349A /* Pulse */,
+				32C8B5822F822036002E6746 /* PulseLogHandler */,
+				9A934ECD2F54194E0063349A /* PulseUI */,
 			);
 			productName = LiShu;
 			productReference = 9A934E9A2F54194D0063349A /* LiShu.app */;
@@ -147,12 +166,14 @@
 			fileSystemSynchronizedGroups = (
 				9A934EAE2F54194E0063349A /* LiShuTests */,
 			);
-			name = LiShuTests;
-			packageProductDependencies = (
-			);
-			productName = LiShuTests;
-			productReference = 9A934EAB2F54194E0063349A /* LiShuTests.xctest */;
-			productType = "com.apple.product-type.bundle.unit-test";
+				name = LiShuTests;
+				packageProductDependencies = (
+					32C8B5832F822036002E6746 /* Logging */,
+					32C8B5842F822036002E6746 /* Pulse */,
+				);
+				productName = LiShuTests;
+				productReference = 9A934EAB2F54194E0063349A /* LiShuTests.xctest */;
+				productType = "com.apple.product-type.bundle.unit-test";
 		};
 		9A934EB42F54194E0063349A /* LiShuUITests */ = {
 			isa = PBXNativeTarget;
@@ -210,6 +231,11 @@
 			);
 			mainGroup = 9A934E912F54194D0063349A;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				9A934ECA2F54194E0063349A /* XCRemoteSwiftPackageReference "Pulse" */,
+				32C8B57F2F822036002E6746 /* XCRemoteSwiftPackageReference "swift-log" */,
+				32C8B5802F822036002E6746 /* XCRemoteSwiftPackageReference "PulseLogHandler" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 9A934E9B2F54194D0063349A /* Products */;
 			projectDirPath = "";
@@ -633,6 +659,66 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		9A934ECA2F54194E0063349A /* XCRemoteSwiftPackageReference "Pulse" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/kean/Pulse";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.0.0;
+			};
+		};
+		32C8B57F2F822036002E6746 /* XCRemoteSwiftPackageReference "swift-log" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-log.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.5.2;
+			};
+		};
+		32C8B5802F822036002E6746 /* XCRemoteSwiftPackageReference "PulseLogHandler" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/kean/PulseLogHandler";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		32C8B5812F822036002E6746 /* Logging */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 32C8B57F2F822036002E6746 /* XCRemoteSwiftPackageReference "swift-log" */;
+			productName = Logging;
+		};
+		32C8B5822F822036002E6746 /* PulseLogHandler */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 32C8B5802F822036002E6746 /* XCRemoteSwiftPackageReference "PulseLogHandler" */;
+			productName = PulseLogHandler;
+		};
+		32C8B5832F822036002E6746 /* Logging */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 32C8B57F2F822036002E6746 /* XCRemoteSwiftPackageReference "swift-log" */;
+			productName = Logging;
+		};
+		32C8B5842F822036002E6746 /* Pulse */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9A934ECA2F54194E0063349A /* XCRemoteSwiftPackageReference "Pulse" */;
+			productName = Pulse;
+		};
+		9A934ECB2F54194E0063349A /* Pulse */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9A934ECA2F54194E0063349A /* XCRemoteSwiftPackageReference "Pulse" */;
+			productName = Pulse;
+		};
+		9A934ECD2F54194E0063349A /* PulseUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9A934ECA2F54194E0063349A /* XCRemoteSwiftPackageReference "Pulse" */;
+			productName = PulseUI;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 9A934E922F54194D0063349A /* Project object */;
 }

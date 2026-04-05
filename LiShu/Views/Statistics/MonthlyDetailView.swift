@@ -226,7 +226,7 @@ struct MonthlyDetailView: View {
             } else {
                 VStack(spacing: 10) {
                     ForEach(viewModel.records) { record in
-                        if let contact = record.contact, let event = record.event {
+                        if let contact = record.contact, record.event != nil {
                             NavigationLink(value: AppRoute.contactExchange(contact.persistentModelID)) {
                                 RecordRow(record: record)
                         }

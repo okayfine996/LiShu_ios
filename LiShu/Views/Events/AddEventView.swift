@@ -35,6 +35,7 @@ struct AddEventView: View {
         .background(DesignSystem.Colors.bgPage)
         .navigationTitle(viewModel.editingEvent != nil ? String(localized: "event.edit.title") : String(localized: "event.add.title"))
         .navigationBarTitleDisplayMode(.inline)
+        .trackScreen(eventID == nil ? "events.add" : "events.edit")
         .onAppear {
             if let eventID {
                 if let event = modelContext.model(for: eventID) as? Event {
@@ -126,6 +127,10 @@ struct AddEventView: View {
                     ForEach(EventType.allCases, id: \.self) { type in
                         Button {
                             viewModel.eventType = type
+                            InteractionLogger.tap(
+                                screen: eventID == nil ? "events.add" : "events.edit",
+                                target: "events.editor.type.\(type.rawValue)"
+                            )
                         } label: {
                             HStack(spacing: 6) {
                                 Image(systemName: type.iconName)
@@ -208,6 +213,10 @@ struct AddEventView: View {
     private var bottomButtons: some View {
         HStack(spacing: 12) {
             Button(String(localized: "common.cancel")) {
+                InteractionLogger.tap(
+                    screen: eventID == nil ? "events.add" : "events.edit",
+                    target: "events.editor.cancel"
+                )
                 dismiss()
             }
             .buttonStyle(SecondaryButtonStyle())
@@ -228,7 +237,22 @@ struct AddEventView: View {
 
     private func saveEvent() {
         if viewModel.save(context: modelContext) {
+            InteractionLogger.submit(
+                screen: eventID == nil ? "events.add" : "events.edit",
+                target: "events.editor.save",
+                action: .save,
+                result: "success",
+                metadata: ["event_name": viewModel.name.trimmingCharacters(in: .whitespacesAndNewlines)]
+            )
             dismiss()
+        } else {
+            InteractionLogger.submit(
+                screen: eventID == nil ? "events.add" : "events.edit",
+                target: "events.editor.save",
+                action: .save,
+                result: "failed",
+                reason: "validation_or_persistence"
+            )
         }
     }
 }

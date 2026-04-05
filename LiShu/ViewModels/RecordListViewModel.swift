@@ -1,5 +1,8 @@
 import Foundation
+import Logging
 import SwiftData
+
+private let recordListLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.recordsViewModel)
 
 enum RecordFilter: String, CaseIterable, Hashable {
     case all = "all"
@@ -60,18 +63,42 @@ class RecordListViewModel {
 
             let grouped = groupByMonth(records)
             state = .loaded(grouped)
+            recordListLogger.notice("Loaded records", metadata: [
+                "step": .string("load"),
+                "count": .stringConvertible(records.count),
+                "result": .string("success"),
+                "reason": .string(filter.rawValue)
+            ])
         } catch {
             state = .error(error.localizedDescription)
+            recordListLogger.error("Failed to load records", metadata: [
+                "step": .string("load"),
+                "error": .string(error.localizedDescription)
+            ])
         }
     }
 
     func deleteRecord(_ record: Record, context: ModelContext) {
+        recordListLogger.notice("Deleting record", metadata: [
+            "step": .string("delete"),
+            "record_id": .string(String(describing: record.persistentModelID))
+        ])
         context.delete(record)
         do {
             try context.save()
+            recordListLogger.notice("Deleted record", metadata: [
+                "step": .string("delete"),
+                "record_id": .string(String(describing: record.persistentModelID)),
+                "result": .string("success")
+            ])
             load(context: context)
         } catch {
             deleteError = error.localizedDescription
+            recordListLogger.error("Failed to delete record", metadata: [
+                "step": .string("delete"),
+                "record_id": .string(String(describing: record.persistentModelID)),
+                "error": .string(error.localizedDescription)
+            ])
             load(context: context)
         }
     }

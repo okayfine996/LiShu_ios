@@ -7,6 +7,16 @@ enum AppTab: String, CaseIterable {
     case contacts = "contacts"
     case events = "events"
     case settings = "settings"
+
+    var screenName: String {
+        switch self {
+        case .home: return "home.dashboard"
+        case .records: return "records.list"
+        case .contacts: return "contacts.list"
+        case .events: return "events.list"
+        case .settings: return "settings.root"
+        }
+    }
 }
 
 struct MainTabView: View {
@@ -78,6 +88,31 @@ struct MainTabView: View {
         .tint(DesignSystem.Colors.primary)
         .sheet(item: $sheetRoute) { route in
             sheetContent(for: route)
+        }
+        .trackScreen(selectedTab.screenName, metadata: ["presentation": UILogPresentation.tab.rawValue])
+        .onChange(of: selectedTab) { oldValue, newValue in
+            guard oldValue != newValue else { return }
+            InteractionLogger.tabSwitch(
+                screen: oldValue.screenName,
+                target: "main.tab.\(newValue.rawValue)",
+                route: newValue.screenName
+            )
+        }
+        .onChange(of: sheetRoute) { oldValue, newValue in
+            if let oldValue, newValue == nil {
+                InteractionLogger.sheetPresentation(
+                    screen: selectedTab.screenName,
+                    route: oldValue.logName,
+                    isPresented: false
+                )
+            }
+            if let newValue {
+                InteractionLogger.sheetPresentation(
+                    screen: selectedTab.screenName,
+                    route: newValue.logName,
+                    isPresented: true
+                )
+            }
         }
     }
 

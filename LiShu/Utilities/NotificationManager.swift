@@ -1,7 +1,10 @@
 import Foundation
+import Logging
 import SwiftData
 import UserNotifications
 import UIKit
+
+private let notificationLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.notifications)
 
 @MainActor
 final class NotificationManager {
@@ -21,25 +24,44 @@ final class NotificationManager {
     // MARK: - Authorization
 
     func requestAuthorization() async -> Bool {
+        notificationLogger.notice("Requesting notification authorization", metadata: [
+            "step": .string("authorization"),
+            "action": .string("request")
+        ])
         do {
             let granted = try await center.requestAuthorization(options: [.alert, .sound, .badge])
             if granted {
                 registerForRemoteNotifications()
             }
+            notificationLogger.notice("Notification authorization finished", metadata: [
+                "step": .string("authorization"),
+                "result": .string(granted ? "granted" : "denied")
+            ])
             return granted
         } catch {
+            notificationLogger.error("Notification authorization failed", metadata: [
+                "step": .string("authorization"),
+                "error": .string(error.localizedDescription)
+            ])
             return false
         }
     }
 
     func checkAuthorizationStatus() async -> UNAuthorizationStatus {
         let settings = await center.notificationSettings()
+        notificationLogger.info("Fetched notification authorization status", metadata: [
+            "step": .string("authorization_status"),
+            "result": .string(String(describing: settings.authorizationStatus))
+        ])
         return settings.authorizationStatus
     }
 
     // MARK: - APNs Remote Registration
 
     func registerForRemoteNotifications() {
+        notificationLogger.notice("Registering for remote notifications", metadata: [
+            "step": .string("apns_registration")
+        ])
         UIApplication.shared.registerForRemoteNotifications()
     }
 
@@ -48,6 +70,10 @@ final class NotificationManager {
     func saveDeviceToken(_ tokenData: Data) {
         let token = tokenData.map { String(format: "%02.2hhx", $0) }.joined()
         settings.deviceToken = token
+        notificationLogger.notice("Saved APNs device token", metadata: [
+            "step": .string("device_token"),
+            "result": .string("updated")
+        ])
     }
 
     var deviceTokenString: String? {
@@ -76,16 +102,34 @@ final class NotificationManager {
             options: []
         )
         center.setNotificationCategories([eventCategory, birthdayCategory, returnGiftCategory])
+        notificationLogger.info("Registered notification categories", metadata: [
+            "step": .string("categories"),
+            "count": .stringConvertible(Category.allCases.count)
+        ])
     }
 
     // MARK: - Event Reminders
 
     func scheduleEventReminder(event: Event) {
-        guard settings.notificationEnabled, settings.eventReminder else { return }
+        guard settings.notificationEnabled, settings.eventReminder else {
+            notificationLogger.info("Skipped event reminder", metadata: [
+                "step": .string("schedule_event"),
+                "event_id": .string(stableIdentifier(for: event.persistentModelID)),
+                "reason": .string("notifications_disabled")
+            ])
+            return
+        }
 
         let eventDate = event.date
         guard let reminderDate = Calendar.current.date(byAdding: .day, value: -1, to: eventDate),
-              reminderDate > Date() else { return }
+              reminderDate > Date() else {
+            notificationLogger.info("Skipped event reminder", metadata: [
+                "step": .string("schedule_event"),
+                "event_id": .string(stableIdentifier(for: event.persistentModelID)),
+                "reason": .string("reminder_date_invalid")
+            ])
+            return
+        }
 
         let content = UNMutableNotificationContent()
         content.title = String(localized: "notification.event.title")
@@ -106,10 +150,19 @@ final class NotificationManager {
         let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
 
         center.add(request)
+        notificationLogger.notice("Scheduled event reminder", metadata: [
+            "step": .string("schedule_event"),
+            "event_id": .string(stableIdentifier(for: event.persistentModelID)),
+            "result": .string("scheduled")
+        ])
     }
 
     func cancelEventReminder(event: Event) {
         center.removePendingNotificationRequests(withIdentifiers: [eventNotificationID(event)])
+        notificationLogger.info("Cancelled event reminder", metadata: [
+            "step": .string("cancel_event"),
+            "event_id": .string(stableIdentifier(for: event.persistentModelID))
+        ])
     }
 
     private func eventNotificationID(_ event: Event) -> String {
@@ -120,7 +173,14 @@ final class NotificationManager {
 
     func scheduleBirthdayReminder(contact: Contact) {
         guard settings.notificationEnabled, settings.birthdayReminder,
-              let birthday = contact.birthday else { return }
+              let birthday = contact.birthday else {
+            notificationLogger.info("Skipped birthday reminder", metadata: [
+                "step": .string("schedule_birthday"),
+                "contact_id": .string(stableIdentifier(for: contact.persistentModelID)),
+                "reason": .string("notifications_disabled_or_missing_birthday")
+            ])
+            return
+        }
 
         let content = UNMutableNotificationContent()
         content.title = String(localized: "notification.birthday.title")
@@ -141,10 +201,19 @@ final class NotificationManager {
         let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
 
         center.add(request)
+        notificationLogger.notice("Scheduled birthday reminder", metadata: [
+            "step": .string("schedule_birthday"),
+            "contact_id": .string(stableIdentifier(for: contact.persistentModelID)),
+            "result": .string("scheduled")
+        ])
     }
 
     func cancelBirthdayReminder(contact: Contact) {
         center.removePendingNotificationRequests(withIdentifiers: [birthdayNotificationID(contact)])
+        notificationLogger.info("Cancelled birthday reminder", metadata: [
+            "step": .string("cancel_birthday"),
+            "contact_id": .string(stableIdentifier(for: contact.persistentModelID))
+        ])
     }
 
     private func birthdayNotificationID(_ contact: Contact) -> String {
@@ -154,14 +223,35 @@ final class NotificationManager {
     // MARK: - Return Gift Reminders
 
     func scheduleReturnGiftReminder(record: Record) {
-        guard settings.notificationEnabled, settings.returnGiftReminder else { return }
+        guard settings.notificationEnabled, settings.returnGiftReminder else {
+            notificationLogger.info("Skipped return gift reminder", metadata: [
+                "step": .string("schedule_return_gift"),
+                "record_id": .string(stableIdentifier(for: record.persistentModelID)),
+                "reason": .string("notifications_disabled")
+            ])
+            return
+        }
         guard record.isMonetary else { return }
         guard record.direction == .given, !record.hasReturnedGift else { return }
 
         guard let reminderDate = Calendar.current.date(byAdding: .day, value: 30, to: record.date),
-              reminderDate > Date() else { return }
+              reminderDate > Date() else {
+            notificationLogger.info("Skipped return gift reminder", metadata: [
+                "step": .string("schedule_return_gift"),
+                "record_id": .string(stableIdentifier(for: record.persistentModelID)),
+                "reason": .string("reminder_date_invalid")
+            ])
+            return
+        }
 
-        guard let contact = record.contact, let event = record.event else { return }
+        guard let contact = record.contact, let event = record.event else {
+            notificationLogger.warning("Skipped return gift reminder", metadata: [
+                "step": .string("schedule_return_gift"),
+                "record_id": .string(stableIdentifier(for: record.persistentModelID)),
+                "reason": .string("missing_related_entities")
+            ])
+            return
+        }
         let content = UNMutableNotificationContent()
         content.title = String(localized: "notification.returnGift.title")
         content.body = String(
@@ -187,10 +277,19 @@ final class NotificationManager {
         let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
 
         center.add(request)
+        notificationLogger.notice("Scheduled return gift reminder", metadata: [
+            "step": .string("schedule_return_gift"),
+            "record_id": .string(stableIdentifier(for: record.persistentModelID)),
+            "result": .string("scheduled")
+        ])
     }
 
     func cancelReturnGiftReminder(record: Record) {
         center.removePendingNotificationRequests(withIdentifiers: [returnGiftNotificationID(record)])
+        notificationLogger.info("Cancelled return gift reminder", metadata: [
+            "step": .string("cancel_return_gift"),
+            "record_id": .string(stableIdentifier(for: record.persistentModelID))
+        ])
     }
 
     private func returnGiftNotificationID(_ record: Record) -> String {
@@ -210,6 +309,9 @@ final class NotificationManager {
 
     func cancelAll() {
         center.removeAllPendingNotificationRequests()
+        notificationLogger.notice("Cancelled all pending notifications", metadata: [
+            "step": .string("cancel_all")
+        ])
     }
 
     func cancelNotifications(for category: Category) {
@@ -219,6 +321,11 @@ final class NotificationManager {
                 .filter { $0.content.categoryIdentifier == category.rawValue }
                 .map(\.identifier)
             center.removePendingNotificationRequests(withIdentifiers: ids)
+            notificationLogger.info("Cancelled notifications for category", metadata: [
+                "step": .string("cancel_category"),
+                "target": .string(category.rawValue),
+                "count": .stringConvertible(ids.count)
+            ])
         }
     }
 
@@ -226,8 +333,18 @@ final class NotificationManager {
 
     func rescheduleAll(context: ModelContext) {
         center.removeAllPendingNotificationRequests()
+        notificationLogger.notice("Rescheduling notifications", metadata: [
+            "step": .string("reschedule_all"),
+            "result": .string("started")
+        ])
 
-        guard settings.notificationEnabled else { return }
+        guard settings.notificationEnabled else {
+            notificationLogger.info("Skipped notification reschedule", metadata: [
+                "step": .string("reschedule_all"),
+                "reason": .string("notifications_disabled")
+            ])
+            return
+        }
 
         if settings.eventReminder {
             let today = Calendar.current.startOfDay(for: Date())
@@ -238,6 +355,10 @@ final class NotificationManager {
                 for event in events {
                     scheduleEventReminder(event: event)
                 }
+                notificationLogger.info("Rescheduled event reminders", metadata: [
+                    "step": .string("reschedule_all"),
+                    "count": .stringConvertible(events.count)
+                ])
             }
         }
 
@@ -249,6 +370,10 @@ final class NotificationManager {
                 for contact in contacts {
                     scheduleBirthdayReminder(contact: contact)
                 }
+                notificationLogger.info("Rescheduled birthday reminders", metadata: [
+                    "step": .string("reschedule_all"),
+                    "count": .stringConvertible(contacts.count)
+                ])
             }
         }
 
@@ -262,6 +387,10 @@ final class NotificationManager {
                 for record in records where !record.hasReturnedGift {
                     scheduleReturnGiftReminder(record: record)
                 }
+                notificationLogger.info("Rescheduled return gift reminders", metadata: [
+                    "step": .string("reschedule_all"),
+                    "count": .stringConvertible(records.count)
+                ])
             }
         }
     }
@@ -272,6 +401,10 @@ final class NotificationManager {
         userInfo: [AnyHashable: Any],
         completion: @escaping (UIBackgroundFetchResult) -> Void
     ) {
+        notificationLogger.notice("Handled remote notification", metadata: [
+            "step": .string("remote_notification"),
+            "count": .stringConvertible(userInfo.count)
+        ])
         // Currently: trigger local notification reschedule on silent push
         // Future: parse backend payload for specific tasks (data sync, etc.)
         completion(.noData)

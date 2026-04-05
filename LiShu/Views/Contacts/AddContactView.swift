@@ -33,9 +33,14 @@ struct AddContactView: View {
         }
         .navigationTitle(viewModel.editingContact != nil ? String(localized: "contact.edit.title") : String(localized: "contact.add.title"))
         .navigationBarTitleDisplayMode(.inline)
+        .trackScreen(contactID == nil ? "contacts.add" : "contacts.edit")
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button(String(localized: "common.cancel")) {
+                    InteractionLogger.tap(
+                        screen: contactID == nil ? "contacts.add" : "contacts.edit",
+                        target: "contacts.editor.cancel"
+                    )
                     dismiss()
                 }
                 .foregroundStyle(DesignSystem.Colors.textSecondary)
@@ -61,6 +66,13 @@ struct AddContactView: View {
                     .environment(SubscriptionManager.shared)
             }
         }
+        .onChange(of: showProSheet) { _, newValue in
+            InteractionLogger.sheetPresentation(
+                screen: contactID == nil ? "contacts.add" : "contacts.edit",
+                route: "sheet.settings.proMembership",
+                isPresented: newValue
+            )
+        }
         .sheet(isPresented: $showContactPicker) {
             ContactPickerView(
                 onSelect: { name, phone in
@@ -69,6 +81,13 @@ struct AddContactView: View {
                     showContactPicker = false
                 },
                 onCancel: { showContactPicker = false }
+            )
+        }
+        .onChange(of: showContactPicker) { _, newValue in
+            InteractionLogger.sheetPresentation(
+                screen: contactID == nil ? "contacts.add" : "contacts.edit",
+                route: "sheet.contacts.picker",
+                isPresented: newValue
             )
         }
     }
@@ -158,6 +177,11 @@ struct AddContactView: View {
                     withAnimation(.easeInOut(duration: 0.15)) {
                         viewModel.hasBirthday.toggle()
                     }
+                    InteractionLogger.toggle(
+                        screen: contactID == nil ? "contacts.add" : "contacts.edit",
+                        target: "contacts.editor.birthday",
+                        isOn: viewModel.hasBirthday
+                    )
                 } label: {
                     Image(systemName: "calendar")
                         .font(.system(size: 18))
@@ -191,6 +215,12 @@ struct AddContactView: View {
                 Spacer()
 
                 Button {
+                    InteractionLogger.tap(
+                        screen: contactID == nil ? "contacts.add" : "contacts.edit",
+                        target: "contacts.editor.importPhone",
+                        route: "sheet.contacts.picker",
+                        presentation: .sheet
+                    )
                     showContactPicker = true
                 } label: {
                     HStack(spacing: 4) {
@@ -268,9 +298,31 @@ struct AddContactView: View {
     private var saveButton: some View {
         Button {
             if viewModel.saveContact(context: modelContext) {
+                InteractionLogger.submit(
+                    screen: contactID == nil ? "contacts.add" : "contacts.edit",
+                    target: "contacts.editor.save",
+                    action: .save,
+                    result: "success",
+                    metadata: ["contact_name": viewModel.name.trimmingCharacters(in: .whitespacesAndNewlines)]
+                )
                 dismiss()
             } else if viewModel.needsProUpgrade {
+                InteractionLogger.submit(
+                    screen: contactID == nil ? "contacts.add" : "contacts.edit",
+                    target: "contacts.editor.save",
+                    action: .save,
+                    result: "blocked",
+                    reason: "subscription_limit"
+                )
                 showProSheet = true
+            } else {
+                InteractionLogger.submit(
+                    screen: contactID == nil ? "contacts.add" : "contacts.edit",
+                    target: "contacts.editor.save",
+                    action: .save,
+                    result: "failed",
+                    reason: viewModel.showValidationAlert ? "validation" : "persistence"
+                )
             }
         } label: {
             Text(String(localized: "contact.add.saveContact"))

@@ -1,6 +1,9 @@
 import Foundation
+import Logging
 import SwiftData
 import UIKit
+
+private let ocrImportLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.ocr)
 
 @Observable
 class OCRImportViewModel {
@@ -63,6 +66,10 @@ class OCRImportViewModel {
 
     func addImage(_ image: UIImage) {
         capturedImages.append(image)
+        ocrImportLogger.info("Added OCR source image", metadata: [
+            "step": .string("image_input"),
+            "count": .stringConvertible(capturedImages.count)
+        ])
     }
 
     func clearImages() {
@@ -70,12 +77,19 @@ class OCRImportViewModel {
         items.removeAll()
         processingState = .idle
         isAIEnhanced = false
+        ocrImportLogger.notice("Cleared OCR import state", metadata: [
+            "step": .string("clear_images")
+        ])
     }
 
     // MARK: - OCR Processing
 
     func processImages() async {
         guard !capturedImages.isEmpty else { return }
+        ocrImportLogger.notice("Processing OCR images", metadata: [
+            "step": .string("process_images"),
+            "count": .stringConvertible(capturedImages.count)
+        ])
 
         await MainActor.run {
             processingState = .loading
@@ -91,11 +105,20 @@ class OCRImportViewModel {
                 isAIEnhanced = result.isAIEnhanced
                 processingState = .loaded(result.items)
                 SubscriptionManager.shared.recordOCRUsage()
+                ocrImportLogger.notice("Processed OCR images", metadata: [
+                    "step": .string("process_images"),
+                    "count": .stringConvertible(result.items.count),
+                    "result": .string(result.isAIEnhanced ? "ai_enhanced" : "ocr_only")
+                ])
             }
         } catch {
             await MainActor.run {
                 isAIEnhanced = false
                 processingState = .error(error.localizedDescription)
+                ocrImportLogger.error("Failed to process OCR images", metadata: [
+                    "step": .string("process_images"),
+                    "error": .string(error.localizedDescription)
+                ])
             }
         }
     }
@@ -105,6 +128,10 @@ class OCRImportViewModel {
     func toggleSelection(for item: OCRRecordItem) {
         guard let index = items.firstIndex(where: { $0.id == item.id }) else { return }
         items[index].isSelected.toggle()
+        ocrImportLogger.info("Toggled OCR item selection", metadata: [
+            "step": .string("selection"),
+            "result": .string(items[index].isSelected ? "selected" : "deselected")
+        ])
     }
 
     func selectAll() {
@@ -125,6 +152,10 @@ class OCRImportViewModel {
         } else {
             selectAll()
         }
+        ocrImportLogger.info("Toggled OCR select all", metadata: [
+            "step": .string("selection"),
+            "count": .stringConvertible(selectedCount)
+        ])
     }
 
     func deleteSelected() {
@@ -159,6 +190,10 @@ class OCRImportViewModel {
         editAmountText = String(item.amount == Double(Int(item.amount)) ? "\(Int(item.amount))" : String(format: "%.2f", item.amount))
         editDate = item.date
         editEventName = item.eventName
+        ocrImportLogger.info("Started editing OCR item", metadata: [
+            "step": .string("edit_item"),
+            "target": .string(item.name)
+        ])
     }
 
     func saveEditing() {
@@ -181,6 +216,10 @@ class OCRImportViewModel {
         items[index].eventType = eventType(for: editEventName) ?? items[index].eventType
 
         self.editingItem = nil
+        ocrImportLogger.notice("Saved OCR item edits", metadata: [
+            "step": .string("edit_item"),
+            "result": .string("success")
+        ])
     }
 
     var editAmountParsed: Double {
@@ -210,6 +249,10 @@ class OCRImportViewModel {
         guard !itemsToImport.isEmpty else { return false }
 
         isImporting = true
+        ocrImportLogger.notice("Starting OCR import", metadata: [
+            "step": .string("perform_import"),
+            "count": .stringConvertible(itemsToImport.count)
+        ])
 
         do {
             let contactDescriptor = FetchDescriptor<Contact>()
@@ -251,10 +294,19 @@ class OCRImportViewModel {
             try context.save()
             isImporting = false
             importSuccess = true
+            ocrImportLogger.notice("Finished OCR import", metadata: [
+                "step": .string("perform_import"),
+                "count": .stringConvertible(itemsToImport.count),
+                "result": .string("success")
+            ])
             return true
         } catch {
             isImporting = false
             importError = error.localizedDescription
+            ocrImportLogger.error("Failed OCR import", metadata: [
+                "step": .string("perform_import"),
+                "error": .string(error.localizedDescription)
+            ])
             return false
         }
     }

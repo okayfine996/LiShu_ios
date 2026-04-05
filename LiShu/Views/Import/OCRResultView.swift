@@ -7,6 +7,46 @@ struct OCRResultView: View {
     @Bindable var viewModel: OCRImportViewModel
 
     var body: some View {
+        content
+            .background(DesignSystem.Colors.bgPage)
+            .navigationTitle(navigationTitleText)
+            .navigationBarTitleDisplayMode(.inline)
+            .trackScreen("import.ocr.result")
+            .navigationBarBackButtonHidden(true)
+            .toolbar { toolbarContent }
+            .sheet(isPresented: $viewModel.isShowingImportConfig) {
+                importConfigSheet
+            }
+            .sheet(item: $viewModel.editingItem) { _ in
+                OCRCorrectionSheet(viewModel: viewModel)
+            }
+            .onChange(of: viewModel.isShowingImportConfig) { _, newValue in
+                InteractionLogger.sheetPresentation(screen: "import.ocr.result", route: "sheet.import.ocrConfig", isPresented: newValue)
+            }
+            .onChange(of: viewModel.editingItem?.id) { _, newValue in
+                InteractionLogger.sheetPresentation(screen: "import.ocr.result", route: "sheet.import.ocrCorrection", isPresented: newValue != nil)
+            }
+            .alert(String(localized: "ocr.import.successTitle"), isPresented: $viewModel.importSuccess) {
+                Button(String(localized: "common.ok")) {
+                    InteractionLogger.alertAction(screen: "import.ocr.result", target: "import.ocr.success", action: .submit, result: "dismiss")
+                    dismiss()
+                }
+            } message: {
+                Text(successMessageText)
+            }
+            .alert(String(localized: "common.error"), isPresented: importErrorBinding) {
+                Button(String(localized: "common.ok")) {
+                    InteractionLogger.alertAction(screen: "import.ocr.result", target: "import.ocr.error", action: .submit, result: "dismiss")
+                    viewModel.importError = nil
+                }
+            } message: {
+                if let error = viewModel.importError {
+                    Text(error)
+                }
+            }
+    }
+
+    private var content: some View {
         VStack(spacing: 0) {
             if viewModel.lowConfidenceCount > 0 {
                 warningBanner
@@ -24,68 +64,66 @@ struct OCRResultView: View {
 
             bottomToolbar
         }
-        .background(DesignSystem.Colors.bgPage)
-        .navigationTitle(
-            String(format: String(localized: "ocr.result.title %lld"), Int64(viewModel.items.count))
+    }
+
+    private var navigationTitleText: String {
+        String(format: String(localized: "ocr.result.title %lld"), Int64(viewModel.items.count))
+    }
+
+    private var successMessageText: String {
+        String(
+            format: String(localized: "ocr.import.successMessage %lld"),
+            Int64(viewModel.selectedCount)
         )
-        .navigationBarTitleDisplayMode(.inline)
-        .navigationBarBackButtonHidden(true)
-        .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                Button {
-                    viewModel.clearImages()
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 14, weight: .semibold))
-                        Text(String(localized: "ocr.result.retake"))
-                            .font(DesignSystem.Typography.body)
-                    }
-                    .foregroundStyle(DesignSystem.Colors.textPrimary)
-                }
-            }
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    viewModel.toggleSelectAll()
-                } label: {
-                    Text(viewModel.isAllSelected
-                         ? String(localized: "ocr.result.deselectAll")
-                         : String(localized: "ocr.result.selectAll"))
-                        .font(DesignSystem.Typography.body)
-                        .foregroundStyle(DesignSystem.Colors.primary)
-                }
-            }
-        }
-        .sheet(isPresented: $viewModel.isShowingImportConfig) {
-            importConfigSheet
-        }
-        .sheet(item: $viewModel.editingItem) { _ in
-            OCRCorrectionSheet(viewModel: viewModel)
-        }
-        .alert(String(localized: "ocr.import.successTitle"), isPresented: $viewModel.importSuccess) {
-            Button(String(localized: "common.ok")) {
-                dismiss()
-            }
-        } message: {
-            Text(
-                String(
-                    format: String(localized: "ocr.import.successMessage %lld"),
-                    Int64(viewModel.selectedCount)
-                )
-            )
-        }
-        .alert(String(localized: "common.error"), isPresented: Binding(
+    }
+
+    private var importErrorBinding: Binding<Bool> {
+        Binding(
             get: { viewModel.importError != nil },
             set: { if !$0 { viewModel.importError = nil } }
-        )) {
-            Button(String(localized: "common.ok")) {
-                viewModel.importError = nil
-            }
-        } message: {
-            if let error = viewModel.importError {
-                Text(error)
-            }
+        )
+    }
+
+    @ToolbarContentBuilder
+    private var toolbarContent: some ToolbarContent {
+        ToolbarItem(placement: .topBarLeading) {
+            retakeButton
         }
+        ToolbarItem(placement: .topBarTrailing) {
+            selectAllButton
+        }
+    }
+
+    private var retakeButton: some View {
+        Button {
+            InteractionLogger.tap(screen: "import.ocr.result", target: "import.ocr.result.retake")
+            viewModel.clearImages()
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 14, weight: .semibold))
+                Text(String(localized: "ocr.result.retake"))
+                    .font(DesignSystem.Typography.body)
+            }
+            .foregroundStyle(DesignSystem.Colors.textPrimary)
+        }
+    }
+
+    private var selectAllButton: some View {
+        Button {
+            viewModel.toggleSelectAll()
+            InteractionLogger.tap(screen: "import.ocr.result", target: "import.ocr.result.selectAll")
+        } label: {
+            Text(selectAllButtonTitle)
+                .font(DesignSystem.Typography.body)
+                .foregroundStyle(DesignSystem.Colors.primary)
+        }
+    }
+
+    private var selectAllButtonTitle: String {
+        viewModel.isAllSelected
+            ? String(localized: "ocr.result.deselectAll")
+            : String(localized: "ocr.result.selectAll")
     }
 
     // MARK: - Warning Banner
@@ -174,12 +212,14 @@ struct OCRResultView: View {
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.smallCard))
         .contentShape(Rectangle())
         .onTapGesture {
+            InteractionLogger.tap(screen: "import.ocr.result", target: "import.ocr.result.editRow")
             viewModel.startEditing(item: item)
         }
     }
 
     private func checkboxButton(_ item: OCRRecordItem) -> some View {
         Button {
+            InteractionLogger.tap(screen: "import.ocr.result", target: "import.ocr.result.toggleSelection")
             viewModel.toggleSelection(for: item)
         } label: {
             ZStack {
@@ -320,6 +360,7 @@ struct OCRResultView: View {
             Spacer()
 
             Button {
+                InteractionLogger.submit(screen: "import.ocr.result", target: "import.ocr.result.deleteSelected", action: .delete, result: "submitted", metadata: ["count": String(viewModel.selectedCount)])
                 viewModel.deleteSelected()
             } label: {
                 Text(String(localized: "ocr.delete"))
@@ -332,6 +373,7 @@ struct OCRResultView: View {
             .disabled(viewModel.selectedCount == 0)
 
             Button {
+                InteractionLogger.tap(screen: "import.ocr.result", target: "import.ocr.result.openImportConfig", route: "sheet.import.ocrConfig", presentation: .sheet)
                 viewModel.isShowingImportConfig = true
             } label: {
                 Text(String(localized: "ocr.import.confirm"))
@@ -388,8 +430,12 @@ struct OCRResultView: View {
                 Spacer()
 
                 Button {
+                    InteractionLogger.tap(screen: "import.ocr.result", target: "import.ocr.config.confirm")
                     if viewModel.performImport(context: modelContext) {
+                        InteractionLogger.submit(screen: "import.ocr.result", target: "import.ocr.config.confirm", action: .save, result: "success", metadata: ["count": String(viewModel.selectedCount)])
                         viewModel.isShowingImportConfig = false
+                    } else {
+                        InteractionLogger.submit(screen: "import.ocr.result", target: "import.ocr.config.confirm", action: .save, result: "failed", reason: "import_error")
                     }
                 } label: {
                     if viewModel.isImporting {
@@ -413,6 +459,7 @@ struct OCRResultView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button(String(localized: "common.cancel")) {
+                        InteractionLogger.tap(screen: "import.ocr.result", target: "import.ocr.config.cancel")
                         viewModel.isShowingImportConfig = false
                     }
                     .font(DesignSystem.Typography.body)
@@ -427,6 +474,7 @@ struct OCRResultView: View {
         let isSelected = viewModel.direction == direction
         return Button {
             viewModel.direction = direction
+            InteractionLogger.tap(screen: "import.ocr.result", target: "import.ocr.config.direction.\(direction.rawValue)")
         } label: {
             Text(title)
                 .font(DesignSystem.Typography.caption)

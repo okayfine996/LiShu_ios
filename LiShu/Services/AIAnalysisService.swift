@@ -1,4 +1,7 @@
 import Foundation
+import Logging
+
+private let aiAnalysisLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.ai)
 
 #if canImport(FoundationModels)
 import FoundationModels
@@ -45,6 +48,10 @@ final class AIAnalysisService {
     // MARK: - Public API
 
     func analyzeOCRText(_ lines: [(text: String, confidence: Float)]) async throws -> [OCRRecordItem] {
+        aiAnalysisLogger.notice("Starting AI OCR analysis", metadata: [
+            "step": .string("analyze_ocr_text"),
+            "count": .stringConvertible(lines.count)
+        ])
         let batches = splitIntoBatches(lines, maxCharsPerBatch: 1500)
         var allItems: [OCRRecordItem] = []
 
@@ -54,8 +61,18 @@ final class AIAnalysisService {
             let response = try await session.respond(to: prompt, generating: AIExtractionResult.self)
             let items = convertToOCRRecordItems(response.content, sourceLines: batch)
             allItems.append(contentsOf: items)
+            aiAnalysisLogger.info("Finished AI OCR batch", metadata: [
+                "step": .string("analyze_ocr_text"),
+                "count": .stringConvertible(items.count),
+                "prompt_chars": .stringConvertible(prompt.count)
+            ])
         }
 
+        aiAnalysisLogger.notice("Finished AI OCR analysis", metadata: [
+            "step": .string("analyze_ocr_text"),
+            "count": .stringConvertible(allItems.count),
+            "result": .string("success")
+        ])
         return allItems
     }
 
@@ -81,6 +98,10 @@ final class AIAnalysisService {
             batches.append(currentBatch)
         }
 
+        aiAnalysisLogger.info("Split OCR lines into AI batches", metadata: [
+            "step": .string("split_batches"),
+            "count": .stringConvertible(batches.count)
+        ])
         return batches
     }
 
@@ -88,6 +109,10 @@ final class AIAnalysisService {
 
     func buildPrompt(from lines: [(text: String, confidence: Float)]) -> String {
         let textBlock = lines.map(\.text).joined(separator: "\n")
+        aiAnalysisLogger.debug("Built AI OCR prompt", metadata: [
+            "step": .string("build_prompt"),
+            "count": .stringConvertible(lines.count)
+        ])
         return """
         你是一个礼金簿OCR文字解析助手。以下是从礼金簿图片中OCR识别出的文字行。
 
@@ -118,7 +143,7 @@ final class AIAnalysisService {
     ) -> [OCRRecordItem] {
         let avgConfidence = sourceLines.isEmpty ? Float(0.7) : sourceLines.map(\.confidence).reduce(0, +) / Float(sourceLines.count)
 
-        return result.records.compactMap { record in
+        let items: [OCRRecordItem] = result.records.compactMap { record -> OCRRecordItem? in
             let name = record.name.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !name.isEmpty, record.amount > 0 else { return nil }
 
@@ -153,6 +178,11 @@ final class AIAnalysisService {
                 eventName: eventName
             )
         }
+        aiAnalysisLogger.info("Converted AI OCR result", metadata: [
+            "step": .string("convert_items"),
+            "count": .stringConvertible(items.count)
+        ])
+        return items
     }
 
     func formatAmount(_ amount: Double) -> String {

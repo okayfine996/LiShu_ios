@@ -34,10 +34,12 @@ struct EventListView: View {
         .background(DesignSystem.Colors.bgPage)
         .navigationTitle(String(localized: "event.list.title"))
         .navigationBarTitleDisplayMode(.large)
+        .trackScreen("events.list")
         .searchable(text: $viewModel.searchText, prompt: String(localized: "common.search"))
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
+                    InteractionLogger.tap(screen: "events.list", target: "events.list.add", route: SheetRoute.addEvent.logName, presentation: .sheet)
                     sheetRoute = .addEvent
                 } label: {
                     Image(systemName: "plus")
@@ -54,6 +56,9 @@ struct EventListView: View {
             sheetContent(for: route)
         }
         .onChange(of: sheetRoute) { _, newValue in
+            if let newValue {
+                InteractionLogger.sheetPresentation(screen: "events.list", route: newValue.logName, isPresented: true)
+            }
             if newValue == nil {
                 viewModel.load(context: modelContext)
             }
@@ -108,6 +113,7 @@ struct EventListView: View {
                 // "All" pill
                 Button {
                     withAnimation { viewModel.selectedTypeFilter = nil }
+                    InteractionLogger.tap(screen: "events.list", target: "events.list.filter.all")
                 } label: {
                     Text(String(localized: "record.filter.all"))
                         .font(DesignSystem.Typography.caption)
@@ -122,6 +128,7 @@ struct EventListView: View {
                 ForEach(EventType.allCases, id: \.self) { type in
                     Button {
                         withAnimation { viewModel.selectedTypeFilter = type }
+                        InteractionLogger.tap(screen: "events.list", target: "events.list.filter.\(type.rawValue)")
                     } label: {
                         HStack(spacing: 4) {
                             Image(systemName: type.iconName)
@@ -163,6 +170,13 @@ struct EventListView: View {
                             badge: upcomingBadge(event.date)
                         )
                     }
+                    .simultaneousGesture(TapGesture().onEnded {
+                        InteractionLogger.navigation(
+                            screen: "events.list",
+                            target: "events.list.event.\(String(describing: event.persistentModelID))",
+                            route: AppRoute.eventDetail(event.persistentModelID).logName
+                        )
+                    })
                     .buttonStyle(.plain)
                 }
             }
@@ -190,6 +204,13 @@ struct EventListView: View {
                             recordCount: (event.records ?? []).count
                         )
                     }
+                    .simultaneousGesture(TapGesture().onEnded {
+                        InteractionLogger.navigation(
+                            screen: "events.list",
+                            target: "events.list.event.\(String(describing: event.persistentModelID))",
+                            route: AppRoute.eventDetail(event.persistentModelID).logName
+                        )
+                    })
                     .buttonStyle(.plain)
                 }
             }

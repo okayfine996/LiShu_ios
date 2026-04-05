@@ -31,6 +31,34 @@ enum AppRoute: Hashable {
     case about
     case termsOfService
     case privacyPolicy
+
+    var logName: String {
+        switch self {
+        case .recordDetail: return "records.detail"
+        case .addRecord: return "records.add"
+        case .monthlyDetail: return "statistics.monthlyDetail"
+        case .periodDetail: return "statistics.periodDetail"
+        case .contactExchange: return "contacts.exchange"
+        case .contactDetail: return "contacts.detail"
+        case .addContact: return "contacts.add"
+        case .eventList: return "events.list"
+        case .eventDetail: return "events.detail"
+        case .addEvent: return "events.add"
+        case .statistics: return "statistics.home"
+        case .eventTypeComposition: return "statistics.eventTypeComposition"
+        case .netValueRanking: return "statistics.netValueRanking"
+        case .circleDetail: return "statistics.circleDetail"
+        case .recordTypeComposition: return "statistics.recordTypeComposition"
+        case .heatmapDetail: return "statistics.heatmapDetail"
+        case .proMembership: return "settings.proMembership"
+        case .appearanceSettings: return "settings.appearance"
+        case .notificationSettings: return "settings.notifications"
+        case .dataManagement, .importExport: return "settings.dataManagement"
+        case .about: return "settings.about"
+        case .termsOfService: return "settings.terms"
+        case .privacyPolicy: return "settings.privacy"
+        }
+    }
 }
 
 enum SheetRoute: Identifiable, Equatable {
@@ -55,6 +83,20 @@ enum SheetRoute: Identifiable, Equatable {
         case .returnGift: return "returnGift"
         case .ocrImport: return "ocrImport"
         case .proMembership: return "proMembership"
+        }
+    }
+
+    var logName: String {
+        switch self {
+        case .addRecord: return "sheet.records.add"
+        case .addContact: return "sheet.contacts.add"
+        case .addEvent: return "sheet.events.add"
+        case .editContact: return "sheet.contacts.edit"
+        case .editEvent: return "sheet.events.edit"
+        case .editRecord: return "sheet.records.edit"
+        case .returnGift: return "sheet.records.returnGift"
+        case .ocrImport: return "sheet.import.ocr"
+        case .proMembership: return "sheet.settings.proMembership"
         }
     }
 }

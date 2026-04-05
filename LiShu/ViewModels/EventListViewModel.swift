@@ -1,5 +1,8 @@
 import Foundation
+import Logging
 import SwiftData
+
+private let eventListLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.eventsViewModel)
 
 @Observable
 class EventListViewModel {
@@ -53,22 +56,46 @@ class EventListViewModel {
             )
             let events = try context.fetch(descriptor)
             state = .loaded(events)
+            eventListLogger.notice("Loaded events", metadata: [
+                "step": .string("load"),
+                "count": .stringConvertible(events.count),
+                "result": .string("success")
+            ])
         } catch {
             state = .error(error.localizedDescription)
+            eventListLogger.error("Failed to load events", metadata: [
+                "step": .string("load"),
+                "error": .string(error.localizedDescription)
+            ])
         }
     }
 
     func deleteEvent(_ event: Event, context: ModelContext) {
         guard (event.records ?? []).isEmpty else {
             deleteError = String(localized: "event.detail.deleteBlocked")
+            eventListLogger.warning("Blocked event deletion", metadata: [
+                "step": .string("delete"),
+                "event_id": .string(String(describing: event.persistentModelID)),
+                "reason": .string("has_records")
+            ])
             return
         }
         context.delete(event)
         do {
             try context.save()
+            eventListLogger.notice("Deleted event", metadata: [
+                "step": .string("delete"),
+                "event_id": .string(String(describing: event.persistentModelID)),
+                "result": .string("success")
+            ])
             load(context: context)
         } catch {
             deleteError = error.localizedDescription
+            eventListLogger.error("Failed to delete event", metadata: [
+                "step": .string("delete"),
+                "event_id": .string(String(describing: event.persistentModelID)),
+                "error": .string(error.localizedDescription)
+            ])
             load(context: context)
         }
     }

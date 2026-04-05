@@ -43,6 +43,15 @@ final class SettingsFlowTests: BaseUITestCase {
             ).firstMatch
             XCTAssertTrue(versionText.waitForExistence(timeout: 3), "About page should show version info")
 
+            let versionLabel = app.staticTexts["about.versionLabel"]
+            XCTAssertTrue(versionLabel.waitForExistence(timeout: 3), "Version label should expose an accessibility identifier for diagnostics")
+            for _ in 0..<7 {
+                versionLabel.tap()
+            }
+
+            let diagnosticsButton = app.buttons["about.openDiagnosticsConsole"]
+            XCTAssertFalse(diagnosticsButton.waitForExistence(timeout: 1), "UI testing mode should keep the hidden diagnostics entry unavailable")
+
             app.navigationBars.buttons.firstMatch.tap()
         }
     }
