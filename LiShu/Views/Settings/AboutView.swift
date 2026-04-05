@@ -1,11 +1,10 @@
-import PulseUI
 import SwiftUI
 
 struct AboutView: View {
-    @State private var showPulseConsole = false
+    @State private var showDiagnosticsConsole = false
     @State private var showDiagnosticsGuide = false
     /// Set with「打开诊断控制台」; cleared in `onDismiss` so the console sheet presents after the guide finishes dismissing.
-    @State private var pendingPulseConsoleAfterGuideDismiss = false
+    @State private var shouldOpenDiagnosticsConsoleAfterGuideDismiss = false
     @State private var diagnosticsTapCount = 0
     @State private var diagnosticsTapResetTask: DispatchWorkItem?
 
@@ -38,16 +37,16 @@ struct AboutView: View {
         .navigationTitle(String(localized: "settings.about"))
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showDiagnosticsGuide, onDismiss: {
-            if pendingPulseConsoleAfterGuideDismiss {
-                pendingPulseConsoleAfterGuideDismiss = false
-                showPulseConsole = true
+            if shouldOpenDiagnosticsConsoleAfterGuideDismiss {
+                shouldOpenDiagnosticsConsoleAfterGuideDismiss = false
+                showDiagnosticsConsole = true
             }
         }) {
             diagnosticsGuideSheet
         }
-        .sheet(isPresented: $showPulseConsole) {
+        .sheet(isPresented: $showDiagnosticsConsole) {
             NavigationStack {
-                ConsoleView()
+                DiagnosticsConsoleContainerView()
             }
         }
     }
@@ -88,7 +87,7 @@ struct AboutView: View {
                             .font(DesignSystem.Typography.title3)
                             .foregroundStyle(DesignSystem.Colors.textPrimary)
 
-                        Text("当需要排查问题时，可在此查看应用日志，并使用 Pulse 的原生分享功能导出日志文件。")
+                        Text("当需要排查问题时，可在此查看应用日志，并通过内置导出功能分享诊断文件。")
                             .font(DesignSystem.Typography.body)
                             .foregroundStyle(DesignSystem.Colors.textSecondary)
                             .fixedSize(horizontal: false, vertical: true)
@@ -101,7 +100,7 @@ struct AboutView: View {
 
                     diagnosticsStepCard(
                         title: "分享方式",
-                        body: "进入控制台后，点击右上角分享按钮即可导出 .pulse 或文本日志，再通过系统分享发送给开发者。"
+                        body: "控制台提供日志浏览与导出入口。若需要导出查询条件、原始业务数据和结果集，请使用“导出日志”，选择详细文本或 JSON 日志。"
                     )
 
                     diagnosticsStepCard(
@@ -110,7 +109,7 @@ struct AboutView: View {
                     )
 
                     Button {
-                        pendingPulseConsoleAfterGuideDismiss = true
+                        shouldOpenDiagnosticsConsoleAfterGuideDismiss = true
                         showDiagnosticsGuide = false
                     } label: {
                         Text("打开诊断控制台")

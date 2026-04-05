@@ -137,6 +137,17 @@ class MonthlyDetailViewModel {
 
         periodIncome = records.filter { $0.direction == .received }.reduce(0) { $0 + $1.monetaryAmount }
         periodExpense = records.filter { $0.direction == .given }.reduce(0) { $0 + $1.monetaryAmount }
+        BusinessDataLogger.recordQuery(
+            screen: "statistics.monthlyDetail",
+            operation: "load",
+            searchText: "",
+            filters: [
+                "period": period.title,
+                "year": String(period.year),
+            ],
+            sort: "date_desc",
+            records: records
+        )
 
         loadPreviousPeriod(context: context, calendar: calendar)
         computeEventTypeSlices()

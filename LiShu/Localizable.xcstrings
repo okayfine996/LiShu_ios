@@ -283,6 +283,9 @@
         }
       }
     },
+    "Close" : {
+
+    },
     "common.cancel" : {
       "localizations" : {
         "zh-Hans" : {
@@ -425,6 +428,9 @@
           }
         }
       }
+    },
+    "Console" : {
+
     },
     "contact.add.addAvatar" : {
       "localizations" : {
@@ -6162,16 +6168,6 @@
         }
       }
     },
-    "settings.data.exportCSV" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "导出为 CSV"
-          }
-        }
-      }
-    },
     "settings.data.export_encoding_failed" : {
       "localizations" : {
         "en" : {
@@ -6184,6 +6180,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "无法将导出内容编码为 UTF-8。"
+          }
+        }
+      }
+    },
+    "settings.data.exportCSV" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导出为 CSV"
           }
         }
       }
@@ -7904,7 +7910,16 @@
         }
       }
     },
-    "当需要排查问题时，可在此查看应用日志，并使用 Pulse 的原生分享功能导出日志文件。" : {
+    "导出失败" : {
+
+    },
+    "导出详细 JSON 日志" : {
+
+    },
+    "导出详细文本日志" : {
+
+    },
+    "当需要排查问题时，可在此查看应用日志，并通过内置导出功能分享诊断文件。" : {
 
     },
     "打开诊断控制台" : {

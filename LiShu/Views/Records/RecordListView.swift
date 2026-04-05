@@ -313,6 +313,7 @@ struct RecordListView: View {
     }
 }
 
+@MainActor
 private func makeRecordListPreviewContainer() -> ModelContainer? {
     guard let container = try? ModelContainer(
         for: Contact.self, Record.self, Event.self,

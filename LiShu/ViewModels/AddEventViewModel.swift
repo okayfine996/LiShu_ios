@@ -18,6 +18,20 @@ class AddEventViewModel {
         !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
+    private var draftPayload: EventLogPayload {
+        EventLogPayload(
+            id: editingEvent.map { String(describing: $0.persistentModelID) } ?? "pending",
+            name: name.trimmingCharacters(in: .whitespacesAndNewlines),
+            type: eventType.rawValue,
+            date: date,
+            location: location.trimmingCharacters(in: .whitespacesAndNewlines),
+            note: note.trimmingCharacters(in: .whitespacesAndNewlines),
+            coverImagePresent: coverImageData != nil,
+            recordCount: editingEvent?.records?.count ?? 0,
+            createdAt: editingEvent?.createdAt ?? .now
+        )
+    }
+
     func configure(with event: Event) {
         eventsViewModelLogger.info("Configured event editor", metadata: [
             "step": .string("configure"),
@@ -32,6 +46,7 @@ class AddEventViewModel {
         coverImageData = event.coverImage
     }
 
+    @MainActor
     func save(context: ModelContext) -> Bool {
         guard isValid else {
             eventsViewModelLogger.warning("Rejected event save", metadata: [
@@ -42,6 +57,13 @@ class AddEventViewModel {
         }
 
         if let existing = editingEvent {
+            BusinessDataLogger.entityMutation(
+                domain: "event",
+                screen: "events.form",
+                operation: "update_attempt",
+                payload: draftPayload,
+                results: [draftPayload]
+            )
             existing.name = name.trimmingCharacters(in: .whitespacesAndNewlines)
             existing.type = eventType
             existing.date = date
@@ -53,6 +75,13 @@ class AddEventViewModel {
                 try context.save()
                 NotificationManager.shared.cancelEventReminder(event: existing)
                 NotificationManager.shared.scheduleEventReminder(event: existing)
+                BusinessDataLogger.entityMutation(
+                    domain: "event",
+                    screen: "events.form",
+                    operation: "update",
+                    payload: draftPayload,
+                    results: [existing.logPayload()]
+                )
                 eventsViewModelLogger.notice("Saved event", metadata: [
                     "step": .string("save"),
                     "event_id": .string(String(describing: existing.persistentModelID)),
@@ -60,6 +89,13 @@ class AddEventViewModel {
                 ])
                 return true
             } catch {
+                BusinessDataLogger.entityMutation(
+                    domain: "event",
+                    screen: "events.form",
+                    operation: "update_failed",
+                    payload: draftPayload,
+                    error: error.localizedDescription
+                )
                 eventsViewModelLogger.error("Failed to save event", metadata: [
                     "step": .string("save"),
                     "result": .string("updated"),
@@ -68,6 +104,13 @@ class AddEventViewModel {
                 return false
             }
         } else {
+            BusinessDataLogger.entityMutation(
+                domain: "event",
+                screen: "events.form",
+                operation: "create_attempt",
+                payload: draftPayload,
+                results: [draftPayload]
+            )
             let event = Event(
                 name: name.trimmingCharacters(in: .whitespacesAndNewlines),
                 type: eventType,
@@ -81,6 +124,13 @@ class AddEventViewModel {
             do {
                 try context.save()
                 NotificationManager.shared.scheduleEventReminder(event: event)
+                BusinessDataLogger.entityMutation(
+                    domain: "event",
+                    screen: "events.form",
+                    operation: "create",
+                    payload: draftPayload,
+                    results: [event.logPayload()]
+                )
                 eventsViewModelLogger.notice("Saved event", metadata: [
                     "step": .string("save"),
                     "event_id": .string(String(describing: event.persistentModelID)),
@@ -88,6 +138,13 @@ class AddEventViewModel {
                 ])
                 return true
             } catch {
+                BusinessDataLogger.entityMutation(
+                    domain: "event",
+                    screen: "events.form",
+                    operation: "create_failed",
+                    payload: draftPayload,
+                    error: error.localizedDescription
+                )
                 eventsViewModelLogger.error("Failed to save event", metadata: [
                     "step": .string("save"),
                     "result": .string("created"),

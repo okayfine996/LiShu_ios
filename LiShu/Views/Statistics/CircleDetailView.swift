@@ -324,6 +324,7 @@ struct CircleDetailView: View {
 
 // MARK: - Preview
 
+@MainActor
 private func makeCircleDetailPreviewContainer() -> ModelContainer? {
     guard let container = try? ModelContainer(
         for: Contact.self, Record.self, Event.self,

@@ -10,6 +10,7 @@ private func ensureApplicationSupportDirectoryExists() {
 }
 
 @main
+@MainActor
 struct LiShuApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     let sharedModelContainer: ModelContainer

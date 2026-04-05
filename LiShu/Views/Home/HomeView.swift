@@ -451,6 +451,7 @@ struct HomeView: View {
     }
 }
 
+@MainActor
 private func makeHomePreviewContainer() -> ModelContainer? {
     guard let container = try? ModelContainer(
         for: Contact.self, Record.self, Event.self,

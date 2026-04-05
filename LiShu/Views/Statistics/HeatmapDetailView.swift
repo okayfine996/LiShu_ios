@@ -196,6 +196,7 @@ struct HeatmapDetailView: View {
 
 // MARK: - Preview
 
+@MainActor
 private func makeHeatmapDetailPreviewContainer() -> ModelContainer? {
     guard let container = try? ModelContainer(
         for: Contact.self, Record.self, Event.self,

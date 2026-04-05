@@ -104,6 +104,24 @@ class OCRImportViewModel {
                 isAIEnhanced = result.isAIEnhanced
                 processingState = .loaded(result.items)
                 SubscriptionManager.shared.recordOCRUsage()
+                BusinessDataLogger.ocrQuery(
+                    screen: "import.ocr.result",
+                    operation: "recognize",
+                    filters: [
+                        "imageCount": String(capturedImages.count),
+                        "pipeline": result.isAIEnhanced ? "ai_enhanced" : "ocr_only",
+                    ],
+                    payload: QueryInputLogPayload(
+                        searchText: "",
+                        filters: [
+                            "imageCount": String(capturedImages.count),
+                            "pipeline": result.isAIEnhanced ? "ai_enhanced" : "ocr_only",
+                        ],
+                        sort: "",
+                        screen: "import.ocr.result"
+                    ),
+                    results: result.items.map { $0.logPayload() }
+                )
                 ocrImportLogger.notice("Processed OCR images", metadata: [
                     "step": .string("process_images"),
                     "count": .stringConvertible(result.items.count),
@@ -127,6 +145,13 @@ class OCRImportViewModel {
     func toggleSelection(for item: OCRRecordItem) {
         guard let index = items.firstIndex(where: { $0.id == item.id }) else { return }
         items[index].isSelected.toggle()
+        BusinessDataLogger.ocrQuery(
+            screen: "import.ocr.result",
+            operation: "selection_update",
+            filters: ["toggledItemID": item.id.uuidString],
+            payload: item.logPayload(),
+            results: selectedItems.map { $0.logPayload() }
+        )
         ocrImportLogger.info("Toggled OCR item selection", metadata: [
             "step": .string("selection"),
             "result": .string(items[index].isSelected ? "selected" : "deselected"),
@@ -146,11 +171,24 @@ class OCRImportViewModel {
     }
 
     func toggleSelectAll() {
+        let wasAllSelected = isAllSelected
         if isAllSelected {
             deselectAll()
         } else {
             selectAll()
         }
+        BusinessDataLogger.ocrQuery(
+            screen: "import.ocr.result",
+            operation: "select_all_toggle",
+            filters: ["mode": wasAllSelected ? "deselect_all" : "select_all"],
+            payload: QueryInputLogPayload(
+                searchText: "",
+                filters: ["totalItems": String(items.count)],
+                sort: "",
+                screen: "import.ocr.result"
+            ),
+            results: selectedItems.map { $0.logPayload() }
+        )
         ocrImportLogger.info("Toggled OCR select all", metadata: [
             "step": .string("selection"),
             "count": .stringConvertible(selectedCount),
@@ -189,6 +227,12 @@ class OCRImportViewModel {
         editAmountText = String(item.amount == Double(Int(item.amount)) ? "\(Int(item.amount))" : String(format: "%.2f", item.amount))
         editDate = item.date
         editEventName = item.eventName
+        BusinessDataLogger.ocrQuery(
+            screen: "import.ocr.result",
+            operation: "edit_open",
+            payload: item.logPayload(),
+            results: [item.logPayload()]
+        )
         ocrImportLogger.info("Started editing OCR item", metadata: [
             "step": .string("edit_item"),
             "target": .string(item.name),
@@ -197,6 +241,7 @@ class OCRImportViewModel {
 
     func saveEditing() {
         guard let editingItem, let index = items.firstIndex(where: { $0.id == editingItem.id }) else { return }
+        let originalPayload = editingItem.logPayload()
 
         let cleanedAmount = editAmountText
             .replacingOccurrences(of: ",", with: "")
@@ -214,7 +259,14 @@ class OCRImportViewModel {
         items[index].eventName = editEventName
         items[index].eventType = eventType(for: editEventName) ?? items[index].eventType
 
+        let updatedPayload = items[index].logPayload()
         self.editingItem = nil
+        BusinessDataLogger.ocrQuery(
+            screen: "import.ocr.result",
+            operation: "edit_save",
+            payload: originalPayload,
+            results: [updatedPayload]
+        )
         ocrImportLogger.notice("Saved OCR item edits", metadata: [
             "step": .string("edit_item"),
             "result": .string("success"),
@@ -248,6 +300,13 @@ class OCRImportViewModel {
         guard !itemsToImport.isEmpty else { return false }
 
         isImporting = true
+        BusinessDataLogger.ocrQuery(
+            screen: "import.ocr.result",
+            operation: "import_attempt",
+            filters: ["direction": direction.rawValue],
+            payload: itemsToImport.map { $0.logPayload() },
+            results: itemsToImport.map { $0.logPayload() }
+        )
         ocrImportLogger.notice("Starting OCR import", metadata: [
             "step": .string("perform_import"),
             "count": .stringConvertible(itemsToImport.count),
@@ -260,6 +319,8 @@ class OCRImportViewModel {
                 existingContacts.map { ($0.name.trimmingCharacters(in: .whitespacesAndNewlines), $0) },
                 uniquingKeysWith: { first, _ in first }
             )
+
+            var importedRecords: [Record] = []
 
             for item in itemsToImport {
                 let normalizedName = item.name.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -292,11 +353,19 @@ class OCRImportViewModel {
                     returnedAmount: 0
                 )))
                 context.insert(record)
+                importedRecords.append(record)
             }
 
             try context.save()
             isImporting = false
             importSuccess = true
+            BusinessDataLogger.ocrQuery(
+                screen: "import.ocr.result",
+                operation: "import",
+                filters: ["direction": direction.rawValue],
+                payload: itemsToImport.map { $0.logPayload() },
+                results: importedRecords.map { $0.logPayload() }
+            )
             ocrImportLogger.notice("Finished OCR import", metadata: [
                 "step": .string("perform_import"),
                 "count": .stringConvertible(itemsToImport.count),
@@ -306,6 +375,14 @@ class OCRImportViewModel {
         } catch {
             isImporting = false
             importError = error.localizedDescription
+            BusinessDataLogger.ocrQuery(
+                screen: "import.ocr.result",
+                operation: "import_failed",
+                filters: ["direction": direction.rawValue],
+                payload: itemsToImport.map { $0.logPayload() },
+                results: [RecordLogPayload](),
+                error: error.localizedDescription
+            )
             ocrImportLogger.error("Failed OCR import", metadata: [
                 "step": .string("perform_import"),
                 "error": .string(error.localizedDescription),

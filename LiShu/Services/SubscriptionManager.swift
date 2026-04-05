@@ -286,7 +286,7 @@ class SubscriptionManager {
         Task.detached { [weak self] in
             for await result in Transaction.updates {
                 if let transaction = try? result.payloadValue {
-                    subscriptionLogger.notice("Transaction update received", metadata: [
+                    await subscriptionLogger.notice("Transaction update received", metadata: [
                         "product_id": .string(transaction.productID),
                     ])
                     await transaction.finish()

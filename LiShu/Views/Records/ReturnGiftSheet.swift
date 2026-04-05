@@ -164,6 +164,7 @@ struct ReturnGiftSheet: View {
         return value <= maxAdditionalReturn(for: record)
     }
 
+    @MainActor
     private func performReturn(_ record: Record) {
         guard let returnValue = UserEnteredDecimal.parse(returnAmountText), returnValue > 0 else {
             validationError = String(localized: "record.returnGift.amountRequired")

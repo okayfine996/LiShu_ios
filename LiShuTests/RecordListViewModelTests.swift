@@ -5,6 +5,11 @@ import Testing
 
 @MainActor
 struct RecordListViewModelTests {
+    private func flattenedRecords(from grouped: [String: [Record]]?) -> [Record] {
+        guard let grouped else { return [] }
+        return grouped.values.flatMap(\.self)
+    }
+
     @Test("load with filter=all returns all 3 records")
     func loadAllRecords() throws {
         let db = try TestDB()
@@ -30,7 +35,7 @@ struct RecordListViewModelTests {
 
         let grouped = vm.state.value
         #expect(grouped != nil)
-        let allRecords = try #require(grouped?.values.flatMap(\.self))
+        let allRecords = flattenedRecords(from: grouped)
         #expect(allRecords.count == 3)
     }
 
@@ -55,7 +60,7 @@ struct RecordListViewModelTests {
 
         let grouped = vm.state.value
         #expect(grouped != nil)
-        let records = try #require(grouped?.values.flatMap(\.self))
+        let records = flattenedRecords(from: grouped)
         #expect(records.count == 1)
         #expect(records.first?.recordType == .monetary)
     }
@@ -81,7 +86,7 @@ struct RecordListViewModelTests {
 
         let grouped = vm.state.value
         #expect(grouped != nil)
-        let records = try #require(grouped?.values.flatMap(\.self))
+        let records = flattenedRecords(from: grouped)
         #expect(records.count == 1)
         #expect(records.first?.recordType == .gift)
     }
@@ -108,7 +113,7 @@ struct RecordListViewModelTests {
 
         let grouped = vm.state.value
         #expect(grouped != nil)
-        let records = try #require(grouped?.values.flatMap(\.self))
+        let records = flattenedRecords(from: grouped)
         #expect(records.count == 1)
         #expect(records.first?.contact?.name == "张三")
     }
@@ -168,11 +173,11 @@ struct RecordListViewModelTests {
 
         let vm = RecordListViewModel()
         vm.load(context: db.context)
-        let before = try #require(vm.state.value?.values.flatMap(\.self).count)
+        let before = flattenedRecords(from: vm.state.value).count
         #expect(before == 1)
 
         vm.deleteRecord(r, context: db.context)
-        let after = try #require(vm.state.value?.values.flatMap(\.self).count)
+        let after = flattenedRecords(from: vm.state.value).count
         #expect(after == 0)
     }
 

@@ -63,6 +63,14 @@ class RecordListViewModel {
 
             let grouped = groupByMonth(records)
             state = .loaded(grouped)
+            BusinessDataLogger.recordQuery(
+                screen: "records.list",
+                operation: "load",
+                searchText: searchText.trimmingCharacters(in: .whitespacesAndNewlines),
+                filters: ["recordType": filter.rawValue],
+                sort: "date_desc",
+                records: records
+            )
             recordListLogger.notice("Loaded records", metadata: [
                 "step": .string("load"),
                 "count": .stringConvertible(records.count),
@@ -71,6 +79,15 @@ class RecordListViewModel {
             ])
         } catch {
             state = .error(error.localizedDescription)
+            BusinessDataLogger.recordQuery(
+                screen: "records.list",
+                operation: "load_failed",
+                searchText: searchText.trimmingCharacters(in: .whitespacesAndNewlines),
+                filters: ["recordType": filter.rawValue],
+                sort: "date_desc",
+                records: [],
+                error: error.localizedDescription
+            )
             recordListLogger.error("Failed to load records", metadata: [
                 "step": .string("load"),
                 "error": .string(error.localizedDescription),
@@ -79,6 +96,7 @@ class RecordListViewModel {
     }
 
     func deleteRecord(_ record: Record, context: ModelContext) {
+        let deletedPayload = record.logPayload()
         recordListLogger.notice("Deleting record", metadata: [
             "step": .string("delete"),
             "record_id": .string(String(describing: record.persistentModelID)),
@@ -86,6 +104,12 @@ class RecordListViewModel {
         context.delete(record)
         do {
             try context.save()
+            BusinessDataLogger.recordMutation(
+                screen: "records.list",
+                operation: "delete",
+                payload: deletedPayload,
+                results: [deletedPayload]
+            )
             recordListLogger.notice("Deleted record", metadata: [
                 "step": .string("delete"),
                 "record_id": .string(String(describing: record.persistentModelID)),
@@ -94,6 +118,12 @@ class RecordListViewModel {
             load(context: context)
         } catch {
             deleteError = error.localizedDescription
+            BusinessDataLogger.recordMutation(
+                screen: "records.list",
+                operation: "delete_failed",
+                payload: deletedPayload,
+                error: error.localizedDescription
+            )
             recordListLogger.error("Failed to delete record", metadata: [
                 "step": .string("delete"),
                 "record_id": .string(String(describing: record.persistentModelID)),
