@@ -12,6 +12,7 @@
 		32C8B5712F822036002E6746 /* Logging in Frameworks */ = {isa = PBXBuildFile; productRef = 32C8B5812F822036002E6746 /* Logging */; };
 		32C8B5722F822036002E6746 /* PulseLogHandler in Frameworks */ = {isa = PBXBuildFile; productRef = 32C8B5822F822036002E6746 /* PulseLogHandler */; };
 		32C8B5732F822036002E6746 /* Logging in Frameworks */ = {isa = PBXBuildFile; productRef = 32C8B5832F822036002E6746 /* Logging */; };
+		32C8B5742F822036002E6746 /* Pulse in Frameworks */ = {isa = PBXBuildFile; productRef = 32C8B5842F822036002E6746 /* Pulse */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -84,6 +85,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				32C8B5742F822036002E6746 /* Pulse in Frameworks */,
 				32C8B5732F822036002E6746 /* Logging in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -164,13 +166,14 @@
 			fileSystemSynchronizedGroups = (
 				9A934EAE2F54194E0063349A /* LiShuTests */,
 			);
-			name = LiShuTests;
-			packageProductDependencies = (
-				32C8B5832F822036002E6746 /* Logging */,
-			);
-			productName = LiShuTests;
-			productReference = 9A934EAB2F54194E0063349A /* LiShuTests.xctest */;
-			productType = "com.apple.product-type.bundle.unit-test";
+				name = LiShuTests;
+				packageProductDependencies = (
+					32C8B5832F822036002E6746 /* Logging */,
+					32C8B5842F822036002E6746 /* Pulse */,
+				);
+				productName = LiShuTests;
+				productReference = 9A934EAB2F54194E0063349A /* LiShuTests.xctest */;
+				productType = "com.apple.product-type.bundle.unit-test";
 		};
 		9A934EB42F54194E0063349A /* LiShuUITests */ = {
 			isa = PBXNativeTarget;
@@ -699,6 +702,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 32C8B57F2F822036002E6746 /* XCRemoteSwiftPackageReference "swift-log" */;
 			productName = Logging;
+		};
+		32C8B5842F822036002E6746 /* Pulse */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9A934ECA2F54194E0063349A /* XCRemoteSwiftPackageReference "Pulse" */;
+			productName = Pulse;
 		};
 		9A934ECB2F54194E0063349A /* Pulse */ = {
 			isa = XCSwiftPackageProductDependency;
