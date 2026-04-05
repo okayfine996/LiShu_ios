@@ -40,9 +40,18 @@ struct ContactGroup: Identifiable {
 @Observable
 class ContactListViewModel {
     var state: LoadingState<[Contact]> = .idle
-    var selectedFilter: ContactCircleFilter = .all
+    var selectedFilter: ContactCircleFilter = .all {
+        didSet {
+            logCurrentQueryIfAvailable(operation: "filter_change")
+        }
+    }
+
     var deleteError: String?
-    var searchText: String = ""
+    var searchText: String = "" {
+        didSet {
+            logCurrentQueryIfAvailable(operation: "search_change")
+        }
+    }
 
     /// All contacts loaded from SwiftData
     private var allContacts: [Contact] = []
@@ -121,6 +130,7 @@ class ContactListViewModel {
             let contacts = try context.fetch(descriptor)
             allContacts = contacts
             state = .loaded(contacts)
+            logCurrentQueryIfAvailable(operation: "load")
             contactListLogger.notice("Loaded contacts", metadata: [
                 "step": .string("load"),
                 "count": .stringConvertible(contacts.count),
@@ -128,6 +138,16 @@ class ContactListViewModel {
             ])
         } catch {
             state = .error(String(localized: "contact.list.loadError"))
+            BusinessDataLogger.entityQuery(
+                domain: "contact",
+                screen: "contacts.list",
+                operation: "load_failed",
+                searchText: searchText.trimmingCharacters(in: .whitespacesAndNewlines),
+                filters: ["circleFilter": selectedFilter.rawValue],
+                sort: "name_asc",
+                results: [ContactLogPayload](),
+                error: error.localizedDescription
+            )
             contactListLogger.error("Failed to load contacts", metadata: [
                 "step": .string("load"),
                 "error": .string(error.localizedDescription),
@@ -137,6 +157,7 @@ class ContactListViewModel {
 
     /// Delete a contact
     func deleteContact(_ contact: Contact, context: ModelContext) {
+        let deletedPayload = contact.logPayload()
         contactListLogger.notice("Deleting contact", metadata: [
             "step": .string("delete"),
             "contact_id": .string(String(describing: contact.persistentModelID)),
@@ -144,6 +165,15 @@ class ContactListViewModel {
         context.delete(contact)
         do {
             try context.save()
+            BusinessDataLogger.entityQuery(
+                domain: "contact",
+                screen: "contacts.list",
+                operation: "delete",
+                searchText: "",
+                filters: ["contact_id": deletedPayload.id],
+                sort: "",
+                results: [deletedPayload]
+            )
             contactListLogger.notice("Deleted contact", metadata: [
                 "step": .string("delete"),
                 "contact_id": .string(String(describing: contact.persistentModelID)),
@@ -152,6 +182,16 @@ class ContactListViewModel {
             loadContacts(context: context)
         } catch {
             deleteError = error.localizedDescription
+            BusinessDataLogger.entityQuery(
+                domain: "contact",
+                screen: "contacts.list",
+                operation: "delete_failed",
+                searchText: "",
+                filters: ["contact_id": deletedPayload.id],
+                sort: "",
+                results: [ContactLogPayload](),
+                error: error.localizedDescription
+            )
             contactListLogger.error("Failed to delete contact", metadata: [
                 "step": .string("delete"),
                 "contact_id": .string(String(describing: contact.persistentModelID)),
@@ -159,5 +199,18 @@ class ContactListViewModel {
             ])
             loadContacts(context: context)
         }
+    }
+
+    private func logCurrentQueryIfAvailable(operation: String) {
+        guard case .loaded = state else { return }
+        BusinessDataLogger.entityQuery(
+            domain: "contact",
+            screen: "contacts.list",
+            operation: operation,
+            searchText: searchText.trimmingCharacters(in: .whitespacesAndNewlines),
+            filters: ["circleFilter": selectedFilter.rawValue],
+            sort: "name_asc",
+            results: filteredContacts.map { $0.logPayload() }
+        )
     }
 }

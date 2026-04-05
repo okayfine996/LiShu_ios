@@ -60,6 +60,17 @@ class EventTypeDetailViewModel {
                 sortBy: [SortDescriptor(\.date, order: .reverse)]
             )
             records = try context.fetch(descriptor)
+            BusinessDataLogger.recordQuery(
+                screen: "statistics.eventTypeDetail",
+                operation: "load",
+                searchText: "",
+                filters: [
+                    "eventType": eventType.rawValue,
+                    "year": String(year),
+                ],
+                sort: "date_desc",
+                records: records
+            )
         } catch {
             records = []
         }

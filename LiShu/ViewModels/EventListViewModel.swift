@@ -7,12 +7,24 @@ private let eventListLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.eve
 @Observable
 class EventListViewModel {
     var state: LoadingState<[Event]> = .idle
-    var selectedTypeFilter: EventType?
-    var searchText: String = ""
+    var selectedTypeFilter: EventType? {
+        didSet {
+            logCurrentQueryIfAvailable(operation: "filter_change")
+        }
+    }
+
+    var searchText: String = "" {
+        didSet {
+            logCurrentQueryIfAvailable(operation: "search_change")
+        }
+    }
+
     var deleteError: String?
 
+    private var allEvents: [Event] = []
+
     private var searchedEvents: [Event] {
-        guard let events = state.value else { return [] }
+        let events = allEvents
         let trimmed = searchText.trimmingCharacters(in: .whitespaces)
         guard !trimmed.isEmpty else { return events }
         return events.filter {
@@ -55,7 +67,9 @@ class EventListViewModel {
                 sortBy: [SortDescriptor(\.date, order: .reverse)]
             )
             let events = try context.fetch(descriptor)
+            allEvents = events
             state = .loaded(events)
+            logCurrentQueryIfAvailable(operation: "load")
             eventListLogger.notice("Loaded events", metadata: [
                 "step": .string("load"),
                 "count": .stringConvertible(events.count),
@@ -63,6 +77,16 @@ class EventListViewModel {
             ])
         } catch {
             state = .error(error.localizedDescription)
+            BusinessDataLogger.entityQuery(
+                domain: "event",
+                screen: "events.list",
+                operation: "load_failed",
+                searchText: searchText.trimmingCharacters(in: .whitespacesAndNewlines),
+                filters: ["eventType": selectedTypeFilter?.rawValue ?? "all"],
+                sort: "date_desc_split",
+                results: [EventLogPayload](),
+                error: error.localizedDescription
+            )
             eventListLogger.error("Failed to load events", metadata: [
                 "step": .string("load"),
                 "error": .string(error.localizedDescription),
@@ -71,6 +95,7 @@ class EventListViewModel {
     }
 
     func deleteEvent(_ event: Event, context: ModelContext) {
+        let deletedPayload = event.logPayload()
         guard (event.records ?? []).isEmpty else {
             deleteError = String(localized: "event.detail.deleteBlocked")
             eventListLogger.warning("Blocked event deletion", metadata: [
@@ -83,6 +108,15 @@ class EventListViewModel {
         context.delete(event)
         do {
             try context.save()
+            BusinessDataLogger.entityQuery(
+                domain: "event",
+                screen: "events.list",
+                operation: "delete",
+                searchText: "",
+                filters: ["event_id": deletedPayload.id],
+                sort: "",
+                results: [deletedPayload]
+            )
             eventListLogger.notice("Deleted event", metadata: [
                 "step": .string("delete"),
                 "event_id": .string(String(describing: event.persistentModelID)),
@@ -91,6 +125,16 @@ class EventListViewModel {
             load(context: context)
         } catch {
             deleteError = error.localizedDescription
+            BusinessDataLogger.entityQuery(
+                domain: "event",
+                screen: "events.list",
+                operation: "delete_failed",
+                searchText: "",
+                filters: ["event_id": deletedPayload.id],
+                sort: "",
+                results: [EventLogPayload](),
+                error: error.localizedDescription
+            )
             eventListLogger.error("Failed to delete event", metadata: [
                 "step": .string("delete"),
                 "event_id": .string(String(describing: event.persistentModelID)),
@@ -113,5 +157,19 @@ class EventListViewModel {
         formatter.locale = Locale(identifier: "zh_Hans")
         formatter.dateFormat = "M月d日"
         return formatter.string(from: date)
+    }
+
+    private func logCurrentQueryIfAvailable(operation: String) {
+        guard case .loaded = state else { return }
+        let results = filteredUpcomingEvents + filteredPastEvents
+        BusinessDataLogger.entityQuery(
+            domain: "event",
+            screen: "events.list",
+            operation: operation,
+            searchText: searchText.trimmingCharacters(in: .whitespacesAndNewlines),
+            filters: ["eventType": selectedTypeFilter?.rawValue ?? "all"],
+            sort: "date_desc_split",
+            results: results.map { $0.logPayload() }
+        )
     }
 }

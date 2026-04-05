@@ -38,6 +38,14 @@ class RecordTypeCompositionViewModel {
             )
             let records = try context.fetch(descriptor)
             computeDistribution(from: records, calendar: calendar)
+            BusinessDataLogger.recordQuery(
+                screen: "statistics.recordTypeComposition",
+                operation: "load",
+                searchText: "",
+                filters: ["year": String(year)],
+                sort: "date_desc",
+                records: records
+            )
         } catch {
             items = []
         }

@@ -125,6 +125,9 @@ enum PulseDiagnostics {
 nonisolated enum AppLogLabel {
     static let appBootstrap = "app.bootstrap"
     static let uiInteraction = "ui.interaction"
+    static let dataRecord = "data.record"
+    static let dataQuery = "data.query"
+    static let dataOCR = "data.ocr"
     static let settings = "settings.app"
     static let notifications = "notifications.manager"
     static let export = "storage.export"

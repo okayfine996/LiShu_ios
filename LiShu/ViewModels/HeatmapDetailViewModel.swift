@@ -28,11 +28,20 @@ final class HeatmapDetailViewModel {
         do {
             let allRecords = try context.fetch(FetchDescriptor<Record>())
             computeYearBounds(from: allRecords)
+            let currentYearRecords = yearRecords(from: allRecords)
             computeHeatmapGrid(from: allRecords)
-            totalInteractions = yearRecords(from: allRecords).count
+            totalInteractions = currentYearRecords.count
             yearOverYearPercent = computeYoYInteractionChange(from: allRecords)
             computeInsights(from: allRecords)
             state = .loaded(true)
+            BusinessDataLogger.recordQuery(
+                screen: "statistics.heatmap",
+                operation: "load",
+                searchText: "",
+                filters: ["year": String(year)],
+                sort: "date_desc",
+                records: currentYearRecords
+            )
         } catch {
             state = .error(error.localizedDescription)
         }

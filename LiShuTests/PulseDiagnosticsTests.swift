@@ -2,6 +2,7 @@ import Foundation
 @testable import LiShu
 import Logging
 import Pulse
+import SwiftData
 import Testing
 
 struct PulseDiagnosticsTests {
@@ -103,6 +104,67 @@ struct PulseDiagnosticsTests {
         #expect(message.metadata["screen"] == "records.list")
         #expect(message.metadata["target"] == "records.list")
         #expect(message.metadata["action"] == UILogAction.open.rawValue)
+    }
+
+    @MainActor
+    @Test("business record query logger writes raw record payloads into Pulse store")
+    func businessRecordQueryLoggerWritesRawRecordPayloads() throws {
+        let db = try TestDB()
+        let contact = SampleData.contact(name: "张三", relation: "朋友")
+        let event = SampleData.event(name: "婚礼", type: .wedding)
+        db.context.insert(contact)
+        db.context.insert(event)
+        let record = SampleData.record(contact: contact, event: event, amount: 888)
+        db.context.insert(record)
+        db.context.insert(SampleData.recordPhoto(record: record))
+        try db.context.save()
+
+        PulseDiagnostics.configureIfNeeded(arguments: [], environment: [:])
+        LoggerStore.shared.removeAll()
+
+        BusinessDataLogger.recordQuery(
+            screen: "records.list",
+            operation: "load",
+            searchText: "张",
+            filters: ["recordType": "all"],
+            sort: "date_desc",
+            records: [record]
+        )
+
+        let messages = try waitForMessages(label: AppLogLabel.dataQuery)
+        let message = try #require(messages.last)
+
+        #expect(message.metadata["event_type"] == "record_query")
+        #expect(message.metadata["domain"] == "record")
+        #expect(message.metadata["screen"] == "records.list")
+        #expect(message.metadata["result_count"] == "1")
+        #expect(message.metadata["query_input"]?.contains("\"searchText\":\"张\"") == true)
+        #expect(message.metadata["raw_results"]?.contains("\"name\":\"张三\"") == true)
+        #expect(message.metadata["raw_results"]?.contains("\"photoCount\":1") == true)
+    }
+
+    @Test("business query logger records empty result sets")
+    func businessQueryLoggerRecordsEmptyResultSets() throws {
+        PulseDiagnostics.configureIfNeeded(arguments: [], environment: [:])
+        LoggerStore.shared.removeAll()
+
+        BusinessDataLogger.entityQuery(
+            domain: "contact",
+            screen: "contacts.list",
+            operation: "search_change",
+            searchText: "不存在",
+            filters: ["circleFilter": "all"],
+            sort: "name_asc",
+            results: [ContactLogPayload]()
+        )
+
+        let messages = try waitForMessages(label: AppLogLabel.dataQuery)
+        let message = try #require(messages.last)
+
+        #expect(message.metadata["event_type"] == "entity_query")
+        #expect(message.metadata["domain"] == "contact")
+        #expect(message.metadata["result_count"] == "0")
+        #expect(message.metadata["raw_results"] == "[]")
     }
 
     private func waitForMessages(label: String, timeout: TimeInterval = 2.0) throws -> [LoggerMessageEntity] {

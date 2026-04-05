@@ -23,6 +23,23 @@ class AddContactViewModel {
         !name.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
+    private var draftPayload: ContactLogPayload {
+        ContactLogPayload(
+            id: editingContact.map { String(describing: $0.persistentModelID) } ?? "pending",
+            name: name.trimmingCharacters(in: .whitespacesAndNewlines),
+            phone: phone.trimmingCharacters(in: .whitespacesAndNewlines),
+            relation: selectedTag,
+            category: selectedCategory?.rawValue ?? "",
+            circle: selectedCategory?.circle ?? 4,
+            birthday: hasBirthday ? birthday : nil,
+            location: location.trimmingCharacters(in: .whitespacesAndNewlines),
+            note: note.trimmingCharacters(in: .whitespacesAndNewlines),
+            avatarPresent: avatar != nil,
+            recordCount: editingContact?.records?.count ?? 0,
+            createdAt: editingContact?.createdAt ?? .now
+        )
+    }
+
     func configure(with contact: Contact) {
         contactsViewModelLogger.info("Configured contact editor", metadata: [
             "step": .string("configure"),
@@ -62,6 +79,15 @@ class AddContactViewModel {
         }
 
         if let existing = editingContact {
+            BusinessDataLogger.entityQuery(
+                domain: "contact",
+                screen: "contacts.form",
+                operation: "update_attempt",
+                searchText: "",
+                filters: [:],
+                sort: "",
+                results: [draftPayload]
+            )
             existing.name = name.trimmingCharacters(in: .whitespaces)
             existing.phone = phone.trimmingCharacters(in: .whitespaces)
             existing.avatar = avatar
@@ -78,6 +104,15 @@ class AddContactViewModel {
                 if hasBirthday {
                     NotificationManager.shared.scheduleBirthdayReminder(contact: existing)
                 }
+                BusinessDataLogger.entityQuery(
+                    domain: "contact",
+                    screen: "contacts.form",
+                    operation: "update",
+                    searchText: "",
+                    filters: [:],
+                    sort: "",
+                    results: [existing.logPayload()]
+                )
                 contactsViewModelLogger.notice("Saved contact", metadata: [
                     "step": .string("save"),
                     "contact_id": .string(String(describing: existing.persistentModelID)),
@@ -85,6 +120,16 @@ class AddContactViewModel {
                 ])
                 return true
             } catch {
+                BusinessDataLogger.entityQuery(
+                    domain: "contact",
+                    screen: "contacts.form",
+                    operation: "update_failed",
+                    searchText: "",
+                    filters: [:],
+                    sort: "",
+                    results: [draftPayload],
+                    error: error.localizedDescription
+                )
                 contactsViewModelLogger.error("Failed to save contact", metadata: [
                     "step": .string("save"),
                     "result": .string("updated"),
@@ -93,6 +138,15 @@ class AddContactViewModel {
                 return false
             }
         } else {
+            BusinessDataLogger.entityQuery(
+                domain: "contact",
+                screen: "contacts.form",
+                operation: "create_attempt",
+                searchText: "",
+                filters: [:],
+                sort: "",
+                results: [draftPayload]
+            )
             let contact = Contact(
                 name: name.trimmingCharacters(in: .whitespaces),
                 phone: phone.trimmingCharacters(in: .whitespaces),
@@ -112,6 +166,15 @@ class AddContactViewModel {
                 if hasBirthday {
                     NotificationManager.shared.scheduleBirthdayReminder(contact: contact)
                 }
+                BusinessDataLogger.entityQuery(
+                    domain: "contact",
+                    screen: "contacts.form",
+                    operation: "create",
+                    searchText: "",
+                    filters: [:],
+                    sort: "",
+                    results: [contact.logPayload()]
+                )
                 contactsViewModelLogger.notice("Saved contact", metadata: [
                     "step": .string("save"),
                     "contact_id": .string(String(describing: contact.persistentModelID)),
@@ -119,6 +182,16 @@ class AddContactViewModel {
                 ])
                 return true
             } catch {
+                BusinessDataLogger.entityQuery(
+                    domain: "contact",
+                    screen: "contacts.form",
+                    operation: "create_failed",
+                    searchText: "",
+                    filters: [:],
+                    sort: "",
+                    results: [draftPayload],
+                    error: error.localizedDescription
+                )
                 contactsViewModelLogger.error("Failed to save contact", metadata: [
                     "step": .string("save"),
                     "result": .string("created"),

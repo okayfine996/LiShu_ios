@@ -70,6 +70,9 @@ class StatisticsViewModel {
         state = .loading
         do {
             let allRecords = try context.fetch(FetchDescriptor<Record>())
+            let yearRecords = allRecords.filter {
+                Calendar.current.component(.year, from: $0.date) == selectedYear
+            }
             computeAvailableYears(from: allRecords)
             computeYearlyStats(from: allRecords)
             computeMonthlyData(from: allRecords)
@@ -81,6 +84,14 @@ class StatisticsViewModel {
             computeYearOverYearChange(from: allRecords)
             computeRelationshipHealthSummary()
             state = .loaded(true)
+            BusinessDataLogger.recordQuery(
+                screen: "statistics.overview",
+                operation: "load",
+                searchText: "",
+                filters: ["year": String(selectedYear)],
+                sort: "date_desc",
+                records: yearRecords
+            )
         } catch {
             state = .error(error.localizedDescription)
         }

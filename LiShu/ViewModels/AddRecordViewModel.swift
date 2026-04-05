@@ -268,6 +268,23 @@ class AddRecordViewModel {
         return selectedEvent
     }
 
+    private func buildDraftPayload(contact: Contact, event: Event?, typeData: RecordTypeData, contextTag: String) -> RecordLogPayload {
+        RecordLogPayload(
+            id: editingRecord.map { String(describing: $0.persistentModelID) } ?? "pending",
+            direction: direction.rawValue,
+            recordType: recordType.rawValue,
+            date: date,
+            note: note,
+            contact: contact.logPayload(),
+            event: event?.logPayload(),
+            contextSelection: contextSelection.rawValue,
+            contextTag: contextTag,
+            typeData: typeData.logPayload(),
+            photoCount: (editingRecord?.photos?.count ?? 0) + newPhotoItems.count,
+            relationshipWeight: relationshipWeight.rawValue
+        )
+    }
+
     func save(context: ModelContext) -> Bool {
         guard isValid,
               let contact = resolveContact(context: context)
@@ -284,8 +301,14 @@ class AddRecordViewModel {
         let typeData = buildTypeData()
 
         let resolvedTag = contextSelection == .daily ? selectedDailyTag : ""
+        let submissionPayload = buildDraftPayload(contact: contact, event: event, typeData: typeData, contextTag: resolvedTag)
 
         if let existing = editingRecord {
+            BusinessDataLogger.recordMutation(
+                screen: "records.form",
+                operation: "update_attempt",
+                payload: submissionPayload
+            )
             existing.contact = contact
             existing.event = event
             existing.direction = direction
@@ -308,6 +331,12 @@ class AddRecordViewModel {
                 if existing.isMonetary, existing.direction == .given, !existing.hasReturnedGift {
                     NotificationManager.shared.scheduleReturnGiftReminder(record: existing)
                 }
+                BusinessDataLogger.recordMutation(
+                    screen: "records.form",
+                    operation: "update",
+                    payload: submissionPayload,
+                    results: [existing.logPayload()]
+                )
                 recordsViewModelLogger.notice("Saved record", metadata: [
                     "step": .string("save"),
                     "record_id": .string(String(describing: existing.persistentModelID)),
@@ -316,6 +345,12 @@ class AddRecordViewModel {
                 ])
                 return true
             } catch {
+                BusinessDataLogger.recordMutation(
+                    screen: "records.form",
+                    operation: "update_failed",
+                    payload: submissionPayload,
+                    error: error.localizedDescription
+                )
                 recordsViewModelLogger.error("Failed to save record", metadata: [
                     "step": .string("save"),
                     "result": .string("updated"),
@@ -324,6 +359,11 @@ class AddRecordViewModel {
                 return false
             }
         } else {
+            BusinessDataLogger.recordMutation(
+                screen: "records.form",
+                operation: "create_attempt",
+                payload: submissionPayload
+            )
             let record = Record(
                 contact: contact,
                 event: event,
@@ -349,6 +389,12 @@ class AddRecordViewModel {
                 if record.isMonetary, record.direction == .given, !record.hasReturnedGift {
                     NotificationManager.shared.scheduleReturnGiftReminder(record: record)
                 }
+                BusinessDataLogger.recordMutation(
+                    screen: "records.form",
+                    operation: "create",
+                    payload: submissionPayload,
+                    results: [record.logPayload()]
+                )
                 recordsViewModelLogger.notice("Saved record", metadata: [
                     "step": .string("save"),
                     "record_id": .string(String(describing: record.persistentModelID)),
@@ -357,6 +403,12 @@ class AddRecordViewModel {
                 ])
                 return true
             } catch {
+                BusinessDataLogger.recordMutation(
+                    screen: "records.form",
+                    operation: "create_failed",
+                    payload: submissionPayload,
+                    error: error.localizedDescription
+                )
                 recordsViewModelLogger.error("Failed to save record", metadata: [
                     "step": .string("save"),
                     "result": .string("created"),

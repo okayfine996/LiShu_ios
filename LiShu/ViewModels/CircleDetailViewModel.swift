@@ -51,6 +51,7 @@ class CircleDetailViewModel {
                 predicate: #Predicate<Contact> { $0.circle == circle }
             )
             let contacts = try context.fetch(descriptor)
+            var queryRecords: [Record] = []
 
             var memberItems: [CircleMemberItem] = []
             var sumIncome: Double = 0
@@ -62,6 +63,7 @@ class CircleDetailViewModel {
                     calendar.component(.year, from: $0.date) == year
                 }
                 guard !yearRecords.isEmpty else { continue }
+                queryRecords.append(contentsOf: yearRecords)
 
                 activeMemberCount += 1
 
@@ -97,6 +99,17 @@ class CircleDetailViewModel {
             members = memberItems.sorted { abs($0.netValue) > abs($1.netValue) }
 
             state = .loaded(true)
+            BusinessDataLogger.recordQuery(
+                screen: "statistics.circleDetail",
+                operation: "load",
+                searchText: "",
+                filters: [
+                    "circle": String(circle),
+                    "year": String(year),
+                ],
+                sort: "net_value_desc",
+                records: queryRecords.sorted { $0.date > $1.date }
+            )
         } catch {
             state = .error(error.localizedDescription)
         }
