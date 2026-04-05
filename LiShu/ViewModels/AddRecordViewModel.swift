@@ -15,8 +15,8 @@ struct NewRecordPhotoItem: Identifiable, Equatable {
 }
 
 enum RecordContextSelection: String, CaseIterable {
-    case event = "event"
-    case daily = "daily"
+    case event
+    case daily
 }
 
 @Observable
@@ -91,10 +91,10 @@ class AddRecordViewModel {
             return false
         }
         switch recordType {
-        case .monetary:  return (UserEnteredDecimal.parse(monetaryAmount) ?? 0) > 0
-        case .gift:      return !giftName.trimmingCharacters(in: .whitespaces).isEmpty
-        case .favor:     return !favorDesc.trimmingCharacters(in: .whitespaces).isEmpty
-        case .banquet:   return !banquetLocation.trimmingCharacters(in: .whitespaces).isEmpty
+        case .monetary: return (UserEnteredDecimal.parse(monetaryAmount) ?? 0) > 0
+        case .gift: return !giftName.trimmingCharacters(in: .whitespaces).isEmpty
+        case .favor: return !favorDesc.trimmingCharacters(in: .whitespaces).isEmpty
+        case .banquet: return !banquetLocation.trimmingCharacters(in: .whitespaces).isEmpty
         }
     }
 
@@ -172,7 +172,7 @@ class AddRecordViewModel {
     func addCustomTag() {
         let trimmed = customTagInput.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
-        if !customDailyTags.contains(trimmed) && !Self.builtInDailyTags.contains(trimmed) {
+        if !customDailyTags.contains(trimmed), !Self.builtInDailyTags.contains(trimmed) {
             customDailyTags.append(trimmed)
         }
         selectedDailyTag = trimmed
@@ -211,19 +211,19 @@ class AddRecordViewModel {
         relationshipWeight = record.relationshipWeight
 
         switch record.resolvedTypeData {
-        case .monetary(let d):
+        case let .monetary(d):
             monetaryAmount = d.amount == Double(Int(d.amount)) ? String(Int(d.amount)) : String(d.amount)
             monetaryPaymentMethod = PaymentMethod(rawValue: d.paymentMethod) ?? .cash
-        case .gift(let d):
+        case let .gift(d):
             giftName = d.giftName
             if let v = d.estimatedValue {
                 giftEstimatedValue = v == Double(Int(v)) ? String(Int(v)) : String(v)
             } else {
                 giftEstimatedValue = ""
             }
-        case .favor(let d):
+        case let .favor(d):
             favorDesc = d.description
-        case .banquet(let d):
+        case let .banquet(d):
             banquetLocation = d.location
             banquetAttendeeList = d.attendeeList
             banquetExtraCostNotes = d.extraCostNotes

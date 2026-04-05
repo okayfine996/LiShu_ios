@@ -1,14 +1,12 @@
 import Foundation
-import Foundation
-import Testing
-import SwiftData
 @testable import LiShu
+import SwiftData
+import Testing
 
 @MainActor
 struct RecordListViewModelTests {
-
     @Test("load with filter=all returns all 3 records")
-    func testLoadAllRecords() throws {
+    func loadAllRecords() throws {
         let db = try TestDB()
         let c1 = SampleData.contact(name: "张三")
         let c2 = SampleData.contact(name: "李四")
@@ -32,12 +30,12 @@ struct RecordListViewModelTests {
 
         let grouped = vm.state.value
         #expect(grouped != nil)
-        let allRecords = grouped!.values.flatMap { $0 }
+        let allRecords = try #require(grouped?.values.flatMap { $0 })
         #expect(allRecords.count == 3)
     }
 
     @Test("load with filter=monetary returns only monetary records")
-    func testLoadFilterMonetary() throws {
+    func loadFilterMonetary() throws {
         let db = try TestDB()
         let c1 = SampleData.contact(name: "张三")
         let c2 = SampleData.contact(name: "李四")
@@ -57,13 +55,13 @@ struct RecordListViewModelTests {
 
         let grouped = vm.state.value
         #expect(grouped != nil)
-        let records = grouped!.values.flatMap { $0 }
+        let records = try #require(grouped?.values.flatMap { $0 })
         #expect(records.count == 1)
-        #expect(records.first!.recordType == .monetary)
+        #expect(records.first?.recordType == .monetary)
     }
 
     @Test("load with filter=gift returns only gift records")
-    func testLoadFilterGift() throws {
+    func loadFilterGift() throws {
         let db = try TestDB()
         let c1 = SampleData.contact(name: "张三")
         let c2 = SampleData.contact(name: "李四")
@@ -83,13 +81,13 @@ struct RecordListViewModelTests {
 
         let grouped = vm.state.value
         #expect(grouped != nil)
-        let records = grouped!.values.flatMap { $0 }
+        let records = try #require(grouped?.values.flatMap { $0 })
         #expect(records.count == 1)
-        #expect(records.first!.recordType == .gift)
+        #expect(records.first?.recordType == .gift)
     }
 
     @Test("searchText filters by contact name")
-    func testSearchFilter() throws {
+    func searchFilter() throws {
         let db = try TestDB()
         let c1 = SampleData.contact(name: "张三")
         let c2 = SampleData.contact(name: "李四")
@@ -110,9 +108,9 @@ struct RecordListViewModelTests {
 
         let grouped = vm.state.value
         #expect(grouped != nil)
-        let records = grouped!.values.flatMap { $0 }
+        let records = try #require(grouped?.values.flatMap { $0 })
         #expect(records.count == 1)
-        #expect(records.first!.contact?.name == "张三")
+        #expect(records.first?.contact?.name == "张三")
     }
 
     @Test("sortedMonthKeys returns newest month first")
@@ -127,11 +125,11 @@ struct RecordListViewModelTests {
         var comps = cal.dateComponents([.year, .month, .day], from: Date())
         comps.month = 1
         comps.day = 15
-        let jan = cal.date(from: comps)!
+        let jan = try #require(cal.date(from: comps))
         comps.month = 6
-        let jun = cal.date(from: comps)!
+        let jun = try #require(cal.date(from: comps))
         comps.month = 3
-        let mar = cal.date(from: comps)!
+        let mar = try #require(cal.date(from: comps))
 
         let r1 = SampleData.record(contact: c, event: e, amount: 500, date: jan)
         let r2 = SampleData.record(contact: c, event: e, amount: 500, date: jun)
@@ -170,16 +168,16 @@ struct RecordListViewModelTests {
 
         let vm = RecordListViewModel()
         vm.load(context: db.context)
-        let before = vm.state.value!.values.flatMap { $0 }.count
+        let before = try #require(vm.state.value?.values.flatMap { $0 }.count)
         #expect(before == 1)
 
         vm.deleteRecord(r, context: db.context)
-        let after = vm.state.value!.values.flatMap { $0 }.count
+        let after = try #require(vm.state.value?.values.flatMap { $0 }.count)
         #expect(after == 0)
     }
 
     @Test("deleteError starts as nil")
-    func testDeleteErrorSetsProperty() throws {
+    func deleteErrorSetsProperty() {
         let vm = RecordListViewModel()
         #expect(vm.deleteError == nil)
     }

@@ -9,7 +9,7 @@ class AddContactViewModel {
     var editingContact: Contact?
     var avatar: Data?
     var name: String = ""
-    var selectedCategory: RelationshipCategory? = nil
+    var selectedCategory: RelationshipCategory?
     var selectedTag: String = ""
     var birthday: Date = .now
     var hasBirthday: Bool = false

@@ -6,9 +6,17 @@ class ContactExchangeViewModel {
     var contact: Contact?
     var records: [Record] = []
 
-    var totalGiven: Double { records.filter { $0.direction == .given }.reduce(0) { $0 + $1.resolvedDisplayAmount } }
-    var totalReceived: Double { records.filter { $0.direction == .received }.reduce(0) { $0 + $1.resolvedDisplayAmount } }
-    var netValue: Double { totalReceived - totalGiven }
+    var totalGiven: Double {
+        records.filter { $0.direction == .given }.reduce(0) { $0 + $1.resolvedDisplayAmount }
+    }
+
+    var totalReceived: Double {
+        records.filter { $0.direction == .received }.reduce(0) { $0 + $1.resolvedDisplayAmount }
+    }
+
+    var netValue: Double {
+        totalReceived - totalGiven
+    }
 
     var givenRatio: Double {
         let total = totalGiven + totalReceived

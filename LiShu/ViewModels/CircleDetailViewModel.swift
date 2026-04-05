@@ -7,9 +7,17 @@ struct CircleMemberItem: Identifiable {
     let expense: Double
     let lastRecordDate: Date?
 
-    var id: PersistentIdentifier { contact.persistentModelID }
-    var netValue: Double { income - expense }
-    var totalAmount: Double { income + expense }
+    var id: PersistentIdentifier {
+        contact.persistentModelID
+    }
+
+    var netValue: Double {
+        income - expense
+    }
+
+    var totalAmount: Double {
+        income + expense
+    }
 }
 
 @Observable

@@ -1,5 +1,5 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 struct ContactListView: View {
     @Environment(\.modelContext) private var modelContext
@@ -16,7 +16,7 @@ struct ContactListView: View {
                 switch viewModel.state {
                 case .idle, .loading:
                     ProgressView()
-                case .loaded(let contacts) where contacts.isEmpty:
+                case let .loaded(contacts) where contacts.isEmpty:
                     EmptyStateView(
                         icon: "person.2.fill",
                         message: String(localized: "contact.list.empty"),
@@ -25,7 +25,7 @@ struct ContactListView: View {
                     )
                 case .loaded:
                     contactListContent
-                case .error(let message):
+                case let .error(message):
                     ErrorStateView(
                         message: message,
                         retryAction: { viewModel.loadContacts(context: modelContext) }
@@ -73,7 +73,7 @@ struct ContactListView: View {
                 NavigationStack {
                     AddContactView()
                 }
-            case .editContact(let contactID):
+            case let .editContact(contactID):
                 NavigationStack {
                     AddContactView(contactID: contactID)
                 }

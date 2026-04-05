@@ -16,8 +16,6 @@ class AppSettings {
         static let hasSeenOnboarding = "hasSeenOnboarding"
         static let colorScheme = "colorScheme"
 
-
-
         static let icloudSyncEnabled = "icloudSyncEnabled"
         static let notificationEnabled = "notificationEnabled"
         static let eventReminder = "eventReminder"

@@ -8,9 +8,8 @@
 import XCTest
 
 final class AddRecordFlowTests: BaseUITestCase {
-
     @MainActor
-    func testAddRecordFullFlow() throws {
+    func testAddRecordFullFlow() {
         createContact(name: "记录测试联系人")
         createEvent(name: "记录测试事件")
 
@@ -43,7 +42,7 @@ final class AddRecordFlowTests: BaseUITestCase {
     }
 
     @MainActor
-    func testRecordListFilterTabs() throws {
+    func testRecordListFilterTabs() {
         let recordsTab = app.tabBars.buttons[TabLabels.records]
         XCTAssertTrue(recordsTab.waitForExistence(timeout: 5))
         recordsTab.tap()
@@ -54,7 +53,7 @@ final class AddRecordFlowTests: BaseUITestCase {
     }
 
     @MainActor
-    func testAddRecordFromHomeEmptyState() throws {
+    func testAddRecordFromHomeEmptyState() {
         let homeTab = app.tabBars.buttons[TabLabels.home]
         homeTab.tap()
         sleep(1)
@@ -76,7 +75,7 @@ final class AddRecordFlowTests: BaseUITestCase {
     }
 
     @MainActor
-    func testRecordListNavigation() throws {
+    func testRecordListNavigation() {
         let recordsTab = app.tabBars.buttons[TabLabels.records]
         XCTAssertTrue(recordsTab.waitForExistence(timeout: 5))
         recordsTab.tap()
@@ -94,7 +93,7 @@ final class AddRecordFlowTests: BaseUITestCase {
     }
 
     @MainActor
-    func testOpenAddRecordSheet() throws {
+    func testOpenAddRecordSheet() {
         let recordsTab = app.tabBars.buttons[TabLabels.records]
         recordsTab.tap()
         sleep(1)
@@ -132,7 +131,7 @@ final class AddRecordFlowTests: BaseUITestCase {
     }
 
     @MainActor
-    func testReturnGiftSheetElements() throws {
+    func testReturnGiftSheetElements() {
         createContact(name: "还礼测试人")
         createEvent(name: "还礼测试事件")
 

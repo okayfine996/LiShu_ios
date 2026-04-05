@@ -5,7 +5,6 @@ import UIKit
 /// 调试菜单与 App Store 截图（`-FASTLANE_SNAPSHOT`）共用的示例数据；截图模式下使用内存库并调用 `insertSampleData`。
 @MainActor
 enum DemoDataSeeding {
-
     static var isFastlaneSnapshotMode: Bool {
         CommandLine.arguments.contains("-FASTLANE_SNAPSHOT")
     }
@@ -44,7 +43,7 @@ enum DemoDataSeeding {
     private enum ScreenshotDemoBundle {
         /// 与 `screenshot_demo_avatar_01` … `screenshot_demo_avatar_16.png` 对应；缺省按索引回退程序化头像。
         static let avatarResourceCount = 16
-        /// 与 `screenshot_demo_scene_<EventType.rawValue>.png` 对应（共 13 种事件场景）。
+        // 与 `screenshot_demo_scene_<EventType.rawValue>.png` 对应（共 13 种事件场景）。
 
         static func sceneResourceName(for eventType: EventType) -> String {
             "screenshot_demo_scene_\(eventType.rawValue)"
@@ -62,12 +61,14 @@ enum DemoDataSeeding {
             let subdirs = ["ScreenshotDemo", "Resources/ScreenshotDemo"]
             for sub in subdirs {
                 if let url = Bundle.main.url(forResource: name, withExtension: "png", subdirectory: sub),
-                   let data = try? Data(contentsOf: url), !data.isEmpty {
+                   let data = try? Data(contentsOf: url), !data.isEmpty
+                {
                     return data
                 }
             }
             if let url = Bundle.main.url(forResource: name, withExtension: "png"),
-               let data = try? Data(contentsOf: url), !data.isEmpty {
+               let data = try? Data(contentsOf: url), !data.isEmpty
+            {
                 return data
             }
             return nil
@@ -617,7 +618,6 @@ enum DemoDataSeeding {
 // MARK: - Image factory
 
 private enum DemoImageFactory {
-
     static func avatarJPEGData(initial: String, background: UIColor, size: CGFloat) -> Data {
         let renderer = UIGraphicsImageRenderer(size: CGSize(width: size, height: size))
         let image = renderer.image { ctx in

@@ -1,12 +1,11 @@
 import Foundation
-import Testing
-import SwiftData
 @testable import LiShu
+import SwiftData
+import Testing
 
 @MainActor
 struct DataRelationshipTests {
-
-    @Test func testContactCascadeDeleteRemovesRecords() throws {
+    @Test func contactCascadeDeleteRemovesRecords() throws {
         let db = try TestDB()
         let contact = SampleData.contact(name: "级联删除测试")
         let event1 = SampleData.event(name: "事件1")
@@ -34,7 +33,7 @@ struct DataRelationshipTests {
     }
 
     /// 与 `Event` 的 nullify 删除规则一致：删事件后记录仍存在且 `event == nil`。
-    @Test func testEventDeleteNullifiesRecordEventReference() throws {
+    @Test func eventDeleteNullifiesRecordEventReference() throws {
         let db = try TestDB()
         let contact = SampleData.contact()
         let event = SampleData.event(name: "不可删除事件")
@@ -54,7 +53,7 @@ struct DataRelationshipTests {
         #expect(records.first?.event == nil)
     }
 
-    @Test func testEventDeleteWithoutRecords() throws {
+    @Test func eventDeleteWithoutRecords() throws {
         let db = try TestDB()
         let event = SampleData.event(name: "可删除事件")
         db.context.insert(event)
@@ -66,7 +65,7 @@ struct DataRelationshipTests {
         #expect(try db.context.fetchCount(FetchDescriptor<Event>()) == 0)
     }
 
-    @Test func testRecordPhotoRelationshipAndCascade() throws {
+    @Test func recordPhotoRelationshipAndCascade() throws {
         let db = try TestDB()
         let contact = SampleData.contact()
         let event = SampleData.event()
@@ -92,7 +91,7 @@ struct DataRelationshipTests {
         #expect(try db.context.fetchCount(FetchDescriptor<RecordPhoto>()) == 0)
     }
 
-    @Test func testDeleteAllDataFlow() throws {
+    @Test func deleteAllDataFlow() throws {
         let db = try TestDB()
         let contact = SampleData.contact(name: "全删测试")
         let event = SampleData.event(name: "全删事件")

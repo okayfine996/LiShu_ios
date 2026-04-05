@@ -4,32 +4,31 @@
 //
 
 import Foundation
-import Testing
-import SwiftData
 @testable import LiShu
+import SwiftData
+import Testing
 
 @MainActor
 struct AddContactViewModelTests {
-
-    @Test func testIsValidWithEmptyName() {
+    @Test func isValidWithEmptyName() {
         let vm = AddContactViewModel()
         vm.name = ""
         #expect(vm.isValid == false)
     }
 
-    @Test func testIsValidWithWhitespaceName() {
+    @Test func isValidWithWhitespaceName() {
         let vm = AddContactViewModel()
         vm.name = "   "
         #expect(vm.isValid == false)
     }
 
-    @Test func testIsValidWithValidName() {
+    @Test func isValidWithValidName() {
         let vm = AddContactViewModel()
         vm.name = "张三"
         #expect(vm.isValid == true)
     }
 
-    @Test func testSaveContactSuccess() throws {
+    @Test func saveContactSuccess() throws {
         let db = try TestDB()
         let vm = AddContactViewModel()
         vm.name = "李四"
@@ -45,7 +44,7 @@ struct AddContactViewModelTests {
         #expect(contacts[0].name == "李四")
     }
 
-    @Test func testSaveContactInvalid() throws {
+    @Test func saveContactInvalid() throws {
         let db = try TestDB()
         let vm = AddContactViewModel()
         vm.name = ""
@@ -54,7 +53,7 @@ struct AddContactViewModelTests {
         #expect(vm.showValidationAlert == true)
     }
 
-    @Test func testConfigureWithContact() throws {
+    @Test func configureWithContact() throws {
         let db = try TestDB()
         let contact = Contact(name: "王五", phone: "13900139000", relation: "朋友", category: "社会", circle: 3, birthday: Date(), note: "备注")
         db.context.insert(contact)
@@ -68,7 +67,7 @@ struct AddContactViewModelTests {
         #expect(vm.note == "备注")
     }
 
-    @Test func testSaveContactEditMode() throws {
+    @Test func saveContactEditMode() throws {
         let db = try TestDB()
         let contact = Contact(name: "赵六", relation: "同事", category: "社会")
         db.context.insert(contact)

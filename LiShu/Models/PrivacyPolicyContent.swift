@@ -8,7 +8,10 @@ struct PrivacyPolicyContent: Decodable {
     let sections: [PolicySection]
 
     struct PolicySection: Decodable, Identifiable {
-        var id: String { title }
+        var id: String {
+            title
+        }
+
         let title: String
         let content: String
     }

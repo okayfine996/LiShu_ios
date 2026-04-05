@@ -12,13 +12,13 @@ struct WeekStripDatePicker: View {
         let date = selectedDate.wrappedValue
         let weekday = Calendar.current.component(.weekday, from: date)
         let daysToMonday = (weekday + 5) % 7
-        let startOfWeek = Calendar.current.date(byAdding: .day, value: -daysToMonday, to: date)!
+        let startOfWeek = Calendar.current.date(byAdding: .day, value: -daysToMonday, to: date) ?? date
         self._currentWeekStart = State(initialValue: Calendar.current.startOfDay(for: startOfWeek))
         self._displayedMonth = State(initialValue: date)
     }
 
     private var weekDays: [Date] {
-        (0..<7).compactMap { calendar.date(byAdding: .day, value: $0, to: currentWeekStart) }
+        (0 ..< 7).compactMap { calendar.date(byAdding: .day, value: $0, to: currentWeekStart) }
     }
 
     private var monthYearTitle: String {
@@ -206,7 +206,8 @@ struct WeekStripDatePicker: View {
     private func calendarWeeks(for referenceDate: Date) -> [[Date?]] {
         let components = calendar.dateComponents([.year, .month], from: referenceDate)
         guard let firstOfMonth = calendar.date(from: components),
-              let range = calendar.range(of: .day, in: .month, for: firstOfMonth) else {
+              let range = calendar.range(of: .day, in: .month, for: firstOfMonth)
+        else {
             return []
         }
 
@@ -223,15 +224,14 @@ struct WeekStripDatePicker: View {
             days.append(nil)
         }
 
-        return stride(from: 0, to: days.count, by: 7).map { Array(days[$0..<min($0 + 7, days.count)]) }
+        return stride(from: 0, to: days.count, by: 7).map { Array(days[$0 ..< min($0 + 7, days.count)]) }
     }
 
     private func shortWeekdaySymbols() -> [String] {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "zh_Hans")
         let symbols = formatter.shortWeekdaySymbols ?? []
-        let mondayFirst = Array(symbols[1...]) + [symbols[0]]
-        return mondayFirst
+        return Array(symbols[1...]) + [symbols[0]]
     }
 
     private func weekdayAbbrev(_ date: Date) -> String {

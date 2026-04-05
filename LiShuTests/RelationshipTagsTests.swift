@@ -1,9 +1,8 @@
 import Foundation
-import Testing
 @testable import LiShu
+import Testing
 
 struct RelationshipTagsTests {
-
     @Test("allCases contains exactly 3 values")
     func testAllCases() {
         #expect(RelationshipCategory.allCases.count == 3)
@@ -13,14 +12,14 @@ struct RelationshipTagsTests {
     }
 
     @Test("circle mapping: family=1, relative=2, social=3")
-    func testCircleMapping() {
+    func circleMapping() {
         #expect(RelationshipCategory.family.circle == 1)
         #expect(RelationshipCategory.relative.circle == 2)
         #expect(RelationshipCategory.social.circle == 3)
     }
 
     @Test("each category has a unique SF Symbol icon")
-    func testIconMapping() {
+    func iconMapping() {
         let familyIcon = RelationshipCategory.family.icon
         let relativeIcon = RelationshipCategory.relative.icon
         let socialIcon = RelationshipCategory.social.icon
@@ -33,14 +32,14 @@ struct RelationshipTagsTests {
     }
 
     @Test("each category has non-empty tags array")
-    func testTagsNotEmpty() {
+    func tagsNotEmpty() {
         for category in RelationshipCategory.allCases {
             #expect(!category.tags.isEmpty, "\(category) should have tags")
         }
     }
 
     @Test("family tags contain expected members")
-    func testFamilyTags() {
+    func familyTags() {
         let tags = RelationshipCategory.family.tags
         #expect(tags.contains("父亲"))
         #expect(tags.contains("母亲"))
@@ -48,7 +47,7 @@ struct RelationshipTagsTests {
     }
 
     @Test("Codable round-trip preserves value")
-    func testCodable() throws {
+    func codable() throws {
         let original = RelationshipCategory.relative
         let data = try JSONEncoder().encode(original)
         let decoded = try JSONDecoder().decode(RelationshipCategory.self, from: data)

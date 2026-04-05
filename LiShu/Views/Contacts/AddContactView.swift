@@ -1,5 +1,5 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 struct AddContactView: View {
     @Environment(\.modelContext) private var modelContext

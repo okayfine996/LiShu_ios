@@ -1,8 +1,8 @@
 import Foundation
 import Logging
 import SwiftData
-import UserNotifications
 import UIKit
+import UserNotifications
 
 private let notificationLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.notifications)
 
@@ -11,7 +11,9 @@ final class NotificationManager {
     static let shared = NotificationManager()
 
     private let center = UNUserNotificationCenter.current()
-    private var settings: AppSettings { AppSettings.shared }
+    private var settings: AppSettings {
+        AppSettings.shared
+    }
 
     enum Category: String, CaseIterable {
         case eventReminder
@@ -138,7 +140,7 @@ final class NotificationManager {
         content.categoryIdentifier = Category.eventReminder.rawValue
         content.userInfo = [
             "type": Category.eventReminder.rawValue,
-            "eventID": stableIdentifier(for: event.persistentModelID)
+            "eventID": stableIdentifier(for: event.persistentModelID),
         ]
 
         var components = Calendar.current.dateComponents([.year, .month, .day], from: reminderDate)
@@ -189,7 +191,7 @@ final class NotificationManager {
         content.categoryIdentifier = Category.birthdayReminder.rawValue
         content.userInfo = [
             "type": Category.birthdayReminder.rawValue,
-            "contactID": stableIdentifier(for: contact.persistentModelID)
+            "contactID": stableIdentifier(for: contact.persistentModelID),
         ]
 
         var components = Calendar.current.dateComponents([.month, .day], from: birthday)
@@ -265,7 +267,7 @@ final class NotificationManager {
         content.categoryIdentifier = Category.returnGift.rawValue
         content.userInfo = [
             "type": Category.returnGift.rawValue,
-            "recordID": stableIdentifier(for: record.persistentModelID)
+            "recordID": stableIdentifier(for: record.persistentModelID),
         ]
 
         var components = Calendar.current.dateComponents([.year, .month, .day], from: reminderDate)
@@ -297,10 +299,10 @@ final class NotificationManager {
     }
 
     private func stableIdentifier(for persistentID: PersistentIdentifier) -> String {
-        var hash: UInt64 = 1469598103934665603
+        var hash: UInt64 = 1_469_598_103_934_665_603
         for byte in String(describing: persistentID).utf8 {
             hash ^= UInt64(byte)
-            hash &*= 1099511628211
+            hash &*= 1_099_511_628_211
         }
         return String(hash, radix: 16)
     }
@@ -413,34 +415,7 @@ final class NotificationManager {
     // MARK: - Debug
 
     #if DEBUG
-    func sendTestNotification(category: Category) {
-        let content = UNMutableNotificationContent()
-        content.sound = .default
-        content.categoryIdentifier = category.rawValue
-
-        switch category {
-        case .eventReminder:
-            content.title = String(localized: "notification.event.title")
-            content.body = String(format: String(localized: "notification.event.body"), "张三的婚礼")
-        case .birthdayReminder:
-            content.title = String(localized: "notification.birthday.title")
-            content.body = String(format: String(localized: "notification.birthday.body"), "李四")
-        case .returnGift:
-            content.title = String(localized: "notification.returnGift.title")
-            content.body = String(format: String(localized: "notification.returnGift.body"), "王五", "乔迁之喜", "1000")
-        }
-
-        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 2, repeats: false)
-        let request = UNNotificationRequest(
-            identifier: "debug-\(category.rawValue)-\(UUID().uuidString)",
-            content: content,
-            trigger: trigger
-        )
-        center.add(request)
-    }
-
-    func sendAllTestNotifications() {
-        for (index, category) in Category.allCases.enumerated() {
+        func sendTestNotification(category: Category) {
             let content = UNMutableNotificationContent()
             content.sound = .default
             content.categoryIdentifier = category.rawValue
@@ -457,8 +432,7 @@ final class NotificationManager {
                 content.body = String(format: String(localized: "notification.returnGift.body"), "王五", "乔迁之喜", "1000")
             }
 
-            let delay = TimeInterval(2 + index * 3)
-            let trigger = UNTimeIntervalNotificationTrigger(timeInterval: delay, repeats: false)
+            let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 2, repeats: false)
             let request = UNNotificationRequest(
                 identifier: "debug-\(category.rawValue)-\(UUID().uuidString)",
                 content: content,
@@ -466,10 +440,38 @@ final class NotificationManager {
             )
             center.add(request)
         }
-    }
 
-    func listPendingNotifications() async -> [UNNotificationRequest] {
-        await center.pendingNotificationRequests()
-    }
+        func sendAllTestNotifications() {
+            for (index, category) in Category.allCases.enumerated() {
+                let content = UNMutableNotificationContent()
+                content.sound = .default
+                content.categoryIdentifier = category.rawValue
+
+                switch category {
+                case .eventReminder:
+                    content.title = String(localized: "notification.event.title")
+                    content.body = String(format: String(localized: "notification.event.body"), "张三的婚礼")
+                case .birthdayReminder:
+                    content.title = String(localized: "notification.birthday.title")
+                    content.body = String(format: String(localized: "notification.birthday.body"), "李四")
+                case .returnGift:
+                    content.title = String(localized: "notification.returnGift.title")
+                    content.body = String(format: String(localized: "notification.returnGift.body"), "王五", "乔迁之喜", "1000")
+                }
+
+                let delay = TimeInterval(2 + index * 3)
+                let trigger = UNTimeIntervalNotificationTrigger(timeInterval: delay, repeats: false)
+                let request = UNNotificationRequest(
+                    identifier: "debug-\(category.rawValue)-\(UUID().uuidString)",
+                    content: content,
+                    trigger: trigger
+                )
+                center.add(request)
+            }
+        }
+
+        func listPendingNotifications() async -> [UNNotificationRequest] {
+            await center.pendingNotificationRequests()
+        }
     #endif
 }

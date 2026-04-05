@@ -4,40 +4,39 @@
 //
 
 import Foundation
-import Testing
 @testable import LiShu
+import Testing
 
 struct LoadingStateTests {
-
-    @Test func testIdleState() {
+    @Test func idleState() {
         let state: LoadingState<String> = .idle
         #expect(state.isLoading == false)
         #expect(state.value == nil)
         #expect(state.errorMessage == nil)
     }
 
-    @Test func testLoadingState() {
+    @Test func loadingState() {
         let state: LoadingState<String> = .loading
         #expect(state.isLoading == true)
         #expect(state.value == nil)
         #expect(state.errorMessage == nil)
     }
 
-    @Test func testLoadedState() {
+    @Test func loadedState() {
         let state: LoadingState<String> = .loaded("test")
         #expect(state.isLoading == false)
         #expect(state.value == "test")
         #expect(state.errorMessage == nil)
     }
 
-    @Test func testErrorState() {
+    @Test func errorState() {
         let state: LoadingState<String> = .error("Something went wrong")
         #expect(state.isLoading == false)
         #expect(state.value == nil)
         #expect(state.errorMessage == "Something went wrong")
     }
 
-    @Test func testValueExtraction() {
+    @Test func valueExtraction() {
         let loaded: LoadingState<Int> = .loaded(42)
         #expect(loaded.value == 42)
 
@@ -45,7 +44,7 @@ struct LoadingStateTests {
         #expect(idle.value == nil)
     }
 
-    @Test func testErrorMessageExtraction() {
+    @Test func errorMessageExtraction() {
         let err: LoadingState<Bool> = .error("Network error")
         #expect(err.errorMessage == "Network error")
 

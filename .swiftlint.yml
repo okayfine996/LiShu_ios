@@ -1,0 +1,22 @@
+# LiShu — 起步：仅启用少量可控规则，避免默认全量规则带来数百条告警。
+# 后续可逐步取消 only_rules、改为 opt_in / disabled 微调。
+# https://github.com/realm/SwiftLint
+
+only_rules:
+  - force_unwrapping
+  - line_length
+
+excluded:
+  - Pods
+  - .build
+  - DerivedData
+  - build
+  - fastlane/DerivedData
+  - "**/DerivedSources/**"
+
+line_length:
+  warning: 220
+  error: 280
+  ignores_urls: true
+  ignores_function_declarations: true
+  ignores_comments: true

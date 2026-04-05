@@ -8,10 +8,21 @@ class EventTypeDetailViewModel {
     var records: [Record] = []
     var monthlyDistribution: [Int] = Array(repeating: 0, count: 12)
 
-    var totalCount: Int { records.count }
-    var totalExpense: Double { records.filter { $0.direction == .given }.reduce(0) { $0 + $1.monetaryAmount } }
-    var totalIncome: Double { records.filter { $0.direction == .received }.reduce(0) { $0 + $1.monetaryAmount } }
-    var netValue: Double { totalIncome - totalExpense }
+    var totalCount: Int {
+        records.count
+    }
+
+    var totalExpense: Double {
+        records.filter { $0.direction == .given }.reduce(0) { $0 + $1.monetaryAmount }
+    }
+
+    var totalIncome: Double {
+        records.filter { $0.direction == .received }.reduce(0) { $0 + $1.monetaryAmount }
+    }
+
+    var netValue: Double {
+        totalIncome - totalExpense
+    }
 
     var peakMonth: Int {
         guard let maxIdx = monthlyDistribution.indices.max(by: { monthlyDistribution[$0] < monthlyDistribution[$1] }),
@@ -34,7 +45,8 @@ class EventTypeDetailViewModel {
         let calendar = Calendar.current
         let typeRaw = eventType.rawValue
         guard let startOfYear = calendar.date(from: DateComponents(year: year, month: 1, day: 1)),
-              let endOfYear = calendar.date(from: DateComponents(year: year + 1, month: 1, day: 1)) else {
+              let endOfYear = calendar.date(from: DateComponents(year: year + 1, month: 1, day: 1))
+        else {
             records = []
             return
         }
@@ -43,7 +55,7 @@ class EventTypeDetailViewModel {
             let descriptor = FetchDescriptor<Record>(
                 predicate: #Predicate<Record> { record in
                     record.event?.typeRaw == typeRaw &&
-                    record.date >= startOfYear && record.date < endOfYear
+                        record.date >= startOfYear && record.date < endOfYear
                 },
                 sortBy: [SortDescriptor(\.date, order: .reverse)]
             )

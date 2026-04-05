@@ -94,7 +94,8 @@ final class Record {
     }
 
     /// 新建一条记录（仅在你写 `Record(...)` 时调用；从 SwiftData 取回已保存的记录**不会**走此初始化方法，而是由框架按存储属性还原，含 `kvData`）。
-    /// - Parameter kvData: 若已有序列化好的类型 JSON（如导入），传入则直接使用；为 `nil` 或空/`{}` 时，金额类会从 `amount` / `paymentMethod` / `returnedAmount` 编码写入，其它类型为 `"{}"`。
+    /// - Parameter kvData: 若已有序列化好的类型 JSON（如导入），传入则直接使用；为 `nil` 或空/`{}` 时，金额类会从 `amount` / `paymentMethod` / `returnedAmount` 编码写入，其它类型为
+    /// `"{}"`。
     init(
         contact: Contact,
         event: Event? = nil,
@@ -118,13 +119,15 @@ final class Record {
         self.createdAt = .now
 
         if let trimmed = kvData?.trimmingCharacters(in: .whitespacesAndNewlines),
-           !trimmed.isEmpty, trimmed != "{}" {
+           !trimmed.isEmpty, trimmed != "{}"
+        {
             self.kvData = trimmed
         } else if recordType == .monetary {
             let monetary = MonetaryData(amount: amount, paymentMethod: paymentMethod.rawValue, returnedAmount: returnedAmount)
             let encoder = JSONEncoder()
             if let data = try? encoder.encode(monetary),
-               let json = String(data: data, encoding: .utf8) {
+               let json = String(data: data, encoding: .utf8)
+            {
                 self.kvData = json
             } else {
                 self.kvData = "{}"
@@ -137,7 +140,7 @@ final class Record {
     /// 已退礼金额（优先 kvData 中 `MonetaryData.returnedAmount`，否则回退旧列）
     var resolvedReturnedAmount: Double {
         guard recordType == .monetary else { return 0 }
-        if case .monetary(let d) = resolvedTypeData {
+        if case let .monetary(d) = resolvedTypeData {
             return d.returnedAmount
         }
         return returnedAmount
@@ -149,19 +152,19 @@ final class Record {
 /// 往来方向
 enum RecordDirection: String, Codable, CaseIterable {
     /// 送出
-    case given = "given"
+    case given
     /// 收到
-    case received = "received"
+    case received
 }
 
 /// 支付方式
 enum PaymentMethod: String, Codable, CaseIterable {
     /// 现金
-    case cash = "cash"
+    case cash
     /// 微信
-    case wechat = "wechat"
+    case wechat
     /// 支付宝
-    case alipay = "alipay"
+    case alipay
 }
 
 /// 退礼角标（仅区分是否发生过退礼，不区分程度）
@@ -179,15 +182,15 @@ enum RecordReturnGiftBadge: Equatable {
 /// 情分分量
 enum RelationshipWeight: String, Codable, CaseIterable {
     /// 举手之劳
-    case trivial = "trivial"
+    case trivial
     /// 点滴之恩
-    case kindness = "kindness"
+    case kindness
     /// 礼尚往来
-    case reciprocal = "reciprocal"
+    case reciprocal
     /// 倾力相助
-    case support = "support"
+    case support
     /// 重如泰山
-    case profound = "profound"
+    case profound
 
     var displayName: String {
         switch self {
@@ -203,13 +206,13 @@ enum RelationshipWeight: String, Codable, CaseIterable {
 /// 记录类型
 enum RecordType: String, Codable, CaseIterable {
     /// 金额
-    case monetary = "monetary"
+    case monetary
     /// 礼品
-    case gift = "gift"
+    case gift
     /// 帮忙
-    case favor = "favor"
+    case favor
     /// 宴请
-    case banquet = "banquet"
+    case banquet
 
     var displayName: String {
         switch self {
@@ -288,7 +291,8 @@ extension Record {
             let columnFallback = MonetaryData(amount: amount, paymentMethod: paymentMethodRaw, returnedAmount: returnedAmount)
             if hasSubstantiveKVJSON,
                let data = kvData.data(using: .utf8),
-               let m = try? decoder.decode(MonetaryData.self, from: data) {
+               let m = try? decoder.decode(MonetaryData.self, from: data)
+            {
                 // 含 recordTypeRaw 已为合法 "monetary" 时：kv 中 0 不得覆盖遗留列上的真实金额
                 if amount > 0, m.amount == 0 {
                     return .monetary(columnFallback)
@@ -298,19 +302,22 @@ extension Record {
             return .monetary(columnFallback)
         case .gift:
             if let data = kvData.data(using: .utf8),
-               let g = try? decoder.decode(GiftData.self, from: data) {
+               let g = try? decoder.decode(GiftData.self, from: data)
+            {
                 return .gift(g)
             }
             return .gift(GiftData())
         case .favor:
             if let data = kvData.data(using: .utf8),
-               let f = try? decoder.decode(FavorData.self, from: data) {
+               let f = try? decoder.decode(FavorData.self, from: data)
+            {
                 return .favor(f)
             }
             return .favor(FavorData())
         case .banquet:
             if let data = kvData.data(using: .utf8),
-               let b = try? decoder.decode(BanquetData.self, from: data) {
+               let b = try? decoder.decode(BanquetData.self, from: data)
+            {
                 return .banquet(b)
             }
             return .banquet(BanquetData())
@@ -324,22 +331,22 @@ extension Record {
     }
 
     var monetaryData: MonetaryData? {
-        guard case .monetary(let data) = resolvedTypeData else { return nil }
+        guard case let .monetary(data) = resolvedTypeData else { return nil }
         return data
     }
 
     var giftData: GiftData? {
-        guard case .gift(let data) = resolvedTypeData else { return nil }
+        guard case let .gift(data) = resolvedTypeData else { return nil }
         return data
     }
 
     var favorData: FavorData? {
-        guard case .favor(let data) = resolvedTypeData else { return nil }
+        guard case let .favor(data) = resolvedTypeData else { return nil }
         return data
     }
 
     var banquetData: BanquetData? {
-        guard case .banquet(let data) = resolvedTypeData else { return nil }
+        guard case let .banquet(data) = resolvedTypeData else { return nil }
         return data
     }
 
@@ -354,9 +361,9 @@ extension Record {
 
     var resolvedDisplayAmount: Double {
         switch resolvedTypeData {
-        case .monetary(let data):
+        case let .monetary(data):
             return data.amount
-        case .gift(let data):
+        case let .gift(data):
             return data.estimatedValue ?? 0
         case .favor:
             return 0
@@ -369,11 +376,11 @@ extension Record {
         switch resolvedTypeData {
         case .monetary:
             return ""
-        case .gift(let data):
+        case let .gift(data):
             return data.giftName
-        case .favor(let data):
+        case let .favor(data):
             return data.description
-        case .banquet(let data):
+        case let .banquet(data):
             if !data.location.isEmpty { return data.location }
             return data.attendeeList
         }
@@ -381,7 +388,7 @@ extension Record {
 
     var resolvedEstimatedValue: Double? {
         switch resolvedTypeData {
-        case .gift(let data):
+        case let .gift(data):
             return data.estimatedValue
         default:
             return nil
@@ -392,25 +399,25 @@ extension Record {
     func applyTypeData(_ typeData: RecordTypeData) {
         let encoder = JSONEncoder()
         switch typeData {
-        case .monetary(let d):
+        case let .monetary(d):
             guard let json = try? encoder.encode(d) else {
                 recordKVDataLogger.error("Failed to encode MonetaryData for kvData")
                 return
             }
             kvData = String(data: json, encoding: .utf8) ?? "{}"
-        case .gift(let d):
+        case let .gift(d):
             guard let json = try? encoder.encode(d) else {
                 recordKVDataLogger.error("Failed to encode GiftData for kvData")
                 return
             }
             kvData = String(data: json, encoding: .utf8) ?? "{}"
-        case .favor(let d):
+        case let .favor(d):
             guard let json = try? encoder.encode(d) else {
                 recordKVDataLogger.error("Failed to encode FavorData for kvData")
                 return
             }
             kvData = String(data: json, encoding: .utf8) ?? "{}"
-        case .banquet(let d):
+        case let .banquet(d):
             guard let json = try? encoder.encode(d) else {
                 recordKVDataLogger.error("Failed to encode BanquetData for kvData")
                 return

@@ -8,34 +8,35 @@ enum StatsPeriod: Hashable {
 
     var year: Int {
         switch self {
-        case .month(let y, _): return y
-        case .quarter(let y, _): return y
+        case let .month(y, _): return y
+        case let .quarter(y, _): return y
         }
     }
 
     var title: String {
         switch self {
-        case .month(let y, let m):
+        case let .month(y, m):
             return "\(y)" + String(localized: "monthly.yearSuffix") + "\(m)" + String(localized: "monthly.monthSuffix")
-        case .quarter(let y, let q):
+        case let .quarter(y, q):
             return "\(y)" + String(localized: "monthly.yearSuffix") + "Q\(q)"
         }
     }
 
     var monthRange: ClosedRange<Int> {
         switch self {
-        case .month(_, let m):
-            return m...m
-        case .quarter(_, let q):
+        case let .month(_, m):
+            return m ... m
+        case let .quarter(_, q):
             let start = (q - 1) * 3 + 1
-            return start...(start + 2)
+            return start ... (start + 2)
         }
     }
 
     func dateRange(calendar: Calendar) -> (start: Date, end: Date)? {
         let range = monthRange
         guard let start = calendar.date(from: DateComponents(year: year, month: range.lowerBound, day: 1)),
-              let end = calendar.date(from: DateComponents(year: year, month: range.upperBound + 1, day: 1)) else {
+              let end = calendar.date(from: DateComponents(year: year, month: range.upperBound + 1, day: 1))
+        else {
             return nil
         }
         return (start, end)
@@ -44,9 +45,9 @@ enum StatsPeriod: Hashable {
     /// The same period in the previous cycle for trend comparison.
     var previous: StatsPeriod {
         switch self {
-        case .month(let y, let m):
+        case let .month(y, m):
             return m == 1 ? .month(year: y - 1, month: 12) : .month(year: y, month: m - 1)
-        case .quarter(let y, let q):
+        case let .quarter(y, q):
             return q == 1 ? .quarter(year: y - 1, quarter: 4) : .quarter(year: y, quarter: q - 1)
         }
     }
@@ -71,7 +72,9 @@ class MonthlyDetailViewModel {
     var prevExpense: Double = 0
     var eventTypeSlices: [EventTypeSlice] = []
 
-    var netAmount: Double { periodIncome - periodExpense }
+    var netAmount: Double {
+        periodIncome - periodExpense
+    }
 
     var incomeTrend: Double? {
         guard prevIncome > 0 else { return nil }
@@ -83,7 +86,9 @@ class MonthlyDetailViewModel {
         return (periodExpense - prevExpense) / prevExpense
     }
 
-    var periodTitle: String { period.title }
+    var periodTitle: String {
+        period.title
+    }
 
     // MARK: - Formatting
 
@@ -179,7 +184,7 @@ class MonthlyDetailViewModel {
                 name: eventTypeName($0.key),
                 amount: $0.value,
                 percentage: $0.value / total
-            )}
+            ) }
     }
 
     private func eventTypeName(_ type: EventType) -> String {

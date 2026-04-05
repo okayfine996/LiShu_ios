@@ -4,14 +4,13 @@
 //
 
 import Foundation
-import Testing
-import SwiftData
 @testable import LiShu
+import SwiftData
+import Testing
 
 @MainActor
 struct EventModelTests {
-
-    @Test func testTypeComputedProperty() throws {
+    @Test func typeComputedProperty() throws {
         let db = try TestDB()
         let event = SampleData.event()
         db.context.insert(event)
@@ -24,14 +23,14 @@ struct EventModelTests {
         #expect(event.typeRaw == "birthday")
     }
 
-    @Test func testDefaultValues() throws {
+    @Test func defaultValues() {
         let event = Event(name: "测试", type: .other, date: .now, location: "", note: "")
         #expect(event.type == .other)
         #expect(event.location.isEmpty)
     }
 
     /// `Event` 使用 `deleteRule: .nullify`：删除事件时关联记录的 `event` 被置空，保存成功；业务层若需禁止删除应在 UI 拦截。
-    @Test func testDeleteEventNullifiesRecordEvent() throws {
+    @Test func deleteEventNullifiesRecordEvent() throws {
         let db = try TestDB()
         let contact = SampleData.contact()
         let event = SampleData.event(name: "有记录的事件")
@@ -51,7 +50,7 @@ struct EventModelTests {
         #expect(records.first?.event == nil)
     }
 
-    @Test func testDeleteWithoutRecordsSucceeds() throws {
+    @Test func deleteWithoutRecordsSucceeds() throws {
         let db = try TestDB()
         let event = SampleData.event(name: "无记录事件")
         db.context.insert(event)
@@ -63,7 +62,7 @@ struct EventModelTests {
         #expect(try db.context.fetchCount(FetchDescriptor<Event>()) == 0)
     }
 
-    @Test func testInitWithType() throws {
+    @Test func initWithType() {
         let event = Event(name: "婚礼", type: .wedding, date: .now, location: "北京")
         #expect(event.typeRaw == "wedding")
         #expect(event.type == .wedding)

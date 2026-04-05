@@ -1,7 +1,6 @@
 import Foundation
 
 enum ChineseAmountFormatter {
-
     private static let digits = ["零", "壹", "贰", "叁", "肆", "伍", "陆", "柒", "捌", "玖"]
     private static let units = ["", "拾", "佰", "仟"]
     private static let bigUnits = ["", "万", "亿"]

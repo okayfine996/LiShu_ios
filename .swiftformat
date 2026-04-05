@@ -1,0 +1,11 @@
+# LiShu — 保守默认，与现有代码风格对齐；与 .swiftlint.yml 配合使用
+# https://github.com/nicklockwood/SwiftFormat
+
+--swiftversion 5.0
+--indent 4
+--maxwidth 140
+--wraparguments before-first
+--wrapparameters before-first
+--wrapcollections before-first
+--stripunusedargs closure-only
+--disable redundantSelf, extensionAccessControl

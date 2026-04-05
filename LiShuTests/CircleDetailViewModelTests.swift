@@ -1,13 +1,12 @@
 import Foundation
-import Testing
-import SwiftData
 @testable import LiShu
+import SwiftData
+import Testing
 
 @MainActor
 struct CircleDetailViewModelTests {
-
     @Test("load circle with contacts computes memberCount, totalIncome, totalExpense, netValue")
-    func testLoadCircleWithContacts() throws {
+    func loadCircleWithContacts() throws {
         let db = try TestDB()
         let c1 = SampleData.contact(name: "家人A", circle: 1)
         let c2 = SampleData.contact(name: "家人B", circle: 1)
@@ -39,7 +38,7 @@ struct CircleDetailViewModelTests {
     }
 
     @Test("load empty circle returns 0 values")
-    func testLoadEmptyCircle() throws {
+    func loadEmptyCircle() throws {
         let db = try TestDB()
         let vm = CircleDetailViewModel()
         let year = Calendar.current.component(.year, from: .now)
@@ -54,13 +53,15 @@ struct CircleDetailViewModelTests {
     }
 
     @Test("members sorted by absolute netValue descending")
-    func testMembersSortedByAbsNetValue() throws {
+    func membersSortedByAbsNetValue() throws {
         let db = try TestDB()
         let c1 = SampleData.contact(name: "小额", circle: 3)
         let c2 = SampleData.contact(name: "大额", circle: 3)
         let c3 = SampleData.contact(name: "中额", circle: 3)
         let e = SampleData.event()
-        for c in [c1, c2, c3] { db.context.insert(c) }
+        for c in [c1, c2, c3] {
+            db.context.insert(c)
+        }
         db.context.insert(e)
 
         let r1 = SampleData.record(contact: c1, event: e, amount: 100, direction: .given)
@@ -82,7 +83,7 @@ struct CircleDetailViewModelTests {
     }
 
     @Test("averageAmount and averageNetValue computed correctly")
-    func testAverageAmountAndNetValue() throws {
+    func averageAmountAndNetValue() throws {
         let db = try TestDB()
         let c1 = SampleData.contact(name: "A", circle: 2)
         let c2 = SampleData.contact(name: "B", circle: 2)

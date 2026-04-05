@@ -1,5 +1,5 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 struct RecordDetailView: View {
     @Environment(\.modelContext) private var modelContext
@@ -74,7 +74,7 @@ struct RecordDetailView: View {
             returnGiftSheet
         }
         .sheet(item: $sheetRoute) { route in
-            if case .editRecord(let rID) = route {
+            if case let .editRecord(rID) = route {
                 NavigationStack {
                     AddRecordView(recordID: rID)
                 }
@@ -104,7 +104,7 @@ struct RecordDetailView: View {
 
             let subtitle = [
                 record.contact?.relation ?? "",
-                record.contextDisplayName
+                record.contextDisplayName,
             ].filter { !$0.isEmpty }.joined(separator: " · ")
 
             if !subtitle.isEmpty {
@@ -206,7 +206,9 @@ struct RecordDetailView: View {
                 .clipShape(Circle())
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(record.isDailyInteraction ? String(localized: "record.detail.context.dailyTitle") : String(localized: "record.detail.context.eventTitle"))
+                Text(record
+                    .isDailyInteraction ? String(localized: "record.detail.context.dailyTitle") :
+                    String(localized: "record.detail.context.eventTitle"))
                     .font(DesignSystem.Typography.caption)
                     .foregroundStyle(DesignSystem.Colors.textSecondary)
 
@@ -244,7 +246,7 @@ struct RecordDetailView: View {
                 }
 
                 switch typeData {
-                case .gift(let d):
+                case let .gift(d):
                     LabeledContent(String(localized: "record.detail.giftName")) {
                         Text(d.giftName)
                             .font(DesignSystem.Typography.body)
@@ -261,7 +263,7 @@ struct RecordDetailView: View {
                         .font(DesignSystem.Typography.caption)
                         .foregroundStyle(DesignSystem.Colors.textSecondary)
                     }
-                case .banquet(let d):
+                case let .banquet(d):
                     if !d.location.isEmpty {
                         LabeledContent(String(localized: "record.add.banquet.location")) {
                             Text(d.location)
@@ -694,7 +696,7 @@ private struct RecordDetailPreview: View {
         let contact = Contact(name: "张三", relation: "朋友")
         modelContext.insert(contact)
 
-        let event = Event(name: "结婚大礼", type: .wedding, date: cal.date(byAdding: .day, value: -60, to: .now)!)
+        let event = Event(name: "结婚大礼", type: .wedding, date: cal.date(byAdding: .day, value: -60, to: .now).unwrappedOrNow)
         modelContext.insert(event)
 
         let record = Record.makeMonetaryRecord(
@@ -705,14 +707,28 @@ private struct RecordDetailPreview: View {
             paymentMethod: .wechat,
             returnedAmount: 200,
             note: "记得发送感谢短信。这是一个非常慷慨的婚礼礼物。下次见面记得带伴手礼。",
-            date: cal.date(byAdding: .day, value: -60, to: .now)!
+            date: cal.date(byAdding: .day, value: -60, to: .now).unwrappedOrNow
         )
         modelContext.insert(record)
 
-        let event2 = Event(name: "春节聚会", type: .festival, date: cal.date(byAdding: .month, value: -3, to: .now)!)
+        let event2 = Event(name: "春节聚会", type: .festival, date: cal.date(byAdding: .month, value: -3, to: .now).unwrappedOrNow)
         modelContext.insert(event2)
-        let r2 = Record.makeMonetaryRecord(contact: contact, event: event2, amount: 500, direction: .received, paymentMethod: .cash, date: cal.date(byAdding: .month, value: -3, to: .now)!)
-        let r3 = Record.makeMonetaryRecord(contact: contact, event: event, amount: 300, direction: .received, paymentMethod: .alipay, date: cal.date(byAdding: .day, value: -30, to: .now)!)
+        let r2 = Record.makeMonetaryRecord(
+            contact: contact,
+            event: event2,
+            amount: 500,
+            direction: .received,
+            paymentMethod: .cash,
+            date: cal.date(byAdding: .month, value: -3, to: .now).unwrappedOrNow
+        )
+        let r3 = Record.makeMonetaryRecord(
+            contact: contact,
+            event: event,
+            amount: 300,
+            direction: .received,
+            paymentMethod: .alipay,
+            date: cal.date(byAdding: .day, value: -30, to: .now).unwrappedOrNow
+        )
         [r2, r3].forEach { modelContext.insert($0) }
 
         try? modelContext.save()

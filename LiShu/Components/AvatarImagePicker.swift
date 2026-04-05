@@ -1,5 +1,5 @@
-import SwiftUI
 import PhotosUI
+import SwiftUI
 
 struct AvatarImagePicker: View {
     @Binding var imageData: Data?

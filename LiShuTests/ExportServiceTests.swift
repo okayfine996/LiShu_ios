@@ -1,14 +1,13 @@
 import Foundation
-import Testing
-import SwiftData
 @testable import LiShu
+import SwiftData
+import Testing
 
 @MainActor
 struct ExportServiceTests {
-
     // MARK: - CSV Parsing
 
-    @Test func testParseCSVLineSimple() {
+    @Test func parseCSVLineSimple() {
         let result = ExportService.parseCSVLine("张三,婚礼,wedding,500,送出,现金,0,未还,2026-03-01 12:00,备注")
         #expect(result.count == 10)
         #expect(result[0] == "张三")
@@ -16,13 +15,13 @@ struct ExportServiceTests {
         #expect(result[9] == "备注")
     }
 
-    @Test func testParseCSVLineWithQuotedComma() {
+    @Test func parseCSVLineWithQuotedComma() {
         let result = ExportService.parseCSVLine("\"张三,李四\",婚礼,wedding,500")
         #expect(result.count == 4)
         #expect(result[0] == "张三,李四")
     }
 
-    @Test func testParseCSVLineWithEscapedQuotes() {
+    @Test func parseCSVLineWithEscapedQuotes() {
         let result = ExportService.parseCSVLine("\"说了\"\"你好\"\"\",婚礼")
         #expect(result.count == 2)
         #expect(result[0] == "说了\"你好\"")
@@ -31,19 +30,19 @@ struct ExportServiceTests {
 
     // MARK: - Escape CSV
 
-    @Test func testEscapeCSVPlainText() {
+    @Test func escapeCSVPlainText() {
         #expect(ExportService.escapeCSV("张三") == "张三")
     }
 
-    @Test func testEscapeCSVWithComma() {
+    @Test func escapeCSVWithComma() {
         #expect(ExportService.escapeCSV("张三,李四") == "\"张三,李四\"")
     }
 
-    @Test func testEscapeCSVWithQuotes() {
+    @Test func escapeCSVWithQuotes() {
         #expect(ExportService.escapeCSV("说了\"你好\"") == "\"说了\"\"你好\"\"\"")
     }
 
-    @Test func testEscapeCSVWithNewline() {
+    @Test func escapeCSVWithNewline() {
         #expect(ExportService.escapeCSV("第一行\n第二行") == "\"第一行\n第二行\"")
     }
 
@@ -107,7 +106,7 @@ struct ExportServiceTests {
         #expect(ExportService.parseRelationshipWeight("未知") == .reciprocal)
     }
 
-    @Test func testParseRecordTypeBanquet() {
+    @Test func parseRecordTypeBanquet() {
         #expect(ExportService.parseRecordType("宴请") == .banquet)
         #expect(ExportService.parseRecordType("banquet") == .banquet)
     }

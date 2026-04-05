@@ -1,9 +1,8 @@
 import XCTest
 
 final class DataManagementFlowTests: BaseUITestCase {
-
     @MainActor
-    func testDataManagementNavigation() throws {
+    func testDataManagementNavigation() {
         let settingsTab = app.tabBars.buttons[TabLabels.settings]
         XCTAssertTrue(settingsTab.waitForExistence(timeout: 5))
         settingsTab.tap()
@@ -26,7 +25,7 @@ final class DataManagementFlowTests: BaseUITestCase {
     }
 
     @MainActor
-    func testExportSectionExists() throws {
+    func testExportSectionExists() {
         let settingsTab = app.tabBars.buttons[TabLabels.settings]
         settingsTab.tap()
         sleep(1)
@@ -53,7 +52,7 @@ final class DataManagementFlowTests: BaseUITestCase {
     }
 
     @MainActor
-    func testImportSectionExists() throws {
+    func testImportSectionExists() {
         let settingsTab = app.tabBars.buttons[TabLabels.settings]
         settingsTab.tap()
         sleep(1)

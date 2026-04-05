@@ -5,11 +5,11 @@ import SwiftData
 private let recordListLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.recordsViewModel)
 
 enum RecordFilter: String, CaseIterable, Hashable {
-    case all = "all"
-    case monetary = "monetary"
-    case gift = "gift"
-    case favor = "favor"
-    case banquet = "banquet"
+    case all
+    case monetary
+    case gift
+    case favor
+    case banquet
 }
 
 @Observable

@@ -1,13 +1,12 @@
 import Foundation
-import Testing
-import SwiftData
 @testable import LiShu
+import SwiftData
+import Testing
 
 @MainActor
 struct ContactExchangeViewModelTests {
-
     @Test("load contact and records by persistentModelID")
-    func testLoadContact() throws {
+    func loadContact() throws {
         let db = try TestDB()
         let contact = SampleData.contact(name: "往来人")
         let event = SampleData.event()
@@ -25,7 +24,7 @@ struct ContactExchangeViewModelTests {
     }
 
     @Test("totalGiven and totalReceived compute correctly")
-    func testTotalGivenAndReceived() throws {
+    func totalGivenAndReceived() throws {
         let db = try TestDB()
         let contact = SampleData.contact()
         let event = SampleData.event()
@@ -48,7 +47,7 @@ struct ContactExchangeViewModelTests {
     }
 
     @Test("netValue and netLabel: positive=theyOwe, negative=iOwe, zero=even")
-    func testNetValueAndLabel() throws {
+    func netValueAndLabel() throws {
         let db = try TestDB()
         let contact = SampleData.contact()
         let event = SampleData.event()
@@ -103,7 +102,7 @@ struct ContactExchangeViewModelTests {
     }
 
     @Test("records sorted by date descending")
-    func testRecordsSortedByDate() throws {
+    func recordsSortedByDate() throws {
         let db = try TestDB()
         let contact = SampleData.contact()
         let event = SampleData.event()
@@ -111,9 +110,9 @@ struct ContactExchangeViewModelTests {
         db.context.insert(event)
 
         let cal = Calendar.current
-        let date1 = cal.date(from: DateComponents(year: 2025, month: 1, day: 1))!
-        let date2 = cal.date(from: DateComponents(year: 2026, month: 6, day: 15))!
-        let date3 = cal.date(from: DateComponents(year: 2025, month: 6, day: 1))!
+        let date1 = try #require(cal.date(from: DateComponents(year: 2025, month: 1, day: 1)))
+        let date2 = try #require(cal.date(from: DateComponents(year: 2026, month: 6, day: 15)))
+        let date3 = try #require(cal.date(from: DateComponents(year: 2025, month: 6, day: 1)))
 
         let r1 = SampleData.record(contact: contact, event: event, amount: 100, date: date1)
         let r2 = SampleData.record(contact: contact, event: event, amount: 200, date: date2)
@@ -142,7 +141,7 @@ struct ContactExchangeViewModelTests {
         db.context.insert(contact)
         db.context.insert(event)
 
-        let pastDate = Calendar.current.date(byAdding: .day, value: -5, to: .now)!
+        let pastDate = try #require(Calendar.current.date(byAdding: .day, value: -5, to: .now))
         let r = SampleData.record(contact: contact, event: event, amount: 100, date: pastDate)
         db.context.insert(r)
         try db.context.save()
@@ -152,7 +151,7 @@ struct ContactExchangeViewModelTests {
     }
 
     @Test("formatAmount includes yen sign and 2 decimal places")
-    func testFormatAmountAndNetAmount() {
+    func formatAmountAndNetAmount() {
         let vm = ContactExchangeViewModel()
         let amount = vm.formatAmount(1234.56)
         #expect(amount.hasPrefix("¥"))
@@ -164,7 +163,7 @@ struct ContactExchangeViewModelTests {
     }
 
     @Test("load with no records for contact returns empty records")
-    func testLoadContactWithNoRecords() throws {
+    func loadContactWithNoRecords() throws {
         let db = try TestDB()
         let contact = SampleData.contact(name: "无记录人")
         db.context.insert(contact)

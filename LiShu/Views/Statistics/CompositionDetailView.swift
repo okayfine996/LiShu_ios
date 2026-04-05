@@ -1,5 +1,5 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 /// 人情构成详情与事件分布详情共用同一套布局：环形图、图例、「详细构成」卡片与月度迷你柱图。
 struct CompositionDetailView: View {
@@ -41,9 +41,9 @@ struct CompositionDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             switch mode {
-            case .recordTypes(let year):
+            case let .recordTypes(year):
                 recordVM.load(year: year, context: modelContext)
-            case .eventTypes(let year):
+            case let .eventTypes(year):
                 eventTypeCompositionVM.load(year: year, context: modelContext)
             }
         }
@@ -332,7 +332,7 @@ struct CompositionDetailView: View {
         let chartHeight: CGFloat = 60
 
         return HStack(alignment: .bottom, spacing: 6) {
-            ForEach(0..<12, id: \.self) { idx in
+            ForEach(0 ..< 12, id: \.self) { idx in
                 let count = distribution[idx]
                 VStack(spacing: 4) {
                     Spacer(minLength: 0)
@@ -380,13 +380,31 @@ private func makeCompositionDetailPreviewContainer() -> ModelContainer? {
     let c2 = Contact(name: "李美玲", relation: "表姐", circle: 2)
     [c1, c2].forEach { ctx.insert($0) }
 
-    let e1 = Event(name: "结婚喜宴", type: .wedding, date: cal.date(from: DateComponents(year: thisYear, month: 1, day: 15))!)
-    let e2 = Event(name: "生日聚会", type: .birthday, date: cal.date(from: DateComponents(year: thisYear, month: 5, day: 20))!)
+    let e1 = Event(name: "结婚喜宴", type: .wedding, date: cal.date(from: DateComponents(year: thisYear, month: 1, day: 15)).unwrappedOrNow)
+    let e2 = Event(name: "生日聚会", type: .birthday, date: cal.date(from: DateComponents(year: thisYear, month: 5, day: 20)).unwrappedOrNow)
     [e1, e2].forEach { ctx.insert($0) }
 
-    let r1 = Record.makeMonetaryRecord(contact: c1, event: e1, amount: 3000, direction: .received, date: cal.date(from: DateComponents(year: thisYear, month: 1, day: 15))!)
-    let r2 = Record.makeMonetaryRecord(contact: c2, event: e1, amount: 2000, direction: .given, date: cal.date(from: DateComponents(year: thisYear, month: 2, day: 10))!)
-    let r3 = Record.makeMonetaryRecord(contact: c1, event: e2, amount: 800, direction: .received, date: cal.date(from: DateComponents(year: thisYear, month: 5, day: 20))!)
+    let r1 = Record.makeMonetaryRecord(
+        contact: c1,
+        event: e1,
+        amount: 3000,
+        direction: .received,
+        date: cal.date(from: DateComponents(year: thisYear, month: 1, day: 15)).unwrappedOrNow
+    )
+    let r2 = Record.makeMonetaryRecord(
+        contact: c2,
+        event: e1,
+        amount: 2000,
+        direction: .given,
+        date: cal.date(from: DateComponents(year: thisYear, month: 2, day: 10)).unwrappedOrNow
+    )
+    let r3 = Record.makeMonetaryRecord(
+        contact: c1,
+        event: e2,
+        amount: 800,
+        direction: .received,
+        date: cal.date(from: DateComponents(year: thisYear, month: 5, day: 20)).unwrappedOrNow
+    )
     [r1, r2, r3].forEach { ctx.insert($0) }
 
     return container

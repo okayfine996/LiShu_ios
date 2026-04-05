@@ -1,6 +1,6 @@
-import SwiftUI
-import ContactsUI
 import Contacts
+import ContactsUI
+import SwiftUI
 
 struct ContactPickerView: UIViewControllerRepresentable {
     var onSelect: (String, String) -> Void

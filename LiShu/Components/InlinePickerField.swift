@@ -1,5 +1,5 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 /// A reusable inline picker with search, selection list, and optional inline-create mode.
 /// Used for both contact and event selection in AddRecordView.

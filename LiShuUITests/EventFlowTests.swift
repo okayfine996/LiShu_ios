@@ -1,9 +1,8 @@
 import XCTest
 
 final class EventFlowTests: BaseUITestCase {
-
     @MainActor
-    func testAddEventFlow() throws {
+    func testAddEventFlow() {
         createEvent(name: "UI测试事件")
 
         let eventText = app.staticTexts["UI测试事件"]
@@ -11,7 +10,7 @@ final class EventFlowTests: BaseUITestCase {
     }
 
     @MainActor
-    func testEventListDisplay() throws {
+    func testEventListDisplay() {
         let eventsTab = app.tabBars.buttons[TabLabels.events]
         XCTAssertTrue(eventsTab.waitForExistence(timeout: 5))
         eventsTab.tap()
@@ -22,7 +21,7 @@ final class EventFlowTests: BaseUITestCase {
     }
 
     @MainActor
-    func testEventDetail() throws {
+    func testEventDetail() {
         createEvent(name: "详情事件")
 
         let eventsTab = app.tabBars.buttons[TabLabels.events]
@@ -39,7 +38,7 @@ final class EventFlowTests: BaseUITestCase {
     }
 
     @MainActor
-    func testDeleteEvent() throws {
+    func testDeleteEvent() {
         createEvent(name: "待删事件")
 
         let eventsTab = app.tabBars.buttons[TabLabels.events]

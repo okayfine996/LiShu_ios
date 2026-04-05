@@ -1,5 +1,5 @@
-import SwiftUI
 import StoreKit
+import SwiftUI
 
 struct ProMembershipView: View {
     @Environment(\.dismiss) private var dismiss
@@ -272,7 +272,8 @@ struct ProMembershipView: View {
                         .fontWeight(.bold)
 
                     if product.type == .autoRenewable,
-                       let period = product.subscription?.subscriptionPeriod {
+                       let period = product.subscription?.subscriptionPeriod
+                    {
                         Text(periodUnitText(period))
                             .font(DesignSystem.Typography.small)
                             .foregroundStyle(DesignSystem.Colors.textTertiary)
@@ -407,12 +408,12 @@ struct ProMembershipView: View {
             }
 
             #if DEBUG
-            Button(String(localized: "DEBUG: 清除购买状态")) {
-                subscriptionManager.debugClearPurchases()
-            }
-            .font(DesignSystem.Typography.small)
-            .foregroundStyle(.red)
-            .padding(.top, 8)
+                Button(String(localized: "DEBUG: 清除购买状态")) {
+                    subscriptionManager.debugClearPurchases()
+                }
+                .font(DesignSystem.Typography.small)
+                .foregroundStyle(.red)
+                .padding(.top, 8)
             #endif
         }
         .frame(maxWidth: .infinity)

@@ -42,7 +42,7 @@ final class BatchContactImportViewModel {
         let query = searchText.lowercased()
         return allItems.filter {
             $0.displayName.lowercased().contains(query) ||
-            $0.phone.contains(query)
+                $0.phone.contains(query)
         }
     }
 
@@ -83,7 +83,7 @@ final class BatchContactImportViewModel {
         let keys: [CNKeyDescriptor] = [
             CNContactGivenNameKey as CNKeyDescriptor,
             CNContactFamilyNameKey as CNKeyDescriptor,
-            CNContactPhoneNumbersKey as CNKeyDescriptor
+            CNContactPhoneNumbersKey as CNKeyDescriptor,
         ]
         let request = CNContactFetchRequest(keysToFetch: keys)
         var items: [PhoneContactItem] = []

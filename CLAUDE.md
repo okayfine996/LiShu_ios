@@ -86,7 +86,9 @@ Text("联系人")
 Button("保存") { ... }
 ```
 
-9. **Preview**: 所有 View 文件必须包含 `#Preview`，确保每个视图可独立预览。需要 SwiftData 环境的 Preview 使用 `ModelContainer(for:inMemory:)` 注入示例数据
+9. **工程质量**: 根目录配置 SwiftLint（`.swiftlint.yml`）、SwiftFormat（`.swiftformat`）。Xcode 编译时运行 SwiftLint（Run Script）。提交前建议安装 [pre-commit](https://pre-commit.com/) 并执行 `pre-commit install`（若因 `core.hooksPath` 冲突无法安装，可先 `git config --unset-all core.hooksPath` 再试，或改用团队统一的 hook 目录），以便在 `git commit` 时对**暂存** Swift 文件运行 SwiftFormat 与 `swiftlint lint --strict`。CI 在 GitHub Actions 上执行相同检查与 `xcodebuild` 编译。
+
+10. **Preview**: 所有 View 文件必须包含 `#Preview`，确保每个视图可独立预览。需要 SwiftData 环境的 Preview 使用 `ModelContainer(for:inMemory:)` 注入示例数据
 
 ```swift
 // 页面级 View
@@ -100,6 +102,8 @@ Button("保存") { ... }
     StatCard(title: "总支出", value: "¥12,000", icon: "arrow.up")
 }
 ```
+
+日期可选值避免 `!` 时，可使用 `Date?.unwrappedOrNow`（见 `LiShu/Utilities/Date+OptionalUnwrap.swift`）。
 
 ## SwiftUI 开发规范
 

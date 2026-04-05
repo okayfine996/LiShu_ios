@@ -1,9 +1,8 @@
 import XCTest
 
 final class SettingsFlowTests: BaseUITestCase {
-
     @MainActor
-    func testSettingsNavigation() throws {
+    func testSettingsNavigation() {
         let settingsTab = app.tabBars.buttons[TabLabels.settings]
         XCTAssertTrue(settingsTab.waitForExistence(timeout: 5))
         settingsTab.tap()
@@ -24,7 +23,7 @@ final class SettingsFlowTests: BaseUITestCase {
     }
 
     @MainActor
-    func testAboutPage() throws {
+    func testAboutPage() {
         let settingsTab = app.tabBars.buttons[TabLabels.settings]
         XCTAssertTrue(settingsTab.waitForExistence(timeout: 5))
         settingsTab.tap()

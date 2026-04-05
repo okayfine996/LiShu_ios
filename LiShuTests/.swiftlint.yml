@@ -1,0 +1,3 @@
+# 单元测试中常见 XCTAssert、try!、可选绑定等，不强制 force_unwrapping
+disabled_rules:
+  - force_unwrapping

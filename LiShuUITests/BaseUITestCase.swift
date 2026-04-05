@@ -8,7 +8,6 @@
 import XCTest
 
 class BaseUITestCase: XCTestCase {
-
     var app: XCUIApplication!
     var defaultLaunchArguments: [String] { ["--uitesting"] }
 

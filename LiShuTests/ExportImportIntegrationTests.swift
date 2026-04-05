@@ -1,12 +1,11 @@
 import Foundation
-import Testing
-import SwiftData
 @testable import LiShu
+import SwiftData
+import Testing
 
 @MainActor
 struct ExportImportIntegrationTests {
-
-    @Test func testCSVExportImportRoundTrip() throws {
+    @Test func cSVExportImportRoundTrip() throws {
         let db = try TestDB()
         let contact = SampleData.contact(name: "张三")
         let event = SampleData.event(name: "婚礼", type: .wedding)
@@ -21,7 +20,7 @@ struct ExportImportIntegrationTests {
             paymentMethod: .wechat,
             returnedAmount: 0,
             note: "新婚快乐",
-            date: Date(timeIntervalSince1970: 1772000000),
+            date: Date(timeIntervalSince1970: 1_772_000_000),
             relationshipWeight: .support
         )
         db.context.insert(record)
@@ -48,7 +47,7 @@ struct ExportImportIntegrationTests {
         #expect(importedRecords[0].relationshipWeight == .support)
     }
 
-    @Test func testCSVExportImportRoundTripNonMonetary() throws {
+    @Test func cSVExportImportRoundTripNonMonetary() throws {
         let db = try TestDB()
         let contact = SampleData.contact(name: "李四")
         let event = SampleData.event(name: "搬家帮忙", type: .other)
@@ -63,7 +62,7 @@ struct ExportImportIntegrationTests {
             paymentMethod: .cash,
             returnedAmount: 0,
             note: "",
-            date: Date(timeIntervalSince1970: 1772000000),
+            date: Date(timeIntervalSince1970: 1_772_000_000),
             recordType: .favor,
             relationshipWeight: .kindness
         )
@@ -93,7 +92,7 @@ struct ExportImportIntegrationTests {
         #expect(importedRecords[0].resolvedDisplayAmount == 0)
     }
 
-    @Test func testCSVExportImportRoundTripBanquet() throws {
+    @Test func cSVExportImportRoundTripBanquet() throws {
         let db = try TestDB()
         let contact = SampleData.contact(name: "王五")
         db.context.insert(contact)
@@ -103,7 +102,7 @@ struct ExportImportIntegrationTests {
             event: nil,
             direction: .given,
             note: "记得下次按同档次回请",
-            date: Date(timeIntervalSince1970: 1772000300),
+            date: Date(timeIntervalSince1970: 1_772_000_300),
             recordType: .banquet,
             relationshipWeight: .support
         )
@@ -138,7 +137,7 @@ struct ExportImportIntegrationTests {
         #expect(importedRecords[0].banquetData?.extraCostNotes == "席间开了两瓶酒")
     }
 
-    @Test func testCSVExportImportRoundTripWithoutEvent() throws {
+    @Test func cSVExportImportRoundTripWithoutEvent() throws {
         let db = try TestDB()
         let contact = SampleData.contact(name: "无事件联系人")
         db.context.insert(contact)
@@ -151,7 +150,7 @@ struct ExportImportIntegrationTests {
             paymentMethod: .cash,
             returnedAmount: 0,
             note: "日常往来",
-            date: Date(timeIntervalSince1970: 1772000200)
+            date: Date(timeIntervalSince1970: 1_772_000_200)
         )
         db.context.insert(record)
         try db.context.save()
@@ -175,7 +174,7 @@ struct ExportImportIntegrationTests {
         #expect(importedRecords[0].note == "日常往来")
     }
 
-    @Test func testCSVImportOldFormatBackwardCompatible() throws {
+    @Test func cSVImportOldFormatBackwardCompatible() throws {
         let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("test_old_format.csv")
         let csv = """
         联系人,事件,事件类型,金额,方向,支付方式,已退金额,日期,备注
@@ -198,7 +197,7 @@ struct ExportImportIntegrationTests {
         #expect(importedRecords[0].note == "恭喜")
     }
 
-    @Test func testCSVRoundTripWithMultilineQuotedNote() throws {
+    @Test func cSVRoundTripWithMultilineQuotedNote() throws {
         let db = try TestDB()
         let contact = SampleData.contact(name: "王五")
         let event = SampleData.event(name: "乔迁", type: .property)
@@ -217,7 +216,7 @@ struct ExportImportIntegrationTests {
             paymentMethod: .cash,
             returnedAmount: 0,
             note: note,
-            date: Date(timeIntervalSince1970: 1772001000)
+            date: Date(timeIntervalSince1970: 1_772_001_000)
         )
         db.context.insert(record)
         try db.context.save()
@@ -237,7 +236,7 @@ struct ExportImportIntegrationTests {
         #expect(importedRecords[0].note == note)
     }
 
-    @Test func testImportDuplicateContactDedup() throws {
+    @Test func importDuplicateContactDedup() throws {
         let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("test_dedup.csv")
         let csv = """
         联系人,事件,事件类型,金额,方向,支付方式,已退金额,日期,备注
@@ -257,7 +256,7 @@ struct ExportImportIntegrationTests {
         #expect(contacts[0].name == "张三")
     }
 
-    @Test func testOCRImportPreservesEventTypeAndReusesEvent() throws {
+    @Test func oCRImportPreservesEventTypeAndReusesEvent() throws {
         let db = try TestDB()
         let viewModel = OCRImportViewModel()
         viewModel.items = [
@@ -293,7 +292,7 @@ struct ExportImportIntegrationTests {
         #expect(records.allSatisfy { $0.event?.type == .wedding })
     }
 
-    @Test func testImportInvalidCSV() throws {
+    @Test func importInvalidCSV() throws {
         let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("test_invalid.csv")
         let csv = """
         联系人,事件,事件类型,金额,方向,支付方式,已退金额,日期,备注
@@ -311,7 +310,7 @@ struct ExportImportIntegrationTests {
         #expect(result.errors >= 1)
     }
 
-    @Test func testCSVExportImportRoundTripGift() throws {
+    @Test func cSVExportImportRoundTripGift() throws {
         let db = try TestDB()
         let contact = SampleData.contact(name: "礼品联系人")
         let event = SampleData.event(name: "乔迁", type: .property)
@@ -324,7 +323,7 @@ struct ExportImportIntegrationTests {
             giftName: "景德镇茶具",
             estimatedValue: 880,
             direction: .given,
-            date: Date(timeIntervalSince1970: 1772000500),
+            date: Date(timeIntervalSince1970: 1_772_000_500),
             relationshipWeight: .reciprocal
         )
         db.context.insert(record)
@@ -351,7 +350,7 @@ struct ExportImportIntegrationTests {
         #expect(importedRecords[0].giftData?.estimatedValue == 880)
     }
 
-    @Test func testEmptyContextExport() throws {
+    @Test func emptyContextExport() throws {
         let db = try TestDB()
 
         let csv = try ExportService.exportCSV(context: db.context)

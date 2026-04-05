@@ -235,7 +235,9 @@ class SubscriptionManager {
             if let transaction = try? checkVerified(result) {
                 activeIDs.insert(transaction.productID)
                 if let exp = transaction.expirationDate {
-                    if nearestExpiration == nil || exp < nearestExpiration! {
+                    if let current = nearestExpiration {
+                        if exp < current { nearestExpiration = exp }
+                    } else {
                         nearestExpiration = exp
                     }
                 }

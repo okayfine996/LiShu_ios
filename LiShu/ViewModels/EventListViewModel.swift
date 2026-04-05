@@ -17,8 +17,8 @@ class EventListViewModel {
         guard !trimmed.isEmpty else { return events }
         return events.filter {
             $0.name.localizedCaseInsensitiveContains(trimmed)
-            || $0.location.localizedCaseInsensitiveContains(trimmed)
-            || $0.type.displayName.localizedCaseInsensitiveContains(trimmed)
+                || $0.location.localizedCaseInsensitiveContains(trimmed)
+                || $0.type.displayName.localizedCaseInsensitiveContains(trimmed)
         }
     }
 

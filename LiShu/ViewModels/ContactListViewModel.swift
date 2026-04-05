@@ -6,10 +6,10 @@ private let contactListLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.c
 
 /// Filter options for contacts by circle level
 enum ContactCircleFilter: String, CaseIterable, Hashable {
-    case all = "all"
-    case family = "family"
-    case relative = "relative"
-    case social = "social"
+    case all
+    case family
+    case relative
+    case social
 
     var title: String {
         switch self {
@@ -61,7 +61,7 @@ class ContactListViewModel {
             let query = searchText.lowercased()
             result = result.filter {
                 $0.name.lowercased().contains(query) ||
-                $0.relation.lowercased().contains(query)
+                    $0.relation.lowercased().contains(query)
             }
         }
 

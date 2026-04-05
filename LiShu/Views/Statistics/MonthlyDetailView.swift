@@ -1,5 +1,5 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 struct MonthlyDetailView: View {
     @Environment(\.modelContext) private var modelContext
@@ -229,10 +229,10 @@ struct MonthlyDetailView: View {
                         if let contact = record.contact, record.event != nil {
                             NavigationLink(value: AppRoute.contactExchange(contact.persistentModelID)) {
                                 RecordRow(record: record)
-                        }
-                        .buttonStyle(.plain)
-                        .background(DesignSystem.Colors.bgSurface)
-                        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.smallCard))
+                            }
+                            .buttonStyle(.plain)
+                            .background(DesignSystem.Colors.bgSurface)
+                            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.smallCard))
                         }
                     }
                 }

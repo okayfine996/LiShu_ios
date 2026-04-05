@@ -48,29 +48,29 @@ final class Event {
 /// 事件类型
 enum EventType: String, Codable, CaseIterable {
     /// 婚礼
-    case wedding = "wedding"
+    case wedding
     /// 订婚
-    case engagement = "engagement"
+    case engagement
     /// 丧事
-    case funeral = "funeral"
+    case funeral
     /// 满月/新生儿
-    case birth = "birth"
+    case birth
     /// 生日
-    case birthday = "birthday"
+    case birthday
     /// 寿宴
-    case longevity = "longevity"
+    case longevity
     /// 节日
-    case festival = "festival"
+    case festival
     /// 乔迁
-    case property = "property"
+    case property
     /// 升学/毕业
-    case education = "education"
+    case education
     /// 开业
-    case business = "business"
+    case business
     /// 升职/晋升
-    case promotion = "promotion"
+    case promotion
     /// 探望/慰问
-    case visit = "visit"
+    case visit
     /// 其他
-    case other = "other"
+    case other
 }

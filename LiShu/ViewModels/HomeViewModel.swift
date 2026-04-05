@@ -25,7 +25,8 @@ class HomeViewModel {
         let calendar = Calendar.current
         let year = currentYear
         guard let startOfYear = calendar.date(from: DateComponents(year: year, month: 1, day: 1)),
-              let endOfYear = calendar.date(from: DateComponents(year: year + 1, month: 1, day: 1)) else {
+              let endOfYear = calendar.date(from: DateComponents(year: year + 1, month: 1, day: 1))
+        else {
             resetSummary()
             return
         }
@@ -97,7 +98,7 @@ class HomeViewModel {
     }
 
     var yearBadge: String {
-        "\(currentYear)" 
+        "\(currentYear)"
     }
 
     var peopleSummary: String {

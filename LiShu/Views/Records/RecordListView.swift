@@ -1,5 +1,5 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 struct RecordListView: View {
     @Environment(\.modelContext) private var modelContext
@@ -98,7 +98,7 @@ struct RecordListView: View {
         case .idle, .loading:
             ProgressView()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-        case .loaded(let grouped) where grouped.isEmpty:
+        case let .loaded(grouped) where grouped.isEmpty:
             if hasActiveQuery {
                 filteredEmptyContent
             } else {
@@ -119,7 +119,7 @@ struct RecordListView: View {
             }
         case .loaded:
             recordsList
-        case .error(let message):
+        case let .error(message):
             ErrorStateView(message: message) {
                 viewModel.load(context: modelContext)
             }
@@ -275,7 +275,7 @@ struct RecordListView: View {
     @ViewBuilder
     private func sheetContent(for route: SheetRoute) -> some View {
         switch route {
-        case .addRecord(let direction, let contactID):
+        case let .addRecord(direction, contactID):
             NavigationStack {
                 AddRecordView(direction: direction, contactID: contactID)
             }
@@ -287,19 +287,19 @@ struct RecordListView: View {
             NavigationStack {
                 AddEventView()
             }
-        case .editContact(let contactID):
+        case let .editContact(contactID):
             NavigationStack {
                 AddContactView(contactID: contactID)
             }
-        case .editEvent(let eventID):
+        case let .editEvent(eventID):
             NavigationStack {
                 AddEventView(eventID: eventID)
             }
-        case .editRecord(let recordID):
+        case let .editRecord(recordID):
             NavigationStack {
                 AddRecordView(recordID: recordID)
             }
-        case .returnGift(let recordID):
+        case let .returnGift(recordID):
             NavigationStack {
                 ReturnGiftSheet(recordID: recordID)
             }
@@ -328,18 +328,56 @@ private func makeRecordListPreviewContainer() -> ModelContainer? {
     [c1, c2, c3, c4, c5].forEach { ctx.insert($0) }
 
     let cal = Calendar.current
-    let e1 = Event(name: "结婚随礼", type: .wedding, date: cal.date(byAdding: .day, value: -6, to: .now)!)
-    let e2 = Event(name: "满月酒", type: .birth, date: cal.date(byAdding: .day, value: -10, to: .now)!)
-    let e3 = Event(name: "聚餐", type: .other, date: cal.date(byAdding: .day, value: -15, to: .now)!)
-    let e4 = Event(name: "乔迁之喜", type: .property, date: cal.date(byAdding: .month, value: -1, to: .now)!)
-    let e5 = Event(name: "升职庆祝", type: .other, date: cal.date(byAdding: .month, value: -1, to: .now)!)
+    let e1 = Event(name: "结婚随礼", type: .wedding, date: cal.date(byAdding: .day, value: -6, to: .now).unwrappedOrNow)
+    let e2 = Event(name: "满月酒", type: .birth, date: cal.date(byAdding: .day, value: -10, to: .now).unwrappedOrNow)
+    let e3 = Event(name: "聚餐", type: .other, date: cal.date(byAdding: .day, value: -15, to: .now).unwrappedOrNow)
+    let e4 = Event(name: "乔迁之喜", type: .property, date: cal.date(byAdding: .month, value: -1, to: .now).unwrappedOrNow)
+    let e5 = Event(name: "升职庆祝", type: .other, date: cal.date(byAdding: .month, value: -1, to: .now).unwrappedOrNow)
     [e1, e2, e3, e4, e5].forEach { ctx.insert($0) }
 
-    let r1 = Record.makeMonetaryRecord(contact: c1, event: e1, amount: 2000, direction: .given, paymentMethod: .wechat, date: cal.date(byAdding: .day, value: -6, to: .now)!)
-    let r2 = Record.makeMonetaryRecord(contact: c2, event: e2, amount: 800, direction: .received, paymentMethod: .cash, returnedAmount: 800, date: cal.date(byAdding: .day, value: -10, to: .now)!)
-    let r3 = Record.makeMonetaryRecord(contact: c3, event: e3, amount: 500, direction: .given, paymentMethod: .alipay, returnedAmount: 500, date: cal.date(byAdding: .day, value: -15, to: .now)!)
-    let r4 = Record.makeMonetaryRecord(contact: c4, event: e4, amount: 1200, direction: .given, paymentMethod: .wechat, date: cal.date(byAdding: .month, value: -1, to: .now)!)
-    let r5 = Record.makeMonetaryRecord(contact: c5, event: e5, amount: 600, direction: .received, paymentMethod: .cash, returnedAmount: 600, date: cal.date(byAdding: .month, value: -1, to: .now)!)
+    let r1 = Record.makeMonetaryRecord(
+        contact: c1,
+        event: e1,
+        amount: 2000,
+        direction: .given,
+        paymentMethod: .wechat,
+        date: cal.date(byAdding: .day, value: -6, to: .now).unwrappedOrNow
+    )
+    let r2 = Record.makeMonetaryRecord(
+        contact: c2,
+        event: e2,
+        amount: 800,
+        direction: .received,
+        paymentMethod: .cash,
+        returnedAmount: 800,
+        date: cal.date(byAdding: .day, value: -10, to: .now).unwrappedOrNow
+    )
+    let r3 = Record.makeMonetaryRecord(
+        contact: c3,
+        event: e3,
+        amount: 500,
+        direction: .given,
+        paymentMethod: .alipay,
+        returnedAmount: 500,
+        date: cal.date(byAdding: .day, value: -15, to: .now).unwrappedOrNow
+    )
+    let r4 = Record.makeMonetaryRecord(
+        contact: c4,
+        event: e4,
+        amount: 1200,
+        direction: .given,
+        paymentMethod: .wechat,
+        date: cal.date(byAdding: .month, value: -1, to: .now).unwrappedOrNow
+    )
+    let r5 = Record.makeMonetaryRecord(
+        contact: c5,
+        event: e5,
+        amount: 600,
+        direction: .received,
+        paymentMethod: .cash,
+        returnedAmount: 600,
+        date: cal.date(byAdding: .month, value: -1, to: .now).unwrappedOrNow
+    )
     [r1, r2, r3, r4, r5].forEach { ctx.insert($0) }
 
     return container

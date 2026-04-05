@@ -96,7 +96,9 @@ enum PulseDiagnostics {
 
     /// 与 Pulse 内部默认路径一致（`Library/Logs/com.github.kean.logger/current.pulse`），避免重复占用空间。
     static nonisolated func pulseStorePackageURL() -> URL {
-        let base = FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask).first!
+        let library = FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask).first
+            ?? URL(fileURLWithPath: NSTemporaryDirectory())
+        let base = library
             .appendingPathComponent("Logs/com.github.kean.logger", isDirectory: true)
         try? FileManager.default.createDirectory(at: base, withIntermediateDirectories: true)
         return base.appendingPathComponent("current.pulse", isDirectory: true)

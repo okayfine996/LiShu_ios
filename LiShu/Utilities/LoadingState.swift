@@ -12,12 +12,12 @@ enum LoadingState<T> {
     }
 
     var value: T? {
-        if case .loaded(let v) = self { return v }
+        if case let .loaded(v) = self { return v }
         return nil
     }
 
     var errorMessage: String? {
-        if case .error(let msg) = self { return msg }
+        if case let .error(msg) = self { return msg }
         return nil
     }
 }

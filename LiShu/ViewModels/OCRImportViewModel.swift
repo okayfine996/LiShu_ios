@@ -7,7 +7,6 @@ private let ocrImportLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.ocr
 
 @Observable
 class OCRImportViewModel {
-
     // MARK: - Image Management
 
     var capturedImages: [UIImage] = []
@@ -287,7 +286,11 @@ class OCRImportViewModel {
                     direction: direction,
                     date: item.date
                 )
-                record.applyTypeData(.monetary(MonetaryData(amount: item.amount, paymentMethod: PaymentMethod.cash.rawValue, returnedAmount: 0)))
+                record.applyTypeData(.monetary(MonetaryData(
+                    amount: item.amount,
+                    paymentMethod: PaymentMethod.cash.rawValue,
+                    returnedAmount: 0
+                )))
                 context.insert(record)
             }
 

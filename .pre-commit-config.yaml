@@ -1,0 +1,25 @@
+# 仅对 Git 暂存文件运行；首次克隆后执行: pre-commit install
+# 依赖: brew install swiftformat swiftlint pre-commit
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        files: ^(LiShu|LiShuTests|LiShuUITests)/
+      - id: end-of-file-fixer
+        files: ^(LiShu|LiShuTests|LiShuUITests)/
+
+  - repo: local
+    hooks:
+      - id: swiftformat
+        name: SwiftFormat
+        entry: swiftformat
+        language: system
+        types: [swift]
+        args: [--config, .swiftformat]
+
+      - id: swiftlint
+        name: SwiftLint
+        entry: swiftlint lint --strict
+        language: system
+        types: [swift]

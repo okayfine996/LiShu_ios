@@ -1,10 +1,9 @@
 import Foundation
-import Testing
 @testable import LiShu
+import Testing
 
 @MainActor
 struct AppSettingsTests {
-
     private let defaults = UserDefaults.standard
 
     private func cleanupKeys() {
@@ -12,7 +11,7 @@ struct AppSettingsTests {
             "hasSeenOnboarding", "colorScheme", "icloudSyncEnabled",
             "notificationEnabled", "eventReminder", "returnGiftReminder",
             "birthdayReminder", "ocrUsageCount", "ocrUsageMonth",
-            "ocrUsageYear", "apnsDeviceToken"
+            "ocrUsageYear", "apnsDeviceToken",
         ]
         for key in keys {
             defaults.removeObject(forKey: key)
@@ -20,7 +19,7 @@ struct AppSettingsTests {
     }
 
     @Test("default values after clearing UserDefaults")
-    func testDefaultValues() {
+    func defaultValues() {
         cleanupKeys()
         let settings = AppSettings.shared
 
@@ -38,7 +37,7 @@ struct AppSettingsTests {
     }
 
     @Test("colorScheme read/write round-trip")
-    func testColorSchemeReadWrite() {
+    func colorSchemeReadWrite() {
         cleanupKeys()
         let settings = AppSettings.shared
 
@@ -55,7 +54,7 @@ struct AppSettingsTests {
     }
 
     @Test("notification settings read/write")
-    func testNotificationSettings() {
+    func notificationSettings() {
         cleanupKeys()
         let settings = AppSettings.shared
 
@@ -75,7 +74,7 @@ struct AppSettingsTests {
     }
 
     @Test("OCR usage tracking read/write")
-    func testOCRUsageTracking() {
+    func oCRUsageTracking() {
         cleanupKeys()
         let settings = AppSettings.shared
 

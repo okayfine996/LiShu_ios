@@ -1,14 +1,15 @@
 import Foundation
-import Testing
 @testable import LiShu
+import Testing
 
 struct OCRServiceTests {
-
-    private var service: OCRService { OCRService.shared }
+    private var service: OCRService {
+        OCRService.shared
+    }
 
     // MARK: - Parse Record Items
 
-    @Test func testParseRecordItemsNameAmount() {
+    @Test func parseRecordItemsNameAmount() {
         let lines: [(text: String, confidence: Float)] = [
             (text: "张三 500", confidence: 0.9),
             (text: "李四 ¥1,200", confidence: 0.85),
@@ -25,7 +26,7 @@ struct OCRServiceTests {
         #expect(items[2].amount == 300)
     }
 
-    @Test func testParseRecordItemsAmountName() {
+    @Test func parseRecordItemsAmountName() {
         let lines: [(text: String, confidence: Float)] = [
             (text: "￥800 赵六", confidence: 0.9),
             (text: "200 孙七", confidence: 0.8),
@@ -39,7 +40,7 @@ struct OCRServiceTests {
 
     // MARK: - Build Item
 
-    @Test func testBuildItemConfidenceLevels() {
+    @Test func buildItemConfidenceLevels() {
         let highItem = service.buildItem(name: "张三", rawAmount: "500", visionConfidence: 0.9)
         #expect(highItem != nil)
         #expect(highItem?.confidence == .high)
@@ -61,7 +62,7 @@ struct OCRServiceTests {
         #expect(zeroItem == nil)
     }
 
-    @Test func testBuildItemCleansChinaComma() {
+    @Test func buildItemCleansChinaComma() {
         let item = service.buildItem(name: "张三", rawAmount: "1，200", visionConfidence: 0.9)
         #expect(item != nil)
         #expect(item?.amount == 1200)
@@ -79,7 +80,7 @@ struct OCRServiceTests {
 
     // MARK: - Event Name Matching
 
-    @Test func testMatchEventNameWithKeywords() {
+    @Test func matchEventNameWithKeywords() {
         #expect(service.matchEventType(from: "张三婚礼") == .wedding)
         #expect(service.matchEventType(from: "李四结婚") == .wedding)
         // 「订婚宴」含「婚宴」会先匹配婚礼关键词，故用不含「婚宴」的短语测订婚。
@@ -96,13 +97,13 @@ struct OCRServiceTests {
         #expect(service.matchEventType(from: "探望病人") == .visit)
     }
 
-    @Test func testMatchEventNameDefaultsToOther() {
+    @Test func matchEventNameDefaultsToOther() {
         #expect(service.matchEventType(from: "张三 500") == .other)
         #expect(service.matchEventType(from: "普通记录") == .other)
         #expect(service.matchEventType(from: "") == .other)
     }
 
-    @Test func testParseRecordItemsWithEventKeyword() {
+    @Test func parseRecordItemsWithEventKeyword() {
         let lines: [(text: String, confidence: Float)] = [
             (text: "张三婚礼 500", confidence: 0.9),
             (text: "李四 300", confidence: 0.9),
@@ -114,7 +115,7 @@ struct OCRServiceTests {
         #expect(items[1].eventName == EventType.other.displayName)
     }
 
-    @Test func testBuildItemWithEventName() {
+    @Test func buildItemWithEventName() {
         let birthdayName = EventType.birthday.displayName
         let itemWithEvent = service.buildItem(name: "张三", rawAmount: "500", visionConfidence: 0.9, eventName: birthdayName)
         #expect(itemWithEvent != nil)

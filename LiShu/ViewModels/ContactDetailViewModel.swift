@@ -4,7 +4,9 @@ import SwiftData
 struct TypeCountItem: Identifiable {
     let type: RecordType
     let count: Int
-    var id: String { type.rawValue }
+    var id: String {
+        type.rawValue
+    }
 }
 
 @Observable
@@ -122,7 +124,8 @@ class ContactDetailViewModel {
 
     func circleLabel(_ level: Int) -> String {
         let name = circleText(level)
-        return String(localized: "contact.detail.circlePrefix") + " \(level) " + String(localized: "contact.detail.circleSuffix") + " · " + name
+        return String(localized: "contact.detail.circlePrefix") + " \(level) " + String(localized: "contact.detail.circleSuffix") + " · " +
+            name
     }
 
     // MARK: - Formatted Values

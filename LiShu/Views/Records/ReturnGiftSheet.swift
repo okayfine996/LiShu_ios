@@ -1,5 +1,5 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 struct ReturnGiftSheet: View {
     @Environment(\.modelContext) private var modelContext
@@ -226,7 +226,7 @@ private struct ReturnGiftPreview: View {
     private func seedData() {
         let cal = Calendar.current
         let contact = Contact(name: "张三", relation: "朋友")
-        let event = Event(name: "结婚大礼", type: .wedding, date: cal.date(byAdding: .day, value: -60, to: .now)!)
+        let event = Event(name: "结婚大礼", type: .wedding, date: cal.date(byAdding: .day, value: -60, to: .now).unwrappedOrNow)
         modelContext.insert(contact)
         modelContext.insert(event)
 
@@ -237,7 +237,7 @@ private struct ReturnGiftPreview: View {
             direction: .given,
             paymentMethod: .wechat,
             returnedAmount: 200,
-            date: cal.date(byAdding: .day, value: -60, to: .now)!
+            date: cal.date(byAdding: .day, value: -60, to: .now).unwrappedOrNow
         )
         modelContext.insert(record)
         try? modelContext.save()

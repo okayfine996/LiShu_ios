@@ -1,7 +1,6 @@
 import XCTest
 
 final class OnboardingFlowTests: XCTestCase {
-
     var app: XCUIApplication!
 
     override func setUpWithError() throws {
@@ -14,7 +13,7 @@ final class OnboardingFlowTests: XCTestCase {
     }
 
     @MainActor
-    func testOnboardingSkipButton() throws {
+    func testOnboardingSkipButton() {
         app.launchArguments = ["--reset-onboarding"]
         app.launch()
         sleep(3)
@@ -37,7 +36,7 @@ final class OnboardingFlowTests: XCTestCase {
     }
 
     @MainActor
-    func testAppLaunchToMainView() throws {
+    func testAppLaunchToMainView() {
         app.launchArguments = ["--uitesting"]
         app.launch()
         sleep(3)
