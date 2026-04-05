@@ -47,7 +47,7 @@ struct AboutView: View {
         }
         .sheet(isPresented: $showPulseConsole) {
             NavigationStack {
-                ConsoleView()
+                DiagnosticsConsoleContainerView()
             }
         }
     }
@@ -101,7 +101,7 @@ struct AboutView: View {
 
                     diagnosticsStepCard(
                         title: "分享方式",
-                        body: "进入控制台后，点击右上角分享按钮即可导出 .pulse 或文本日志，再通过系统分享发送给开发者。"
+                        body: "控制台内容仍使用 Pulse 原有列表界面，但顶部操作栏已改为我们自己的导出入口。若需要导出查询条件、原始业务数据和结果集，请使用“导出日志”，选择详细文本或 JSON 日志。"
                     )
 
                     diagnosticsStepCard(
@@ -262,6 +262,109 @@ struct AboutView: View {
             aboutRowContent(icon: icon, title: title)
         }
         .buttonStyle(.plain)
+    }
+}
+
+private struct DiagnosticsShareableFile: Identifiable {
+    let id: String
+    let url: URL
+}
+
+private struct DiagnosticsConsoleContainerView: View {
+    @Environment(\.dismiss) private var dismiss
+    @State private var diagnosticsShareURL: URL?
+    @State private var diagnosticsExportError: String?
+
+    var body: some View {
+        VStack(spacing: 0) {
+            header
+            Divider()
+            ConsoleView()
+                .closeButtonHidden()
+                .toolbar(.hidden, for: .navigationBar)
+        }
+        .sheet(item: Binding(
+            get: { diagnosticsShareURL.map { DiagnosticsShareableFile(id: $0.absoluteString, url: $0) } },
+            set: {
+                if let url = diagnosticsShareURL, $0 == nil {
+                    try? FileManager.default.removeItem(at: url)
+                }
+                diagnosticsShareURL = $0?.url
+            }
+        )) { item in
+            ShareSheet(url: item.url) {
+                diagnosticsShareURL = nil
+                try? FileManager.default.removeItem(at: item.url)
+            }
+        }
+        .alert("导出失败", isPresented: Binding(
+            get: { diagnosticsExportError != nil },
+            set: { if !$0 { diagnosticsExportError = nil } }
+        )) {
+            Button(String(localized: "common.ok")) {
+                diagnosticsExportError = nil
+            }
+        } message: {
+            if let diagnosticsExportError {
+                Text(diagnosticsExportError)
+            }
+        }
+    }
+
+    private var header: some View {
+        ZStack {
+            Text("Console")
+                .font(.headline)
+                .foregroundStyle(DesignSystem.Colors.textPrimary)
+
+            HStack {
+                Button {
+                    dismiss()
+                } label: {
+                    Text("Close")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(DesignSystem.Colors.primary)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(DesignSystem.Colors.bgSurface)
+                        .clipShape(Capsule())
+                }
+
+                Spacer()
+
+                Menu {
+                    Button("导出详细文本日志") {
+                        exportDiagnosticsLog(as: .detailedText)
+                    }
+                    Button("导出详细 JSON 日志") {
+                        exportDiagnosticsLog(as: .jsonLines)
+                    }
+                } label: {
+                    Image(systemName: "square.and.arrow.up")
+                        .font(.body.weight(.semibold))
+                        .foregroundStyle(DesignSystem.Colors.primary)
+                        .frame(width: 36, height: 36)
+                        .background(DesignSystem.Colors.bgSurface)
+                        .clipShape(Circle())
+                }
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(DesignSystem.Colors.bgPage)
+    }
+
+    private func exportDiagnosticsLog(as format: DiagnosticsExportService.ExportFormat) {
+        do {
+            switch format {
+            case .detailedText:
+                diagnosticsShareURL = try DiagnosticsExportService.exportDetailedLogs()
+            case .jsonLines:
+                diagnosticsShareURL = try DiagnosticsExportService.exportDetailedJSONLines()
+            }
+        } catch {
+            diagnosticsExportError = error.localizedDescription
+        }
     }
 }
 

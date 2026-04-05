@@ -167,6 +167,71 @@ struct PulseDiagnosticsTests {
         #expect(message.metadata["raw_results"] == "[]")
     }
 
+    @MainActor
+    @Test("detailed diagnostics export includes business metadata payloads")
+    func detailedDiagnosticsExportIncludesBusinessMetadataPayloads() throws {
+        let db = try TestDB()
+        let contact = SampleData.contact(name: "李四", relation: "同事")
+        db.context.insert(contact)
+        try db.context.save()
+
+        PulseDiagnostics.configureIfNeeded(arguments: [], environment: [:])
+        LoggerStore.shared.removeAll()
+
+        BusinessDataLogger.entityQuery(
+            domain: "contact",
+            screen: "contacts.list",
+            operation: "load",
+            searchText: "李",
+            filters: ["circleFilter": "all"],
+            sort: "name_asc",
+            results: [contact.logPayload()]
+        )
+
+        _ = try waitForMessages(label: AppLogLabel.dataQuery)
+        let fileURL = try DiagnosticsExportService.exportDetailedLogs()
+        let content = try String(contentsOf: fileURL, encoding: .utf8)
+
+        #expect(content.contains("Metadata"))
+        #expect(content.contains("query_input:"))
+        #expect(content.contains("\"searchText\" : \"李\""))
+        #expect(content.contains("raw_results:"))
+        #expect(content.contains("\"name\" : \"李四\""))
+        try? FileManager.default.removeItem(at: fileURL)
+    }
+
+    @MainActor
+    @Test("json lines diagnostics export includes business metadata payloads")
+    func jsonLinesDiagnosticsExportIncludesBusinessMetadataPayloads() throws {
+        let db = try TestDB()
+        let contact = SampleData.contact(name: "王五", relation: "亲戚")
+        db.context.insert(contact)
+        try db.context.save()
+
+        PulseDiagnostics.configureIfNeeded(arguments: [], environment: [:])
+        LoggerStore.shared.removeAll()
+
+        BusinessDataLogger.entityQuery(
+            domain: "contact",
+            screen: "contacts.list",
+            operation: "load",
+            searchText: "王",
+            filters: ["circleFilter": "family"],
+            sort: "name_asc",
+            results: [contact.logPayload()]
+        )
+
+        _ = try waitForMessages(label: AppLogLabel.dataQuery)
+        let fileURL = try DiagnosticsExportService.exportDetailedJSONLines()
+        let content = try String(contentsOf: fileURL, encoding: .utf8)
+
+        #expect(content.contains("\"message\":\"Business query\""))
+        #expect(content.contains("\"rawLabel\":\"data.query\""))
+        #expect(content.contains("\"searchText\":\"王\""))
+        #expect(content.contains("\"name\":\"王五\""))
+        try? FileManager.default.removeItem(at: fileURL)
+    }
+
     private func waitForMessages(label: String, timeout: TimeInterval = 2.0) throws -> [LoggerMessageEntity] {
         let deadline = Date().addingTimeInterval(timeout)
         while Date() < deadline {
