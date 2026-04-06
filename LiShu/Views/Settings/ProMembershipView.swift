@@ -4,17 +4,22 @@ import SwiftUI
 struct ProMembershipView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(SubscriptionManager.self) private var subscriptionManager
+    @Environment(DebugOverrideManager.self) private var debugOverrides
 
     @State private var selectedProductID: String = SubscriptionManager.yearlyID
     @State private var showError = false
     @State private var isPurchasing = false
+
+    private var effectiveProAccessEnabled: Bool {
+        subscriptionManager.effectiveIsPro(overrides: debugOverrides)
+    }
 
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 28) {
                 heroCard
                 featuresSection
-                if !subscriptionManager.isPro {
+                if !effectiveProAccessEnabled {
                     pricingSection
                     purchaseButton
                     termsFooter
@@ -29,7 +34,7 @@ struct ProMembershipView: View {
         .navigationTitle(String(localized: "pro.title"))
         .navigationBarTitleDisplayMode(.inline)
         .task {
-            if subscriptionManager.products.isEmpty, !subscriptionManager.isPro {
+            if subscriptionManager.products.isEmpty, !effectiveProAccessEnabled {
                 await subscriptionManager.reloadProducts()
             }
         }
@@ -156,7 +161,7 @@ struct ProMembershipView: View {
 
             Spacer()
 
-            Image(systemName: subscriptionManager.isPro ? "checkmark.circle.fill" : "lock.fill")
+            Image(systemName: effectiveProAccessEnabled ? "checkmark.circle.fill" : "lock.fill")
                 .font(.system(size: 18))
                 .foregroundStyle(DesignSystem.Colors.accentGold)
         }
@@ -382,7 +387,7 @@ struct ProMembershipView: View {
         isPurchasing = true
         await subscriptionManager.restorePurchases()
         isPurchasing = false
-        if subscriptionManager.isPro {
+        if effectiveProAccessEnabled {
             dismiss()
         } else if subscriptionManager.errorMessage != nil {
             showError = true
@@ -475,5 +480,6 @@ struct ProMembershipView: View {
     NavigationStack {
         ProMembershipView()
             .environment(SubscriptionManager.shared)
+            .environment(DebugOverrideManager.shared)
     }
 }

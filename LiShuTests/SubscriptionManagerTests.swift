@@ -98,6 +98,48 @@ struct SubscriptionManagerTests {
         #expect(manager.canAddContact(context: db.context, overrides: overrides))
     }
 
+    @Test("canAddContacts blocks batch imports that exceed the free limit")
+    func canAddContactsRejectsOverflowBatch() throws {
+        let db = try TestDB()
+        for i in 0 ..< (UsageLimits.freeContactTotal - 1) {
+            db.context.insert(SampleData.contact(name: "联系人\(i)"))
+        }
+        try db.context.save()
+
+        let manager = SubscriptionManager.shared
+        #expect(manager.canAddContacts(1, context: db.context))
+        #expect(manager.canAddContacts(2, context: db.context) == false)
+    }
+
+    @Test("session override allows batch contact import beyond limit")
+    func sessionOverrideAllowsBatchContactImportAtLimit() async throws {
+        let db = try TestDB()
+        for i in 0 ..< UsageLimits.freeContactTotal {
+            db.context.insert(SampleData.contact(name: "联系人\(i)"))
+        }
+        try db.context.save()
+
+        let overrides = DebugOverrideManager.shared
+        let originalOverrideValue = overrides.proAccessOverrideEnabled
+        defer { overrides.proAccessOverrideEnabled = originalOverrideValue }
+        overrides.proAccessOverrideEnabled = true
+
+        let viewModel = BatchContactImportViewModel()
+        let importItem = PhoneContactItem(
+            id: PhoneContactItem.key(name: "新增联系人", phone: "13800138000"),
+            displayName: "新增联系人",
+            phone: "13800138000",
+            isExisting: false
+        )
+        viewModel.allItems = [importItem]
+        viewModel.selectedIDs = [importItem.id]
+
+        let result = await viewModel.performImport(context: db.context)
+
+        #expect(result)
+        #expect(viewModel.showProSheet == false)
+    }
+
     @Test("session override allows OCR after usage limit")
     func sessionOverrideAllowsOCRAfterLimit() {
         let settings = AppSettings.shared

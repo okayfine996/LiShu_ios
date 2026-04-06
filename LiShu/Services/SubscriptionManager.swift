@@ -344,6 +344,13 @@ class SubscriptionManager {
         return count < UsageLimits.freeContactTotal
     }
 
+    func canAddContacts(_ additionalCount: Int, context: ModelContext, overrides: DebugOverrideManager? = nil) -> Bool {
+        guard !effectiveIsPro(overrides: overrides) else { return true }
+        let descriptor = FetchDescriptor<Contact>()
+        let count = (try? context.fetchCount(descriptor)) ?? 0
+        return count + max(0, additionalCount) <= UsageLimits.freeContactTotal
+    }
+
     func canUseOCR(overrides: DebugOverrideManager? = nil) -> Bool {
         guard !effectiveIsPro(overrides: overrides) else { return true }
         resetOCRCountIfNeeded()

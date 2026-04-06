@@ -165,14 +165,7 @@ final class BatchContactImportViewModel {
         let toImport = allItems.filter { selectedIDs.contains($0.id) && !$0.isExisting }
         guard !toImport.isEmpty else { return false }
 
-        let currentCount: Int
-        do {
-            currentCount = try context.fetchCount(FetchDescriptor<Contact>())
-        } catch {
-            return false
-        }
-        let afterCount = currentCount + toImport.count
-        if afterCount > 20, !SubscriptionManager.shared.isPro {
+        if !SubscriptionManager.shared.canAddContacts(toImport.count, context: context) {
             showProSheet = true
             return false
         }
