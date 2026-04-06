@@ -7,16 +7,19 @@ struct AvatarView: View {
     /// 无头像图片时的底色（有图时仍使用 `bgIconSubtle` 作为照片衬底）
     var placeholderBackground: Color = DesignSystem.Colors.bgIconSubtle
 
-    private var hasImage: Bool {
-        if let data = imageData, UIImage(data: data) != nil { return true }
-        return false
+    private var avatarPixelSize: Int {
+        ImagePipeline.pixelSize(for: size)
+    }
+
+    private var decodedImageAvailable: Bool {
+        guard let data = imageData else { return false }
+        return ImagePipeline.image(from: data, maxPixelSize: avatarPixelSize) != nil
     }
 
     var body: some View {
         Group {
-            if let data = imageData, let uiImage = UIImage(data: data) {
-                Image(uiImage: uiImage)
-                    .resizable()
+            if let data = imageData, decodedImageAvailable {
+                DecodedImageView(data: data, maxPixelSize: avatarPixelSize)
                     .scaledToFill()
             } else if let firstChar = name?.first {
                 Text(String(firstChar))
@@ -29,7 +32,7 @@ struct AvatarView: View {
             }
         }
         .frame(width: size, height: size)
-        .background(hasImage ? DesignSystem.Colors.bgIconSubtle : placeholderBackground)
+        .background(decodedImageAvailable ? DesignSystem.Colors.bgIconSubtle : placeholderBackground)
         .clipShape(Circle())
     }
 }

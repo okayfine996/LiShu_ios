@@ -18,6 +18,15 @@ struct QueryInputLogPayload: Encodable {
     let screen: String
 }
 
+struct QuerySummaryLogPayload: Encodable {
+    let searchText: String
+    let filters: [String: String]
+    let sort: String
+    let screen: String
+    let resultCount: Int
+    let sampleIDs: [String]
+}
+
 struct AmountLogPayload: Encodable {
     let value: Double
     let display: String
@@ -107,7 +116,17 @@ struct OCRRecordItemLogPayload: Encodable {
     let eventName: String
 }
 
-private struct EmptyBusinessLogPayload: Encodable {}
+private struct AnyEncodable: Encodable {
+    private let encodeImpl: (Encoder) throws -> Void
+
+    nonisolated init(_ wrapped: some Encodable) {
+        encodeImpl = wrapped.encode
+    }
+
+    nonisolated func encode(to encoder: Encoder) throws {
+        try encodeImpl(encoder)
+    }
+}
 
 enum BusinessDataLogger {
     private static let recordLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.dataRecord)
@@ -130,8 +149,8 @@ enum BusinessDataLogger {
             operation: operation,
             screen: screen,
             queryInput: QueryInputLogPayload(searchText: "", filters: [:], sort: "", screen: screen),
-            payload: payload,
-            results: results,
+            payload: AnyEncodable(payload),
+            results: results.map(AnyEncodable.init),
             error: error
         )
     }
@@ -146,14 +165,27 @@ enum BusinessDataLogger {
         error: String? = nil
     ) {
         let payloads = records.map { $0.logPayload() }
-        let query = QueryLogPayload(
-            searchText: searchText,
-            filters: filters,
-            sort: sort,
-            screen: screen,
-            resultCount: payloads.count,
-            results: payloads
-        )
+        #if DEBUG
+            let queryPayload = QuerySummaryLogPayload(
+                searchText: searchText,
+                filters: filters,
+                sort: sort,
+                screen: screen,
+                resultCount: payloads.count,
+                sampleIDs: payloads.compactMap(\.id).prefix(5).map(\.self)
+            )
+            let loggedResults: [AnyEncodable] = []
+        #else
+            let queryPayload = QueryLogPayload(
+                searchText: searchText,
+                filters: filters,
+                sort: sort,
+                screen: screen,
+                resultCount: payloads.count,
+                results: payloads
+            )
+            let loggedResults = payloads.map(AnyEncodable.init)
+        #endif
         log(
             logger: queryLogger,
             message: "Business query",
@@ -162,8 +194,9 @@ enum BusinessDataLogger {
             operation: operation,
             screen: screen,
             queryInput: QueryInputLogPayload(searchText: searchText, filters: filters, sort: sort, screen: screen),
-            payload: query,
-            results: payloads,
+            payload: AnyEncodable(queryPayload),
+            results: loggedResults,
+            resultCount: payloads.count,
             error: error
         )
     }
@@ -183,8 +216,9 @@ enum BusinessDataLogger {
             operation: operation,
             screen: screen,
             queryInput: QueryInputLogPayload(searchText: "", filters: [:], sort: "", screen: screen),
-            payload: payload,
-            results: [EmptyBusinessLogPayload](),
+            payload: AnyEncodable(payload),
+            results: [],
+            resultCount: 0,
             error: error
         )
     }
@@ -205,8 +239,8 @@ enum BusinessDataLogger {
             operation: operation,
             screen: screen,
             queryInput: QueryInputLogPayload(searchText: "", filters: [:], sort: "", screen: screen),
-            payload: payload,
-            results: results,
+            payload: AnyEncodable(payload),
+            results: results.map(AnyEncodable.init),
             error: error
         )
     }
@@ -221,14 +255,31 @@ enum BusinessDataLogger {
         results: [some Encodable],
         error: String? = nil
     ) {
-        let query = QueryLogPayload(
-            searchText: searchText,
-            filters: filters,
-            sort: sort,
-            screen: screen,
-            resultCount: results.count,
-            results: results
-        )
+        #if DEBUG
+            let sampleIDs = results.prefix(5).compactMap { item -> String? in
+                let mirror = Mirror(reflecting: item)
+                return mirror.children.first(where: { $0.label == "id" })?.value as? String
+            }
+            let queryPayload = QuerySummaryLogPayload(
+                searchText: searchText,
+                filters: filters,
+                sort: sort,
+                screen: screen,
+                resultCount: results.count,
+                sampleIDs: sampleIDs
+            )
+            let loggedResults: [AnyEncodable] = []
+        #else
+            let queryPayload = QueryLogPayload(
+                searchText: searchText,
+                filters: filters,
+                sort: sort,
+                screen: screen,
+                resultCount: results.count,
+                results: results
+            )
+            let loggedResults = results.map(AnyEncodable.init)
+        #endif
         log(
             logger: queryLogger,
             message: "Business query",
@@ -237,8 +288,9 @@ enum BusinessDataLogger {
             operation: operation,
             screen: screen,
             queryInput: QueryInputLogPayload(searchText: searchText, filters: filters, sort: sort, screen: screen),
-            payload: query,
-            results: results,
+            payload: AnyEncodable(queryPayload),
+            results: loggedResults,
+            resultCount: results.count,
             error: error
         )
     }
@@ -261,8 +313,8 @@ enum BusinessDataLogger {
             operation: operation,
             screen: screen,
             queryInput: QueryInputLogPayload(searchText: searchText, filters: filters, sort: sort, screen: screen),
-            payload: payload,
-            results: results,
+            payload: AnyEncodable(payload),
+            results: results.map(AnyEncodable.init),
             error: error
         )
     }
@@ -275,8 +327,9 @@ enum BusinessDataLogger {
         operation: String,
         screen: String,
         queryInput: QueryInputLogPayload,
-        payload: some Encodable,
-        results: [some Encodable],
+        payload: AnyEncodable,
+        results: [AnyEncodable],
+        resultCount: Int? = nil,
         error: String?
     ) {
         let encodedQueryInput = encodeJSONString(queryInput, fallbackLabel: "query_input", logger: logger)
@@ -289,7 +342,7 @@ enum BusinessDataLogger {
             "operation": .string(operation),
             "screen": .string(screen),
             "query_input": .string(encodedQueryInput),
-            "result_count": .stringConvertible(results.count),
+            "result_count": .stringConvertible(resultCount ?? results.count),
             "raw_payload": .string(encodedPayload),
             "raw_results": .string(encodedResults),
         ]

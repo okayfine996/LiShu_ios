@@ -108,8 +108,8 @@ struct PulseDiagnosticsTests {
     }
 
     @MainActor
-    @Test("business record query logger writes raw record payloads into Pulse store")
-    func businessRecordQueryLoggerWritesRawRecordPayloads() throws {
+    @Test("business record query logger writes summarized record payloads into Pulse store")
+    func businessRecordQueryLoggerWritesSummarizedRecordPayloads() throws {
         let db = try TestDB()
         let contact = SampleData.contact(name: "张三", relation: "朋友")
         let event = SampleData.event(name: "婚礼", type: .wedding)
@@ -140,8 +140,10 @@ struct PulseDiagnosticsTests {
         #expect(message.metadata["screen"] == "records.list")
         #expect(message.metadata["result_count"] == "1")
         #expect(message.metadata["query_input"]?.contains("\"searchText\":\"张\"") == true)
-        #expect(message.metadata["raw_results"]?.contains("\"name\":\"张三\"") == true)
-        #expect(message.metadata["raw_results"]?.contains("\"photoCount\":1") == true)
+        #expect(message.metadata["raw_payload"]?.contains("\"searchText\":\"张\"") == true)
+        #expect(message.metadata["raw_payload"]?.contains("\"resultCount\":1") == true)
+        #expect(message.metadata["raw_payload"]?.contains(String(describing: record.persistentModelID)) == true)
+        #expect(message.metadata["raw_results"] == "[]")
     }
 
     @Test("business query logger records empty result sets")
@@ -165,6 +167,7 @@ struct PulseDiagnosticsTests {
         #expect(message.metadata["event_type"] == "entity_query")
         #expect(message.metadata["domain"] == "contact")
         #expect(message.metadata["result_count"] == "0")
+        #expect(message.metadata["raw_payload"]?.contains("\"resultCount\":0") == true)
         #expect(message.metadata["raw_results"] == "[]")
     }
 
@@ -206,6 +209,41 @@ struct PulseDiagnosticsTests {
         #expect(message.metadata["raw_results"]?.contains("\"name\":\"赵六\"") == true)
     }
 
+    @Test("business entity mutation logger preserves zero-result attempts")
+    func businessEntityMutationLoggerPreservesZeroResultAttempts() throws {
+        PulseDiagnostics.configureIfNeeded(arguments: [], environment: [:])
+        LoggerStore.shared.removeAll()
+
+        let payload = ContactLogPayload(
+            id: "contact-2",
+            name: "未保存",
+            phone: "",
+            relation: "",
+            category: "",
+            circle: 4,
+            birthday: nil,
+            location: "",
+            note: "",
+            avatarPresent: false,
+            recordCount: 0,
+            createdAt: .now
+        )
+
+        BusinessDataLogger.entityMutation(
+            domain: "contact",
+            screen: "contacts.form",
+            operation: "create_failed",
+            payload: payload,
+            error: "validation_failed"
+        )
+
+        let messages = try waitForMessages(label: AppLogLabel.dataMutation)
+        let message = try #require(messages.last)
+
+        #expect(message.metadata["result_count"] == "0")
+        #expect(message.metadata["raw_results"] == "[]")
+    }
+
     @MainActor
     @Test("detailed diagnostics export includes business metadata payloads")
     func detailedDiagnosticsExportIncludesBusinessMetadataPayloads() throws {
@@ -237,8 +275,11 @@ struct PulseDiagnosticsTests {
         #expect(content.contains("Metadata"))
         #expect(content.contains("query_input:"))
         #expect(content.contains("\"searchText\" : \"李\""))
+        #expect(content.contains("raw_payload:"))
+        #expect(content.contains("\"resultCount\" : 1"))
+        #expect(content.contains(String(describing: contact.persistentModelID)))
         #expect(content.contains("raw_results:"))
-        #expect(content.contains("\"name\" : \"李四\""))
+        #expect(content.contains("[]"))
         let plaintextURL = plaintextSiblingURL(for: fileURL, extension: "log")
         #expect(!FileManager.default.fileExists(atPath: plaintextURL.path))
         try? FileManager.default.removeItem(at: extractedFileURL.deletingLastPathComponent())
@@ -276,7 +317,9 @@ struct PulseDiagnosticsTests {
         #expect(content.contains("\"message\":\"Business query\""))
         #expect(content.contains("\"rawLabel\":\"data.query\""))
         #expect(content.contains("\"searchText\":\"王\""))
-        #expect(content.contains("\"name\":\"王五\""))
+        #expect(content.contains("\"resultCount\":1"))
+        #expect(content.contains(String(describing: contact.persistentModelID)))
+        #expect(content.contains("\"raw_results\":\"[]\""))
         let plaintextURL = plaintextSiblingURL(for: fileURL, extension: "jsonl")
         #expect(!FileManager.default.fileExists(atPath: plaintextURL.path))
         try? FileManager.default.removeItem(at: extractedFileURL.deletingLastPathComponent())
@@ -300,13 +343,12 @@ struct PulseDiagnosticsTests {
             .appendingPathComponent(UUID().uuidString, isDirectory: true)
         try FileManager.default.createDirectory(at: destinationURL, withIntermediateDirectories: true)
 
-        let success = SSZipArchive.unzipFile(
+        try SSZipArchive.unzipFile(
             atPath: archiveURL.path,
             toDestination: destinationURL.path,
             overwrite: true,
             password: DiagnosticsExportConstants.archivePassword
         )
-        #expect(success)
 
         let extractedFiles = try FileManager.default.contentsOfDirectory(
             at: destinationURL,
