@@ -1,3 +1,4 @@
+import Combine
 import SwiftUI
 
 enum CarouselIndicatorPosition {
@@ -39,11 +40,17 @@ enum CarouselIndicatorPosition {
 }
 
 struct CarouselView<Content: View>: View {
+    private enum AutoScrollBehavior {
+        case disabled
+        case enabled(interval: TimeInterval)
+    }
+
     private let pageCount: Int
     private let externalCurrentPage: Binding<Int>?
     private let indicatorPosition: CarouselIndicatorPosition
     private let showsIndicator: Bool
     private let contentInsets: EdgeInsets
+    private let autoScrollBehavior: AutoScrollBehavior
     private let content: (Int) -> Content
 
     @State private var internalCurrentPage = 0
@@ -54,6 +61,7 @@ struct CarouselView<Content: View>: View {
         indicatorPosition: CarouselIndicatorPosition = .bottomCenter,
         showsIndicator: Bool = true,
         contentInsets: EdgeInsets = EdgeInsets(),
+        autoScrollInterval: TimeInterval? = nil,
         @ViewBuilder content: @escaping (Int) -> Content
     ) {
         self.pageCount = pageCount
@@ -61,6 +69,11 @@ struct CarouselView<Content: View>: View {
         self.indicatorPosition = indicatorPosition
         self.showsIndicator = showsIndicator
         self.contentInsets = contentInsets
+        if let autoScrollInterval, autoScrollInterval > 0 {
+            autoScrollBehavior = .enabled(interval: autoScrollInterval)
+        } else {
+            autoScrollBehavior = .disabled
+        }
         self.content = content
     }
 
@@ -78,12 +91,27 @@ struct CarouselView<Content: View>: View {
                 }
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
+            .onReceive(autoScrollTimer) { _ in
+                guard pageCount > 1 else { return }
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    currentPageBinding.wrappedValue = (currentPageBinding.wrappedValue + 1) % pageCount
+                }
+            }
 
             if showsIndicator, pageCount > 1 {
                 pageIndicator(current: currentPageBinding.wrappedValue)
                     .padding(indicatorPosition.padding)
                     .allowsHitTesting(false)
             }
+        }
+    }
+
+    private var autoScrollTimer: Publishers.Autoconnect<Timer.TimerPublisher> {
+        switch autoScrollBehavior {
+        case .disabled:
+            Timer.publish(every: 86400, on: .main, in: .common).autoconnect()
+        case let .enabled(interval):
+            Timer.publish(every: interval, on: .main, in: .common).autoconnect()
         }
     }
 
