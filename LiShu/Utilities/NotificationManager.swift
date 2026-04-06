@@ -417,8 +417,34 @@ final class NotificationManager {
 
     // MARK: - Debug
 
-    #if DEBUG
-        func sendTestNotification(category: Category) {
+    func sendTestNotification(category: Category) {
+        let content = UNMutableNotificationContent()
+        content.sound = .default
+        content.categoryIdentifier = category.rawValue
+
+        switch category {
+        case .eventReminder:
+            content.title = String(localized: "notification.event.title")
+            content.body = String(format: String(localized: "notification.event.body"), "张三的婚礼")
+        case .birthdayReminder:
+            content.title = String(localized: "notification.birthday.title")
+            content.body = String(format: String(localized: "notification.birthday.body"), "李四")
+        case .returnGift:
+            content.title = String(localized: "notification.returnGift.title")
+            content.body = String(format: String(localized: "notification.returnGift.body"), "王五", "乔迁之喜", "1000")
+        }
+
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 2, repeats: false)
+        let request = UNNotificationRequest(
+            identifier: "debug-\(category.rawValue)-\(UUID().uuidString)",
+            content: content,
+            trigger: trigger
+        )
+        center.add(request)
+    }
+
+    func sendAllTestNotifications() {
+        for (index, category) in Category.allCases.enumerated() {
             let content = UNMutableNotificationContent()
             content.sound = .default
             content.categoryIdentifier = category.rawValue
@@ -435,7 +461,8 @@ final class NotificationManager {
                 content.body = String(format: String(localized: "notification.returnGift.body"), "王五", "乔迁之喜", "1000")
             }
 
-            let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 2, repeats: false)
+            let delay = TimeInterval(2 + index * 3)
+            let trigger = UNTimeIntervalNotificationTrigger(timeInterval: delay, repeats: false)
             let request = UNNotificationRequest(
                 identifier: "debug-\(category.rawValue)-\(UUID().uuidString)",
                 content: content,
@@ -443,38 +470,9 @@ final class NotificationManager {
             )
             center.add(request)
         }
+    }
 
-        func sendAllTestNotifications() {
-            for (index, category) in Category.allCases.enumerated() {
-                let content = UNMutableNotificationContent()
-                content.sound = .default
-                content.categoryIdentifier = category.rawValue
-
-                switch category {
-                case .eventReminder:
-                    content.title = String(localized: "notification.event.title")
-                    content.body = String(format: String(localized: "notification.event.body"), "张三的婚礼")
-                case .birthdayReminder:
-                    content.title = String(localized: "notification.birthday.title")
-                    content.body = String(format: String(localized: "notification.birthday.body"), "李四")
-                case .returnGift:
-                    content.title = String(localized: "notification.returnGift.title")
-                    content.body = String(format: String(localized: "notification.returnGift.body"), "王五", "乔迁之喜", "1000")
-                }
-
-                let delay = TimeInterval(2 + index * 3)
-                let trigger = UNTimeIntervalNotificationTrigger(timeInterval: delay, repeats: false)
-                let request = UNNotificationRequest(
-                    identifier: "debug-\(category.rawValue)-\(UUID().uuidString)",
-                    content: content,
-                    trigger: trigger
-                )
-                center.add(request)
-            }
-        }
-
-        func listPendingNotifications() async -> [UNNotificationRequest] {
-            await center.pendingNotificationRequests()
-        }
-    #endif
+    func listPendingNotifications() async -> [UNNotificationRequest] {
+        await center.pendingNotificationRequests()
+    }
 }

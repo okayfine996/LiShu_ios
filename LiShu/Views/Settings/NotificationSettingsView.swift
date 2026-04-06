@@ -7,11 +7,6 @@ struct NotificationSettingsView: View {
     @Environment(AppSettings.self) private var settings
     @State private var systemDenied = false
 
-    #if DEBUG
-        @State private var pendingCount: Int = 0
-        @State private var showTestSentToast = false
-    #endif
-
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 20) {
@@ -20,9 +15,6 @@ struct NotificationSettingsView: View {
                 }
                 pushNotificationSection
                 notificationTypesSection
-                #if DEBUG
-                    debugSection
-                #endif
             }
             .padding(.horizontal, 16)
             .padding(.top, 8)
@@ -34,25 +26,6 @@ struct NotificationSettingsView: View {
             let status = await NotificationManager.shared.checkAuthorizationStatus()
             systemDenied = (status == .denied)
         }
-        #if DEBUG
-        .overlay(alignment: .bottom) {
-                if showTestSentToast {
-                    Text(String(localized: "debug.notification.sent"))
-                        .font(DesignSystem.Typography.caption)
-                        .foregroundStyle(DesignSystem.Colors.textOnPrimary)
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 10)
-                        .background(DesignSystem.Colors.primary)
-                        .clipShape(Capsule())
-                        .padding(.bottom, 20)
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
-                }
-            }
-            .animation(.easeInOut(duration: 0.3), value: showTestSentToast)
-            .task {
-                await refreshPendingCount()
-            }
-        #endif
     }
 
     // MARK: - System Denied Banner
@@ -180,142 +153,6 @@ struct NotificationSettingsView: View {
             .disabled(!settings.notificationEnabled)
         }
     }
-
-    // MARK: - Debug Section
-
-    #if DEBUG
-        private var debugSection: some View {
-            VStack(alignment: .leading, spacing: 8) {
-                sectionHeader("🛠 DEBUG")
-
-                VStack(spacing: 0) {
-                    debugButton(
-                        icon: "calendar.badge.clock",
-                        title: String(localized: "debug.notification.test.event")
-                    ) {
-                        NotificationManager.shared.sendTestNotification(category: .eventReminder)
-                        showToast()
-                    }
-
-                    debugDivider
-
-                    debugButton(
-                        icon: "gift.fill",
-                        title: String(localized: "debug.notification.test.returnGift")
-                    ) {
-                        NotificationManager.shared.sendTestNotification(category: .returnGift)
-                        showToast()
-                    }
-
-                    debugDivider
-
-                    debugButton(
-                        icon: "birthday.cake.fill",
-                        title: String(localized: "debug.notification.test.birthday")
-                    ) {
-                        NotificationManager.shared.sendTestNotification(category: .birthdayReminder)
-                        showToast()
-                    }
-
-                    debugDivider
-
-                    debugButton(
-                        icon: "bell.badge.fill",
-                        title: String(localized: "debug.notification.test.all")
-                    ) {
-                        NotificationManager.shared.sendAllTestNotifications()
-                        showToast()
-                    }
-
-                    debugDivider
-
-                    HStack(spacing: 12) {
-                        Image(systemName: "list.bullet.clipboard")
-                            .font(.system(size: 18))
-                            .foregroundStyle(.orange)
-                            .frame(width: 28, height: 28)
-
-                        Text(String(localized: "debug.notification.pending"))
-                            .font(DesignSystem.Typography.body)
-                            .foregroundStyle(DesignSystem.Colors.textPrimary)
-
-                        Spacer()
-
-                        Text("\(pendingCount)")
-                            .font(DesignSystem.Typography.caption)
-                            .foregroundStyle(DesignSystem.Colors.textSecondary)
-                            .monospacedDigit()
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 14)
-
-                    debugDivider
-
-                    debugButton(
-                        icon: "trash",
-                        title: String(localized: "debug.notification.clearAll"),
-                        isDestructive: true
-                    ) {
-                        NotificationManager.shared.cancelAll()
-                        Task { await refreshPendingCount() }
-                    }
-                }
-                .background(DesignSystem.Colors.bgSurface)
-                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
-                .overlay(
-                    RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
-                        .stroke(.orange.opacity(0.3), lineWidth: 1)
-                )
-            }
-        }
-
-        private var debugDivider: some View {
-            Divider()
-                .background(DesignSystem.Colors.separator)
-                .padding(.leading, 56)
-        }
-
-        private func debugButton(
-            icon: String,
-            title: String,
-            isDestructive: Bool = false,
-            action: @escaping () -> Void
-        ) -> some View {
-            Button {
-                action()
-                Task { await refreshPendingCount() }
-            } label: {
-                HStack(spacing: 12) {
-                    Image(systemName: icon)
-                        .font(.system(size: 18))
-                        .foregroundStyle(isDestructive ? DesignSystem.Colors.destructive : .orange)
-                        .frame(width: 28, height: 28)
-
-                    Text(title)
-                        .font(DesignSystem.Typography.body)
-                        .foregroundStyle(isDestructive ? DesignSystem.Colors.destructive : DesignSystem.Colors.textPrimary)
-
-                    Spacer()
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 14)
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-        }
-
-        private func showToast() {
-            showTestSentToast = true
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                showTestSentToast = false
-            }
-        }
-
-        private func refreshPendingCount() async {
-            let requests = await NotificationManager.shared.listPendingNotifications()
-            pendingCount = requests.count
-        }
-    #endif
 
     // MARK: - Helpers
 

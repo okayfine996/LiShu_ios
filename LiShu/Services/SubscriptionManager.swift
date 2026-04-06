@@ -21,8 +21,17 @@ class SubscriptionManager {
     private(set) var isLoading = false
     var errorMessage: String?
 
-    var isPro: Bool {
+    var hasActiveEntitlement: Bool {
         !purchasedProductIDs.isEmpty
+    }
+
+    var isPro: Bool {
+        hasActiveEntitlement
+    }
+
+    func effectiveIsPro(overrides: DebugOverrideManager? = nil) -> Bool {
+        let overrides = overrides ?? DebugOverrideManager.shared
+        return overrides.effectiveProAccessEnabled(hasEntitlement: hasActiveEntitlement)
     }
 
     @ObservationIgnored private var updateListenerTask: Task<Void, Error>?
@@ -313,38 +322,42 @@ class SubscriptionManager {
         func debugClearPurchases() {
             purchasedProductIDs.removeAll()
         }
+
+        func debugSetPurchasedProductIDs(_ ids: Set<String>) {
+            purchasedProductIDs = ids
+        }
     #endif
 
     // MARK: - Usage Limits
 
-    func canAddRecord(context: ModelContext) -> Bool {
-        guard !isPro else { return true }
+    func canAddRecord(context: ModelContext, overrides: DebugOverrideManager? = nil) -> Bool {
+        guard !effectiveIsPro(overrides: overrides) else { return true }
         let descriptor = FetchDescriptor<Record>()
         let count = (try? context.fetchCount(descriptor)) ?? 0
         return count < UsageLimits.freeRecordTotal
     }
 
-    func canAddContact(context: ModelContext) -> Bool {
-        guard !isPro else { return true }
+    func canAddContact(context: ModelContext, overrides: DebugOverrideManager? = nil) -> Bool {
+        guard !effectiveIsPro(overrides: overrides) else { return true }
         let descriptor = FetchDescriptor<Contact>()
         let count = (try? context.fetchCount(descriptor)) ?? 0
         return count < UsageLimits.freeContactTotal
     }
 
-    func canUseOCR() -> Bool {
-        guard !isPro else { return true }
+    func canUseOCR(overrides: DebugOverrideManager? = nil) -> Bool {
+        guard !effectiveIsPro(overrides: overrides) else { return true }
         resetOCRCountIfNeeded()
         return AppSettings.shared.ocrUsageCount < UsageLimits.freeOCRPerMonth
     }
 
-    func recordOCRUsage() {
-        guard !isPro else { return }
+    func recordOCRUsage(overrides: DebugOverrideManager? = nil) {
+        guard !effectiveIsPro(overrides: overrides) else { return }
         resetOCRCountIfNeeded()
         AppSettings.shared.ocrUsageCount += 1
     }
 
-    func remainingOCRCount() -> Int {
-        guard !isPro else { return .max }
+    func remainingOCRCount(overrides: DebugOverrideManager? = nil) -> Int {
+        guard !effectiveIsPro(overrides: overrides) else { return .max }
         resetOCRCountIfNeeded()
         return max(0, UsageLimits.freeOCRPerMonth - AppSettings.shared.ocrUsageCount)
     }

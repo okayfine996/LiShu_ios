@@ -5,6 +5,7 @@ import UniformTypeIdentifiers
 struct DataManagementView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(SubscriptionManager.self) private var subscriptionManager
+    @Environment(DebugOverrideManager.self) private var debugOverrides
     @State private var showComingSoonToast = false
     @State private var toastMessage = ""
     @State private var showOCRImport = false
@@ -131,6 +132,10 @@ struct DataManagementView: View {
 
     // MARK: - Helpers
 
+    private var effectiveProAccessEnabled: Bool {
+        subscriptionManager.effectiveIsPro(overrides: debugOverrides)
+    }
+
     private func dataRow(icon: String, title: String, isPro: Bool = false, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 12) {
@@ -173,7 +178,7 @@ struct DataManagementView: View {
     }
 
     private func performExportCSV() {
-        guard subscriptionManager.isPro else {
+        guard effectiveProAccessEnabled else {
             showProSheet = true
             return
         }

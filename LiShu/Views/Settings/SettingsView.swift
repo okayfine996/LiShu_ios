@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @Environment(SubscriptionManager.self) private var subscriptionManager
+    @Environment(DebugOverrideManager.self) private var debugOverrides
     @Environment(AppSettings.self) private var settings
     @State private var showDeleteAllSheet = false
     @State private var showProSheet = false
@@ -60,6 +61,10 @@ struct SettingsView: View {
 
     // MARK: - Pro card
 
+    private var effectiveProAccessEnabled: Bool {
+        subscriptionManager.effectiveIsPro(overrides: debugOverrides)
+    }
+
     private var proCard: some View {
         NavigationLink(value: AppRoute.proMembership) {
             ZStack(alignment: .bottomTrailing) {
@@ -81,10 +86,14 @@ struct SettingsView: View {
                             .foregroundStyle(DesignSystem.Colors.textPrimary)
                             .fontWeight(.bold)
 
-                        if subscriptionManager.isPro {
-                            Text(subscriptionManager.currentSubscriptionName ?? String(localized: "pro.status.active"))
-                                .font(DesignSystem.Typography.caption)
-                                .foregroundStyle(DesignSystem.Colors.accentGold)
+                        if effectiveProAccessEnabled {
+                            Text(
+                                subscriptionManager.hasActiveEntitlement
+                                    ? (subscriptionManager.currentSubscriptionName ?? String(localized: "pro.status.active"))
+                                    : "开发会话 PRO"
+                            )
+                            .font(DesignSystem.Typography.caption)
+                            .foregroundStyle(DesignSystem.Colors.accentGold)
                         } else {
                             Text(String(localized: "settings.pro.subtitle"))
                                 .font(DesignSystem.Typography.caption)
@@ -92,7 +101,7 @@ struct SettingsView: View {
                         }
                     }
 
-                    if !subscriptionManager.isPro {
+                    if !effectiveProAccessEnabled {
                         HStack(spacing: 6) {
                             Text(String(localized: "settings.pro.action"))
                                 .font(DesignSystem.Typography.caption)
@@ -203,7 +212,7 @@ struct SettingsView: View {
                     isOn: Binding(
                         get: { settings.icloudSyncEnabled },
                         set: { newValue in
-                            if newValue, !subscriptionManager.isPro {
+                            if newValue, !effectiveProAccessEnabled {
                                 InteractionLogger.toggle(
                                     screen: "settings.root",
                                     target: "settings.icloudSync",
@@ -218,7 +227,7 @@ struct SettingsView: View {
                             }
                         }
                     ),
-                    badge: subscriptionManager.isPro ? nil : "PRO"
+                    badge: effectiveProAccessEnabled ? nil : "PRO"
                 )
             }
             .background(DesignSystem.Colors.bgSurface)

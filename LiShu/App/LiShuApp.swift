@@ -17,6 +17,7 @@ struct LiShuApp: App {
     @State private var settings = AppSettings.shared
     @State private var showSplash = true
     @State private var subscriptionManager = SubscriptionManager.shared
+    @State private var debugOverrideManager = DebugOverrideManager.shared
     @Environment(\.scenePhase) private var scenePhase
 
     private var resolvedColorScheme: ColorScheme? {
@@ -147,6 +148,7 @@ struct LiShuApp: App {
             .environment(\.locale, Locale(identifier: "zh-Hans"))
             .environment(settings)
             .environment(subscriptionManager)
+            .environment(debugOverrideManager)
         }
         .modelContainer(sharedModelContainer)
     }

@@ -31,29 +31,6 @@ struct HomeView: View {
                 viewModel.load(context: modelContext)
             }
         }
-        #if DEBUG
-        .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Menu {
-                        Button {
-                            DebugDataGenerator.generateSampleData(context: modelContext)
-                            viewModel.load(context: modelContext)
-                        } label: {
-                            Label(String(localized: "debug.generateSampleData"), systemImage: "plus.circle")
-                        }
-
-                        Button(role: .destructive) {
-                            DebugDataGenerator.clearAllData(context: modelContext)
-                            viewModel.load(context: modelContext)
-                        } label: {
-                            Label(String(localized: "debug.clearAllData"), systemImage: "trash")
-                        }
-                    } label: {
-                        Image(systemName: "ladybug.fill")
-                    }
-                }
-            }
-        #endif
     }
 
     // MARK: - Summary Section

@@ -135,6 +135,7 @@
 				9A934E962F54194D0063349A /* Sources */,
 				9A934E972F54194D0063349A /* Frameworks */,
 				9A934E982F54194D0063349A /* Resources */,
+				F0C0A1B22D3E4F5600010001 /* Embed Git Commit Info */,
 				9A934EC92F54194E0063349A /* Strip ScreenshotDemo for Release */,
 			);
 			buildRules = (
@@ -299,6 +300,28 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "export PATH=\"$PATH:/opt/homebrew/bin:/usr/local/bin\"\ncd \"${SRCROOT}\"\nif command -v swiftlint >/dev/null 2>&1; then\n  swiftlint lint --strict\nelse\n  echo \"warning: SwiftLint not installed; install with: brew install swiftlint\"\nfi\n";
+			showEnvVarsInLog = 0;
+		};
+		F0C0A1B22D3E4F5600010001 /* Embed Git Commit Info */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/.git/HEAD",
+			);
+			name = "Embed Git Commit Info";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/git-commit-info.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "export PATH=\"$PATH:/opt/homebrew/bin:/usr/local/bin\"\nCOMMIT_HASH=\"$(git -C \"$SRCROOT\" rev-parse --short=12 HEAD 2>/dev/null || echo unknown)\"\n/usr/libexec/PlistBuddy -c \"Delete :LiShuGitCommit\" \"$TARGET_BUILD_DIR/$INFOPLIST_PATH\" >/dev/null 2>&1 || true\n/usr/libexec/PlistBuddy -c \"Add :LiShuGitCommit string $COMMIT_HASH\" \"$TARGET_BUILD_DIR/$INFOPLIST_PATH\"\nprintf '%s' \"$COMMIT_HASH\" > \"$DERIVED_FILE_DIR/git-commit-info.txt\"\n";
 			showEnvVarsInLog = 0;
 		};
 		9A934EC92F54194E0063349A /* Strip ScreenshotDemo for Release */ = {
@@ -745,16 +768,6 @@
 			package = 9A934ECA2F54194E0063349A /* XCRemoteSwiftPackageReference "Pulse" */;
 			productName = Pulse;
 		};
-		B7A1000321C34D5600AA1101 /* ZipArchive */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = B7A1000521C34D5600AA1101 /* XCRemoteSwiftPackageReference "ZipArchive" */;
-			productName = ZipArchive;
-		};
-		B7A1000421C34D5600AA1101 /* ZipArchive */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = B7A1000521C34D5600AA1101 /* XCRemoteSwiftPackageReference "ZipArchive" */;
-			productName = ZipArchive;
-		};
 		9A934ECB2F54194E0063349A /* Pulse */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 9A934ECA2F54194E0063349A /* XCRemoteSwiftPackageReference "Pulse" */;
@@ -764,6 +777,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 9A934ECA2F54194E0063349A /* XCRemoteSwiftPackageReference "Pulse" */;
 			productName = PulseUI;
+		};
+		B7A1000321C34D5600AA1101 /* ZipArchive */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B7A1000521C34D5600AA1101 /* XCRemoteSwiftPackageReference "ZipArchive" */;
+			productName = ZipArchive;
+		};
+		B7A1000421C34D5600AA1101 /* ZipArchive */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B7A1000521C34D5600AA1101 /* XCRemoteSwiftPackageReference "ZipArchive" */;
+			productName = ZipArchive;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
