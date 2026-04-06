@@ -69,7 +69,13 @@ class AddEventViewModel {
             existing.date = date
             existing.location = location.trimmingCharacters(in: .whitespacesAndNewlines)
             existing.note = note.trimmingCharacters(in: .whitespacesAndNewlines)
-            existing.coverImage = coverImageData
+            existing.coverImage = coverImageData.flatMap {
+                ImagePipeline.optimizedJPEGData(
+                    from: $0,
+                    maxPixelSize: ImagePipeline.Preset.eventCoverMaxPixelSize,
+                    compressionQuality: 0.84
+                ) ?? $0
+            }
 
             do {
                 try context.save()
@@ -118,7 +124,13 @@ class AddEventViewModel {
                 location: location.trimmingCharacters(in: .whitespacesAndNewlines),
                 note: note.trimmingCharacters(in: .whitespacesAndNewlines)
             )
-            event.coverImage = coverImageData
+            event.coverImage = coverImageData.flatMap {
+                ImagePipeline.optimizedJPEGData(
+                    from: $0,
+                    maxPixelSize: ImagePipeline.Preset.eventCoverMaxPixelSize,
+                    compressionQuality: 0.84
+                ) ?? $0
+            }
             context.insert(event)
 
             do {

@@ -92,4 +92,20 @@ struct AddEventViewModelTests {
         #expect(events[0].type == .birthday)
         #expect(events[0].location == "新地点")
     }
+
+    @Test func saveEventCompressesCoverImage() throws {
+        let db = try TestDB()
+        let vm = AddEventViewModel()
+        vm.name = "封面测试"
+        vm.coverImageData = SampleImages.makePNGData(width: 2800, height: 1800)
+
+        #expect(vm.save(context: db.context) == true)
+
+        let events = try db.context.fetch(FetchDescriptor<Event>())
+        #expect(events.count == 1)
+        let coverImage = try #require(events[0].coverImage)
+        let dimensions = try #require(ImagePipeline.imageDimensions(from: coverImage))
+        #expect(dimensions.width <= CGFloat(ImagePipeline.Preset.eventCoverMaxPixelSize))
+        #expect(dimensions.height <= CGFloat(ImagePipeline.Preset.eventCoverMaxPixelSize))
+    }
 }

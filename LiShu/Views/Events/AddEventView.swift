@@ -45,9 +45,15 @@ struct AddEventView: View {
         }
         .onChange(of: selectedCoverItem) { _, newItem in
             Task {
-                if let data = try? await newItem?.loadTransferable(type: Data.self), !data.isEmpty {
+                if let data = try? await newItem?.loadTransferable(type: Data.self), !data.isEmpty,
+                   let optimized = ImagePipeline.optimizedJPEGData(
+                       from: data,
+                       maxPixelSize: ImagePipeline.Preset.eventCoverMaxPixelSize,
+                       compressionQuality: 0.84
+                   )
+                {
                     await MainActor.run {
-                        viewModel.coverImageData = data
+                        viewModel.coverImageData = optimized
                     }
                 }
             }
@@ -68,10 +74,12 @@ struct AddEventView: View {
                 matching: .images
             ) {
                 Group {
-                    if let data = viewModel.coverImageData, let uiImage = UIImage(data: data) {
-                        Image(uiImage: uiImage)
-                            .resizable()
-                            .scaledToFill()
+                    if let data = viewModel.coverImageData {
+                        DecodedImageView(
+                            data: data,
+                            maxPixelSize: ImagePipeline.pixelSize(for: CGSize(width: 360, height: 140))
+                        )
+                        .scaledToFill()
                     } else {
                         VStack(spacing: 12) {
                             Image(systemName: "camera")

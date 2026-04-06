@@ -26,9 +26,15 @@ struct AvatarImagePicker: View {
         .accessibilityLabel(String(localized: "contact.add.addAvatar"))
         .onChange(of: selectedItem) { _, newItem in
             Task {
-                if let data = try? await newItem?.loadTransferable(type: Data.self) {
+                if let data = try? await newItem?.loadTransferable(type: Data.self),
+                   let optimized = ImagePipeline.optimizedJPEGData(
+                       from: data,
+                       maxPixelSize: ImagePipeline.Preset.avatarMaxPixelSize,
+                       compressionQuality: 0.82
+                   )
+                {
                     await MainActor.run {
-                        imageData = data
+                        imageData = optimized
                     }
                 }
             }

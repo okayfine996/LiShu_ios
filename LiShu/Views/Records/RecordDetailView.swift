@@ -449,9 +449,8 @@ struct RecordDetailView: View {
 
     private func recordPhotoThumbnail(imageData: Data) -> some View {
         Group {
-            if let uiImage = UIImage(data: imageData) {
-                Image(uiImage: uiImage)
-                    .resizable()
+            if !imageData.isEmpty {
+                DecodedImageView(data: imageData, maxPixelSize: ImagePipeline.Preset.thumbnailMaxPixelSize)
                     .scaledToFill()
             }
         }
@@ -653,11 +652,14 @@ private struct FullScreenPhotoView: View {
     let imageData: Data
     let onDismiss: () -> Void
 
+    private var fullScreenPixelSize: Int {
+        ImagePipeline.pixelSize(for: UIScreen.main.bounds.size)
+    }
+
     var body: some View {
         ZStack(alignment: .topTrailing) {
-            if let uiImage = UIImage(data: imageData) {
-                Image(uiImage: uiImage)
-                    .resizable()
+            if !imageData.isEmpty {
+                DecodedImageView(data: imageData, maxPixelSize: fullScreenPixelSize)
                     .scaledToFit()
                     .ignoresSafeArea()
             }

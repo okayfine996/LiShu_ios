@@ -285,9 +285,8 @@ struct EventDetailView: View {
 
     private func eventCoverImage(_ data: Data) -> some View {
         Group {
-            if let uiImage = UIImage(data: data) {
-                Image(uiImage: uiImage)
-                    .resizable()
+            if !data.isEmpty {
+                DecodedImageView(data: data, maxPixelSize: ImagePipeline.Preset.detailHeroMaxPixelSize)
                     .scaledToFill()
                     .frame(maxWidth: .infinity)
                     .frame(height: 200)

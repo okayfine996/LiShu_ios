@@ -248,7 +248,12 @@ struct OCRImportView: View {
             var images: [UIImage] = []
             for item in items {
                 if let data = try? await item.loadTransferable(type: Data.self),
-                   let image = UIImage(data: data)
+                   let optimized = ImagePipeline.optimizedJPEGData(
+                       from: data,
+                       maxPixelSize: ImagePipeline.Preset.ocrInputMaxPixelSize,
+                       compressionQuality: 0.82
+                   ),
+                   let image = UIImage(data: optimized)
                 {
                     images.append(image)
                 }

@@ -2,6 +2,7 @@ import Foundation
 @testable import LiShu
 import SwiftData
 import Testing
+import UIKit
 
 @MainActor
 struct OCRImportViewModelTests {
@@ -164,6 +165,32 @@ struct OCRImportViewModelTests {
 
         vm.items[0].isSelected = true
         #expect(vm.canImport == true)
+    }
+
+    @Test func addImageCompressesLargeCameraInput() {
+        let vm = OCRImportViewModel()
+        vm.addImage(SampleImages.makeUIImage(width: 2600, height: 1900))
+
+        #expect(vm.capturedImages.count == 1)
+        let maxDimension = max(vm.capturedImages[0].size.width, vm.capturedImages[0].size.height)
+        #expect(maxDimension <= CGFloat(ImagePipeline.Preset.ocrInputMaxPixelSize))
+    }
+
+    @Test func clearImagesReleasesCapturedImages() {
+        let vm = OCRImportViewModel()
+        vm.addImage(SampleImages.makeUIImage(width: 1800, height: 1400))
+        vm.items = makeItems()
+        vm.processingState = .loaded(vm.items)
+
+        vm.clearImages()
+
+        #expect(vm.capturedImages.isEmpty)
+        #expect(vm.items.isEmpty)
+        if case .idle = vm.processingState {
+            #expect(Bool(true))
+        } else {
+            Issue.record("Expected processingState to return to idle after clearing OCR images")
+        }
     }
 
     // MARK: - performImport creates events per record

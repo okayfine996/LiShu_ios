@@ -7,16 +7,19 @@ struct EventCoverView: View {
     /// 无封面图时的底色（有图时仍使用 `bgIconSubtle` 作为图片衬底）
     var placeholderBackground: Color = DesignSystem.Colors.bgIconSubtle
 
-    private var hasImage: Bool {
-        if let data = coverImage, UIImage(data: data) != nil { return true }
-        return false
+    private var coverPixelSize: Int {
+        ImagePipeline.pixelSize(for: size)
+    }
+
+    private var decodedImageAvailable: Bool {
+        guard let data = coverImage else { return false }
+        return ImagePipeline.image(from: data, maxPixelSize: coverPixelSize) != nil
     }
 
     var body: some View {
         Group {
-            if let data = coverImage, let uiImage = UIImage(data: data) {
-                Image(uiImage: uiImage)
-                    .resizable()
+            if let data = coverImage, decodedImageAvailable {
+                DecodedImageView(data: data, maxPixelSize: coverPixelSize)
                     .scaledToFill()
             } else {
                 Image(systemName: eventType.iconName)
@@ -25,7 +28,7 @@ struct EventCoverView: View {
             }
         }
         .frame(width: size, height: size)
-        .background(hasImage ? DesignSystem.Colors.bgIconSubtle : placeholderBackground)
+        .background(decodedImageAvailable ? DesignSystem.Colors.bgIconSubtle : placeholderBackground)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.input))
     }
 }

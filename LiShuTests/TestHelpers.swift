@@ -2,6 +2,7 @@ import Foundation
 @testable import LiShu
 import SwiftData
 import Testing
+import UIKit
 
 @MainActor
 struct TestDB {
@@ -151,6 +152,25 @@ struct SampleData {
                     returnedAmount: 0
                 ))
             )
+        }
+    }
+}
+
+enum SampleImages {
+    static func makePNGData(width: CGFloat = 2400, height: CGFloat = 1800, color: UIColor = .systemTeal) -> Data {
+        let renderer = UIGraphicsImageRenderer(size: CGSize(width: width, height: height))
+        let image = renderer.image { context in
+            color.setFill()
+            context.fill(CGRect(origin: .zero, size: CGSize(width: width, height: height)))
+        }
+        return image.pngData() ?? Data()
+    }
+
+    static func makeUIImage(width: CGFloat = 2400, height: CGFloat = 1800, color: UIColor = .systemPink) -> UIImage {
+        let renderer = UIGraphicsImageRenderer(size: CGSize(width: width, height: height))
+        return renderer.image { context in
+            color.setFill()
+            context.fill(CGRect(origin: .zero, size: CGSize(width: width, height: height)))
         }
     }
 }
