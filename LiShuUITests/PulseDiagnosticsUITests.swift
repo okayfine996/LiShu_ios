@@ -6,7 +6,7 @@ final class PulseDiagnosticsUITests: BaseUITestCase {
     }
 
     @MainActor
-    func testHiddenDiagnosticsEntryOpensGuide() {
+    func testHiddenDiagnosticsEntryOpensConsole() {
         let settingsTab = app.tabBars.buttons[TabLabels.settings]
         XCTAssertTrue(settingsTab.waitForExistence(timeout: 5))
         settingsTab.tap()
@@ -26,8 +26,8 @@ final class PulseDiagnosticsUITests: BaseUITestCase {
             versionLabel.tap()
         }
 
-        let diagnosticsButton = app.buttons["about.openDiagnosticsConsole"]
-        XCTAssertTrue(diagnosticsButton.waitForExistence(timeout: 3), "Hidden diagnostics guide should appear outside UI testing mode")
+        let consoleTitle = app.staticTexts["开发控制台"]
+        XCTAssertTrue(consoleTitle.waitForExistence(timeout: 3), "Hidden diagnostics entry should open the console directly")
     }
 }
 

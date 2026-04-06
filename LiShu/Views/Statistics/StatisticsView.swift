@@ -4,6 +4,7 @@ import SwiftUI
 struct StatisticsView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(SubscriptionManager.self) private var subscriptionManager
+    @Environment(DebugOverrideManager.self) private var debugOverrides
     @State private var viewModel = StatisticsViewModel()
     @State private var sheetRoute: SheetRoute?
 
@@ -11,7 +12,7 @@ struct StatisticsView: View {
         if ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1" {
             return false
         }
-        return !subscriptionManager.isPro
+        return !subscriptionManager.effectiveIsPro(overrides: debugOverrides)
     }
 
     var body: some View {

@@ -51,10 +51,10 @@ final class SettingsFlowTests: BaseUITestCase {
                 versionLabel.tap()
             }
 
-            let diagnosticsButton = app.buttons["about.openDiagnosticsConsole"]
+            let consoleTitle = app.staticTexts["开发控制台"]
             XCTAssertFalse(
-                diagnosticsButton.waitForExistence(timeout: 1),
-                "UI testing mode should keep the hidden diagnostics entry unavailable"
+                consoleTitle.waitForExistence(timeout: 1),
+                "UI testing mode should keep the hidden diagnostics console unavailable"
             )
 
             app.navigationBars.buttons.firstMatch.tap()
