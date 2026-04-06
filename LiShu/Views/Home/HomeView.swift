@@ -166,7 +166,8 @@ struct HomeView: View {
                 emptyUpcomingCard
             } else {
                 CarouselView(
-                    pageCount: viewModel.upcomingEvents.count
+                    pageCount: viewModel.upcomingEvents.count,
+                    autoScrollInterval: 3
                 ) { index in
                     let event = viewModel.upcomingEvents[index]
 
