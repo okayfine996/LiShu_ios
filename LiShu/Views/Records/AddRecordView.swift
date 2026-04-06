@@ -35,8 +35,14 @@ struct AddRecordView: View {
                 Task {
                     var loaded: [NewRecordPhotoItem] = []
                     for item in newItems {
-                        if let data = try? await item.loadTransferable(type: Data.self), !data.isEmpty {
-                            loaded.append(NewRecordPhotoItem(id: UUID(), data: data))
+                        if let data = try? await item.loadTransferable(type: Data.self), !data.isEmpty,
+                           let optimized = ImagePipeline.optimizedJPEGData(
+                               from: data,
+                               maxPixelSize: ImagePipeline.Preset.recordPhotoMaxPixelSize,
+                               compressionQuality: 0.84
+                           )
+                        {
+                            loaded.append(NewRecordPhotoItem(id: UUID(), data: optimized))
                         }
                     }
                     await MainActor.run {
@@ -1178,9 +1184,8 @@ struct AddRecordView: View {
 
     private func photoThumbnail(imageData: Data) -> some View {
         Group {
-            if let uiImage = UIImage(data: imageData) {
-                Image(uiImage: uiImage)
-                    .resizable()
+            if !imageData.isEmpty {
+                DecodedImageView(data: imageData, maxPixelSize: ImagePipeline.Preset.thumbnailMaxPixelSize)
                     .scaledToFill()
             }
         }

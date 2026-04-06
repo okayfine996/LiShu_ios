@@ -89,7 +89,13 @@ class AddContactViewModel {
             )
             existing.name = name.trimmingCharacters(in: .whitespaces)
             existing.phone = phone.trimmingCharacters(in: .whitespaces)
-            existing.avatar = avatar
+            existing.avatar = avatar.flatMap {
+                ImagePipeline.optimizedJPEGData(
+                    from: $0,
+                    maxPixelSize: ImagePipeline.Preset.avatarMaxPixelSize,
+                    compressionQuality: 0.82
+                ) ?? $0
+            }
             existing.relation = selectedTag
             existing.category = selectedCategory?.rawValue ?? ""
             existing.circle = circle
@@ -142,7 +148,13 @@ class AddContactViewModel {
             let contact = Contact(
                 name: name.trimmingCharacters(in: .whitespaces),
                 phone: phone.trimmingCharacters(in: .whitespaces),
-                avatar: avatar,
+                avatar: avatar.flatMap {
+                    ImagePipeline.optimizedJPEGData(
+                        from: $0,
+                        maxPixelSize: ImagePipeline.Preset.avatarMaxPixelSize,
+                        compressionQuality: 0.82
+                    ) ?? $0
+                },
                 relation: selectedTag,
                 category: selectedCategory?.rawValue ?? "",
                 circle: circle,

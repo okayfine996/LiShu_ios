@@ -84,4 +84,20 @@ struct AddContactViewModelTests {
         #expect(contacts.count == 1)
         #expect(contacts[0].name == "赵六 updated")
     }
+
+    @Test func saveContactCompressesAvatar() throws {
+        let db = try TestDB()
+        let vm = AddContactViewModel()
+        vm.name = "头像测试"
+        vm.avatar = SampleImages.makePNGData(width: 2400, height: 2400)
+
+        #expect(vm.saveContact(context: db.context) == true)
+
+        let contacts = try db.context.fetch(FetchDescriptor<Contact>())
+        #expect(contacts.count == 1)
+        let avatar = try #require(contacts[0].avatar)
+        let dimensions = try #require(ImagePipeline.imageDimensions(from: avatar))
+        #expect(dimensions.width <= CGFloat(ImagePipeline.Preset.avatarMaxPixelSize))
+        #expect(dimensions.height <= CGFloat(ImagePipeline.Preset.avatarMaxPixelSize))
+    }
 }

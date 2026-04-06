@@ -6,6 +6,7 @@ struct RecordListView: View {
     @State private var viewModel = RecordListViewModel()
     @State private var sheetRoute: SheetRoute?
     @State private var showOCRImport = false
+    @State private var pendingSearchTask: Task<Void, Never>?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -55,7 +56,12 @@ struct RecordListView: View {
             viewModel.load(context: modelContext)
         }
         .onChange(of: viewModel.searchText) { _, _ in
-            viewModel.load(context: modelContext)
+            pendingSearchTask?.cancel()
+            pendingSearchTask = Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(300))
+                guard !Task.isCancelled else { return }
+                viewModel.load(context: modelContext)
+            }
         }
         .sheet(item: $sheetRoute) { route in
             sheetContent(for: route)
@@ -75,6 +81,9 @@ struct RecordListView: View {
         }
         .onChange(of: showOCRImport) { _, newValue in
             InteractionLogger.fullScreenPresentation(screen: "records.list", route: "fullScreen.import.ocr", isPresented: newValue)
+        }
+        .onDisappear {
+            pendingSearchTask?.cancel()
         }
         .alert(String(localized: "common.error"), isPresented: Binding(
             get: { viewModel.deleteError != nil },

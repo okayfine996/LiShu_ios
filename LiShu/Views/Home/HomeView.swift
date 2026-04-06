@@ -188,9 +188,8 @@ struct HomeView: View {
     private func upcomingEventCard(_ event: Event) -> some View {
         ZStack(alignment: .bottomLeading) {
             Group {
-                if let data = event.coverImage, let uiImage = UIImage(data: data) {
-                    Image(uiImage: uiImage)
-                        .resizable()
+                if let data = event.coverImage {
+                    DecodedImageView(data: data, maxPixelSize: ImagePipeline.Preset.homeHeroMaxPixelSize)
                         .scaledToFill()
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .clipped()

@@ -177,4 +177,30 @@ struct AddRecordViewModelTests {
         #expect(vm.allContacts.count == 2)
         #expect(vm.allEvents.count == 1)
     }
+
+    @Test func saveRecordCompressesNewPhotoData() throws {
+        let db = try TestDB()
+        let contact = SampleData.contact()
+        let event = SampleData.event()
+        db.context.insert(contact)
+        db.context.insert(event)
+        try db.context.save()
+
+        let vm = AddRecordViewModel()
+        vm.loadData(context: db.context)
+        vm.selectedContact = contact
+        vm.selectedEvent = event
+        vm.monetaryAmount = "520"
+        vm.newPhotoItems = [
+            NewRecordPhotoItem(id: UUID(), data: SampleImages.makePNGData(width: 2600, height: 1800)),
+        ]
+
+        #expect(vm.save(context: db.context) == true)
+
+        let photos = try db.context.fetch(FetchDescriptor<RecordPhoto>())
+        #expect(photos.count == 1)
+        let dimensions = try #require(ImagePipeline.imageDimensions(from: photos[0].imageData))
+        #expect(dimensions.width <= CGFloat(ImagePipeline.Preset.recordPhotoMaxPixelSize))
+        #expect(dimensions.height <= CGFloat(ImagePipeline.Preset.recordPhotoMaxPixelSize))
+    }
 }

@@ -302,6 +302,26 @@
 			shellScript = "export PATH=\"$PATH:/opt/homebrew/bin:/usr/local/bin\"\ncd \"${SRCROOT}\"\nif command -v swiftlint >/dev/null 2>&1; then\n  swiftlint lint --strict\nelse\n  echo \"warning: SwiftLint not installed; install with: brew install swiftlint\"\nfi\n";
 			showEnvVarsInLog = 0;
 		};
+		9A934EC92F54194E0063349A /* Strip ScreenshotDemo for Release */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Strip ScreenshotDemo for Release";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Strip ScreenshotDemo assets from Release app bundle (not shipped to App Store users).\n# File-system sync may place PNGs at bundle root and/or under ScreenshotDemo/.\nif [ \"${CONFIGURATION}\" = \"Release\" ]; then\n  APP_ROOT=\"${CODESIGNING_FOLDER_PATH}\"\n  find \"$APP_ROOT\" -name 'screenshot_demo_*.png' -delete\n  for path in \"$APP_ROOT/ScreenshotDemo\" \"$APP_ROOT/Resources/ScreenshotDemo\"; do\n    if [ -d \"$path\" ]; then\n      rm -rf \"$path\"\n    fi\n  done\nfi\n";
+			showEnvVarsInLog = 0;
+		};
 		F0C0A1B22D3E4F5600010001 /* Embed Git Commit Info */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
@@ -322,26 +342,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "export PATH=\"$PATH:/opt/homebrew/bin:/usr/local/bin\"\nCOMMIT_HASH=\"$(git -C \"$SRCROOT\" rev-parse --short=12 HEAD 2>/dev/null || echo unknown)\"\n/usr/libexec/PlistBuddy -c \"Delete :LiShuGitCommit\" \"$TARGET_BUILD_DIR/$INFOPLIST_PATH\" >/dev/null 2>&1 || true\n/usr/libexec/PlistBuddy -c \"Add :LiShuGitCommit string $COMMIT_HASH\" \"$TARGET_BUILD_DIR/$INFOPLIST_PATH\"\nprintf '%s' \"$COMMIT_HASH\" > \"$DERIVED_FILE_DIR/git-commit-info.txt\"\n";
-			showEnvVarsInLog = 0;
-		};
-		9A934EC92F54194E0063349A /* Strip ScreenshotDemo for Release */ = {
-			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-			);
-			name = "Strip ScreenshotDemo for Release";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "# Strip ScreenshotDemo assets from Release app bundle (not shipped to App Store users).\n# File-system sync may place PNGs at bundle root and/or under ScreenshotDemo/.\nif [ \"${CONFIGURATION}\" = \"Release\" ]; then\n  APP_ROOT=\"${CODESIGNING_FOLDER_PATH}\"\n  find \"$APP_ROOT\" -name 'screenshot_demo_*.png' -delete\n  for path in \"$APP_ROOT/ScreenshotDemo\" \"$APP_ROOT/Resources/ScreenshotDemo\"; do\n    if [ -d \"$path\" ]; then\n      rm -rf \"$path\"\n    fi\n  done\nfi\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
