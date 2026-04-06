@@ -165,16 +165,20 @@ struct HomeView: View {
             if viewModel.upcomingEvents.isEmpty {
                 emptyUpcomingCard
             } else {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 12) {
-                        ForEach(viewModel.upcomingEvents) { event in
-                            NavigationLink(value: AppRoute.eventDetail(event.persistentModelID)) {
-                                upcomingEventCard(event)
-                            }
-                            .buttonStyle(.plain)
+                CarouselView(
+                    pageCount: viewModel.upcomingEvents.count
+                ) { index in
+                    let event = viewModel.upcomingEvents[index]
+
+                    VStack {
+                        NavigationLink(value: AppRoute.eventDetail(event.persistentModelID)) {
+                            upcomingEventCard(event)
                         }
+                        .buttonStyle(.plain)
                     }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                 }
+                .frame(height: 196)
             }
         }
     }
@@ -204,13 +208,13 @@ struct HomeView: View {
     }
 
     private func upcomingEventCard(_ event: Event) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            ZStack(alignment: .bottomLeading) {
+        ZStack(alignment: .bottomLeading) {
+            Group {
                 if let data = event.coverImage, let uiImage = UIImage(data: data) {
                     Image(uiImage: uiImage)
                         .resizable()
                         .scaledToFill()
-                        .frame(width: 180, height: 160)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .clipped()
                 } else {
                     LinearGradient(
@@ -218,14 +222,27 @@ struct HomeView: View {
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
-                    .frame(width: 180, height: 160)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .overlay {
                         Image(systemName: event.type.iconName)
                             .font(.system(size: 40))
                             .foregroundStyle(.white.opacity(0.6))
                     }
                 }
+            }
+            .overlay {
+                LinearGradient(
+                    colors: [
+                        Color.black.opacity(0),
+                        Color.black.opacity(0.08),
+                        Color.black.opacity(0.26),
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            }
 
+            VStack(alignment: .leading, spacing: 8) {
                 Text(event.type.displayName)
                     .font(DesignSystem.Typography.small)
                     .foregroundStyle(DesignSystem.Colors.primary)
@@ -233,28 +250,27 @@ struct HomeView: View {
                     .padding(.vertical, 4)
                     .background(DesignSystem.Colors.bgSurface.opacity(0.9))
                     .clipShape(Capsule())
-                    .padding(8)
-            }
-            .frame(width: 180, height: 160)
-            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.smallCard))
 
-            // Event info
-            VStack(alignment: .leading, spacing: 2) {
-                Text(event.name)
-                    .font(DesignSystem.Typography.caption)
-                    .foregroundStyle(DesignSystem.Colors.textPrimary)
-                    .fontWeight(.semibold)
-                    .lineLimit(1)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(event.name)
+                        .font(DesignSystem.Typography.caption)
+                        .foregroundStyle(.white)
+                        .fontWeight(.semibold)
+                        .lineLimit(1)
 
-                Text(formatEventDate(event.date))
-                    .font(DesignSystem.Typography.small)
-                    .foregroundStyle(DesignSystem.Colors.textTertiary)
+                    Text(formatEventDate(event.date))
+                        .font(DesignSystem.Typography.small)
+                        .foregroundStyle(.white.opacity(0.82))
+                }
             }
-            .padding(.horizontal, 4)
-            .padding(.top, 8)
+            .padding(12)
         }
-        .frame(width: 180)
+        .frame(maxWidth: .infinity)
+        .frame(height: 196)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.smallCard))
+        .frame(maxWidth: .infinity, alignment: .leading)
         .contentShape(Rectangle())
+        .padding(.horizontal, 2)
     }
 
     // MARK: - Recent Records Section
