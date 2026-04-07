@@ -13,12 +13,14 @@ class HomeViewModel {
     var banquetCount: Int = 0
     var recentRecords: [Record] = []
     var upcomingEvents: [Event] = []
+    var upcomingFestivals: [FestivalOccurrence] = []
     var currentYear: Int = Calendar.current.component(.year, from: Date())
 
     func load(context: ModelContext) {
         loadYearlySummary(context: context)
         loadRecentRecords(context: context)
         loadUpcomingEvents(context: context)
+        loadUpcomingFestivals(context: context)
     }
 
     private func loadYearlySummary(context: ModelContext) {
@@ -87,6 +89,10 @@ class HomeViewModel {
         } catch {
             upcomingEvents = []
         }
+    }
+
+    private func loadUpcomingFestivals(context: ModelContext) {
+        upcomingFestivals = Array(FestivalService.allOccurrences(context: context).prefix(3))
     }
 
     var formattedIncome: String {

@@ -2257,6 +2257,1117 @@
         }
       }
     },
+    "festival.contactEditor.byCircle" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按圈层"
+          }
+        }
+      }
+    },
+    "festival.contactEditor.byPerson" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按个人"
+          }
+        }
+      }
+    },
+    "festival.contactEditor.circle.family" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "家人"
+          }
+        }
+      }
+    },
+    "festival.contactEditor.circle.other" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "其他"
+          }
+        }
+      }
+    },
+    "festival.contactEditor.circle.relatives" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "亲属"
+          }
+        }
+      }
+    },
+    "festival.contactEditor.circle.social" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "社交"
+          }
+        }
+      }
+    },
+    "festival.contactEditor.circleCount" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%d 位联系人"
+          }
+        }
+      }
+    },
+    "festival.contactEditor.contacts" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "手动问候人"
+          }
+        }
+      }
+    },
+    "festival.contactEditor.empty" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暂无可选择的联系人"
+          }
+        }
+      }
+    },
+    "festival.contactEditor.emptySelection" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "还没有指定候选人"
+          }
+        }
+      }
+    },
+    "festival.contactEditor.method" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择方式"
+          }
+        }
+      }
+    },
+    "festival.contactEditor.mode" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "名单模式"
+          }
+        }
+      }
+    },
+    "festival.contactEditor.modeHint" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "如果没有手动选择联系人，将回退到系统推荐名单。"
+          }
+        }
+      }
+    },
+    "festival.contactEditor.search" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "搜索联系人"
+          }
+        }
+      }
+    },
+    "festival.contactEditor.selectedCount" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已指定 %d 位联系人"
+          }
+        }
+      }
+    },
+    "festival.contactEditor.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "问候名单"
+          }
+        }
+      }
+    },
+    "festival.contactSelection.manualOnly" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "仅手动名单"
+          }
+        }
+      }
+    },
+    "festival.contactSelection.manualPlusRecommended" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "手动 + 推荐"
+          }
+        }
+      }
+    },
+    "festival.contactSelection.recommendedOnly" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "系统推荐"
+          }
+        }
+      }
+    },
+    "festival.detail.addContacts" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加关注"
+          }
+        }
+      }
+    },
+    "festival.detail.addRecord" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "记一笔人情"
+          }
+        }
+      }
+    },
+    "festival.detail.contactMeta" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ · 上次联系 %@"
+          }
+        }
+      }
+    },
+    "festival.detail.countdown" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "还有 %d 天"
+          }
+        }
+      }
+    },
+    "festival.detail.editContacts" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "编辑问候名单"
+          }
+        }
+      }
+    },
+    "festival.detail.empty" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前没有可展示的联系人"
+          }
+        }
+      }
+    },
+    "festival.detail.footer" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "海上生明月，天涯共此时"
+          }
+        }
+      }
+    },
+    "festival.detail.greeted" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已问候"
+          }
+        }
+      }
+    },
+    "festival.detail.greetedSummary" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已送达问候"
+          }
+        }
+      }
+    },
+    "festival.detail.greetedTag" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已问候"
+          }
+        }
+      }
+    },
+    "festival.detail.markGreeted" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "标记已问候"
+          }
+        }
+      }
+    },
+    "festival.detail.mode" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "名单来源"
+          }
+        }
+      }
+    },
+    "festival.detail.pending" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "待问候"
+          }
+        }
+      }
+    },
+    "festival.detail.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "节日关系"
+          }
+        }
+      }
+    },
+    "festival.detail.undoGreeted" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "撤销已问候"
+          }
+        }
+      }
+    },
+    "festival.editor.addAction" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加自定义节日"
+          }
+        }
+      }
+    },
+    "festival.editor.addTitle" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加自定义节日"
+          }
+        }
+      }
+    },
+    "festival.editor.circle.family" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "家人"
+          }
+        }
+      }
+    },
+    "festival.editor.circle.other" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "其他"
+          }
+        }
+      }
+    },
+    "festival.editor.circle.relatives" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "亲属"
+          }
+        }
+      }
+    },
+    "festival.editor.circle.social" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "社交"
+          }
+        }
+      }
+    },
+    "festival.editor.configureContacts" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "设置候选人"
+          }
+        }
+      }
+    },
+    "festival.editor.contactHint" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "设置后，系统会在这个节日前为您生成更贴合的问候建议。"
+          }
+        }
+      }
+    },
+    "festival.editor.contacts" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "手动问候人"
+          }
+        }
+      }
+    },
+    "festival.editor.contactSelectionStyle" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "指定问候人"
+          }
+        }
+      }
+    },
+    "festival.editor.contactsEmpty" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "还没有联系人"
+          }
+        }
+      }
+    },
+    "festival.editor.contactsSelectedCount" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已选 %d 位联系人"
+          }
+        }
+      }
+    },
+    "festival.editor.coverImage" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "节日图片"
+          }
+        }
+      }
+    },
+    "festival.editor.coverImageAction" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择图片"
+          }
+        }
+      }
+    },
+    "festival.editor.coverImageHint" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "上传一张能代表这个节日的图片"
+          }
+        }
+      }
+    },
+    "festival.editor.date" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "日期"
+          }
+        }
+      }
+    },
+    "festival.editor.day" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "公历日"
+          }
+        }
+      }
+    },
+    "festival.editor.dayBadge" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DAY"
+          }
+        }
+      }
+    },
+    "festival.editor.dayValue" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%d日"
+          }
+        }
+      }
+    },
+    "festival.editor.deleteConfirm" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "确认删除这个节日？"
+          }
+        }
+      }
+    },
+    "festival.editor.editTitle" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "编辑自定义节日"
+          }
+        }
+      }
+    },
+    "festival.editor.lunarDay" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "农历日"
+          }
+        }
+      }
+    },
+    "festival.editor.lunarDayValue" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "农历 %d 日"
+          }
+        }
+      }
+    },
+    "festival.editor.lunarMonth" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "农历月"
+          }
+        }
+      }
+    },
+    "festival.editor.lunarMonthValue" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "农历 %d 月"
+          }
+        }
+      }
+    },
+    "festival.editor.manualFallbackHint" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未指定联系人时，将暂时使用系统推荐"
+          }
+        }
+      }
+    },
+    "festival.editor.manualOnlyHint" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "仅在你手动指定的人里生成提醒和候选名单"
+          }
+        }
+      }
+    },
+    "festival.editor.manualPlusHint" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "手动指定的人会排在前面，系统推荐会补在后面"
+          }
+        }
+      }
+    },
+    "festival.editor.month" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "公历月"
+          }
+        }
+      }
+    },
+    "festival.editor.monthBadge" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MONTH"
+          }
+        }
+      }
+    },
+    "festival.editor.monthValue" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%d月"
+          }
+        }
+      }
+    },
+    "festival.editor.name" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "名称"
+          }
+        }
+      }
+    },
+    "festival.editor.namePlaceholder" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "例如：结婚纪念日"
+          }
+        }
+      }
+    },
+    "festival.editor.recommendedHint" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "系统会根据亲密关系和最近往来自动推荐问候对象。"
+          }
+        }
+      }
+    },
+    "festival.editor.recurrence" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重复"
+          }
+        }
+      }
+    },
+    "festival.editor.reminder" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "提醒"
+          }
+        }
+      }
+    },
+    "festival.editor.reminderDescription" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在节日到来前 1 天向您发送通知"
+          }
+        }
+      }
+    },
+    "festival.editor.reminderToggle" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "节日前一天提醒我"
+          }
+        }
+      }
+    },
+    "festival.editor.removeCoverImage" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移除图片"
+          }
+        }
+      }
+    },
+    "festival.editor.selectDate" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择日期"
+          }
+        }
+      }
+    },
+    "festival.editor.selectionByCircle" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按圈层"
+          }
+        }
+      }
+    },
+    "festival.editor.selectionByPerson" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按个人"
+          }
+        }
+      }
+    },
+    "festival.lunar.chineseNewYearsEve" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "腊月最后一天"
+          }
+        }
+      }
+    },
+    "festival.lunar.doubleNinthFestival" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "九月初九"
+          }
+        }
+      }
+    },
+    "festival.lunar.dragonBoatFestival" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "五月初五"
+          }
+        }
+      }
+    },
+    "festival.lunar.lanternFestival" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正月十五"
+          }
+        }
+      }
+    },
+    "festival.lunar.midAutumnFestival" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "八月十五"
+          }
+        }
+      }
+    },
+    "festival.lunar.qixiFestival" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "七月初七"
+          }
+        }
+      }
+    },
+    "festival.lunar.springFestival" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正月初一"
+          }
+        }
+      }
+    },
+    "festival.management.closed" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已关闭"
+          }
+        }
+      }
+    },
+    "festival.management.daysRemaining" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "还有 %d 天"
+          }
+        }
+      }
+    },
+    "festival.management.info" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "说明：内置日期由农历推算；「我的节日」由您自行添加。"
+          }
+        }
+      }
+    },
+    "festival.management.row.subtitle" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ · 还有 %d 天"
+          }
+        }
+      }
+    },
+    "festival.management.section.builtin" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "内置节日"
+          }
+        }
+      }
+    },
+    "festival.management.section.builtin.subtitle" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "traditional solar & lunar"
+          }
+        }
+      }
+    },
+    "festival.management.section.user" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "我的节日"
+          }
+        }
+      }
+    },
+    "festival.management.section.user.subtitle" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "private & meaningful"
+          }
+        }
+      }
+    },
+    "festival.management.smartBadge" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "智能推算"
+          }
+        }
+      }
+    },
+    "festival.management.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "节日管理"
+          }
+        }
+      }
+    },
+    "festival.name.chineseNewYearsEve" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "除夕"
+          }
+        }
+      }
+    },
+    "festival.name.doubleNinthFestival" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重阳节"
+          }
+        }
+      }
+    },
+    "festival.name.dragonBoatFestival" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "端午节"
+          }
+        }
+      }
+    },
+    "festival.name.lanternFestival" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "元宵节"
+          }
+        }
+      }
+    },
+    "festival.name.midAutumnFestival" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "中秋节"
+          }
+        }
+      }
+    },
+    "festival.name.qixiFestival" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "七夕"
+          }
+        }
+      }
+    },
+    "festival.name.springFestival" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "春节"
+          }
+        }
+      }
+    },
+    "festival.notification.body" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@即将到来，别忘了问候%@%@"
+          }
+        }
+      }
+    },
+    "festival.notification.namesSuffix" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "等亲友"
+          }
+        }
+      }
+    },
+    "festival.notification.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "节日提醒"
+          }
+        }
+      }
+    },
+    "festival.recurrence.annualGregorian" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每年公历"
+          }
+        }
+      }
+    },
+    "festival.recurrence.annualLunar" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每年农历"
+          }
+        }
+      }
+    },
+    "festival.recurrence.oneTime" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "仅一次"
+          }
+        }
+      }
+    },
+    "festival.status.expired" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已过期"
+          }
+        }
+      }
+    },
+    "festival.summary.gregorian" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每年公历 %d月%d日"
+          }
+        }
+      }
+    },
+    "festival.summary.lunar" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每年农历 %d月%d日"
+          }
+        }
+      }
+    },
     "FORM ELEMENTS" : {
 
     },
@@ -2350,6 +3461,27 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "支出"
+          }
+        }
+      }
+    },
+    "home.festival.daysLeftFormat" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ · 还有 %d 天"
+          }
+        }
+      }
+    },
+    "home.festival.sectionTitle" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "传统节日"
           }
         }
       }

@@ -4,7 +4,7 @@ import SwiftData
 enum AppRoute: Hashable {
     // 记录
     case recordDetail(PersistentIdentifier)
-    case addRecord(direction: RecordDirection?, contactID: PersistentIdentifier?)
+    case addRecord(direction: RecordDirection?, contactID: PersistentIdentifier?, dailyTag: String?)
     case monthlyDetail(year: Int, month: Int)
     case periodDetail(StatsPeriod)
     // 联系人
@@ -26,6 +26,11 @@ enum AppRoute: Hashable {
     case proMembership
     case appearanceSettings
     case notificationSettings
+    case festivalManagement
+    case festivalDetail(FestivalRoutePayload)
+    case festivalContactEditor(FestivalRoutePayload)
+    case addUserFestival
+    case editUserFestival(PersistentIdentifier)
     case dataManagement
     case importExport
     case about
@@ -53,6 +58,11 @@ enum AppRoute: Hashable {
         case .proMembership: "settings.proMembership"
         case .appearanceSettings: "settings.appearance"
         case .notificationSettings: "settings.notifications"
+        case .festivalManagement: "settings.festivals"
+        case .festivalDetail: "festival.detail"
+        case .festivalContactEditor: "festival.contacts"
+        case .addUserFestival: "festival.add"
+        case .editUserFestival: "festival.edit"
         case .dataManagement, .importExport: "settings.dataManagement"
         case .about: "settings.about"
         case .termsOfService: "settings.terms"
@@ -62,7 +72,7 @@ enum AppRoute: Hashable {
 }
 
 enum SheetRoute: Identifiable, Equatable {
-    case addRecord(direction: RecordDirection?, contactID: PersistentIdentifier?)
+    case addRecord(direction: RecordDirection?, contactID: PersistentIdentifier?, dailyTag: String?)
     case addContact
     case addEvent
     case editContact(PersistentIdentifier)

@@ -16,11 +16,18 @@ struct AddRecordView: View {
     var direction: RecordDirection?
     var contactID: PersistentIdentifier?
     var recordID: PersistentIdentifier?
+    var initialDailyTag: String?
 
-    init(direction: RecordDirection? = nil, contactID: PersistentIdentifier? = nil, recordID: PersistentIdentifier? = nil) {
+    init(
+        direction: RecordDirection? = nil,
+        contactID: PersistentIdentifier? = nil,
+        recordID: PersistentIdentifier? = nil,
+        initialDailyTag: String? = nil
+    ) {
         self.direction = direction
         self.contactID = contactID
         self.recordID = recordID
+        self.initialDailyTag = initialDailyTag
     }
 
     var body: some View {
@@ -123,7 +130,7 @@ struct AddRecordView: View {
         if let recordID, let record = modelContext.model(for: recordID) as? Record {
             viewModel.configure(with: record)
         } else {
-            viewModel.configure(direction: direction, contactID: contactID, context: modelContext)
+            viewModel.configure(direction: direction, contactID: contactID, dailyTag: initialDailyTag, context: modelContext)
         }
     }
 

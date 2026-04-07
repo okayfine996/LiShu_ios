@@ -44,6 +44,9 @@ struct LiShuApp: App {
             Record.self,
             Event.self,
             RecordPhoto.self,
+            UserFestival.self,
+            FestivalGreeting.self,
+            FestivalContactPreference.self,
         ])
 
         let icloudEnabled = AppSettings.shared.icloudSyncEnabled

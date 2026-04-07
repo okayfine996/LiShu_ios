@@ -19,6 +19,7 @@ final class NotificationManager {
         case eventReminder
         case birthdayReminder
         case returnGift
+        case festivalReminder
     }
 
     private init() {}
@@ -103,7 +104,13 @@ final class NotificationManager {
             intentIdentifiers: [],
             options: []
         )
-        center.setNotificationCategories([eventCategory, birthdayCategory, returnGiftCategory])
+        let festivalCategory = UNNotificationCategory(
+            identifier: Category.festivalReminder.rawValue,
+            actions: [],
+            intentIdentifiers: [],
+            options: []
+        )
+        center.setNotificationCategories([eventCategory, birthdayCategory, returnGiftCategory, festivalCategory])
         notificationLogger.info("Registered notification categories", metadata: [
             "step": .string("categories"),
             "count": .stringConvertible(Category.allCases.count),
@@ -301,9 +308,101 @@ final class NotificationManager {
         "returnGift-\(stableIdentifier(for: record.persistentModelID))"
     }
 
+    // MARK: - Festival Reminders
+
+    func scheduleFestivalReminder(occurrence: FestivalOccurrence, context: ModelContext) {
+        guard settings.notificationEnabled else {
+            notificationLogger.info("Skipped festival reminder", metadata: [
+                "step": .string("schedule_festival"),
+                "festival_key": .string(occurrence.route.key),
+                "reason": .string("notifications_disabled"),
+            ])
+            return
+        }
+
+        guard occurrence.reminderEnabled else {
+            notificationLogger.info("Skipped festival reminder", metadata: [
+                "step": .string("schedule_festival"),
+                "festival_key": .string(occurrence.route.key),
+                "reason": .string("festival_disabled"),
+            ])
+            return
+        }
+
+        let contacts = FestivalService.finalContacts(for: occurrence.route, context: context)
+        guard !contacts.isEmpty else {
+            notificationLogger.info("Skipped festival reminder", metadata: [
+                "step": .string("schedule_festival"),
+                "festival_key": .string(occurrence.route.key),
+                "reason": .string("no_contacts"),
+            ])
+            return
+        }
+
+        guard let reminderDate = Calendar.current.date(byAdding: .day, value: -1, to: occurrence.date),
+              reminderDate > Date()
+        else {
+            notificationLogger.info("Skipped festival reminder", metadata: [
+                "step": .string("schedule_festival"),
+                "festival_key": .string(occurrence.route.key),
+                "reason": .string("reminder_date_invalid"),
+            ])
+            return
+        }
+
+        let displayedNames = contacts.prefix(3).map(\.name).joined(separator: "、")
+        let suffix = contacts.count > 3 ? String(localized: "festival.notification.namesSuffix") : ""
+
+        let content = UNMutableNotificationContent()
+        content.title = String(localized: "festival.notification.title")
+        content.body = String(
+            format: String(localized: "festival.notification.body"),
+            occurrence.name,
+            displayedNames,
+            suffix
+        )
+        content.sound = .default
+        content.categoryIdentifier = Category.festivalReminder.rawValue
+        content.userInfo = [
+            "type": Category.festivalReminder.rawValue,
+            "festivalKey": occurrence.route.key,
+        ]
+
+        var components = Calendar.current.dateComponents([.year, .month, .day], from: reminderDate)
+        components.hour = 9
+        components.minute = 0
+
+        let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
+        let identifier = festivalNotificationID(occurrence)
+        let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
+
+        center.add(request)
+        notificationLogger.notice("Scheduled festival reminder", metadata: [
+            "step": .string("schedule_festival"),
+            "festival_key": .string(occurrence.route.key),
+            "result": .string("scheduled"),
+        ])
+    }
+
+    func cancelFestivalReminder(occurrence: FestivalOccurrence) {
+        center.removePendingNotificationRequests(withIdentifiers: [festivalNotificationID(occurrence)])
+        notificationLogger.info("Cancelled festival reminder", metadata: [
+            "step": .string("cancel_festival"),
+            "festival_key": .string(occurrence.route.key),
+        ])
+    }
+
+    private func festivalNotificationID(_ occurrence: FestivalOccurrence) -> String {
+        "festival-\(stableIdentifier(for: occurrence.route.key))-\(Calendar.current.component(.year, from: occurrence.date))"
+    }
+
     private func stableIdentifier(for persistentID: PersistentIdentifier) -> String {
+        stableIdentifier(for: String(describing: persistentID))
+    }
+
+    private func stableIdentifier(for rawValue: String) -> String {
         var hash: UInt64 = 1_469_598_103_934_665_603
-        for byte in String(describing: persistentID).utf8 {
+        for byte in rawValue.utf8 {
             hash ^= UInt64(byte)
             hash &*= 1_099_511_628_211
         }
@@ -398,6 +497,15 @@ final class NotificationManager {
                 ])
             }
         }
+
+        let festivalOccurrences = FestivalService.allOccurrences(context: context)
+        for occurrence in festivalOccurrences where !occurrence.isExpired {
+            scheduleFestivalReminder(occurrence: occurrence, context: context)
+        }
+        notificationLogger.info("Rescheduled festival reminders", metadata: [
+            "step": .string("reschedule_all"),
+            "count": .stringConvertible(festivalOccurrences.count),
+        ])
     }
 
     // MARK: - Remote Notification Handler (Future Extension)
@@ -432,6 +540,9 @@ final class NotificationManager {
         case .returnGift:
             content.title = String(localized: "notification.returnGift.title")
             content.body = String(format: String(localized: "notification.returnGift.body"), "王五", "乔迁之喜", "1000")
+        case .festivalReminder:
+            content.title = String(localized: "festival.notification.title")
+            content.body = String(format: String(localized: "festival.notification.body"), "中秋节", "张三、李四", "")
         }
 
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 2, repeats: false)
@@ -459,6 +570,9 @@ final class NotificationManager {
             case .returnGift:
                 content.title = String(localized: "notification.returnGift.title")
                 content.body = String(format: String(localized: "notification.returnGift.body"), "王五", "乔迁之喜", "1000")
+            case .festivalReminder:
+                content.title = String(localized: "festival.notification.title")
+                content.body = String(format: String(localized: "festival.notification.body"), "中秋节", "张三、李四", "")
             }
 
             let delay = TimeInterval(2 + index * 3)

@@ -1,15 +1,23 @@
 import SwiftData
 import SwiftUI
+import UIKit
 
 struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var viewModel = HomeViewModel()
     @State private var sheetRoute: SheetRoute?
+    private let loadsOnAppear: Bool
+
+    init(viewModel: HomeViewModel = HomeViewModel(), loadsOnAppear: Bool = true) {
+        _viewModel = State(initialValue: viewModel)
+        self.loadsOnAppear = loadsOnAppear
+    }
 
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 20) {
                 summarySection
+                festivalSection
                 upcomingSection
                 recentRecordsSection
             }
@@ -21,13 +29,14 @@ struct HomeView: View {
         .navigationTitle(String(localized: "home.title"))
         .navigationBarTitleDisplayMode(.automatic)
         .onAppear {
+            guard loadsOnAppear else { return }
             viewModel.load(context: modelContext)
         }
         .sheet(item: $sheetRoute) { route in
             sheetContent(for: route)
         }
         .onChange(of: sheetRoute) { _, newValue in
-            if newValue == nil {
+            if loadsOnAppear, newValue == nil {
                 viewModel.load(context: modelContext)
             }
         }
@@ -131,6 +140,220 @@ struct HomeView: View {
     }
 
     // MARK: - Upcoming Events Section
+
+    private var festivalSection: some View {
+        VStack(spacing: 12) {
+            sectionHeader(
+                title: String(localized: "home.festival.sectionTitle"),
+                route: .festivalManagement
+            )
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: DesignSystem.Spacing.block) {
+                    ForEach(viewModel.upcomingFestivals) { festival in
+                        NavigationLink(value: AppRoute.festivalDetail(festival.route)) {
+                            festivalCard(festival)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, DesignSystem.Spacing.pageHorizontal)
+            }
+            .padding(.horizontal, -DesignSystem.Spacing.pageHorizontal)
+        }
+    }
+
+    private func festivalCard(_ festival: FestivalOccurrence) -> some View {
+        ZStack(alignment: .bottomLeading) {
+            festivalArtwork(for: festival)
+
+            LinearGradient(
+                colors: [
+                    .clear,
+                    DesignSystem.Colors.bgPage.opacity(0.16),
+                    DesignSystem.Colors.bgPage.opacity(0.88),
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.stackTight) {
+                HStack(alignment: .firstTextBaseline, spacing: DesignSystem.Spacing.inlineTight) {
+                    Text(festival.name)
+                        .font(DesignSystem.Typography.title3)
+                        .foregroundStyle(DesignSystem.Colors.textPrimary)
+                        .lineLimit(1)
+
+                    Spacer(minLength: DesignSystem.Spacing.inlineTight)
+
+                    Text(String(format: String(localized: "festival.detail.countdown"), festival.countdownDays))
+                        .font(DesignSystem.Typography.small)
+                        .foregroundStyle(DesignSystem.Colors.primary)
+                        .lineLimit(1)
+                }
+
+                Text(festival.secondaryText)
+                    .font(DesignSystem.Typography.caption)
+                    .foregroundStyle(DesignSystem.Colors.textSecondary)
+                    .lineLimit(1)
+            }
+            .padding(.horizontal, DesignSystem.Spacing.cardPaddingSmall)
+            .padding(.bottom, DesignSystem.Spacing.cardPaddingSmall)
+        }
+        .frame(
+            width: DesignSystem.Layout.avatarM * 3 + DesignSystem.Spacing.cardPadding,
+            height: DesignSystem.Layout.avatarM * 3 + DesignSystem.Spacing.block
+        )
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
+                .stroke(DesignSystem.Colors.primary.opacity(0.05), lineWidth: 1)
+        )
+        .contentShape(Rectangle())
+    }
+
+    private func festivalArtwork(for festival: FestivalOccurrence) -> some View {
+        ZStack(alignment: .topTrailing) {
+            festivalArtworkBackground(for: festival)
+
+            Color.black.opacity(0.05)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .overlay(alignment: .bottomLeading) {
+            cloudDecoration
+        }
+        .overlay(alignment: .topLeading) {
+            RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
+                .stroke(DesignSystem.Colors.bgSurface.opacity(0.5), lineWidth: 1)
+        }
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+    }
+
+    @ViewBuilder
+    private func festivalArtworkBackground(for festival: FestivalOccurrence) -> some View {
+        if let imageData = customFestivalImageData(for: festival),
+           ImagePipeline.image(from: imageData, maxPixelSize: ImagePipeline.Preset.homeHeroMaxPixelSize) != nil
+        {
+            DecodedImageView(data: imageData, maxPixelSize: ImagePipeline.Preset.homeHeroMaxPixelSize)
+                .scaledToFill()
+        } else if let assetName = builtinFestivalAssetName(for: festival), UIImage(named: assetName) != nil {
+            Image(assetName)
+                .resizable()
+                .scaledToFill()
+        } else {
+            fallbackFestivalArtwork(for: festival)
+        }
+    }
+
+    private func customFestivalImageData(for festival: FestivalOccurrence) -> Data? {
+        guard case let .userFestival(id) = festival.route,
+              let model = modelContext.model(for: id) as? UserFestival
+        else {
+            return nil
+        }
+
+        return model.coverImage
+    }
+
+    private func builtinFestivalAssetName(for festival: FestivalOccurrence) -> String? {
+        guard case let .builtin(id) = festival.route else { return nil }
+        return id.imageAssetName
+    }
+
+    private func fallbackFestivalArtwork(for festival: FestivalOccurrence) -> some View {
+        GeometryReader { proxy in
+            let width = proxy.size.width
+            let height = proxy.size.height
+
+            ZStack(alignment: .topTrailing) {
+                LinearGradient(
+                    colors: [
+                        DesignSystem.Colors.bgInput,
+                        DesignSystem.Colors.bgIconSubtle,
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+
+                Circle()
+                    .stroke(DesignSystem.Colors.border, lineWidth: 1)
+                    .frame(width: width * 0.54, height: width * 0.54)
+                    .offset(x: -width * 0.08, y: -width * 0.04)
+
+                Image(systemName: festivalAccentSymbol(for: festival))
+                    .font(DesignSystem.Typography.title2)
+                    .foregroundStyle(DesignSystem.Colors.primary)
+                    .offset(x: -width * 0.12, y: height * 0.05)
+
+                Image(systemName: festivalOverlaySymbol(for: festival))
+                    .font(DesignSystem.Typography.title3)
+                    .foregroundStyle(DesignSystem.Colors.primary)
+                    .padding(DesignSystem.Spacing.block)
+            }
+        }
+    }
+
+    private var cloudDecoration: some View {
+        HStack(spacing: DesignSystem.Spacing.dense) {
+            ForEach(0 ..< 3, id: \.self) { _ in
+                RoundedRectangle(cornerRadius: DesignSystem.Radius.button)
+                    .fill(DesignSystem.Colors.bgSurface.opacity(0.6))
+                    .frame(width: DesignSystem.Spacing.cardPadding, height: DesignSystem.Spacing.block)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: DesignSystem.Radius.button)
+                            .stroke(DesignSystem.Colors.border.opacity(0.45), lineWidth: 1)
+                    )
+            }
+        }
+        .padding(.leading, DesignSystem.Spacing.block)
+        .padding(.bottom, DesignSystem.Spacing.block)
+    }
+
+    private func festivalAccentSymbol(for festival: FestivalOccurrence) -> String {
+        switch festival.route {
+        case let .builtin(id):
+            switch id {
+            case .springFestival:
+                "sparkler"
+            case .lanternFestival:
+                "lantern.fill"
+            case .dragonBoatFestival:
+                "leaf.fill"
+            case .qixiFestival:
+                "heart.fill"
+            case .midAutumnFestival:
+                "moonphase.waning.crescent"
+            case .doubleNinthFestival:
+                "mountain.2.fill"
+            case .chineseNewYearsEve:
+                "moon.stars.fill"
+            }
+        case .userFestival:
+            "seal.fill"
+        }
+    }
+
+    private func festivalOverlaySymbol(for festival: FestivalOccurrence) -> String {
+        switch festival.route {
+        case let .builtin(id):
+            switch id {
+            case .midAutumnFestival:
+                return "moon.stars"
+            case .doubleNinthFestival:
+                return "rosette"
+            case .dragonBoatFestival:
+                return "drop"
+            case .qixiFestival:
+                return "sparkles"
+            case .springFestival, .lanternFestival, .chineseNewYearsEve:
+                return "seal"
+            }
+        case .userFestival:
+            break
+        }
+
+        return "seal"
+    }
 
     private var upcomingSection: some View {
         VStack(spacing: 12) {
@@ -264,7 +487,7 @@ struct HomeView: View {
                     message: String(localized: "record.list.empty"),
                     actionTitle: String(localized: "home.addRecord"),
                     action: {
-                        sheetRoute = .addRecord(direction: nil, contactID: nil)
+                        sheetRoute = .addRecord(direction: nil, contactID: nil, dailyTag: nil)
                     }
                 )
                 .accessibilityIdentifier("home.addRecordButton")
@@ -406,9 +629,9 @@ struct HomeView: View {
     @ViewBuilder
     private func sheetContent(for route: SheetRoute) -> some View {
         switch route {
-        case let .addRecord(direction, contactID):
+        case let .addRecord(direction, contactID, dailyTag):
             NavigationStack {
-                AddRecordView(direction: direction, contactID: contactID)
+                AddRecordView(direction: direction, contactID: contactID, initialDailyTag: dailyTag)
             }
         case .addContact:
             NavigationStack {
@@ -445,64 +668,84 @@ struct HomeView: View {
 }
 
 @MainActor
-private func makeHomePreviewContainer() -> ModelContainer? {
-    guard let container = try? ModelContainer(
-        for: Contact.self, Record.self, Event.self,
-        configurations: ModelConfiguration(isStoredInMemoryOnly: true)
-    ) else { return nil }
-    let ctx = container.mainContext
+private func makeHomePreviewViewModel() -> HomeViewModel {
+    let viewModel = HomeViewModel()
+    let calendar = Calendar.current
 
-    let c1 = Contact(name: "张三", relation: "同事")
-    let c2 = Contact(name: "李四", relation: "朋友")
-    let c3 = Contact(name: "王五", relation: "亲戚")
-    [c1, c2, c3].forEach { ctx.insert($0) }
+    let contact1 = Contact(name: "张三", relation: "大学同学", circle: 2)
+    let contact2 = Contact(name: "李四", relation: "远房亲戚", circle: 1)
+    let contact3 = Contact(name: "王五", relation: "同事", circle: 2)
 
-    let cal = Calendar.current
-    let e1 = Event(name: "表哥的婚礼", type: .wedding, date: cal.liShuDateByAddingDays(3), location: "北京")
-    let e2 = Event(name: "小李的30岁生日", type: .birthday, date: cal.liShuDateByAddingDays(7), location: "上海")
-    let e3 = Event(name: "硕士毕业", type: .education, date: cal.liShuDateByAddingDays(14), location: "广州")
-    [e1, e2, e3].forEach { ctx.insert($0) }
+    let event1 = Event(name: "王志强的婚礼", type: .wedding, date: calendar.liShuDateByAddingDays(9), location: "上海市")
+    let event2 = Event(name: "林悦儿满月酒", type: .birth, date: calendar.liShuDateByAddingDays(15), location: "杭州市")
 
-    let r1 = Record.makeMonetaryRecord(contact: c1, event: e1, amount: 500, direction: .given, paymentMethod: .wechat, date: .now)
-    let r2 = Record.makeMonetaryRecord(
-        contact: c2,
-        event: e2,
-        amount: 200,
+    let record1 = Record.makeMonetaryRecord(
+        contact: contact1,
+        event: event1,
+        amount: 800,
         direction: .given,
-        paymentMethod: .cash,
-        date: cal.liShuDateByAddingDays(-1)
+        paymentMethod: .wechat,
+        date: calendar.liShuDateByAddingDays(-365)
     )
-    let r3 = Record.makeMonetaryRecord(
-        contact: c3,
-        event: e1,
-        amount: 350,
-        direction: .given,
-        paymentMethod: .alipay,
-        date: cal.liShuDateByAddingDays(-3)
-    )
-    let r4 = Record.makeMonetaryRecord(
-        contact: c1,
-        event: e2,
+    let record2 = Record.makeMonetaryRecord(
+        contact: contact2,
+        event: event2,
         amount: 600,
         direction: .received,
-        paymentMethod: .wechat,
-        date: cal.liShuDateByAddingDays(-10)
+        paymentMethod: .cash,
+        date: calendar.liShuDateByAddingDays(-120)
     )
-    [r1, r2, r3, r4].forEach { ctx.insert($0) }
+    let record3 = Record.makeMonetaryRecord(
+        contact: contact3,
+        event: event1,
+        amount: 300,
+        direction: .given,
+        paymentMethod: .alipay,
+        date: calendar.liShuDateByAddingDays(-20)
+    )
 
-    return container
+    viewModel.recordCount = 42
+    viewModel.contactCount = 18
+    viewModel.monetaryCount = 18
+    viewModel.giftCount = 3
+    viewModel.favorCount = 2
+    viewModel.banquetCount = 1
+    viewModel.yearlyIncome = 28400
+    viewModel.yearlyExpense = 15600
+    viewModel.upcomingEvents = [event1, event2]
+    viewModel.recentRecords = [record1, record2, record3]
+    viewModel.upcomingFestivals = [
+        FestivalOccurrence(
+            route: .builtin(.midAutumnFestival),
+            name: BuiltinFestivalID.midAutumnFestival.localizedTitle,
+            date: calendar.liShuDateByAddingDays(12),
+            countdownDays: 12,
+            recurrence: .annualLunar,
+            reminderEnabled: true,
+            contactSelectionMode: .recommendedOnly,
+            secondaryText: "八月十五 · 团圆",
+            isExpired: false,
+            sortOrder: 0
+        ),
+        FestivalOccurrence(
+            route: .builtin(.doubleNinthFestival),
+            name: BuiltinFestivalID.doubleNinthFestival.localizedTitle,
+            date: calendar.liShuDateByAddingDays(26),
+            countdownDays: 26,
+            recurrence: .annualLunar,
+            reminderEnabled: true,
+            contactSelectionMode: .recommendedOnly,
+            secondaryText: "九月初九 · 敬老",
+            isExpired: false,
+            sortOrder: 1
+        ),
+    ]
+
+    return viewModel
 }
 
 #Preview {
-    Group {
-        if let container = makeHomePreviewContainer() {
-            NavigationStack {
-                HomeView()
-            }
-            .modelContainer(container)
-            .environment(SubscriptionManager.shared)
-        } else {
-            Text(String(localized: "common.preview.unavailable"))
-        }
+    NavigationStack {
+        HomeView(viewModel: makeHomePreviewViewModel(), loadsOnAppear: false)
     }
 }

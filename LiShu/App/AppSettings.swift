@@ -25,6 +25,9 @@ class AppSettings {
         static let ocrUsageMonth = "ocrUsageMonth"
         static let ocrUsageYear = "ocrUsageYear"
         static let deviceToken = "apnsDeviceToken"
+        static let builtinFestivalReminderRevision = "builtinFestivalReminderRevision"
+        static let builtinFestivalReminderPrefix = "builtinFestivalReminder."
+        static let builtinFestivalContactSelectionModePrefix = "builtinFestivalContactSelectionMode."
     }
 
     private init() {}
@@ -173,5 +176,50 @@ class AppSettings {
                 "result": .string(newValue == nil ? "cleared" : "updated"),
             ])
         }
+    }
+
+    // MARK: - Festivals
+
+    private var builtinFestivalReminderRevision: Int {
+        get {
+            access(keyPath: \.builtinFestivalReminderRevision)
+            return defaults.integer(forKey: Keys.builtinFestivalReminderRevision)
+        }
+        set {
+            withMutation(keyPath: \.builtinFestivalReminderRevision) {
+                defaults.set(newValue, forKey: Keys.builtinFestivalReminderRevision)
+            }
+        }
+    }
+
+    func builtinFestivalReminderEnabled(for festival: BuiltinFestivalID) -> Bool {
+        _ = builtinFestivalReminderRevision
+        return defaults.object(forKey: Keys.builtinFestivalReminderPrefix + festival.rawValue) as? Bool ?? true
+    }
+
+    func setBuiltinFestivalReminderEnabled(_ isEnabled: Bool, for festival: BuiltinFestivalID) {
+        defaults.set(isEnabled, forKey: Keys.builtinFestivalReminderPrefix + festival.rawValue)
+        builtinFestivalReminderRevision += 1
+        appSettingsLogger.notice("Updated app setting", metadata: [
+            "action": .string("set"),
+            "target": .string("notifications.festival.\(festival.rawValue)"),
+            "result": .string(isEnabled ? "enabled" : "disabled"),
+        ])
+    }
+
+    func builtinFestivalContactSelectionMode(for festival: BuiltinFestivalID) -> FestivalContactSelectionMode {
+        _ = builtinFestivalReminderRevision
+        let raw = defaults.string(forKey: Keys.builtinFestivalContactSelectionModePrefix + festival.rawValue)
+        return FestivalContactSelectionMode(rawValue: raw ?? "") ?? .recommendedOnly
+    }
+
+    func setBuiltinFestivalContactSelectionMode(_ mode: FestivalContactSelectionMode, for festival: BuiltinFestivalID) {
+        defaults.set(mode.rawValue, forKey: Keys.builtinFestivalContactSelectionModePrefix + festival.rawValue)
+        builtinFestivalReminderRevision += 1
+        appSettingsLogger.notice("Updated app setting", metadata: [
+            "action": .string("set"),
+            "target": .string("festival.contact_selection.\(festival.rawValue)"),
+            "result": .string(mode.rawValue),
+        ])
     }
 }

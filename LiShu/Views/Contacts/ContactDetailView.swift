@@ -52,9 +52,9 @@ struct ContactDetailView: View {
         }
         .sheet(item: $presentedSheet) { route in
             switch route {
-            case let .addRecord(direction, contactID):
+            case let .addRecord(direction, contactID, dailyTag):
                 NavigationStack {
-                    AddRecordView(direction: direction, contactID: contactID)
+                    AddRecordView(direction: direction, contactID: contactID, initialDailyTag: dailyTag)
                 }
             case let .editContact(id):
                 NavigationStack {
@@ -457,7 +457,8 @@ struct ContactDetailView: View {
                 Button {
                     presentedSheet = .addRecord(
                         direction: nil,
-                        contactID: contact.persistentModelID
+                        contactID: contact.persistentModelID,
+                        dailyTag: nil
                     )
                 } label: {
                     Image(systemName: "plus.circle.fill")

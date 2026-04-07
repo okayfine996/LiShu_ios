@@ -179,6 +179,20 @@ struct SettingsView: View {
                     )
                 })
                 .buttonStyle(.plain)
+
+                sectionDivider
+
+                NavigationLink(value: AppRoute.festivalManagement) {
+                    settingsRow(icon: "sparkles", title: String(localized: "festival.management.title"))
+                }
+                .simultaneousGesture(TapGesture().onEnded {
+                    InteractionLogger.navigation(
+                        screen: "settings.root",
+                        target: "settings.festivals",
+                        route: AppRoute.festivalManagement.logName
+                    )
+                })
+                .buttonStyle(.plain)
             }
             .background(DesignSystem.Colors.bgSurface)
             .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))

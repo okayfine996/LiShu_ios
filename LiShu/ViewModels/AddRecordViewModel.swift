@@ -180,12 +180,16 @@ class AddRecordViewModel {
         isCreatingCustomTag = false
     }
 
-    func configure(direction: RecordDirection?, contactID: PersistentIdentifier?, context: ModelContext) {
+    func configure(direction: RecordDirection?, contactID: PersistentIdentifier?, dailyTag: String?, context: ModelContext) {
         if let dir = direction {
             self.direction = dir
         }
         if let cID = contactID {
             selectedContact = context.model(for: cID) as? Contact
+        }
+        if let dailyTag, !dailyTag.isEmpty {
+            contextSelection = .daily
+            selectedDailyTag = dailyTag
         }
         recordsViewModelLogger.info("Configured add record context", metadata: [
             "step": .string("configure"),

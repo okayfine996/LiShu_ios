@@ -24,10 +24,10 @@ struct RecordListView: View {
                         InteractionLogger.tap(
                             screen: "records.list",
                             target: "records.list.addRecord",
-                            route: SheetRoute.addRecord(direction: nil, contactID: nil).logName,
+                            route: SheetRoute.addRecord(direction: nil, contactID: nil, dailyTag: nil).logName,
                             presentation: .sheet
                         )
-                        sheetRoute = .addRecord(direction: nil, contactID: nil)
+                        sheetRoute = .addRecord(direction: nil, contactID: nil, dailyTag: nil)
                     } label: {
                         Label(String(localized: "home.addRecord"), systemImage: "square.and.pencil")
                     }
@@ -119,10 +119,10 @@ struct RecordListView: View {
                         InteractionLogger.tap(
                             screen: "records.list",
                             target: "records.list.empty.addRecord",
-                            route: SheetRoute.addRecord(direction: nil, contactID: nil).logName,
+                            route: SheetRoute.addRecord(direction: nil, contactID: nil, dailyTag: nil).logName,
                             presentation: .sheet
                         )
-                        sheetRoute = .addRecord(direction: nil, contactID: nil)
+                        sheetRoute = .addRecord(direction: nil, contactID: nil, dailyTag: nil)
                     }
                 )
             }
@@ -284,9 +284,9 @@ struct RecordListView: View {
     @ViewBuilder
     private func sheetContent(for route: SheetRoute) -> some View {
         switch route {
-        case let .addRecord(direction, contactID):
+        case let .addRecord(direction, contactID, dailyTag):
             NavigationStack {
-                AddRecordView(direction: direction, contactID: contactID)
+                AddRecordView(direction: direction, contactID: contactID, initialDailyTag: dailyTag)
             }
         case .addContact:
             NavigationStack {

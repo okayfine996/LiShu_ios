@@ -80,6 +80,7 @@ class AddContactViewModel {
         }
 
         if let existing = editingContact {
+            let previousCircle = existing.circle
             BusinessDataLogger.entityMutation(
                 domain: "contact",
                 screen: "contacts.form",
@@ -108,6 +109,9 @@ class AddContactViewModel {
                 NotificationManager.shared.cancelBirthdayReminder(contact: existing)
                 if hasBirthday {
                     NotificationManager.shared.scheduleBirthdayReminder(contact: existing)
+                }
+                if previousCircle != existing.circle {
+                    NotificationManager.shared.rescheduleAll(context: context)
                 }
                 BusinessDataLogger.entityMutation(
                     domain: "contact",

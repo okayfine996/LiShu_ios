@@ -319,9 +319,9 @@ struct EventDetailView: View {
     @ViewBuilder
     private func sheetContent(for route: SheetRoute) -> some View {
         switch route {
-        case let .addRecord(direction, contactID):
+        case let .addRecord(direction, contactID, dailyTag):
             NavigationStack {
-                AddRecordView(direction: direction, contactID: contactID)
+                AddRecordView(direction: direction, contactID: contactID, initialDailyTag: dailyTag)
             }
         case let .editEvent(eID):
             NavigationStack {

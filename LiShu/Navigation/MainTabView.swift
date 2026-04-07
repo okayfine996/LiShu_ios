@@ -123,8 +123,8 @@ struct MainTabView: View {
         switch route {
         case let .recordDetail(id):
             RecordDetailView(recordID: id)
-        case let .addRecord(direction, contactID):
-            AddRecordView(direction: direction, contactID: contactID)
+        case let .addRecord(direction, contactID, dailyTag):
+            AddRecordView(direction: direction, contactID: contactID, initialDailyTag: dailyTag)
         case let .monthlyDetail(year, month):
             MonthlyDetailView(period: .month(year: year, month: month))
         case let .periodDetail(period):
@@ -159,6 +159,16 @@ struct MainTabView: View {
             AppearanceSettingsView()
         case .notificationSettings:
             NotificationSettingsView()
+        case .festivalManagement:
+            FestivalManagementView()
+        case let .festivalDetail(route):
+            FestivalDetailView(route: route)
+        case let .festivalContactEditor(route):
+            FestivalContactEditorView(route: route)
+        case .addUserFestival:
+            FestivalEditorView()
+        case let .editUserFestival(id):
+            FestivalEditorView(festivalID: id)
         case .dataManagement:
             DataManagementView()
         case .importExport:
@@ -177,9 +187,9 @@ struct MainTabView: View {
     @ViewBuilder
     private func sheetContent(for route: SheetRoute) -> some View {
         switch route {
-        case let .addRecord(direction, contactID):
+        case let .addRecord(direction, contactID, dailyTag):
             NavigationStack {
-                AddRecordView(direction: direction, contactID: contactID)
+                AddRecordView(direction: direction, contactID: contactID, initialDailyTag: dailyTag)
             }
         case .addContact:
             NavigationStack {
@@ -217,7 +227,10 @@ struct MainTabView: View {
 
 #Preview {
     MainTabView()
-        .modelContainer(for: [Contact.self, Record.self, Event.self], inMemory: true)
+        .modelContainer(
+            for: [Contact.self, Record.self, Event.self, UserFestival.self, FestivalGreeting.self, FestivalContactPreference.self],
+            inMemory: true
+        )
         .environment(SubscriptionManager.shared)
         .environment(AppSettings.shared)
 }
