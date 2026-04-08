@@ -164,59 +164,53 @@ struct HomeView: View {
     }
 
     private func festivalCard(_ festival: FestivalOccurrence) -> some View {
-        VStack(spacing: 0) {
-            festivalArtwork(for: festival)
-                .frame(height: DesignSystem.Layout.avatarM * 2 + DesignSystem.Spacing.cardPaddingSmall)
-
-            festivalCardInfo(festival)
-        }
-        .frame(width: DesignSystem.Layout.avatarM * 3 + DesignSystem.Spacing.cardPadding)
-        .background(DesignSystem.Colors.bgSurface)
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
-        .contentShape(Rectangle())
+        festivalCardInfo(festival)
+            .background {
+                festivalArtwork(for: festival)
+            }
+            .frame(width: DesignSystem.Layout.avatarM * 3 + DesignSystem.Spacing.cardPadding)
+            .frame(height: DesignSystem.Layout.avatarM * 3 + DesignSystem.Spacing.heroCardPadding)
+            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+            .contentShape(Rectangle())
     }
 
     private func festivalCardInfo(_ festival: FestivalOccurrence) -> some View {
-        VStack(alignment: .leading, spacing: DesignSystem.Spacing.stackTight) {
-            Text(festival.name)
-                .font(DesignSystem.Typography.body)
-                .fontWeight(.semibold)
-                .foregroundStyle(DesignSystem.Colors.textPrimary)
-                .lineLimit(1)
-                .fixedSize(horizontal: false, vertical: true)
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.block) {
+            Spacer(minLength: DesignSystem.Spacing.block)
 
-            VStack(alignment: .leading, spacing: DesignSystem.Spacing.inlineTight) {
-                Text(festival.secondaryText)
-                    .font(DesignSystem.Typography.caption)
-                    .foregroundStyle(DesignSystem.Colors.textSecondary)
-                    .lineLimit(2)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                Text(String(format: String(localized: "festival.detail.countdown"), festival.countdownDays))
-                    .font(DesignSystem.Typography.small)
-                    .foregroundStyle(DesignSystem.Colors.primary)
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.stackTight) {
+                Text(festival.name)
+                    .font(DesignSystem.Typography.body)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(DesignSystem.Colors.textPrimary)
                     .lineLimit(1)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                HStack(alignment: .bottom, spacing: DesignSystem.Spacing.block) {
+                    Text(FestivalService.formatGregorianDate(festival.date))
+                        .font(DesignSystem.Typography.caption)
+                        .foregroundStyle(DesignSystem.Colors.textSecondary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.85)
+
+                    Spacer(minLength: DesignSystem.Spacing.inlineTight)
+
+                    Text(String(format: String(localized: "festival.detail.countdown"), festival.countdownDays))
+                        .font(DesignSystem.Typography.caption)
+                        .foregroundStyle(DesignSystem.Colors.primary)
+                        .lineLimit(1)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
+            .padding(DesignSystem.Spacing.cardPaddingSmall)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(DesignSystem.Colors.bgSurface.opacity(0.72))
         }
-        .padding(.horizontal, DesignSystem.Spacing.cardPaddingSmall)
-        .padding(.vertical, DesignSystem.Spacing.cardPaddingSmall)
-        .frame(minHeight: DesignSystem.Layout.avatarM + DesignSystem.Spacing.block)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(DesignSystem.Colors.bgSurface)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
     }
 
     private func festivalArtwork(for festival: FestivalOccurrence) -> some View {
-        ZStack(alignment: .topTrailing) {
-            festivalArtworkBackground(for: festival)
-
-            Color.black.opacity(0.05)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .overlay(alignment: .topLeading) {
-            RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
-                .stroke(DesignSystem.Colors.bgSurface.opacity(0.5), lineWidth: 1)
-        }
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+        festivalArtworkBackground(for: festival)
     }
 
     @ViewBuilder
