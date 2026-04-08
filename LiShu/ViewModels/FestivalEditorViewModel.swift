@@ -56,7 +56,7 @@ class FestivalEditorViewModel {
         festival.reminderEnabled = reminderEnabled
         festival.contactSelectionMode = contactSelectionMode
         festival.gregorianMonth = recurrence == .annualGregorian ? gregorianMonth : nil
-        festival.gregorianDay = recurrence == .annualGregorian ? gregorianDay : nil
+        festival.gregorianDay = recurrence == .annualGregorian ? clampedGregorianDay(month: gregorianMonth, day: gregorianDay) : nil
         festival.lunarMonth = recurrence == .annualLunar ? lunarMonth : nil
         festival.lunarDay = recurrence == .annualLunar ? lunarDay : nil
         festival.oneTimeDate = recurrence == .oneTime ? Calendar.current.startOfDay(for: oneTimeDate) : nil
@@ -88,5 +88,12 @@ class FestivalEditorViewModel {
         } catch {
             return false
         }
+    }
+
+    private func clampedGregorianDay(month: Int, day: Int) -> Int {
+        let calendar = Calendar(identifier: .gregorian)
+        let components = DateComponents(year: 2024, month: month)
+        let maxDay = calendar.range(of: .day, in: .month, for: calendar.date(from: components) ?? .now)?.count ?? 31
+        return min(max(day, 1), maxDay)
     }
 }

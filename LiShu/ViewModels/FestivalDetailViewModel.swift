@@ -29,12 +29,14 @@ class FestivalDetailViewModel {
     func markGreeted(contact: Contact, context: ModelContext) {
         guard let occurrence else { return }
         FestivalService.markGreeted(contact: contact, occurrence: occurrence, context: context)
+        NotificationManager.shared.rescheduleAll(context: context)
         load(route: occurrence.route, context: context)
     }
 
     func unmarkGreeted(contact: Contact, context: ModelContext) {
         guard let occurrence else { return }
         FestivalService.unmarkGreeted(contact: contact, occurrence: occurrence, context: context)
+        NotificationManager.shared.rescheduleAll(context: context)
         load(route: occurrence.route, context: context)
     }
 }

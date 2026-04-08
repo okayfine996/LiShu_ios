@@ -372,15 +372,30 @@ struct FestivalEditorView: View {
                         .tint(DesignSystem.Colors.primary)
                     } else {
                         HStack(spacing: DesignSystem.Spacing.block) {
-                            dateBadge(
+                            dateBadgeMenu(
                                 title: String(localized: "festival.editor.monthBadge"),
                                 value: formattedMonthValue,
-                                selectionView: AnyView(monthMenu)
+                                options: Array(1 ... 12),
+                                label: { monthLabel(for: $0) },
+                                action: { value in
+                                    withAnimation(.smooth(duration: 0.18)) {
+                                        monthBinding.wrappedValue = value
+                                        if viewModel.recurrence == .annualGregorian {
+                                            viewModel.gregorianDay = min(viewModel.gregorianDay, gregorianDayUpperBound)
+                                        }
+                                    }
+                                }
                             )
-                            dateBadge(
+                            dateBadgeMenu(
                                 title: String(localized: "festival.editor.dayBadge"),
                                 value: formattedDayValue,
-                                selectionView: AnyView(dayMenu)
+                                options: Array(1 ... dayRangeUpperBound),
+                                label: { dayLabel(for: $0) },
+                                action: { value in
+                                    withAnimation(.smooth(duration: 0.18)) {
+                                        dayBinding.wrappedValue = value
+                                    }
+                                }
                             )
                         }
                     }
@@ -428,26 +443,6 @@ struct FestivalEditorView: View {
                     .clipShape(Circle())
             }
         }
-    }
-
-    private var monthMenu: some View {
-        Picker("", selection: monthBinding) {
-            ForEach(1 ... 12, id: \.self) { value in
-                Text(monthLabel(for: value))
-                    .tag(value)
-            }
-        }
-        .pickerStyle(.menu)
-    }
-
-    private var dayMenu: some View {
-        Picker("", selection: dayBinding) {
-            ForEach(1 ... dayRangeUpperBound, id: \.self) { value in
-                Text(dayLabel(for: value))
-                    .tag(value)
-            }
-        }
-        .pickerStyle(.menu)
     }
 
     private var monthBinding: Binding<Int> {
@@ -505,7 +500,7 @@ struct FestivalEditorView: View {
         case .annualGregorian:
             "\(formattedMonthValue)\(formattedDayValue)"
         case .annualLunar:
-            "\(monthLabel(for: viewModel.lunarMonth))\(dayLabel(for: viewModel.lunarDay))"
+            lunarFullDate(month: viewModel.lunarMonth, day: viewModel.lunarDay)
         case .oneTime:
             oneTimeDateFormatter.string(from: viewModel.oneTimeDate)
         }
@@ -516,7 +511,7 @@ struct FestivalEditorView: View {
         case .annualGregorian:
             String(format: String(localized: "festival.editor.monthValue"), viewModel.gregorianMonth)
         case .annualLunar:
-            String(format: String(localized: "festival.editor.monthValue"), viewModel.lunarMonth)
+            lunarMonthText(viewModel.lunarMonth)
         case .oneTime:
             String(format: String(localized: "festival.editor.monthValue"), Calendar.current.component(.month, from: viewModel.oneTimeDate))
         }
@@ -527,7 +522,7 @@ struct FestivalEditorView: View {
         case .annualGregorian:
             String(format: String(localized: "festival.editor.dayValue"), viewModel.gregorianDay)
         case .annualLunar:
-            String(format: String(localized: "festival.editor.dayValue"), viewModel.lunarDay)
+            lunarDayText(viewModel.lunarDay)
         case .oneTime:
             String(format: String(localized: "festival.editor.dayValue"), Calendar.current.component(.day, from: viewModel.oneTimeDate))
         }
@@ -536,12 +531,18 @@ struct FestivalEditorView: View {
     private var dayRangeUpperBound: Int {
         switch viewModel.recurrence {
         case .annualGregorian:
-            31
+            gregorianDayUpperBound
         case .annualLunar:
             30
         case .oneTime:
             31
         }
+    }
+
+    private var gregorianDayUpperBound: Int {
+        let calendar = Calendar(identifier: .gregorian)
+        let components = DateComponents(year: 2024, month: viewModel.gregorianMonth)
+        return calendar.range(of: .day, in: .month, for: calendar.date(from: components) ?? .now)?.count ?? 31
     }
 
     private var selectedContacts: [Contact] {
@@ -609,31 +610,43 @@ struct FestivalEditorView: View {
         .buttonStyle(.plain)
     }
 
-    private func dateBadge(title: String, value: String, selectionView: AnyView) -> some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: DesignSystem.Radius.smallCard)
-                .fill(DesignSystem.Colors.bgInput)
-
-            VStack(spacing: DesignSystem.Spacing.stackTight) {
-                Text(title)
-                    .font(DesignSystem.Typography.small)
-                    .foregroundStyle(DesignSystem.Colors.textTertiary)
-
-                Text(value.replacingOccurrences(of: "农历 ", with: ""))
-                    .font(DesignSystem.Typography.title3)
-                    .foregroundStyle(DesignSystem.Colors.primary)
+    private func dateBadgeMenu(
+        title: String,
+        value: String,
+        options: [Int],
+        label: @escaping (Int) -> String,
+        action: @escaping (Int) -> Void
+    ) -> some View {
+        Menu {
+            ForEach(options, id: \.self) { option in
+                Button(label(option)) {
+                    action(option)
+                }
             }
-            .padding(.vertical, DesignSystem.Spacing.block)
+        } label: {
+            ZStack {
+                RoundedRectangle(cornerRadius: DesignSystem.Radius.smallCard)
+                    .fill(DesignSystem.Colors.bgInput)
+
+                VStack(spacing: DesignSystem.Spacing.stackTight) {
+                    Text(title)
+                        .font(DesignSystem.Typography.small)
+                        .foregroundStyle(DesignSystem.Colors.textTertiary)
+
+                    Text(value)
+                        .font(DesignSystem.Typography.title3)
+                        .foregroundStyle(DesignSystem.Colors.primary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                }
+                .padding(.vertical, DesignSystem.Spacing.block)
+            }
+            .frame(
+                width: DesignSystem.Layout.festivalEditorDateBadgeWidth,
+                height: DesignSystem.Layout.festivalEditorDateBadgeHeight
+            )
         }
-        .frame(
-            width: DesignSystem.Layout.festivalEditorDateBadgeWidth,
-            height: DesignSystem.Layout.festivalEditorDateBadgeHeight
-        )
-        .overlay {
-            selectionView
-                .labelsHidden()
-                .opacity(0.015)
-        }
+        .buttonStyle(.plain)
     }
 
     private var selectionSummaryTitle: String {
@@ -672,7 +685,7 @@ struct FestivalEditorView: View {
         case .annualGregorian, .oneTime:
             String(format: String(localized: "festival.editor.monthValue"), value)
         case .annualLunar:
-            String(format: String(localized: "festival.editor.lunarMonthValue"), value)
+            lunarMonthText(value)
         }
     }
 
@@ -681,8 +694,43 @@ struct FestivalEditorView: View {
         case .annualGregorian, .oneTime:
             String(format: String(localized: "festival.editor.dayValue"), value)
         case .annualLunar:
-            String(format: String(localized: "festival.editor.lunarDayValue"), value)
+            lunarDayText(value)
         }
+    }
+
+    private func lunarFullDate(month: Int, day: Int) -> String {
+        lunarMonthText(month) + lunarDayText(day)
+    }
+
+    private func lunarMonthText(_ month: Int) -> String {
+        if month == 1 {
+            return "正月"
+        }
+        return chineseNumberText(month) + "月"
+    }
+
+    private func lunarDayText(_ day: Int) -> String {
+        switch day {
+        case 1 ... 10:
+            "初" + chineseNumberText(day)
+        case 11 ... 19:
+            "十" + chineseNumberText(day - 10)
+        case 20:
+            "二十"
+        case 21 ... 29:
+            "廿" + chineseNumberText(day - 20)
+        case 30:
+            "三十"
+        default:
+            "\(day)"
+        }
+    }
+
+    private func chineseNumberText(_ number: Int) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .spellOut
+        formatter.locale = Locale(identifier: "zh_Hans")
+        return formatter.string(from: NSNumber(value: number)) ?? "\(number)"
     }
 
     private var oneTimeDateFormatter: DateFormatter {

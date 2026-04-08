@@ -1,5 +1,6 @@
 import SwiftData
 import SwiftUI
+import UIKit
 
 struct FestivalManagementView: View {
     @Environment(\.modelContext) private var modelContext
@@ -112,58 +113,66 @@ struct FestivalManagementView: View {
     }
 
     private func festivalRow(_ festival: FestivalOccurrence, canEdit: Bool) -> some View {
-        NavigationLink(value: AppRoute.festivalDetail(festival.route)) {
-            HStack(spacing: DesignSystem.Spacing.block) {
-                VStack(alignment: .leading, spacing: DesignSystem.Spacing.block) {
+        ZStack(alignment: .bottomLeading) {
+            festivalArtworkBackground(for: festival)
+
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.block) {
+                Spacer(minLength: DesignSystem.Spacing.block)
+
+                HStack(alignment: .bottom, spacing: DesignSystem.Spacing.block) {
                     HStack(spacing: DesignSystem.Spacing.dense) {
-                        Text(festival.name)
-                            .font(DesignSystem.Typography.body)
-                            .foregroundStyle(DesignSystem.Colors.textPrimary)
-                            .lineLimit(1)
+                        VStack(alignment: .leading, spacing: DesignSystem.Spacing.block) {
+                            HStack(spacing: DesignSystem.Spacing.dense) {
+                                Text(festival.name)
+                                    .font(DesignSystem.Typography.body)
+                                    .foregroundStyle(DesignSystem.Colors.textPrimary)
+                                    .lineLimit(1)
 
-                        if let badge = festivalBadge(for: festival, canEdit: canEdit) {
-                            badge
+                                if let badge = festivalBadge(for: festival, canEdit: canEdit) {
+                                    badge
+                                }
+                            }
+
+                            HStack(spacing: DesignSystem.Spacing.inlineTight) {
+                                Text(FestivalService.formatFullGregorianDate(festival.date))
+                                    .font(DesignSystem.Typography.caption)
+                                    .foregroundStyle(DesignSystem.Colors.textSecondary)
+
+                                if festival.isExpired || !festival.reminderEnabled {
+                                    Text(String(localized: "festival.management.closed"))
+                                        .font(DesignSystem.Typography.caption)
+                                        .foregroundStyle(DesignSystem.Colors.textTertiary)
+                                } else {
+                                    Text(String(format: String(localized: "festival.management.daysRemaining"), festival.countdownDays))
+                                        .font(DesignSystem.Typography.caption)
+                                        .foregroundStyle(DesignSystem.Colors.primary)
+                                }
+                            }
                         }
                     }
 
-                    HStack(spacing: DesignSystem.Spacing.inlineTight) {
-                        Text(FestivalService.formatFullGregorianDate(festival.date))
-                            .font(DesignSystem.Typography.caption)
-                            .foregroundStyle(DesignSystem.Colors.textSecondary)
+                    Spacer(minLength: DesignSystem.Spacing.block)
 
-                        if festival.isExpired || !festival.reminderEnabled {
-                            Text(String(localized: "festival.management.closed"))
-                                .font(DesignSystem.Typography.caption)
-                                .foregroundStyle(DesignSystem.Colors.textTertiary)
-                        } else {
-                            Text(String(format: String(localized: "festival.management.daysRemaining"), festival.countdownDays))
-                                .font(DesignSystem.Typography.caption)
-                                .foregroundStyle(DesignSystem.Colors.primary)
-                        }
-                    }
-                }
-
-                Spacer()
-
-                Toggle(
-                    "",
-                    isOn: Binding(
-                        get: { festival.reminderEnabled },
-                        set: { newValue in
-                            FestivalService.setReminderEnabled(newValue, for: festival.route, context: modelContext)
-                            viewModel.load(context: modelContext)
-                            NotificationManager.shared.rescheduleAll(context: modelContext)
-                        }
+                    Toggle(
+                        "",
+                        isOn: Binding(
+                            get: { festival.reminderEnabled },
+                            set: { newValue in
+                                FestivalService.setReminderEnabled(newValue, for: festival.route, context: modelContext)
+                                viewModel.load(context: modelContext)
+                                NotificationManager.shared.rescheduleAll(context: modelContext)
+                            }
+                        )
                     )
-                )
-                .labelsHidden()
-                .tint(DesignSystem.Colors.primary)
+                    .labelsHidden()
+                    .tint(DesignSystem.Colors.primary)
+                }
+                .padding(DesignSystem.Spacing.cardPaddingSmall)
+                .background(DesignSystem.Colors.bgSurface.opacity(0.48))
             }
-            .padding(DesignSystem.Spacing.cardPaddingSmall)
-            .background(DesignSystem.Colors.bgSurface)
-            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
         }
-        .buttonStyle(.plain)
+        .frame(height: DesignSystem.Layout.avatarM * 3 + DesignSystem.Spacing.heroCardPadding)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
         .contextMenu {
             NavigationLink(value: AppRoute.festivalContactEditor(festival.route)) {
                 Label(String(localized: "festival.detail.editContacts"), systemImage: "person.2")
@@ -173,6 +182,84 @@ struct FestivalManagementView: View {
                     Label(String(localized: "common.edit"), systemImage: "pencil")
                 }
             }
+        }
+    }
+
+    @ViewBuilder
+    private func festivalArtworkBackground(for festival: FestivalOccurrence) -> some View {
+        if let imageData = customFestivalImageData(for: festival),
+           ImagePipeline.image(from: imageData, maxPixelSize: ImagePipeline.Preset.homeHeroMaxPixelSize) != nil
+        {
+            DecodedImageView(data: imageData, maxPixelSize: ImagePipeline.Preset.homeHeroMaxPixelSize)
+                .scaledToFill()
+        } else if let assetName = builtinFestivalAssetName(for: festival), UIImage(named: assetName) != nil {
+            Image(assetName)
+                .resizable()
+                .scaledToFill()
+        } else {
+            fallbackArtwork(for: festival)
+        }
+    }
+
+    private func customFestivalImageData(for festival: FestivalOccurrence) -> Data? {
+        guard case let .userFestival(id) = festival.route,
+              let model = modelContext.model(for: id) as? UserFestival
+        else {
+            return nil
+        }
+
+        return model.coverImage
+    }
+
+    private func builtinFestivalAssetName(for festival: FestivalOccurrence) -> String? {
+        guard case let .builtin(id) = festival.route else { return nil }
+        return id.imageAssetName
+    }
+
+    private func fallbackArtwork(for festival: FestivalOccurrence) -> some View {
+        ZStack(alignment: .topTrailing) {
+            LinearGradient(
+                colors: [
+                    DesignSystem.Colors.bgInput,
+                    DesignSystem.Colors.bgIconSubtle,
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+
+            Circle()
+                .stroke(DesignSystem.Colors.border, lineWidth: 1)
+                .frame(width: DesignSystem.Layout.avatarM, height: DesignSystem.Layout.avatarM)
+                .offset(x: -DesignSystem.Spacing.block, y: -DesignSystem.Spacing.block)
+
+            Image(systemName: festivalAccentSymbol(for: festival))
+                .font(DesignSystem.Typography.title2)
+                .foregroundStyle(DesignSystem.Colors.primary)
+                .offset(x: -DesignSystem.Spacing.cardPaddingSmall, y: DesignSystem.Spacing.cardPaddingSmall)
+        }
+    }
+
+    private func festivalAccentSymbol(for festival: FestivalOccurrence) -> String {
+        switch festival.route {
+        case let .builtin(id):
+            switch id {
+            case .springFestival:
+                "sparkler"
+            case .lanternFestival:
+                "lantern.fill"
+            case .dragonBoatFestival:
+                "leaf.fill"
+            case .qixiFestival:
+                "heart.fill"
+            case .midAutumnFestival:
+                "moonphase.waning.crescent"
+            case .doubleNinthFestival:
+                "mountain.2.fill"
+            case .chineseNewYearsEve:
+                "moon.stars.fill"
+            }
+        case .userFestival:
+            "seal.fill"
         }
     }
 

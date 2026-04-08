@@ -2833,6 +2833,7 @@
       }
     },
     "festival.editor.lunarDayValue" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -2854,6 +2855,7 @@
       }
     },
     "festival.editor.lunarMonthValue" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {

@@ -329,7 +329,7 @@ final class NotificationManager {
             return
         }
 
-        let contacts = FestivalService.finalContacts(for: occurrence.route, context: context)
+        let contacts = FestivalService.pendingContacts(for: occurrence, context: context)
         guard !contacts.isEmpty else {
             notificationLogger.info("Skipped festival reminder", metadata: [
                 "step": .string("schedule_festival"),

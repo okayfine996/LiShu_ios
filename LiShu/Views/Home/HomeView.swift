@@ -164,52 +164,43 @@ struct HomeView: View {
     }
 
     private func festivalCard(_ festival: FestivalOccurrence) -> some View {
-        ZStack(alignment: .bottomLeading) {
+        VStack(spacing: 0) {
             festivalArtwork(for: festival)
+                .frame(height: DesignSystem.Layout.avatarM * 2 + DesignSystem.Spacing.cardPaddingSmall)
 
-            LinearGradient(
-                colors: [
-                    .clear,
-                    DesignSystem.Colors.bgPage.opacity(0.16),
-                    DesignSystem.Colors.bgPage.opacity(0.88),
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
+            festivalCardInfo(festival)
+        }
+        .frame(width: DesignSystem.Layout.avatarM * 3 + DesignSystem.Spacing.cardPadding)
+        .background(DesignSystem.Colors.bgSurface)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+        .contentShape(Rectangle())
+    }
 
-            VStack(alignment: .leading, spacing: DesignSystem.Spacing.stackTight) {
-                HStack(alignment: .firstTextBaseline, spacing: DesignSystem.Spacing.inlineTight) {
-                    Text(festival.name)
-                        .font(DesignSystem.Typography.title3)
-                        .foregroundStyle(DesignSystem.Colors.textPrimary)
-                        .lineLimit(1)
+    private func festivalCardInfo(_ festival: FestivalOccurrence) -> some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.stackTight) {
+            HStack(alignment: .firstTextBaseline, spacing: DesignSystem.Spacing.cardPaddingSmall) {
+                Text(festival.name)
+                    .font(DesignSystem.Typography.title3)
+                    .foregroundStyle(DesignSystem.Colors.textPrimary)
+                    .lineLimit(1)
 
-                    Spacer(minLength: DesignSystem.Spacing.inlineTight)
+                Spacer(minLength: DesignSystem.Spacing.cardPaddingSmall)
 
-                    Text(String(format: String(localized: "festival.detail.countdown"), festival.countdownDays))
-                        .font(DesignSystem.Typography.small)
-                        .foregroundStyle(DesignSystem.Colors.primary)
-                        .lineLimit(1)
-                }
-
-                Text(festival.secondaryText)
-                    .font(DesignSystem.Typography.caption)
-                    .foregroundStyle(DesignSystem.Colors.textSecondary)
+                Text(String(format: String(localized: "festival.detail.countdown"), festival.countdownDays))
+                    .font(DesignSystem.Typography.small)
+                    .foregroundStyle(DesignSystem.Colors.primary)
                     .lineLimit(1)
             }
-            .padding(.horizontal, DesignSystem.Spacing.cardPaddingSmall)
-            .padding(.bottom, DesignSystem.Spacing.cardPaddingSmall)
+
+            Text(festival.secondaryText)
+                .font(DesignSystem.Typography.caption)
+                .foregroundStyle(DesignSystem.Colors.textSecondary)
+                .lineLimit(1)
         }
-        .frame(
-            width: DesignSystem.Layout.avatarM * 3 + DesignSystem.Spacing.cardPadding,
-            height: DesignSystem.Layout.avatarM * 3 + DesignSystem.Spacing.block
-        )
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
-        .overlay(
-            RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
-                .stroke(DesignSystem.Colors.primary.opacity(0.05), lineWidth: 1)
-        )
-        .contentShape(Rectangle())
+        .padding(.horizontal, DesignSystem.Spacing.cardPaddingSmall)
+        .padding(.vertical, DesignSystem.Spacing.cardPaddingSmall)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(DesignSystem.Colors.bgSurface)
     }
 
     private func festivalArtwork(for festival: FestivalOccurrence) -> some View {
@@ -219,9 +210,6 @@ struct HomeView: View {
             Color.black.opacity(0.05)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .overlay(alignment: .bottomLeading) {
-            cloudDecoration
-        }
         .overlay(alignment: .topLeading) {
             RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
                 .stroke(DesignSystem.Colors.bgSurface.opacity(0.5), lineWidth: 1)
@@ -291,22 +279,6 @@ struct HomeView: View {
                     .padding(DesignSystem.Spacing.block)
             }
         }
-    }
-
-    private var cloudDecoration: some View {
-        HStack(spacing: DesignSystem.Spacing.dense) {
-            ForEach(0 ..< 3, id: \.self) { _ in
-                RoundedRectangle(cornerRadius: DesignSystem.Radius.button)
-                    .fill(DesignSystem.Colors.bgSurface.opacity(0.6))
-                    .frame(width: DesignSystem.Spacing.cardPadding, height: DesignSystem.Spacing.block)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: DesignSystem.Radius.button)
-                            .stroke(DesignSystem.Colors.border.opacity(0.45), lineWidth: 1)
-                    )
-            }
-        }
-        .padding(.leading, DesignSystem.Spacing.block)
-        .padding(.bottom, DesignSystem.Spacing.block)
     }
 
     private func festivalAccentSymbol(for festival: FestivalOccurrence) -> String {

@@ -11,6 +11,7 @@ enum PulseDiagnostics {
         static let disabledEnvironmentKey = "PULSE_DISABLED"
         static let uiTestingArgument = "--uitesting"
         static let skipOnboardingArgument = "--skip-onboarding"
+        static let xCTestConfigurationFilePathKey = "XCTestConfigurationFilePath"
     }
 
     private nonisolated static let lock = NSLock()
@@ -58,6 +59,7 @@ enum PulseDiagnostics {
     nonisolated static func monitoringEnabled(arguments: [String], environment: [String: String]) -> Bool {
         if arguments.contains(Constants.uiTestingArgument) { return false }
         if environment[Constants.disabledEnvironmentKey] == "1" { return false }
+        if environment[Constants.xCTestConfigurationFilePathKey] != nil { return false }
         return true
     }
 

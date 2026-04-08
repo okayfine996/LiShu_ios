@@ -65,7 +65,12 @@ struct FestivalServiceTests {
             date: Calendar.current.date(byAdding: .day, value: -10, to: .now) ?? .now
         )
 
-        [family, relative, outsider, event, recentRecord, olderRecord].forEach(db.context.insert)
+        db.context.insert(family)
+        db.context.insert(relative)
+        db.context.insert(outsider)
+        db.context.insert(event)
+        db.context.insert(recentRecord)
+        db.context.insert(olderRecord)
         try db.context.save()
 
         let contacts = FestivalService.recommendedContacts(context: db.context)
@@ -80,7 +85,9 @@ struct FestivalServiceTests {
         let festival = UserFestival(name: "家祭", recurrence: .annualGregorian, gregorianMonth: 10, gregorianDay: 1)
         festival.contactSelectionMode = .manualPlusRecommended
 
-        [family, relative, festival].forEach(db.context.insert)
+        db.context.insert(family)
+        db.context.insert(relative)
+        db.context.insert(festival)
         try db.context.save()
 
         FestivalService.replacePreferredContacts(
@@ -97,16 +104,31 @@ struct FestivalServiceTests {
         #expect(contacts.map(\.name) == ["亲属B", "家人A"])
     }
 
-    @Test func homeViewModelLoadsOnlyThreeFestivals() throws {
+    @Test func homeViewModelLoadsAllEnabledFutureFestivals() throws {
         let db = try TestDB()
-        db.context.insert(UserFestival(name: "家祭", recurrence: .annualGregorian, gregorianMonth: 10, gregorianDay: 1))
-        db.context.insert(UserFestival(name: "纪念日", recurrence: .annualGregorian, gregorianMonth: 11, gregorianDay: 1))
-        db.context.insert(UserFestival(name: "师父寿辰", recurrence: .annualGregorian, gregorianMonth: 12, gregorianDay: 1))
+        let enabledFestival = UserFestival(name: "家祭", recurrence: .annualGregorian, gregorianMonth: 10, gregorianDay: 1)
+        let anotherEnabledFestival = UserFestival(name: "纪念日", recurrence: .annualGregorian, gregorianMonth: 11, gregorianDay: 1)
+        let disabledFestival = UserFestival(name: "师父寿辰", recurrence: .annualGregorian, gregorianMonth: 12, gregorianDay: 1)
+        disabledFestival.reminderEnabled = false
+        let expiredFestival = UserFestival(
+            name: "旧纪念日",
+            recurrence: .oneTime,
+            oneTimeDate: Calendar.current.date(byAdding: .day, value: -3, to: .now)
+        )
+        db.context.insert(enabledFestival)
+        db.context.insert(anotherEnabledFestival)
+        db.context.insert(disabledFestival)
+        db.context.insert(expiredFestival)
         try db.context.save()
 
         let viewModel = HomeViewModel()
         viewModel.load(context: db.context)
 
-        #expect(viewModel.upcomingFestivals.count == 3)
+        let names = viewModel.upcomingFestivals.map(\.name)
+        #expect(names.contains("家祭"))
+        #expect(names.contains("纪念日"))
+        #expect(!names.contains("师父寿辰"))
+        #expect(!names.contains("旧纪念日"))
+        #expect(viewModel.upcomingFestivals.allSatisfy { !$0.isExpired && $0.reminderEnabled })
     }
 }

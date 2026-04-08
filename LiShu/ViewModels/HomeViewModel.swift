@@ -92,7 +92,8 @@ class HomeViewModel {
     }
 
     private func loadUpcomingFestivals(context: ModelContext) {
-        upcomingFestivals = Array(FestivalService.allOccurrences(context: context).prefix(3))
+        upcomingFestivals = FestivalService.allOccurrences(context: context)
+            .filter { !$0.isExpired && $0.reminderEnabled }
     }
 
     var formattedIncome: String {
