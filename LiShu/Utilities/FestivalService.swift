@@ -485,11 +485,46 @@ enum FestivalService {
             guard let month = festival.lunarMonth, let day = festival.lunarDay else {
                 return String(localized: "festival.recurrence.annualLunar")
             }
-            return String(format: String(localized: "festival.summary.lunar"), month, day)
+            return String(localized: "festival.recurrence.annualLunar") + " " + lunarDateText(month: month, day: day)
         case .oneTime:
             guard let date = festival.oneTimeDate else { return String(localized: "festival.recurrence.oneTime") }
             return formatFullGregorianDate(date)
         }
+    }
+
+    private static func lunarDateText(month: Int, day: Int) -> String {
+        lunarMonthText(month) + lunarDayText(day)
+    }
+
+    private static func lunarMonthText(_ month: Int) -> String {
+        if month == 1 {
+            return String(localized: "festival.editor.lunarMonth.first")
+        }
+        return chineseNumberText(month) + String(localized: "festival.editor.lunarMonth.suffix")
+    }
+
+    private static func lunarDayText(_ day: Int) -> String {
+        switch day {
+        case 1 ... 10:
+            String(localized: "festival.editor.lunarDay.prefix.firstTen") + chineseNumberText(day)
+        case 11 ... 19:
+            String(localized: "festival.editor.lunarDay.prefix.ten") + chineseNumberText(day - 10)
+        case 20:
+            String(localized: "festival.editor.lunarDay.twenty")
+        case 21 ... 29:
+            String(localized: "festival.editor.lunarDay.prefix.twenty") + chineseNumberText(day - 20)
+        case 30:
+            String(localized: "festival.editor.lunarDay.thirty")
+        default:
+            "\(day)"
+        }
+    }
+
+    private static func chineseNumberText(_ number: Int) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .spellOut
+        formatter.locale = Locale(identifier: "zh_Hans")
+        return formatter.string(from: NSNumber(value: number)) ?? "\(number)"
     }
 
     private static func lastInteractionDate(for contact: Contact) -> Date? {

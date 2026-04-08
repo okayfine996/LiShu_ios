@@ -2832,6 +2832,56 @@
         }
       }
     },
+    "festival.editor.lunarDay.prefix.firstTen" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "初"
+          }
+        }
+      }
+    },
+    "festival.editor.lunarDay.prefix.ten" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "十"
+          }
+        }
+      }
+    },
+    "festival.editor.lunarDay.prefix.twenty" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "廿"
+          }
+        }
+      }
+    },
+    "festival.editor.lunarDay.thirty" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "三十"
+          }
+        }
+      }
+    },
+    "festival.editor.lunarDay.twenty" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "二十"
+          }
+        }
+      }
+    },
     "festival.editor.lunarDayValue" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -2850,6 +2900,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "农历月"
+          }
+        }
+      }
+    },
+    "festival.editor.lunarMonth.first" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正月"
+          }
+        }
+      }
+    },
+    "festival.editor.lunarMonth.suffix" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "月"
           }
         }
       }

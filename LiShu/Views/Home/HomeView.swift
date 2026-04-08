@@ -178,27 +178,29 @@ struct HomeView: View {
 
     private func festivalCardInfo(_ festival: FestivalOccurrence) -> some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.stackTight) {
-            HStack(alignment: .firstTextBaseline, spacing: DesignSystem.Spacing.cardPaddingSmall) {
-                Text(festival.name)
-                    .font(DesignSystem.Typography.title3)
-                    .foregroundStyle(DesignSystem.Colors.textPrimary)
-                    .lineLimit(1)
+            Text(festival.name)
+                .font(DesignSystem.Typography.body)
+                .fontWeight(.semibold)
+                .foregroundStyle(DesignSystem.Colors.textPrimary)
+                .lineLimit(1)
+                .fixedSize(horizontal: false, vertical: true)
 
-                Spacer(minLength: DesignSystem.Spacing.cardPaddingSmall)
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.inlineTight) {
+                Text(festival.secondaryText)
+                    .font(DesignSystem.Typography.caption)
+                    .foregroundStyle(DesignSystem.Colors.textSecondary)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
 
                 Text(String(format: String(localized: "festival.detail.countdown"), festival.countdownDays))
                     .font(DesignSystem.Typography.small)
                     .foregroundStyle(DesignSystem.Colors.primary)
                     .lineLimit(1)
             }
-
-            Text(festival.secondaryText)
-                .font(DesignSystem.Typography.caption)
-                .foregroundStyle(DesignSystem.Colors.textSecondary)
-                .lineLimit(1)
         }
         .padding(.horizontal, DesignSystem.Spacing.cardPaddingSmall)
         .padding(.vertical, DesignSystem.Spacing.cardPaddingSmall)
+        .frame(minHeight: DesignSystem.Layout.avatarM + DesignSystem.Spacing.block)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(DesignSystem.Colors.bgSurface)
     }

@@ -32,6 +32,23 @@ struct FestivalServiceTests {
         #expect(FestivalService.formatFullGregorianDate(occurrence?.date ?? .now) == "2027年5月20日")
     }
 
+    @Test func annualLunarFestivalUsesChineseLunarSummary() throws {
+        let db = try TestDB()
+        let festival = UserFestival(
+            name: "家祭",
+            recurrence: .annualLunar,
+            lunarMonth: 8,
+            lunarDay: 15
+        )
+        db.context.insert(festival)
+        try db.context.save()
+
+        let occurrence = FestivalService.occurrence(for: festival, today: .now)
+
+        #expect(occurrence != nil)
+        #expect(occurrence?.secondaryText == "每年农历 八月十五")
+    }
+
     @Test func manualOnlyFallsBackToRecommendedWhenNoManualContacts() throws {
         let db = try TestDB()
         let family = SampleData.contact(name: "张三", relation: "叔叔", category: "亲属", circle: 2)
