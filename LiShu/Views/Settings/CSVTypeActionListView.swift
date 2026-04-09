@@ -41,6 +41,8 @@ struct CSVTypeActionListView: View {
     @State private var shareURL: URL?
     @State private var exportError: String?
     @State private var showProSheet = false
+    @State private var showExportPreview = false
+    @State private var exportPreviewViewModel: CSVExportPreviewViewModel?
 
     let mode: CSVTypeActionMode
 
@@ -81,6 +83,13 @@ struct CSVTypeActionListView: View {
         .background(DesignSystem.Colors.bgPage)
         .navigationTitle(mode.title)
         .navigationBarTitleDisplayMode(.inline)
+        .navigationDestination(isPresented: $showExportPreview) {
+            if let exportPreviewViewModel {
+                CSVExportPreviewView(viewModel: exportPreviewViewModel) { csv, recordType in
+                    await handleConfirmedExport(csv: csv, recordType: recordType)
+                }
+            }
+        }
         .sheet(isPresented: $showProSheet) {
             NavigationStack {
                 ProMembershipView()
@@ -110,6 +119,11 @@ struct CSVTypeActionListView: View {
         } message: {
             if let exportError {
                 Text(exportError)
+            }
+        }
+        .onChange(of: showExportPreview) { _, newValue in
+            if !newValue {
+                exportPreviewViewModel = nil
             }
         }
     }
@@ -190,14 +204,26 @@ struct CSVTypeActionListView: View {
         }
 
         do {
+            let preview = try ExportService.previewExportCSV(context: modelContext, recordType: recordType)
+            exportPreviewViewModel = CSVExportPreviewViewModel(previewResult: preview)
+            showExportPreview = true
+        } catch {
+            exportError = error.localizedDescription
+        }
+    }
+
+    @MainActor
+    private func handleConfirmedExport(csv: String, recordType: RecordType) async {
+        do {
             let tempDir = FileManager.default.temporaryDirectory
             let fileName = "lishu_\(recordType.rawValue)_export_\(dateSuffix()).csv"
-            guard let data = try ExportService.exportCSV(context: modelContext, recordType: recordType).data(using: .utf8) else {
+            guard let data = csv.data(using: .utf8) else {
                 exportError = String(localized: "settings.data.export_encoding_failed")
                 return
             }
             let fileURL = tempDir.appendingPathComponent(fileName)
             try data.write(to: fileURL)
+            showExportPreview = false
             shareURL = fileURL
         } catch {
             exportError = error.localizedDescription

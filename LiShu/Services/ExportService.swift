@@ -42,6 +42,46 @@ enum ExportService {
         return content
     }
 
+    static func previewExportCSV(context: ModelContext, recordType: RecordType) throws -> CSVExportPreviewResult {
+        exportLogger.notice("Starting CSV export preview", metadata: [
+            "step": .string("preview_export_csv"),
+            "record_type": .string(recordType.rawValue),
+        ])
+
+        let descriptor = FetchDescriptor<Record>(
+            predicate: #Predicate<Record> { $0.recordTypeRaw == recordType.rawValue },
+            sortBy: [SortDescriptor(\.date, order: .reverse)]
+        )
+        let records = try context.fetch(descriptor)
+
+        var items: [CSVExportPreviewItem] = []
+        var skipped = 0
+
+        for (index, record) in records.enumerated() {
+            let item = buildExportPreviewItem(for: record, recordType: recordType, rowNumber: index + 2)
+            if case .skipped = item.status {
+                skipped += 1
+            }
+            items.append(item)
+        }
+
+        exportLogger.notice("Finished CSV export preview", metadata: [
+            "step": .string("preview_export_csv"),
+            "record_type": .string(recordType.rawValue),
+            "count": .stringConvertible(items.count),
+            "skipped": .stringConvertible(skipped),
+        ])
+
+        return CSVExportPreviewResult(recordType: recordType, items: items, skipped: skipped)
+    }
+
+    static func exportPreviewItems(_ items: [CSVExportPreviewItem], recordType: RecordType) throws -> String {
+        let rows = items
+            .filter { $0.isSelected && $0.isExportable }
+            .compactMap(\.payload?.csvRow)
+        return ([csvHeader(for: recordType)] + rows).joined(separator: "\n")
+    }
+
     static func templateCSV(for recordType: RecordType) -> String {
         [csvHeader(for: recordType), templateRow(for: recordType)].joined(separator: "\n")
     }
@@ -90,6 +130,66 @@ enum ExportService {
         }
 
         return csvValues(for: recordType).map { escapeCSV(values[$0] ?? "") }.joined(separator: ",")
+    }
+
+    private static func buildExportPreviewItem(for record: Record, recordType: RecordType, rowNumber: Int) -> CSVExportPreviewItem {
+        let contactName = record.contact?.name.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let contextText = record.contextDisplayName
+        let detailText = previewDetailText(
+            dateText: csvDateFormatter.string(from: record.date),
+            direction: record.direction,
+            recordType: record.recordType
+        )
+
+        guard !contactName.isEmpty else {
+            return CSVExportPreviewItem(
+                rowNumber: rowNumber,
+                isSelected: false,
+                contactName: String(localized: "common.unknown"),
+                contextText: contextText,
+                detailText: detailText,
+                trailingText: exportPreviewTrailingText(for: record),
+                status: .skipped(String(localized: "csv.export.preview.invalid.missingContact")),
+                payload: nil
+            )
+        }
+
+        guard resolveExportContext(for: record) != nil else {
+            return CSVExportPreviewItem(
+                rowNumber: rowNumber,
+                isSelected: false,
+                contactName: contactName,
+                contextText: contextText,
+                detailText: detailText,
+                trailingText: exportPreviewTrailingText(for: record),
+                status: .skipped(String(localized: "csv.export.preview.invalid.missingContext")),
+                payload: nil
+            )
+        }
+
+        guard let csvRow = exportRow(for: record, recordType: recordType) else {
+            return CSVExportPreviewItem(
+                rowNumber: rowNumber,
+                isSelected: false,
+                contactName: contactName,
+                contextText: contextText,
+                detailText: detailText,
+                trailingText: exportPreviewTrailingText(for: record),
+                status: .skipped(String(localized: "csv.export.preview.invalid.missingContext")),
+                payload: nil
+            )
+        }
+
+        return CSVExportPreviewItem(
+            rowNumber: rowNumber,
+            isSelected: true,
+            contactName: contactName,
+            contextText: contextText,
+            detailText: detailText,
+            trailingText: exportPreviewTrailingText(for: record),
+            status: .ready,
+            payload: CSVExportPayload(csvRow: csvRow)
+        )
     }
 
     private static func templateRow(for recordType: RecordType) -> String {
@@ -224,9 +324,9 @@ enum ExportService {
 
     // MARK: - CSV Import
 
-    static func importCSV(url: URL, context: ModelContext) throws -> ImportResult {
-        importLogger.notice("Starting CSV import", metadata: [
-            "step": .string("import_csv"),
+    static func previewCSV(url: URL) throws -> CSVImportPreviewResult {
+        importLogger.notice("Starting CSV preview parse", metadata: [
+            "step": .string("preview_csv"),
             "source": .string(url.lastPathComponent),
         ])
 
@@ -238,155 +338,51 @@ enum ExportService {
         }
 
         let content = try String(contentsOf: url, encoding: .utf8)
-        let rows = parseCSVRows(content)
+        return try previewCSV(content: content, sourceFileName: url.lastPathComponent)
+    }
 
-        guard rows.count > 1 else {
-            importLogger.warning("CSV import finished without data rows", metadata: [
-                "step": .string("import_csv"),
-                "source": .string(url.lastPathComponent),
-                "reason": .string("empty_rows"),
-            ])
-            return ImportResult()
-        }
+    static func importCSV(url: URL, context: ModelContext) throws -> ImportResult {
+        let preview = try previewCSV(url: url)
+        return try importPreviewItems(preview.items, baseResult: ImportResult(
+            imported: 0,
+            skipped: preview.skipped,
+            errors: preview.errors
+        ), sourceFileName: preview.sourceFileName, context: context)
+    }
 
-        let headerRow = rows[0].map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-        try validateCSVHeader(headerRow)
-        let columnIndex = buildCSVColumnIndexMap(headerRow)
+    static func importPreviewItems(
+        _ items: [CSVImportPreviewItem],
+        baseResult: ImportResult = ImportResult(),
+        sourceFileName: String = "preview",
+        context: ModelContext
+    ) throws -> ImportResult {
+        importLogger.notice("Starting CSV import", metadata: [
+            "step": .string("import_csv"),
+            "source": .string(sourceFileName),
+        ])
 
-        var result = ImportResult()
+        var result = baseResult
+        let importableItems = items.filter { $0.isSelected && $0.isImportable }
 
-        for (rowIndex, rawFields) in rows.dropFirst().enumerated() {
-            if rawFields.allSatisfy({ $0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }) {
-                continue
-            }
+        for item in importableItems {
+            guard let payload = item.payload else { continue }
 
-            let fields = alignFieldsToHeader(rawFields, headerColumnCount: headerRow.count)
-            let contactName = csvCell(fields, columnIndex: columnIndex, column: "联系人")
-            guard !contactName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-                result.errors += 1
-                importLogger.warning("Skipped CSV row", metadata: [
-                    "step": .string("import_csv"),
-                    "source": .string(url.lastPathComponent),
-                    "reason": .string("missing_contact_name"),
-                    "count": .stringConvertible(rowIndex + 2),
-                ])
-                continue
-            }
-
-            let amountStr = csvCell(fields, columnIndex: columnIndex, column: "金额")
-            let amount = UserEnteredDecimal.parse(amountStr) ?? 0
-            let giftName = csvCell(fields, columnIndex: columnIndex, column: "礼品名称")
-            let giftEstimatedValueStr = csvCell(fields, columnIndex: columnIndex, column: "礼品估值")
-            let favorHelp = csvCell(fields, columnIndex: columnIndex, column: "帮忙说明")
-            let banquetLocation = csvCell(fields, columnIndex: columnIndex, column: "宴请地点")
-            let banquetAttendees = csvCell(fields, columnIndex: columnIndex, column: "宴请宾客")
-            let banquetExtra = csvCell(fields, columnIndex: columnIndex, column: "宴请额外费用")
-            let humanDescription = csvCell(fields, columnIndex: columnIndex, column: "人情描述")
-
-            guard let inferredType = inferRecordType(
-                amount: amount,
-                giftName: giftName,
-                giftEstimatedValueStr: giftEstimatedValueStr,
-                favorHelp: favorHelp,
-                banquetLocation: banquetLocation,
-                banquetAttendees: banquetAttendees,
-                banquetExtra: banquetExtra,
-                humanDescription: humanDescription,
-                columnIndex: columnIndex
-            ) else {
-                result.errors += 1
-                importLogger.warning("Skipped CSV row", metadata: [
-                    "step": .string("import_csv"),
-                    "source": .string(url.lastPathComponent),
-                    "reason": .string("missing_payload"),
-                    "count": .stringConvertible(rowIndex + 2),
-                ])
-                continue
-            }
-
-            let eventName = csvCell(fields, columnIndex: columnIndex, column: "事件")
-            let eventTypeStr = csvCell(fields, columnIndex: columnIndex, column: "事件类型")
-            let sceneTag = csvCell(fields, columnIndex: columnIndex, column: "场景标签")
-            let directionStr = csvCell(fields, columnIndex: columnIndex, column: "方向")
-            let paymentStr = csvCell(fields, columnIndex: columnIndex, column: "支付方式")
-            let returnedStr = csvCell(fields, columnIndex: columnIndex, column: "已退金额")
-            let dateStr = csvCell(fields, columnIndex: columnIndex, column: "日期")
-            let note = csvCell(fields, columnIndex: columnIndex, column: "备注")
-
-            let trimmedEventName = eventName.trimmingCharacters(in: .whitespacesAndNewlines)
-            let trimmedSceneTag = sceneTag.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !trimmedEventName.isEmpty || !trimmedSceneTag.isEmpty else {
-                result.skipped += 1
-                importLogger.warning("Skipped CSV row", metadata: [
-                    "step": .string("import_csv"),
-                    "source": .string(url.lastPathComponent),
-                    "reason": .string("missing_context"),
-                    "count": .stringConvertible(rowIndex + 2),
-                ])
-                continue
-            }
-
-            if inferredType == .monetary, amount <= 0 {
-                result.errors += 1
-                importLogger.warning("Skipped CSV row", metadata: [
-                    "step": .string("import_csv"),
-                    "source": .string(url.lastPathComponent),
-                    "reason": .string("invalid_monetary_amount"),
-                    "count": .stringConvertible(rowIndex + 2),
-                ])
-                continue
-            }
-
-            let date = parseDate(dateStr) ?? Date()
-            if parseDate(dateStr) == nil, !dateStr.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                importLogger.info("Fell back to current date during CSV import", metadata: [
-                    "step": .string("import_csv"),
-                    "source": .string(url.lastPathComponent),
-                    "reason": .string("invalid_date_fallback"),
-                    "count": .stringConvertible(rowIndex + 2),
-                ])
-            }
-
-            if parseDate(dateStr) == nil, dateStr.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                importLogger.info("Fell back to current date during CSV import", metadata: [
-                    "step": .string("import_csv"),
-                    "source": .string(url.lastPathComponent),
-                    "reason": .string("missing_date_fallback"),
-                    "count": .stringConvertible(rowIndex + 2),
-                ])
-            }
-
-            let contact = findOrCreateContact(name: contactName, context: context)
-            let eventType = trimmedEventName.isEmpty ? .other : parseEventType(eventTypeStr)
-            let event = findOrCreateEventIfNeeded(name: trimmedEventName, type: eventType, context: context)
-            let direction = parseDirection(directionStr)
-            let paymentMethod = parsePaymentMethod(paymentStr)
-            let returnedAmount = inferredType == .monetary ? (UserEnteredDecimal.parse(returnedStr) ?? 0) : 0
+            let contact = findOrCreateContact(name: payload.contactName, context: context)
+            let event = findOrCreateEventIfNeeded(name: payload.eventName, type: payload.eventType, context: context)
+            let returnedAmount = payload.recordType == .monetary ? payload.returnedAmount : 0
 
             let record = Record(
                 contact: contact,
                 event: event,
-                direction: direction,
+                direction: payload.direction,
                 returnedAmount: returnedAmount,
-                note: note,
-                date: date,
-                recordType: inferredType,
+                note: payload.note,
+                date: payload.date,
+                recordType: payload.recordType,
                 relationshipWeight: .reciprocal
             )
-            record.contextTag = trimmedEventName.isEmpty ? trimmedSceneTag : ""
-            record.applyTypeData(buildTypeDataForImport(
-                recordType: inferredType,
-                amount: amount,
-                paymentMethod: paymentMethod,
-                returnedAmount: returnedAmount,
-                humanDesc: humanDescription,
-                giftName: giftName,
-                giftEstStr: giftEstimatedValueStr,
-                favorHelp: favorHelp,
-                banquetLoc: banquetLocation,
-                banquetAtt: banquetAttendees,
-                banquetExtra: banquetExtra
-            ))
+            record.contextTag = payload.eventName.isEmpty ? payload.sceneTag : ""
+            record.applyTypeData(payload.typeData)
 
             context.insert(record)
             result.imported += 1
@@ -395,7 +391,7 @@ enum ExportService {
         try context.save()
         importLogger.notice("Finished CSV import", metadata: [
             "step": .string("import_csv"),
-            "source": .string(url.lastPathComponent),
+            "source": .string(sourceFileName),
             "count": .stringConvertible(result.imported),
             "result": .string("success"),
             "errors": .stringConvertible(result.errors),
@@ -711,6 +707,319 @@ enum ExportService {
         return ("", "", trimmedSceneTag)
     }
 
+    static func previewCSV(content: String, sourceFileName: String) throws -> CSVImportPreviewResult {
+        let rows = parseCSVRows(content)
+
+        guard rows.count > 1 else {
+            importLogger.warning("CSV preview finished without data rows", metadata: [
+                "step": .string("preview_csv"),
+                "source": .string(sourceFileName),
+                "reason": .string("empty_rows"),
+            ])
+            return CSVImportPreviewResult(sourceFileName: sourceFileName, items: [])
+        }
+
+        let headerRow = rows[0].map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+        try validateCSVHeader(headerRow)
+        let columnIndex = buildCSVColumnIndexMap(headerRow)
+
+        var items: [CSVImportPreviewItem] = []
+        var skipped = 0
+        var errors = 0
+
+        for (rowIndex, rawFields) in rows.dropFirst().enumerated() {
+            if rawFields.allSatisfy({ $0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }) {
+                continue
+            }
+
+            let item = buildPreviewItem(
+                rawFields: rawFields,
+                rowIndex: rowIndex,
+                headerColumnCount: headerRow.count,
+                columnIndex: columnIndex
+            )
+            if case .skipped = item.status {
+                skipped += 1
+            }
+            if case .error = item.status {
+                errors += 1
+            }
+            items.append(item)
+        }
+
+        importLogger.notice("Finished CSV preview parse", metadata: [
+            "step": .string("preview_csv"),
+            "source": .string(sourceFileName),
+            "count": .stringConvertible(items.count),
+            "errors": .stringConvertible(errors),
+        ])
+
+        return CSVImportPreviewResult(
+            sourceFileName: sourceFileName,
+            items: items,
+            skipped: skipped,
+            errors: errors
+        )
+    }
+
+    private static func buildPreviewItem(
+        rawFields: [String],
+        rowIndex: Int,
+        headerColumnCount: Int,
+        columnIndex: [String: Int]
+    ) -> CSVImportPreviewItem {
+        let lineNumber = rowIndex + 2
+        let fields = alignFieldsToHeader(rawFields, headerColumnCount: headerColumnCount)
+        let contactName = csvCell(fields, columnIndex: columnIndex, column: "联系人").trimmingCharacters(in: .whitespacesAndNewlines)
+        let eventName = csvCell(fields, columnIndex: columnIndex, column: "事件").trimmingCharacters(in: .whitespacesAndNewlines)
+        let eventTypeName = csvCell(fields, columnIndex: columnIndex, column: "事件类型").trimmingCharacters(in: .whitespacesAndNewlines)
+        let sceneTag = csvCell(fields, columnIndex: columnIndex, column: "场景标签").trimmingCharacters(in: .whitespacesAndNewlines)
+        let direction = parseDirection(csvCell(fields, columnIndex: columnIndex, column: "方向"))
+        let dateTextRaw = csvCell(fields, columnIndex: columnIndex, column: "日期")
+        let note = csvCell(fields, columnIndex: columnIndex, column: "备注")
+        let amountStr = csvCell(fields, columnIndex: columnIndex, column: "金额")
+        let amount = UserEnteredDecimal.parse(amountStr) ?? 0
+        let returnedAmount = UserEnteredDecimal.parse(csvCell(fields, columnIndex: columnIndex, column: "已退金额")) ?? 0
+        let giftName = csvCell(fields, columnIndex: columnIndex, column: "礼品名称")
+        let giftEstimatedValueStr = csvCell(fields, columnIndex: columnIndex, column: "礼品估值")
+        let favorHelp = csvCell(fields, columnIndex: columnIndex, column: "帮忙说明")
+        let banquetLocation = csvCell(fields, columnIndex: columnIndex, column: "宴请地点")
+        let banquetAttendees = csvCell(fields, columnIndex: columnIndex, column: "宴请宾客")
+        let banquetExtra = csvCell(fields, columnIndex: columnIndex, column: "宴请额外费用")
+        let humanDescription = csvCell(fields, columnIndex: columnIndex, column: "人情描述")
+        let recordType = inferRecordType(
+            amount: amount,
+            giftName: giftName,
+            giftEstimatedValueStr: giftEstimatedValueStr,
+            favorHelp: favorHelp,
+            banquetLocation: banquetLocation,
+            banquetAttendees: banquetAttendees,
+            banquetExtra: banquetExtra,
+            humanDescription: humanDescription,
+            columnIndex: columnIndex
+        )
+        let parsedDate = parseDate(dateTextRaw) ?? Date()
+        let dateText = csvDateFormatter.string(from: parsedDate)
+        let contextText = eventName.isEmpty ? sceneTag : eventName
+
+        guard !contactName.isEmpty else {
+            return CSVImportPreviewItem(
+                rowNumber: lineNumber,
+                isSelected: false,
+                contactName: String(localized: "common.unknown"),
+                eventName: eventName,
+                eventTypeName: eventTypeName,
+                sceneTag: sceneTag,
+                direction: direction,
+                date: parsedDate,
+                dateText: dateText,
+                note: note,
+                recordType: recordType,
+                contextText: contextText,
+                trailingText: previewTrailingText(
+                    recordType: recordType,
+                    amount: amount,
+                    giftName: giftName,
+                    favorHelp: favorHelp,
+                    banquetLocation: banquetLocation,
+                    humanDescription: humanDescription
+                ),
+                detailText: previewDetailText(dateText: dateText, direction: direction, recordType: recordType),
+                status: .error(String(localized: "csv.import.preview.invalid.missingContact")),
+                payload: nil
+            )
+        }
+
+        guard let resolvedRecordType = recordType else {
+            return CSVImportPreviewItem(
+                rowNumber: lineNumber,
+                isSelected: false,
+                contactName: contactName,
+                eventName: eventName,
+                eventTypeName: eventTypeName,
+                sceneTag: sceneTag,
+                direction: direction,
+                date: parsedDate,
+                dateText: dateText,
+                note: note,
+                recordType: nil,
+                contextText: contextText,
+                trailingText: "",
+                detailText: previewDetailText(dateText: dateText, direction: direction, recordType: nil),
+                status: .error(String(localized: "csv.import.preview.invalid.missingPayload")),
+                payload: nil
+            )
+        }
+
+        guard !eventName.isEmpty || !sceneTag.isEmpty else {
+            return CSVImportPreviewItem(
+                rowNumber: lineNumber,
+                isSelected: false,
+                contactName: contactName,
+                eventName: eventName,
+                eventTypeName: eventTypeName,
+                sceneTag: sceneTag,
+                direction: direction,
+                date: parsedDate,
+                dateText: dateText,
+                note: note,
+                recordType: resolvedRecordType,
+                contextText: String(localized: "record.context.daily"),
+                trailingText: previewTrailingText(
+                    recordType: resolvedRecordType,
+                    amount: amount,
+                    giftName: giftName,
+                    favorHelp: favorHelp,
+                    banquetLocation: banquetLocation,
+                    humanDescription: humanDescription
+                ),
+                detailText: previewDetailText(dateText: dateText, direction: direction, recordType: resolvedRecordType),
+                status: .skipped(String(localized: "csv.import.preview.invalid.missingContext")),
+                payload: nil
+            )
+        }
+
+        if resolvedRecordType == .monetary, amount <= 0 {
+            return CSVImportPreviewItem(
+                rowNumber: lineNumber,
+                isSelected: false,
+                contactName: contactName,
+                eventName: eventName,
+                eventTypeName: eventTypeName,
+                sceneTag: sceneTag,
+                direction: direction,
+                date: parsedDate,
+                dateText: dateText,
+                note: note,
+                recordType: resolvedRecordType,
+                contextText: eventName.isEmpty ? sceneTag : eventName,
+                trailingText: previewTrailingText(
+                    recordType: resolvedRecordType,
+                    amount: amount,
+                    giftName: giftName,
+                    favorHelp: favorHelp,
+                    banquetLocation: banquetLocation,
+                    humanDescription: humanDescription
+                ),
+                detailText: previewDetailText(dateText: dateText, direction: direction, recordType: resolvedRecordType),
+                status: .error(String(localized: "csv.import.preview.invalid.invalidAmount")),
+                payload: nil
+            )
+        }
+
+        let resolvedEventType = eventName.isEmpty ? .other : parseEventType(eventTypeName)
+        let payload = CSVImportPayload(
+            contactName: contactName,
+            eventName: eventName,
+            eventType: resolvedEventType,
+            sceneTag: eventName.isEmpty ? sceneTag : "",
+            direction: direction,
+            date: parsedDate,
+            note: note,
+            recordType: resolvedRecordType,
+            returnedAmount: returnedAmount,
+            typeData: buildTypeDataForImport(
+                recordType: resolvedRecordType,
+                amount: amount,
+                paymentMethod: parsePaymentMethod(csvCell(fields, columnIndex: columnIndex, column: "支付方式")),
+                returnedAmount: returnedAmount,
+                humanDesc: humanDescription,
+                giftName: giftName,
+                giftEstStr: giftEstimatedValueStr,
+                favorHelp: favorHelp,
+                banquetLoc: banquetLocation,
+                banquetAtt: banquetAttendees,
+                banquetExtra: banquetExtra
+            )
+        )
+
+        return CSVImportPreviewItem(
+            rowNumber: lineNumber,
+            isSelected: true,
+            contactName: contactName,
+            eventName: eventName,
+            eventTypeName: eventTypeName,
+            sceneTag: sceneTag,
+            direction: direction,
+            date: parsedDate,
+            dateText: dateText,
+            note: note,
+            recordType: resolvedRecordType,
+            contextText: eventName.isEmpty ? sceneTag : eventName,
+            trailingText: previewTrailingText(
+                recordType: resolvedRecordType,
+                amount: amount,
+                giftName: giftName,
+                favorHelp: favorHelp,
+                banquetLocation: banquetLocation,
+                humanDescription: humanDescription
+            ),
+            detailText: previewDetailText(dateText: dateText, direction: direction, recordType: resolvedRecordType),
+            status: .ready,
+            payload: payload
+        )
+    }
+
+    private static func previewTrailingText(
+        recordType: RecordType?,
+        amount: Double,
+        giftName: String,
+        favorHelp: String,
+        banquetLocation: String,
+        humanDescription: String
+    ) -> String {
+        guard let recordType else { return "" }
+        switch recordType {
+        case .monetary:
+            return formatPreviewCurrency(amount)
+        case .gift:
+            return firstNonEmpty(giftName, humanDescription)
+        case .favor:
+            return firstNonEmpty(favorHelp, humanDescription)
+        case .banquet:
+            return firstNonEmpty(banquetLocation, humanDescription)
+        }
+    }
+
+    private static func exportPreviewTrailingText(for record: Record) -> String {
+        switch record.recordType {
+        case .monetary:
+            formatPreviewCurrency(record.monetaryAmount)
+        case .gift:
+            firstNonEmpty(record.giftData?.giftName ?? "", record.resolvedDescription)
+        case .favor:
+            firstNonEmpty(record.favorData?.description ?? "", record.resolvedDescription)
+        case .banquet:
+            firstNonEmpty(record.banquetData?.location ?? "", record.resolvedDescription)
+        }
+    }
+
+    private static func previewDetailText(dateText: String, direction: RecordDirection, recordType: RecordType?) -> String {
+        var parts = [dateText, direction.csvValue]
+        if let recordType {
+            parts.append(recordType.displayName)
+        }
+        return parts.joined(separator: " · ")
+    }
+
+    private static func formatPreviewCurrency(_ amount: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.maximumFractionDigits = amount == Double(Int(amount)) ? 0 : 2
+        let formatted = formatter.string(from: NSNumber(value: amount)) ?? String(format: "%.2f", amount)
+        return "¥" + formatted
+    }
+
+    private static func firstNonEmpty(_ values: String...) -> String {
+        for value in values {
+            let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !trimmed.isEmpty {
+                return trimmed
+            }
+        }
+        return ""
+    }
+
     static func parseEventType(_ str: String) -> EventType {
         let s = str.trimmingCharacters(in: .whitespaces)
         switch s {
@@ -763,6 +1072,115 @@ struct ImportResult {
     var imported: Int = 0
     var skipped: Int = 0
     var errors: Int = 0
+}
+
+struct CSVImportPreviewResult {
+    let sourceFileName: String
+    var items: [CSVImportPreviewItem]
+    var skipped: Int = 0
+    var errors: Int = 0
+}
+
+struct CSVImportPreviewItem: Identifiable {
+    let id = UUID()
+    let rowNumber: Int
+    var isSelected: Bool
+    let contactName: String
+    let eventName: String
+    let eventTypeName: String
+    let sceneTag: String
+    let direction: RecordDirection
+    let date: Date?
+    let dateText: String
+    let note: String
+    let recordType: RecordType?
+    let contextText: String
+    let trailingText: String
+    let detailText: String
+    let status: CSVImportPreviewStatus
+    let payload: CSVImportPayload?
+
+    var isImportable: Bool {
+        switch status {
+        case .ready:
+            payload != nil
+        case .skipped, .error:
+            false
+        }
+    }
+
+    var statusMessage: String? {
+        switch status {
+        case .ready:
+            nil
+        case let .skipped(reason), let .error(reason):
+            reason
+        }
+    }
+}
+
+struct CSVExportPreviewResult {
+    let recordType: RecordType
+    var items: [CSVExportPreviewItem]
+    var skipped: Int = 0
+}
+
+struct CSVExportPreviewItem: Identifiable {
+    let id = UUID()
+    let rowNumber: Int
+    var isSelected: Bool
+    let contactName: String
+    let contextText: String
+    let detailText: String
+    let trailingText: String
+    let status: CSVExportPreviewStatus
+    let payload: CSVExportPayload?
+
+    var isExportable: Bool {
+        switch status {
+        case .ready:
+            payload != nil
+        case .skipped:
+            false
+        }
+    }
+
+    var statusMessage: String? {
+        switch status {
+        case .ready:
+            nil
+        case let .skipped(reason):
+            reason
+        }
+    }
+}
+
+enum CSVExportPreviewStatus: Equatable {
+    case ready
+    case skipped(String)
+}
+
+struct CSVExportPayload {
+    let csvRow: String
+}
+
+enum CSVImportPreviewStatus: Equatable {
+    case ready
+    case skipped(String)
+    case error(String)
+}
+
+struct CSVImportPayload {
+    let contactName: String
+    let eventName: String
+    let eventType: EventType
+    let sceneTag: String
+    let direction: RecordDirection
+    let date: Date
+    let note: String
+    let recordType: RecordType
+    let returnedAmount: Double
+    let typeData: RecordTypeData
 }
 
 enum ImportError: LocalizedError {

@@ -7,9 +7,13 @@ struct DataManagementView: View {
     @State private var showComingSoonToast = false
     @State private var toastMessage = ""
     @State private var showOCRImport = false
+    @State private var showCSVPreview = false
+    @State private var csvPreviewViewModel: CSVImportPreviewViewModel?
     @State private var exportError: String?
     @State private var showCSVImporter = false
     @State private var importResult: String?
+    @State private var didLoadUITestCSVPreview = false
+    @State private var didRequestUITestCSVImporter = false
 
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -23,11 +27,26 @@ struct DataManagementView: View {
         .background(DesignSystem.Colors.bgPage)
         .navigationTitle(String(localized: "settings.importExport"))
         .navigationBarTitleDisplayMode(.inline)
+        .navigationDestination(isPresented: $showCSVPreview) {
+            if let csvPreviewViewModel {
+                CSVImportPreviewView(viewModel: csvPreviewViewModel) { result in
+                    handleCompletedCSVImport(result)
+                }
+            }
+        }
         .overlay(alignment: .bottom) {
             if showComingSoonToast {
                 toastView
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                     .padding(.bottom, 32)
+            }
+        }
+        .overlay(alignment: .topLeading) {
+            if CommandLine.arguments.contains("--uitesting"), didRequestUITestCSVImporter {
+                Color.clear
+                    .frame(width: 1, height: 1)
+                    .accessibilityElement()
+                    .accessibilityIdentifier("csv.importer.requested")
             }
         }
         .fullScreenCover(isPresented: $showOCRImport) {
@@ -47,6 +66,14 @@ struct DataManagementView: View {
             allowsMultipleSelection: false
         ) { result in
             handleCSVImport(result)
+        }
+        .onChange(of: showCSVPreview) { _, newValue in
+            if !newValue {
+                csvPreviewViewModel = nil
+            }
+        }
+        .onAppear {
+            loadUITestCSVPreviewIfNeeded()
         }
     }
 
@@ -70,7 +97,15 @@ struct DataManagementView: View {
                 actionRow(
                     icon: "doc.text",
                     title: String(localized: "settings.data.importCSV"),
-                    action: { showCSVImporter = true }
+                    action: {
+                        if CommandLine.arguments.contains("--uitesting") {
+                            didRequestUITestCSVImporter = true
+                            if ProcessInfo.processInfo.environment["UITEST_SKIP_SYSTEM_CSV_IMPORTER"] == "1" {
+                                return
+                            }
+                        }
+                        showCSVImporter = true
+                    }
                 )
 
                 sectionDivider
@@ -199,26 +234,48 @@ struct DataManagementView: View {
         case let .success(urls):
             guard let url = urls.first else { return }
             do {
-                let res = try ExportService.importCSV(url: url, context: modelContext)
-                importResult = String(
-                    format: String(localized: "settings.data.importResult %lld %lld %lld"),
-                    Int64(res.imported),
-                    Int64(res.skipped),
-                    Int64(res.errors)
-                )
-                toastMessage = importResult ?? ""
-                withAnimation(.easeInOut(duration: 0.3)) {
-                    showComingSoonToast = true
-                }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                    withAnimation(.easeInOut(duration: 0.3)) {
-                        showComingSoonToast = false
-                    }
-                }
+                let preview = try ExportService.previewCSV(url: url)
+                csvPreviewViewModel = CSVImportPreviewViewModel(previewResult: preview)
+                showCSVPreview = true
             } catch {
                 exportError = error.localizedDescription
             }
         case let .failure(error):
+            exportError = error.localizedDescription
+        }
+    }
+
+    private func handleCompletedCSVImport(_ result: ImportResult) {
+        importResult = String(
+            format: String(localized: "settings.data.importResult %lld %lld %lld"),
+            Int64(result.imported),
+            Int64(result.skipped),
+            Int64(result.errors)
+        )
+        toastMessage = importResult ?? ""
+        withAnimation(.easeInOut(duration: 0.3)) {
+            showComingSoonToast = true
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            withAnimation(.easeInOut(duration: 0.3)) {
+                showComingSoonToast = false
+            }
+        }
+    }
+
+    private func loadUITestCSVPreviewIfNeeded() {
+        guard !didLoadUITestCSVPreview else { return }
+        didLoadUITestCSVPreview = true
+
+        guard CommandLine.arguments.contains("--uitesting") else { return }
+        guard let content = ProcessInfo.processInfo.environment["UITEST_CSV_PREVIEW_CONTENT"], !content.isEmpty else { return }
+
+        do {
+            let fileName = ProcessInfo.processInfo.environment["UITEST_CSV_PREVIEW_FILENAME"] ?? "ui-test-preview.csv"
+            let preview = try ExportService.previewCSV(content: content, sourceFileName: fileName)
+            csvPreviewViewModel = CSVImportPreviewViewModel(previewResult: preview)
+            showCSVPreview = true
+        } catch {
             exportError = error.localizedDescription
         }
     }

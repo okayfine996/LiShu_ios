@@ -5,6 +5,62 @@ import Testing
 
 @MainActor
 struct ExportImportIntegrationTests {
+    @Test func previewCSVParsesRowsWithoutImporting() throws {
+        let tempURL = try writeCSV(
+            """
+            联系人,事件,事件类型,场景标签,方向,日期,备注,金额,支付方式,已退金额
+            张三,婚礼,婚礼,,送出,2026-04-09 10:30,事件记录,888.00,微信,0.00
+            李四,,,节日看望,送出,2026-04-10 10:30,日常记录,200.00,现金,0.00
+            王五,,,,送出,2026-04-11 10:30,无上下文,100.00,现金,0.00
+            """,
+            named: "test_preview_parse.csv"
+        )
+        defer { try? FileManager.default.removeItem(at: tempURL) }
+
+        let preview = try ExportService.previewCSV(url: tempURL)
+
+        #expect(preview.items.count == 3)
+        #expect(preview.skipped == 1)
+        #expect(preview.errors == 0)
+        #expect(preview.items[0].isImportable == true)
+        #expect(preview.items[0].isSelected == true)
+        #expect(preview.items[1].sceneTag == "节日看望")
+        #expect(preview.items[1].isImportable == true)
+        #expect(preview.items[2].isImportable == false)
+        #expect(preview.items[2].statusMessage == String(localized: "csv.import.preview.invalid.missingContext"))
+    }
+
+    @Test func importPreviewItemsOnlyImportsSelectedRows() throws {
+        let tempURL = try writeCSV(
+            """
+            联系人,事件,事件类型,场景标签,方向,日期,备注,金额,支付方式,已退金额
+            张三,婚礼,婚礼,,送出,2026-04-09 10:30,事件记录,888.00,微信,0.00
+            李四,,,节日看望,送出,2026-04-10 10:30,日常记录,200.00,现金,0.00
+            """,
+            named: "test_preview_import_selected.csv"
+        )
+        defer { try? FileManager.default.removeItem(at: tempURL) }
+
+        var preview = try ExportService.previewCSV(url: tempURL)
+        preview.items[1].isSelected = false
+
+        let db = try TestDB()
+        let result = try ExportService.importPreviewItems(
+            preview.items,
+            baseResult: ImportResult(imported: 0, skipped: preview.skipped, errors: preview.errors),
+            sourceFileName: preview.sourceFileName,
+            context: db.context
+        )
+
+        #expect(result.imported == 1)
+        #expect(result.skipped == 0)
+        #expect(result.errors == 0)
+
+        let importedRecords = try db.context.fetch(FetchDescriptor<Record>())
+        #expect(importedRecords.count == 1)
+        #expect(importedRecords[0].contact?.name == "张三")
+    }
+
     @Test func monetaryExportImportRoundTrip() throws {
         let db = try TestDB()
         let contact = SampleData.contact(name: "张三")

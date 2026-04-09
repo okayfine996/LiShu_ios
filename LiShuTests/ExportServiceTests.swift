@@ -164,4 +164,54 @@ struct ExportServiceTests {
         #expect(lines.count == 1)
         #expect(lines[0] == "联系人,事件,事件类型,场景标签,方向,日期,备注,金额,支付方式,已退金额")
     }
+
+    @Test func previewExportMarksContextlessRowsAsSkipped() throws {
+        let db = try TestDB()
+        let validContact = SampleData.contact(name: "张三")
+        let invalidContact = SampleData.contact(name: "李四")
+        let event = SampleData.event(name: "婚礼", type: .wedding)
+        db.context.insert(validContact)
+        db.context.insert(invalidContact)
+        db.context.insert(event)
+
+        let validRecord = SampleData.record(contact: validContact, event: event, amount: 500, direction: .given)
+        let invalidRecord = SampleData.record(contact: invalidContact, event: nil, amount: 300, direction: .given)
+        db.context.insert(validRecord)
+        db.context.insert(invalidRecord)
+        try db.context.save()
+
+        let preview = try ExportService.previewExportCSV(context: db.context, recordType: .monetary)
+
+        #expect(preview.items.count == 2)
+        #expect(preview.skipped == 1)
+        #expect(preview.items[0].isExportable == false)
+        #expect(preview.items[0].statusMessage == String(localized: "csv.export.preview.invalid.missingContext"))
+        #expect(preview.items[1].isExportable == true)
+        #expect(preview.items[1].isSelected == true)
+    }
+
+    @Test func exportPreviewItemsOnlyExportsSelectedRows() throws {
+        let db = try TestDB()
+        let contactA = SampleData.contact(name: "张三")
+        let contactB = SampleData.contact(name: "李四")
+        let event = SampleData.event(name: "婚礼", type: .wedding)
+        db.context.insert(contactA)
+        db.context.insert(contactB)
+        db.context.insert(event)
+        db.context.insert(SampleData.record(contact: contactA, event: event, amount: 500, direction: .given))
+        db.context.insert(SampleData.record(contact: contactB, event: event, amount: 600, direction: .given))
+        try db.context.save()
+
+        var preview = try ExportService.previewExportCSV(context: db.context, recordType: .monetary)
+        preview.items[1].isSelected = false
+
+        let csv = try ExportService.exportPreviewItems(preview.items, recordType: .monetary)
+        let lines = csv.components(separatedBy: "\n")
+
+        #expect(lines.count == 2)
+        #expect(lines[0] == "联系人,事件,事件类型,场景标签,方向,日期,备注,金额,支付方式,已退金额")
+        #expect(lines[1].contains("李四"))
+        #expect(lines[1].contains("600.00"))
+        #expect(!lines[1].contains("张三"))
+    }
 }

@@ -101,6 +101,8 @@ public enum DesignSystem {
         public static let heroDecorationOffset: CGFloat = 80
         public static let heatmapLegendSwatchWidth: CGFloat = 14
         public static let heatmapLegendSwatchHeight: CGFloat = 8
+        /// 导入导出预览页底部主操作按钮宽度
+        public static let selectionPreviewActionWidth: CGFloat = 220
     }
 
     // MARK: - Effects
