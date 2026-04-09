@@ -118,4 +118,17 @@ class CSVImportPreviewViewModel {
             context: context
         )
     }
+
+    func performImport(container: ModelContainer) async throws -> ImportResult {
+        guard selectedCount > 0 else {
+            throw ImportError.invalidFormat
+        }
+
+        return try await ExportService.importPreviewItemsAsync(
+            items,
+            baseResult: baseResult,
+            sourceFileName: sourceFileName,
+            container: container
+        )
+    }
 }

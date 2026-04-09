@@ -6,20 +6,20 @@ private let exportLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.export
 private let importLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.importFlow)
 
 enum ExportService {
-    private static let csvDateFormat = "yyyy-MM-dd HH:mm"
-    private static let commonColumns = ["联系人", "事件", "事件类型", "场景标签", "方向", "日期", "备注"]
-    private static let typeSpecificColumns: [RecordType: [String]] = [
+    private nonisolated static let csvDateFormat = "yyyy-MM-dd HH:mm"
+    private nonisolated static let commonColumns = ["联系人", "事件", "事件类型", "场景标签", "方向", "日期", "备注"]
+    private nonisolated static let typeSpecificColumns: [RecordType: [String]] = [
         .monetary: ["金额", "支付方式", "已退金额"],
         .gift: ["礼品名称", "礼品估值", "人情描述"],
         .favor: ["帮忙说明", "人情描述"],
         .banquet: ["宴请地点", "宴请宾客", "宴请额外费用", "人情描述"],
     ]
 
-    private static let allowedColumns = Set(commonColumns + typeSpecificColumns.values.flatMap(\.self))
+    private nonisolated static let allowedColumns = Set(commonColumns + typeSpecificColumns.values.flatMap(\.self))
 
     // MARK: - CSV Export
 
-    static func exportCSV(context: ModelContext, recordType: RecordType) throws -> String {
+    nonisolated static func exportCSV(context: ModelContext, recordType: RecordType) throws -> String {
         exportLogger.notice("Starting CSV export", metadata: [
             "step": .string("export_csv"),
             "record_type": .string(recordType.rawValue),
@@ -42,7 +42,7 @@ enum ExportService {
         return content
     }
 
-    static func previewExportCSV(context: ModelContext, recordType: RecordType) throws -> CSVExportPreviewResult {
+    nonisolated static func previewExportCSV(context: ModelContext, recordType: RecordType) throws -> CSVExportPreviewResult {
         exportLogger.notice("Starting CSV export preview", metadata: [
             "step": .string("preview_export_csv"),
             "record_type": .string(recordType.rawValue),
@@ -75,22 +75,54 @@ enum ExportService {
         return CSVExportPreviewResult(recordType: recordType, items: items, skipped: skipped)
     }
 
-    static func exportPreviewItems(_ items: [CSVExportPreviewItem], recordType: RecordType) throws -> String {
+    nonisolated static func previewExportCSVAsync(
+        container: ModelContainer,
+        recordType: RecordType
+    ) async throws -> CSVExportPreviewResult {
+        try await Task.detached(priority: .userInitiated) {
+            let context = ModelContext(container)
+            return try previewExportCSV(context: context, recordType: recordType)
+        }.value
+    }
+
+    nonisolated static func exportPreviewItems(_ items: [CSVExportPreviewItem], recordType: RecordType) throws -> String {
         let rows = items
             .filter { $0.isSelected && $0.isExportable }
             .compactMap(\.payload?.csvRow)
         return ([csvHeader(for: recordType)] + rows).joined(separator: "\n")
     }
 
-    static func templateCSV(for recordType: RecordType) -> String {
+    nonisolated static func exportPreviewItemsToTemporaryFileAsync(
+        _ items: [CSVExportPreviewItem],
+        recordType: RecordType,
+        fileName: String
+    ) async throws -> URL {
+        try await Task.detached(priority: .userInitiated) {
+            if let delayNanoseconds = uiTestDelayNanoseconds(environmentKey: "UITEST_CSV_EXPORT_DELAY_MS") {
+                try await Task.sleep(nanoseconds: delayNanoseconds)
+            }
+
+            let csv = try exportPreviewItems(items, recordType: recordType)
+            guard let data = csv.data(using: .utf8) else {
+                throw ImportError.invalidFormat
+            }
+
+            let tempDir = FileManager.default.temporaryDirectory
+            let fileURL = tempDir.appendingPathComponent(fileName)
+            try data.write(to: fileURL, options: .atomic)
+            return fileURL
+        }.value
+    }
+
+    nonisolated static func templateCSV(for recordType: RecordType) -> String {
         [csvHeader(for: recordType), templateRow(for: recordType)].joined(separator: "\n")
     }
 
-    private static func csvHeader(for recordType: RecordType) -> String {
+    private nonisolated static func csvHeader(for recordType: RecordType) -> String {
         (commonColumns + (typeSpecificColumns[recordType] ?? [])).joined(separator: ",")
     }
 
-    private static func exportRow(for record: Record, recordType: RecordType) -> String? {
+    private nonisolated static func exportRow(for record: Record, recordType: RecordType) -> String? {
         guard record.recordType == recordType, let contact = record.contact else { return nil }
         guard let context = resolveExportContext(for: record) else {
             return nil
@@ -132,7 +164,11 @@ enum ExportService {
         return csvValues(for: recordType).map { escapeCSV(values[$0] ?? "") }.joined(separator: ",")
     }
 
-    private static func buildExportPreviewItem(for record: Record, recordType: RecordType, rowNumber: Int) -> CSVExportPreviewItem {
+    private nonisolated static func buildExportPreviewItem(
+        for record: Record,
+        recordType: RecordType,
+        rowNumber: Int
+    ) -> CSVExportPreviewItem {
         let contactName = record.contact?.name.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         let contextText = record.contextDisplayName
         let detailText = previewDetailText(
@@ -192,7 +228,7 @@ enum ExportService {
         )
     }
 
-    private static func templateRow(for recordType: RecordType) -> String {
+    private nonisolated static func templateRow(for recordType: RecordType) -> String {
         let values: [[String: String]] = switch recordType {
         case .monetary:
             [
@@ -311,11 +347,11 @@ enum ExportService {
             .joined(separator: "\n")
     }
 
-    private static func csvValues(for recordType: RecordType) -> [String] {
+    private nonisolated static func csvValues(for recordType: RecordType) -> [String] {
         commonColumns + (typeSpecificColumns[recordType] ?? [])
     }
 
-    static func escapeCSV(_ value: String) -> String {
+    nonisolated static func escapeCSV(_ value: String) -> String {
         if value.contains(",") || value.contains("\"") || value.contains("\n") {
             return "\"" + value.replacingOccurrences(of: "\"", with: "\"\"") + "\""
         }
@@ -324,7 +360,7 @@ enum ExportService {
 
     // MARK: - CSV Import
 
-    static func previewCSV(url: URL) throws -> CSVImportPreviewResult {
+    nonisolated static func previewCSV(url: URL) throws -> CSVImportPreviewResult {
         importLogger.notice("Starting CSV preview parse", metadata: [
             "step": .string("preview_csv"),
             "source": .string(url.lastPathComponent),
@@ -341,7 +377,21 @@ enum ExportService {
         return try previewCSV(content: content, sourceFileName: url.lastPathComponent)
     }
 
-    static func importCSV(url: URL, context: ModelContext) throws -> ImportResult {
+    nonisolated static func previewCSVAsync(url: URL) async throws -> CSVImportPreviewResult {
+        let didStartAccessing = url.startAccessingSecurityScopedResource()
+        defer {
+            if didStartAccessing {
+                url.stopAccessingSecurityScopedResource()
+            }
+        }
+
+        return try await Task.detached(priority: .userInitiated) {
+            let content = try String(contentsOf: url, encoding: .utf8)
+            return try previewCSV(content: content, sourceFileName: url.lastPathComponent)
+        }.value
+    }
+
+    nonisolated static func importCSV(url: URL, context: ModelContext) throws -> ImportResult {
         let preview = try previewCSV(url: url)
         return try importPreviewItems(preview.items, baseResult: ImportResult(
             imported: 0,
@@ -350,9 +400,30 @@ enum ExportService {
         ), sourceFileName: preview.sourceFileName, context: context)
     }
 
-    static func importPreviewItems(
+    nonisolated static func importPreviewItemsAsync(
         _ items: [CSVImportPreviewItem],
-        baseResult: ImportResult = ImportResult(),
+        baseResult: ImportResult,
+        sourceFileName: String = "preview",
+        container: ModelContainer
+    ) async throws -> ImportResult {
+        try await Task.detached(priority: .userInitiated) {
+            let context = ModelContext(container)
+            if let delayNanoseconds = uiTestDelayNanoseconds(environmentKey: "UITEST_CSV_IMPORT_DELAY_MS") {
+                try await Task.sleep(nanoseconds: delayNanoseconds)
+            }
+
+            return try importPreviewItems(
+                items,
+                baseResult: baseResult,
+                sourceFileName: sourceFileName,
+                context: context
+            )
+        }.value
+    }
+
+    nonisolated static func importPreviewItems(
+        _ items: [CSVImportPreviewItem],
+        baseResult: ImportResult,
         sourceFileName: String = "preview",
         context: ModelContext
     ) throws -> ImportResult {
@@ -399,7 +470,7 @@ enum ExportService {
         return result
     }
 
-    private static func validateCSVHeader(_ headerRow: [String]) throws {
+    private nonisolated static func validateCSVHeader(_ headerRow: [String]) throws {
         guard Set(commonColumns).isSubset(of: Set(headerRow)) else {
             throw ImportError.invalidFormat
         }
@@ -416,7 +487,7 @@ enum ExportService {
         }
     }
 
-    private static func inferRecordType(
+    private nonisolated static func inferRecordType(
         amount: Double,
         giftName: String,
         giftEstimatedValueStr: String,
@@ -469,7 +540,7 @@ enum ExportService {
     }
 
     /// 表头列名 → 列下标（同名取第一次出现）。
-    private static func buildCSVColumnIndexMap(_ headerRow: [String]) -> [String: Int] {
+    private nonisolated static func buildCSVColumnIndexMap(_ headerRow: [String]) -> [String: Int] {
         var map: [String: Int] = [:]
         for (i, raw) in headerRow.enumerated() {
             let key = raw.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -482,20 +553,20 @@ enum ExportService {
     }
 
     /// 将数据行对齐到表头列数：不足补空串，多余截断（仅与表头对齐，不再按固定列数推断语义）。
-    private static func alignFieldsToHeader(_ fields: [String], headerColumnCount: Int) -> [String] {
+    private nonisolated static func alignFieldsToHeader(_ fields: [String], headerColumnCount: Int) -> [String] {
         if fields.count >= headerColumnCount {
             return Array(fields.prefix(headerColumnCount))
         }
         return fields + Array(repeating: "", count: headerColumnCount - fields.count)
     }
 
-    private static func csvCell(_ row: [String], columnIndex: [String: Int], column: String) -> String {
+    private nonisolated static func csvCell(_ row: [String], columnIndex: [String: Int], column: String) -> String {
         let key = column.trimmingCharacters(in: .whitespacesAndNewlines)
         guard let idx = columnIndex[key], idx < row.count else { return "" }
         return row[idx]
     }
 
-    private static func buildTypeDataForImport(
+    private nonisolated static func buildTypeDataForImport(
         recordType: RecordType,
         amount: Double,
         paymentMethod: PaymentMethod,
@@ -537,7 +608,7 @@ enum ExportService {
         }
     }
 
-    static func parseCSVLine(_ line: String) -> [String] {
+    nonisolated static func parseCSVLine(_ line: String) -> [String] {
         var result: [String] = []
         var current = ""
         var inQuotes = false
@@ -575,7 +646,7 @@ enum ExportService {
         return result
     }
 
-    private static func parseCSVRows(_ content: String) -> [[String]] {
+    private nonisolated static func parseCSVRows(_ content: String) -> [[String]] {
         var rows: [[String]] = []
         var row: [String] = []
         var field = ""
@@ -640,7 +711,7 @@ enum ExportService {
         return rows
     }
 
-    static func findOrCreateContact(name: String, context: ModelContext) -> Contact {
+    nonisolated static func findOrCreateContact(name: String, context: ModelContext) -> Contact {
         let trimmed = name.trimmingCharacters(in: .whitespaces)
         let predicate = #Predicate<Contact> { $0.name == trimmed }
         var descriptor = FetchDescriptor<Contact>(predicate: predicate)
@@ -664,7 +735,7 @@ enum ExportService {
         return contact
     }
 
-    static func findOrCreateEvent(name: String, type: EventType, context: ModelContext) -> Event {
+    nonisolated static func findOrCreateEvent(name: String, type: EventType, context: ModelContext) -> Event {
         let trimmed = name.trimmingCharacters(in: .whitespaces)
         let typeRaw = type.rawValue
         let predicate = #Predicate<Event> { $0.name == trimmed && $0.typeRaw == typeRaw }
@@ -689,13 +760,15 @@ enum ExportService {
         return event
     }
 
-    static func findOrCreateEventIfNeeded(name: String, type: EventType, context: ModelContext) -> Event? {
+    nonisolated static func findOrCreateEventIfNeeded(name: String, type: EventType, context: ModelContext) -> Event? {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return nil }
         return findOrCreateEvent(name: trimmed, type: type, context: context)
     }
 
-    private static func resolveExportContext(for record: Record) -> (eventName: String, eventTypeName: String, sceneTag: String)? {
+    private nonisolated static func resolveExportContext(
+        for record: Record
+    ) -> (eventName: String, eventTypeName: String, sceneTag: String)? {
         if let event = record.event {
             return (event.name, event.type.displayName, "")
         }
@@ -707,7 +780,7 @@ enum ExportService {
         return ("", "", trimmedSceneTag)
     }
 
-    static func previewCSV(content: String, sourceFileName: String) throws -> CSVImportPreviewResult {
+    nonisolated static func previewCSV(content: String, sourceFileName: String) throws -> CSVImportPreviewResult {
         let rows = parseCSVRows(content)
 
         guard rows.count > 1 else {
@@ -762,7 +835,13 @@ enum ExportService {
         )
     }
 
-    private static func buildPreviewItem(
+    nonisolated static func previewCSVAsync(content: String, sourceFileName: String) async throws -> CSVImportPreviewResult {
+        try await Task.detached(priority: .userInitiated) {
+            try previewCSV(content: content, sourceFileName: sourceFileName)
+        }.value
+    }
+
+    private nonisolated static func buildPreviewItem(
         rawFields: [String],
         rowIndex: Int,
         headerColumnCount: Int,
@@ -960,7 +1039,7 @@ enum ExportService {
         )
     }
 
-    private static func previewTrailingText(
+    private nonisolated static func previewTrailingText(
         recordType: RecordType?,
         amount: Double,
         giftName: String,
@@ -981,7 +1060,7 @@ enum ExportService {
         }
     }
 
-    private static func exportPreviewTrailingText(for record: Record) -> String {
+    private nonisolated static func exportPreviewTrailingText(for record: Record) -> String {
         switch record.recordType {
         case .monetary:
             formatPreviewCurrency(record.monetaryAmount)
@@ -994,7 +1073,7 @@ enum ExportService {
         }
     }
 
-    private static func previewDetailText(dateText: String, direction: RecordDirection, recordType: RecordType?) -> String {
+    private nonisolated static func previewDetailText(dateText: String, direction: RecordDirection, recordType: RecordType?) -> String {
         var parts = [dateText, direction.csvValue]
         if let recordType {
             parts.append(recordType.displayName)
@@ -1002,7 +1081,7 @@ enum ExportService {
         return parts.joined(separator: " · ")
     }
 
-    private static func formatPreviewCurrency(_ amount: Double) -> String {
+    private nonisolated static func formatPreviewCurrency(_ amount: Double) -> String {
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
         formatter.maximumFractionDigits = amount == Double(Int(amount)) ? 0 : 2
@@ -1010,7 +1089,7 @@ enum ExportService {
         return "¥" + formatted
     }
 
-    private static func firstNonEmpty(_ values: String...) -> String {
+    private nonisolated static func firstNonEmpty(_ values: String...) -> String {
         for value in values {
             let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
             if !trimmed.isEmpty {
@@ -1020,7 +1099,7 @@ enum ExportService {
         return ""
     }
 
-    static func parseEventType(_ str: String) -> EventType {
+    nonisolated static func parseEventType(_ str: String) -> EventType {
         let s = str.trimmingCharacters(in: .whitespaces)
         switch s {
         case "婚礼": return .wedding
@@ -1035,7 +1114,7 @@ enum ExportService {
         }
     }
 
-    static func parseDirection(_ str: String) -> RecordDirection {
+    nonisolated static func parseDirection(_ str: String) -> RecordDirection {
         let s = str.trimmingCharacters(in: .whitespaces)
         switch s {
         case "送出", "随礼", "given": return .given
@@ -1044,7 +1123,7 @@ enum ExportService {
         }
     }
 
-    static func parsePaymentMethod(_ str: String) -> PaymentMethod {
+    nonisolated static func parsePaymentMethod(_ str: String) -> PaymentMethod {
         let s = str.trimmingCharacters(in: .whitespaces)
         switch s {
         case "现金", "cash": return .cash
@@ -1054,15 +1133,25 @@ enum ExportService {
         }
     }
 
-    static func parseDate(_ str: String) -> Date? {
+    nonisolated static func parseDate(_ str: String) -> Date? {
         csvDateFormatter.date(from: str.trimmingCharacters(in: .whitespaces))
     }
 
-    private static var csvDateFormatter: DateFormatter {
+    private nonisolated static var csvDateFormatter: DateFormatter {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "zh_Hans")
         formatter.dateFormat = csvDateFormat
         return formatter
+    }
+
+    private nonisolated static func uiTestDelayNanoseconds(environmentKey: String) -> UInt64? {
+        guard CommandLine.arguments.contains("--uitesting") else { return nil }
+        guard let delayString = ProcessInfo.processInfo.environment[environmentKey],
+              let delayMilliseconds = UInt64(delayString)
+        else {
+            return nil
+        }
+        return delayMilliseconds * 1_000_000
     }
 }
 

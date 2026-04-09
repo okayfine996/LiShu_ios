@@ -1,9 +1,10 @@
 import SwiftUI
 
 struct CSVExportPreviewView: View {
+    @Environment(\.dismiss) private var dismiss
     @Bindable var viewModel: CSVExportPreviewViewModel
 
-    let onExportConfirmed: @MainActor (String, RecordType) async -> Void
+    let onExportConfirmed: @MainActor (URL) -> Void
 
     @State private var exportErrorMessage: String?
 
@@ -30,6 +31,21 @@ struct CSVExportPreviewView: View {
                 }
             }
         )
+        .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button {
+                    guard !viewModel.isProcessing else { return }
+                    dismiss()
+                } label: {
+                    Image(systemName: "chevron.left")
+                        .font(DesignSystem.Typography.caption)
+                        .foregroundStyle(DesignSystem.Colors.primary)
+                }
+                .disabled(viewModel.isProcessing)
+                .accessibilityIdentifier("csv.export.preview.backButton")
+            }
+        }
         .alert(String(localized: "common.error"), isPresented: errorBinding) {
             Button(String(localized: "common.ok")) {
                 exportErrorMessage = nil
@@ -59,11 +75,21 @@ struct CSVExportPreviewView: View {
         try? await Task.sleep(for: .milliseconds(150))
 
         do {
-            let csv = try viewModel.buildCSV()
-            await onExportConfirmed(csv, viewModel.recordType)
+            let fileURL = try await viewModel.exportToTemporaryFile(fileName: exportFileName)
+            onExportConfirmed(fileURL)
         } catch {
             exportErrorMessage = error.localizedDescription
         }
+    }
+
+    private var exportFileName: String {
+        "lishu_\(viewModel.recordType.rawValue)_export_\(dateSuffix()).csv"
+    }
+
+    private func dateSuffix() -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyyMMdd_HHmmss"
+        return formatter.string(from: Date())
     }
 }
 
@@ -98,7 +124,7 @@ struct CSVExportPreviewView: View {
                     skipped: 1
                 )
             ),
-            onExportConfirmed: { _, _ in }
+            onExportConfirmed: { _ in }
         )
     }
 }

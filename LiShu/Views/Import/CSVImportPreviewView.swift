@@ -3,6 +3,7 @@ import SwiftUI
 
 struct CSVImportPreviewView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
     @Bindable var viewModel: CSVImportPreviewViewModel
 
     let onImportCompleted: (ImportResult) -> Void
@@ -33,6 +34,21 @@ struct CSVImportPreviewView: View {
             }
         )
         .trackScreen("import.csv.preview")
+        .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button {
+                    guard !viewModel.isProcessing else { return }
+                    dismiss()
+                } label: {
+                    Image(systemName: "chevron.left")
+                        .font(DesignSystem.Typography.caption)
+                        .foregroundStyle(DesignSystem.Colors.primary)
+                }
+                .disabled(viewModel.isProcessing)
+                .accessibilityIdentifier("csv.import.preview.backButton")
+            }
+        }
         .alert(String(localized: "common.error"), isPresented: importErrorBinding) {
             Button(String(localized: "common.ok")) {
                 importErrorMessage = nil
@@ -62,7 +78,7 @@ struct CSVImportPreviewView: View {
         try? await Task.sleep(for: .milliseconds(150))
 
         do {
-            let result = try viewModel.performImport(context: modelContext)
+            let result = try await viewModel.performImport(container: modelContext.container)
             onImportCompleted(result)
         } catch {
             importErrorMessage = error.localizedDescription

@@ -112,4 +112,16 @@ class CSVExportPreviewViewModel {
         }
         return try ExportService.exportPreviewItems(items, recordType: recordType)
     }
+
+    func exportToTemporaryFile(fileName: String) async throws -> URL {
+        guard hasSelectedItems else {
+            throw ImportError.invalidFormat
+        }
+
+        return try await ExportService.exportPreviewItemsToTemporaryFileAsync(
+            items,
+            recordType: recordType,
+            fileName: fileName
+        )
+    }
 }

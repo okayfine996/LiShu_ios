@@ -43,6 +43,7 @@ struct CSVTypeActionListView: View {
     @State private var showProSheet = false
     @State private var showExportPreview = false
     @State private var exportPreviewViewModel: CSVExportPreviewViewModel?
+    @State private var isPreparingExportPreview = false
 
     let mode: CSVTypeActionMode
 
@@ -67,6 +68,7 @@ struct CSVTypeActionListView: View {
                             rowContent(for: recordType)
                         }
                         .buttonStyle(.plain)
+                        .disabled(isPreparingExportPreview)
                     }
                 }
                 .background(DesignSystem.Colors.bgSurface)
@@ -85,8 +87,8 @@ struct CSVTypeActionListView: View {
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(isPresented: $showExportPreview) {
             if let exportPreviewViewModel {
-                CSVExportPreviewView(viewModel: exportPreviewViewModel) { csv, recordType in
-                    await handleConfirmedExport(csv: csv, recordType: recordType)
+                CSVExportPreviewView(viewModel: exportPreviewViewModel) { fileURL in
+                    handleConfirmedExport(fileURL: fileURL)
                 }
             }
         }
@@ -119,6 +121,11 @@ struct CSVTypeActionListView: View {
         } message: {
             if let exportError {
                 Text(exportError)
+            }
+        }
+        .overlay {
+            if isPreparingExportPreview {
+                csvExportLoadingOverlay
             }
         }
         .onChange(of: showExportPreview) { _, newValue in
@@ -203,31 +210,29 @@ struct CSVTypeActionListView: View {
             return
         }
 
-        do {
-            let preview = try ExportService.previewExportCSV(context: modelContext, recordType: recordType)
-            exportPreviewViewModel = CSVExportPreviewViewModel(previewResult: preview)
-            showExportPreview = true
-        } catch {
-            exportError = error.localizedDescription
+        guard !isPreparingExportPreview else { return }
+        isPreparingExportPreview = true
+
+        Task {
+            do {
+                let preview = try await ExportService.previewExportCSVAsync(
+                    container: modelContext.container,
+                    recordType: recordType
+                )
+                exportPreviewViewModel = CSVExportPreviewViewModel(previewResult: preview)
+                showExportPreview = true
+            } catch {
+                exportError = error.localizedDescription
+            }
+
+            isPreparingExportPreview = false
         }
     }
 
     @MainActor
-    private func handleConfirmedExport(csv: String, recordType: RecordType) async {
-        do {
-            let tempDir = FileManager.default.temporaryDirectory
-            let fileName = "lishu_\(recordType.rawValue)_export_\(dateSuffix()).csv"
-            guard let data = csv.data(using: .utf8) else {
-                exportError = String(localized: "settings.data.export_encoding_failed")
-                return
-            }
-            let fileURL = tempDir.appendingPathComponent(fileName)
-            try data.write(to: fileURL)
-            showExportPreview = false
-            shareURL = fileURL
-        } catch {
-            exportError = error.localizedDescription
-        }
+    private func handleConfirmedExport(fileURL: URL) {
+        showExportPreview = false
+        shareURL = fileURL
     }
 
     private func downloadTemplate(for recordType: RecordType) {
@@ -246,10 +251,23 @@ struct CSVTypeActionListView: View {
         }
     }
 
-    private func dateSuffix() -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyyMMdd_HHmmss"
-        return formatter.string(from: Date())
+    private var csvExportLoadingOverlay: some View {
+        ZStack {
+            DesignSystem.Colors.bgPage.opacity(0.7)
+                .ignoresSafeArea()
+
+            VStack(spacing: DesignSystem.Spacing.block) {
+                ProgressView()
+                    .tint(DesignSystem.Colors.primary)
+
+                Text(String(localized: "csv.export.preview.loading"))
+                    .font(DesignSystem.Typography.caption)
+                    .foregroundStyle(DesignSystem.Colors.textPrimary)
+            }
+            .padding(DesignSystem.Spacing.cardPadding)
+            .background(DesignSystem.Colors.bgSurface)
+            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+        }
     }
 }
 

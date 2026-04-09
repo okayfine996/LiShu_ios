@@ -60,6 +60,7 @@ struct CSVSelectionPreviewView: View {
         .background(DesignSystem.Colors.bgPage)
         .navigationTitle(config.title)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar(isProcessing ? .hidden : .visible, for: .navigationBar)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 if selectableItemsCount > 0 {
@@ -83,6 +84,7 @@ struct CSVSelectionPreviewView: View {
         .overlay {
             if isProcessing {
                 LoadingOverlay(text: config.loadingText)
+                    .accessibilityIdentifier("csv.selection.preview.loadingOverlay")
             }
         }
     }
