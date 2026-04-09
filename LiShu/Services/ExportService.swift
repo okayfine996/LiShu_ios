@@ -6,93 +6,145 @@ private let exportLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.export
 private let importLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.importFlow)
 
 enum ExportService {
+    private static let csvDateFormat = "yyyy-MM-dd HH:mm"
+    private static let commonColumns = ["联系人", "事件", "事件类型", "方向", "日期", "备注"]
+    private static let typeSpecificColumns: [RecordType: [String]] = [
+        .monetary: ["金额", "支付方式", "已退金额"],
+        .gift: ["礼品名称", "礼品估值", "人情描述"],
+        .favor: ["帮忙说明", "人情描述"],
+        .banquet: ["宴请地点", "宴请宾客", "宴请额外费用", "人情描述"],
+    ]
+
+    private static let allowedColumns = Set(commonColumns + typeSpecificColumns.values.flatMap(\.self))
+
     // MARK: - CSV Export
 
-    /// 表头：`备注` 后为 6 列类型平铺字段，不含 `kvData`；不含退礼展示用「状态」列。
-    private static let csvHeader =
-        "联系人,事件,事件类型,金额,方向,支付方式,已退金额,日期,记录类型,情分分量,人情描述,备注,礼品名称,礼品估值,帮忙说明,宴请地点,宴请宾客,宴请额外费用"
-
-    static func exportCSV(context: ModelContext) throws -> String {
+    static func exportCSV(context: ModelContext, recordType: RecordType) throws -> String {
         exportLogger.notice("Starting CSV export", metadata: [
             "step": .string("export_csv"),
+            "record_type": .string(recordType.rawValue),
         ])
-        let records = try context.fetch(FetchDescriptor<Record>(
+
+        let descriptor = FetchDescriptor<Record>(
+            predicate: #Predicate<Record> { $0.recordTypeRaw == recordType.rawValue },
             sortBy: [SortDescriptor(\.date, order: .reverse)]
-        ))
+        )
+        let records = try context.fetch(descriptor)
+        let rows = records.compactMap { exportRow(for: $0, recordType: recordType) }
+        let content = ([csvHeader(for: recordType)] + rows).joined(separator: "\n")
 
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "zh_Hans")
-        formatter.dateFormat = "yyyy-MM-dd HH:mm"
-
-        let rows = records.compactMap { record -> String? in
-            guard let contact = record.contact else { return nil }
-            let flat = flatTypeColumnsForExport(record)
-            guard flat.count == 6 else { return nil }
-            return [
-                escapeCSV(contact.name),
-                escapeCSV(record.event?.name ?? ""),
-                escapeCSV(record.event?.type.displayName ?? ""),
-                String(format: "%.2f", record.resolvedDisplayAmount),
-                escapeCSV(record.direction.csvValue),
-                escapeCSV(record.isMonetary ? record.resolvedPaymentMethod.csvValue : ""),
-                String(format: "%.2f", record.resolvedReturnedAmount),
-                escapeCSV(formatter.string(from: record.date)),
-                escapeCSV(record.recordType.displayName),
-                escapeCSV(record.relationshipWeight.displayName),
-                escapeCSV(record.resolvedDescription),
-                escapeCSV(record.note),
-                flat[0],
-                flat[1],
-                flat[2],
-                flat[3],
-                flat[4],
-                flat[5],
-            ].joined(separator: ",")
-        }
-
-        let content = ([csvHeader] + rows).joined(separator: "\n")
         exportLogger.notice("Finished CSV export", metadata: [
             "step": .string("export_csv"),
+            "record_type": .string(recordType.rawValue),
             "count": .stringConvertible(rows.count),
             "result": .string("success"),
         ])
         return content
     }
 
-    /// 返回 6 个已 `escapeCSV` 的字段：礼品名称、礼品估值、帮忙说明、宴请地点、宴请宾客、宴请额外费用。
-    private static func flatTypeColumnsForExport(_ record: Record) -> [String] {
-        switch record.recordType {
+    static func templateCSV(for recordType: RecordType) -> String {
+        [csvHeader(for: recordType), templateRow(for: recordType)].joined(separator: "\n")
+    }
+
+    private static func csvHeader(for recordType: RecordType) -> String {
+        (commonColumns + (typeSpecificColumns[recordType] ?? [])).joined(separator: ",")
+    }
+
+    private static func exportRow(for record: Record, recordType: RecordType) -> String? {
+        guard record.recordType == recordType, let contact = record.contact else { return nil }
+
+        var values: [String: String] = [
+            "联系人": contact.name,
+            "事件": record.event?.name ?? "",
+            "事件类型": record.event?.type.displayName ?? "",
+            "方向": record.direction.csvValue,
+            "日期": csvDateFormatter.string(from: record.date),
+            "备注": record.note,
+        ]
+
+        switch recordType {
         case .monetary:
-            return Array(repeating: "", count: 6)
+            values["金额"] = String(format: "%.2f", record.monetaryAmount)
+            values["支付方式"] = record.resolvedPaymentMethod.csvValue
+            values["已退金额"] = String(format: "%.2f", record.resolvedReturnedAmount)
         case .gift:
-            let g = record.giftData
-            let name = g?.giftName ?? ""
-            let estStr = if let est = g?.estimatedValue {
-                String(format: "%.2f", est)
+            values["礼品名称"] = record.giftData?.giftName ?? ""
+            values["礼品估值"] = if let estimatedValue = record.giftData?.estimatedValue {
+                String(format: "%.2f", estimatedValue)
             } else {
                 ""
             }
-            return [
-                escapeCSV(name),
-                escapeCSV(estStr),
-                "", "", "", "",
+            values["人情描述"] = record.giftData?.giftName ?? ""
+        case .favor:
+            values["帮忙说明"] = record.favorData?.description ?? ""
+            values["人情描述"] = record.favorData?.description ?? ""
+        case .banquet:
+            values["宴请地点"] = record.banquetData?.location ?? ""
+            values["宴请宾客"] = record.banquetData?.attendeeList ?? ""
+            values["宴请额外费用"] = record.banquetData?.extraCostNotes ?? ""
+            values["人情描述"] = record.banquetData?.location ?? ""
+        }
+
+        return csvValues(for: recordType).map { escapeCSV(values[$0] ?? "") }.joined(separator: ",")
+    }
+
+    private static func templateRow(for recordType: RecordType) -> String {
+        let values: [String: String] = switch recordType {
+        case .monetary:
+            [
+                "联系人": "张三",
+                "事件": "婚礼",
+                "事件类型": "婚礼",
+                "方向": "送出",
+                "日期": "2026-04-09 10:30",
+                "备注": "示例备注",
+                "金额": "800.00",
+                "支付方式": "微信",
+                "已退金额": "0.00",
+            ]
+        case .gift:
+            [
+                "联系人": "李四",
+                "事件": "乔迁",
+                "事件类型": "乔迁",
+                "方向": "送出",
+                "日期": "2026-04-09 10:30",
+                "备注": "示例备注",
+                "礼品名称": "景德镇茶具",
+                "礼品估值": "880.00",
+                "人情描述": "乔迁随礼品",
             ]
         case .favor:
-            let d = record.favorData?.description ?? ""
-            return [
-                "", "",
-                escapeCSV(d),
-                "", "", "",
+            [
+                "联系人": "王五",
+                "事件": "日常往来",
+                "事件类型": "其他",
+                "方向": "送出",
+                "日期": "2026-04-09 10:30",
+                "备注": "示例备注",
+                "帮忙说明": "帮忙挂号预约",
+                "人情描述": "医院陪同",
             ]
         case .banquet:
-            let b = record.banquetData
-            return [
-                "", "", "",
-                escapeCSV(b?.location ?? ""),
-                escapeCSV(b?.attendeeList ?? ""),
-                escapeCSV(b?.extraCostNotes ?? ""),
+            [
+                "联系人": "赵六",
+                "事件": "商务宴请",
+                "事件类型": "其他",
+                "方向": "送出",
+                "日期": "2026-04-09 10:30",
+                "备注": "示例备注",
+                "宴请地点": "兰亭包厢",
+                "宴请宾客": "张三、李四",
+                "宴请额外费用": "两瓶酒水",
+                "人情描述": "商务答谢宴",
             ]
         }
+
+        return csvValues(for: recordType).map { escapeCSV(values[$0] ?? "") }.joined(separator: ",")
+    }
+
+    private static func csvValues(for recordType: RecordType) -> [String] {
+        commonColumns + (typeSpecificColumns[recordType] ?? [])
     }
 
     static func escapeCSV(_ value: String) -> String {
@@ -109,6 +161,7 @@ enum ExportService {
             "step": .string("import_csv"),
             "source": .string(url.lastPathComponent),
         ])
+
         let didStartAccessing = url.startAccessingSecurityScopedResource()
         defer {
             if didStartAccessing {
@@ -128,23 +181,9 @@ enum ExportService {
             return ImportResult()
         }
 
-        let headerRow = rows[0]
+        let headerRow = rows[0].map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+        try validateCSVHeader(headerRow)
         let columnIndex = buildCSVColumnIndexMap(headerRow)
-        guard columnIndex["联系人"] != nil else {
-            var r = ImportResult()
-            r.errors = rows.count - 1
-            importLogger.error("CSV import failed validation", metadata: [
-                "step": .string("import_csv"),
-                "source": .string(url.lastPathComponent),
-                "reason": .string("missing_contact_column"),
-                "count": .stringConvertible(r.errors),
-            ])
-            return r
-        }
-
-        let hasRecordTypeColumn = columnIndex["记录类型"] != nil
-        // 仅在表头含「记录类型」且存在任一类型平铺列名时，按平铺列参与 Gift/Favor/Banquet 组装。
-        let hasFlatTypeData = hasRecordTypeColumn && csvImportHasFlatTypeColumns(columnIndex)
 
         var result = ImportResult()
 
@@ -154,7 +193,6 @@ enum ExportService {
             }
 
             let fields = alignFieldsToHeader(rawFields, headerColumnCount: headerRow.count)
-
             let contactName = csvCell(fields, columnIndex: columnIndex, column: "联系人")
             guard !contactName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
                 result.errors += 1
@@ -167,87 +205,73 @@ enum ExportService {
                 continue
             }
 
+            let amountStr = csvCell(fields, columnIndex: columnIndex, column: "金额")
+            let amount = UserEnteredDecimal.parse(amountStr) ?? 0
+            let giftName = csvCell(fields, columnIndex: columnIndex, column: "礼品名称")
+            let giftEstimatedValueStr = csvCell(fields, columnIndex: columnIndex, column: "礼品估值")
+            let favorHelp = csvCell(fields, columnIndex: columnIndex, column: "帮忙说明")
+            let banquetLocation = csvCell(fields, columnIndex: columnIndex, column: "宴请地点")
+            let banquetAttendees = csvCell(fields, columnIndex: columnIndex, column: "宴请宾客")
+            let banquetExtra = csvCell(fields, columnIndex: columnIndex, column: "宴请额外费用")
+            let humanDescription = csvCell(fields, columnIndex: columnIndex, column: "人情描述")
+
+            guard let inferredType = inferRecordType(
+                amount: amount,
+                giftName: giftName,
+                giftEstimatedValueStr: giftEstimatedValueStr,
+                favorHelp: favorHelp,
+                banquetLocation: banquetLocation,
+                banquetAttendees: banquetAttendees,
+                banquetExtra: banquetExtra,
+                humanDescription: humanDescription,
+                columnIndex: columnIndex
+            ) else {
+                result.errors += 1
+                importLogger.warning("Skipped CSV row", metadata: [
+                    "step": .string("import_csv"),
+                    "source": .string(url.lastPathComponent),
+                    "reason": .string("missing_payload"),
+                    "count": .stringConvertible(rowIndex + 2),
+                ])
+                continue
+            }
+
             let eventName = csvCell(fields, columnIndex: columnIndex, column: "事件")
             let eventTypeStr = csvCell(fields, columnIndex: columnIndex, column: "事件类型")
-            let amountStr = csvCell(fields, columnIndex: columnIndex, column: "金额")
             let directionStr = csvCell(fields, columnIndex: columnIndex, column: "方向")
             let paymentStr = csvCell(fields, columnIndex: columnIndex, column: "支付方式")
             let returnedStr = csvCell(fields, columnIndex: columnIndex, column: "已退金额")
             let dateStr = csvCell(fields, columnIndex: columnIndex, column: "日期")
+            let note = csvCell(fields, columnIndex: columnIndex, column: "备注")
 
-            let recordType: RecordType
-            let relationshipWeight: RelationshipWeight
-            let favorDescription: String
-            let note: String
-            var giftName = ""
-            var giftEstimatedValueStr = ""
-            var favorHelp = ""
-            var banquetLocation = ""
-            var banquetAttendees = ""
-            var banquetExtra = ""
-
-            if !hasRecordTypeColumn {
-                recordType = .monetary
-                relationshipWeight = .reciprocal
-                favorDescription = ""
-                giftName = ""
-                giftEstimatedValueStr = ""
-                favorHelp = ""
-                banquetLocation = ""
-                banquetAttendees = ""
-                banquetExtra = ""
-                note = csvCell(fields, columnIndex: columnIndex, column: "备注")
-            } else {
-                recordType = parseRecordType(csvCell(fields, columnIndex: columnIndex, column: "记录类型"))
-                if columnIndex["情分分量"] != nil {
-                    relationshipWeight = parseRelationshipWeight(csvCell(fields, columnIndex: columnIndex, column: "情分分量"))
-                } else {
-                    relationshipWeight = .reciprocal
-                }
-                favorDescription = csvCell(fields, columnIndex: columnIndex, column: "人情描述")
-                note = csvCell(fields, columnIndex: columnIndex, column: "备注")
-                giftName = csvCell(fields, columnIndex: columnIndex, column: "礼品名称")
-                giftEstimatedValueStr = csvCell(fields, columnIndex: columnIndex, column: "礼品估值")
-                favorHelp = csvCell(fields, columnIndex: columnIndex, column: "帮忙说明")
-                banquetLocation = csvCell(fields, columnIndex: columnIndex, column: "宴请地点")
-                banquetAttendees = csvCell(fields, columnIndex: columnIndex, column: "宴请宾客")
-                banquetExtra = csvCell(fields, columnIndex: columnIndex, column: "宴请额外费用")
+            if inferredType == .monetary, amount <= 0 {
+                result.errors += 1
+                importLogger.warning("Skipped CSV row", metadata: [
+                    "step": .string("import_csv"),
+                    "source": .string(url.lastPathComponent),
+                    "reason": .string("invalid_monetary_amount"),
+                    "count": .stringConvertible(rowIndex + 2),
+                ])
+                continue
             }
 
-            let amount = UserEnteredDecimal.parse(amountStr) ?? 0
+            let date = parseDate(dateStr) ?? Date()
+            if parseDate(dateStr) == nil, !dateStr.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                importLogger.info("Fell back to current date during CSV import", metadata: [
+                    "step": .string("import_csv"),
+                    "source": .string(url.lastPathComponent),
+                    "reason": .string("invalid_date_fallback"),
+                    "count": .stringConvertible(rowIndex + 2),
+                ])
+            }
 
-            if recordType.isMonetary {
-                guard amount > 0 else {
-                    result.errors += 1
-                    importLogger.warning("Skipped CSV row", metadata: [
-                        "step": .string("import_csv"),
-                        "source": .string(url.lastPathComponent),
-                        "reason": .string("invalid_monetary_amount"),
-                        "count": .stringConvertible(rowIndex + 2),
-                    ])
-                    continue
-                }
-            } else {
-                guard nonMonetaryImportHasPayload(
-                    recordType: recordType,
-                    humanDesc: favorDescription,
-                    giftName: giftName,
-                    giftEstStr: giftEstimatedValueStr,
-                    favorHelp: favorHelp,
-                    banquetLoc: banquetLocation,
-                    banquetAtt: banquetAttendees,
-                    banquetExtra: banquetExtra,
-                    amount: amount
-                ) else {
-                    result.errors += 1
-                    importLogger.warning("Skipped CSV row", metadata: [
-                        "step": .string("import_csv"),
-                        "source": .string(url.lastPathComponent),
-                        "reason": .string("missing_non_monetary_payload"),
-                        "count": .stringConvertible(rowIndex + 2),
-                    ])
-                    continue
-                }
+            if parseDate(dateStr) == nil, dateStr.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                importLogger.info("Fell back to current date during CSV import", metadata: [
+                    "step": .string("import_csv"),
+                    "source": .string(url.lastPathComponent),
+                    "reason": .string("missing_date_fallback"),
+                    "count": .stringConvertible(rowIndex + 2),
+                ])
             }
 
             let contact = findOrCreateContact(name: contactName, context: context)
@@ -255,8 +279,7 @@ enum ExportService {
             let event = findOrCreateEventIfNeeded(name: eventName, type: eventType, context: context)
             let direction = parseDirection(directionStr)
             let paymentMethod = parsePaymentMethod(paymentStr)
-            let returnedAmount = recordType.isMonetary ? (UserEnteredDecimal.parse(returnedStr) ?? 0) : 0
-            let date = parseDate(dateStr) ?? Date()
+            let returnedAmount = inferredType == .monetary ? (UserEnteredDecimal.parse(returnedStr) ?? 0) : 0
 
             let record = Record(
                 contact: contact,
@@ -265,25 +288,22 @@ enum ExportService {
                 returnedAmount: returnedAmount,
                 note: note,
                 date: date,
-                recordType: recordType,
-                relationshipWeight: relationshipWeight
+                recordType: inferredType,
+                relationshipWeight: .reciprocal
             )
-
-            let typeData = buildTypeDataForImport(
-                recordType: recordType,
+            record.applyTypeData(buildTypeDataForImport(
+                recordType: inferredType,
                 amount: amount,
                 paymentMethod: paymentMethod,
                 returnedAmount: returnedAmount,
-                humanDesc: favorDescription,
+                humanDesc: humanDescription,
                 giftName: giftName,
                 giftEstStr: giftEstimatedValueStr,
                 favorHelp: favorHelp,
                 banquetLoc: banquetLocation,
                 banquetAtt: banquetAttendees,
-                banquetExtra: banquetExtra,
-                hasFlatColumns: hasFlatTypeData
-            )
-            record.applyTypeData(typeData)
+                banquetExtra: banquetExtra
+            ))
 
             context.insert(record)
             result.imported += 1
@@ -298,6 +318,75 @@ enum ExportService {
             "errors": .stringConvertible(result.errors),
         ])
         return result
+    }
+
+    private static func validateCSVHeader(_ headerRow: [String]) throws {
+        guard Set(commonColumns).isSubset(of: Set(headerRow)) else {
+            throw ImportError.invalidFormat
+        }
+
+        guard headerRow.allSatisfy({ allowedColumns.contains($0) }) else {
+            throw ImportError.invalidFormat
+        }
+
+        let hasTypeSpecificColumn = typeSpecificColumns.values
+            .flatMap(\.self)
+            .contains { Set(headerRow).contains($0) }
+        guard hasTypeSpecificColumn else {
+            throw ImportError.invalidFormat
+        }
+    }
+
+    private static func inferRecordType(
+        amount: Double,
+        giftName: String,
+        giftEstimatedValueStr: String,
+        favorHelp: String,
+        banquetLocation: String,
+        banquetAttendees: String,
+        banquetExtra: String,
+        humanDescription: String,
+        columnIndex: [String: Int]
+    ) -> RecordType? {
+        if amount > 0 {
+            return .monetary
+        }
+
+        let trimmedDescription = humanDescription.trimmingCharacters(in: .whitespacesAndNewlines)
+        let hasGiftPayload = !giftName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            || UserEnteredDecimal.parse(giftEstimatedValueStr) != nil
+        let hasFavorPayload = !favorHelp.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        let hasBanquetPayload = !banquetLocation.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            || !banquetAttendees.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            || !banquetExtra.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        let hasGiftColumns = columnIndex["礼品名称"] != nil || columnIndex["礼品估值"] != nil
+        let hasFavorColumns = columnIndex["帮忙说明"] != nil
+        let hasBanquetColumns = columnIndex["宴请地点"] != nil
+            || columnIndex["宴请宾客"] != nil
+            || columnIndex["宴请额外费用"] != nil
+
+        if hasGiftPayload {
+            return .gift
+        }
+        if hasFavorPayload {
+            return .favor
+        }
+        if hasBanquetPayload {
+            return .banquet
+        }
+        if !trimmedDescription.isEmpty {
+            if hasFavorColumns {
+                return .favor
+            }
+            if hasBanquetColumns {
+                return .banquet
+            }
+            if hasGiftColumns {
+                return .gift
+            }
+        }
+
+        return nil
     }
 
     /// 表头列名 → 列下标（同名取第一次出现）。
@@ -327,44 +416,6 @@ enum ExportService {
         return row[idx]
     }
 
-    private static let csvFlatTypeColumnNames: [String] = [
-        "礼品名称", "礼品估值", "帮忙说明", "宴请地点", "宴请宾客", "宴请额外费用",
-    ]
-
-    private static func csvImportHasFlatTypeColumns(_ columnIndex: [String: Int]) -> Bool {
-        csvFlatTypeColumnNames.contains { columnIndex[$0] != nil }
-    }
-
-    private static func nonMonetaryImportHasPayload(
-        recordType: RecordType,
-        humanDesc: String,
-        giftName: String,
-        giftEstStr: String,
-        favorHelp: String,
-        banquetLoc: String,
-        banquetAtt: String,
-        banquetExtra: String,
-        amount: Double
-    ) -> Bool {
-        let h = humanDesc.trimmingCharacters(in: .whitespacesAndNewlines)
-        switch recordType {
-        case .monetary:
-            return true
-        case .gift:
-            let g = giftName.trimmingCharacters(in: .whitespacesAndNewlines)
-            let e = giftEstStr.trimmingCharacters(in: .whitespacesAndNewlines)
-            return !g.isEmpty || !h.isEmpty || amount > 0 || !e.isEmpty
-        case .favor:
-            let f = favorHelp.trimmingCharacters(in: .whitespacesAndNewlines)
-            return !f.isEmpty || !h.isEmpty
-        case .banquet:
-            return !banquetLoc.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                || !banquetAtt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                || !banquetExtra.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                || !h.isEmpty
-        }
-    }
-
     private static func buildTypeDataForImport(
         recordType: RecordType,
         amount: Double,
@@ -376,52 +427,34 @@ enum ExportService {
         favorHelp: String,
         banquetLoc: String,
         banquetAtt: String,
-        banquetExtra: String,
-        hasFlatColumns: Bool
+        banquetExtra: String
     ) -> RecordTypeData {
-        let h = humanDesc.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedDescription = humanDesc.trimmingCharacters(in: .whitespacesAndNewlines)
+
         switch recordType {
         case .monetary:
-            return .monetary(MonetaryData(amount: amount, paymentMethod: paymentMethod.rawValue, returnedAmount: returnedAmount))
+            return .monetary(MonetaryData(
+                amount: amount,
+                paymentMethod: paymentMethod.rawValue,
+                returnedAmount: returnedAmount
+            ))
         case .gift:
-            let name: String
-            if hasFlatColumns {
-                let g = giftName.trimmingCharacters(in: .whitespacesAndNewlines)
-                name = g.isEmpty ? h : g
-            } else {
-                name = h
-            }
-            let estFromFlat = UserEnteredDecimal.parse(giftEstStr)
-            let estimatedValue: Double? = if hasFlatColumns {
-                if let v = estFromFlat, v > 0 {
-                    v
-                } else if amount > 0 {
-                    amount
-                } else {
-                    nil
-                }
-            } else {
-                amount > 0 ? amount : nil
-            }
-            return .gift(GiftData(giftName: name, estimatedValue: estimatedValue))
+            let name = giftName.trimmingCharacters(in: .whitespacesAndNewlines)
+            let estimatedValue = UserEnteredDecimal.parse(giftEstStr)
+            return .gift(GiftData(
+                giftName: name.isEmpty ? trimmedDescription : name,
+                estimatedValue: estimatedValue
+            ))
         case .favor:
-            let desc: String
-            if hasFlatColumns {
-                let f = favorHelp.trimmingCharacters(in: .whitespacesAndNewlines)
-                desc = f.isEmpty ? h : f
-            } else {
-                desc = h
-            }
-            return .favor(FavorData(description: desc))
+            let description = favorHelp.trimmingCharacters(in: .whitespacesAndNewlines)
+            return .favor(FavorData(description: description.isEmpty ? trimmedDescription : description))
         case .banquet:
-            if hasFlatColumns {
-                let loc = banquetLoc.trimmingCharacters(in: .whitespacesAndNewlines)
-                let att = banquetAtt.trimmingCharacters(in: .whitespacesAndNewlines)
-                let ex = banquetExtra.trimmingCharacters(in: .whitespacesAndNewlines)
-                let location = loc.isEmpty ? h : loc
-                return .banquet(BanquetData(location: location, attendeeList: att, extraCostNotes: ex))
-            }
-            return .banquet(BanquetData(location: h, attendeeList: "", extraCostNotes: ""))
+            let location = banquetLoc.trimmingCharacters(in: .whitespacesAndNewlines)
+            return .banquet(BanquetData(
+                location: location.isEmpty ? trimmedDescription : location,
+                attendeeList: banquetAtt.trimmingCharacters(in: .whitespacesAndNewlines),
+                extraCostNotes: banquetExtra.trimmingCharacters(in: .whitespacesAndNewlines)
+            ))
         }
     }
 
@@ -617,38 +650,15 @@ enum ExportService {
         }
     }
 
-    static func parseRecordType(_ str: String) -> RecordType {
-        let s = str.trimmingCharacters(in: .whitespaces)
-        if let byRaw = RecordType(rawValue: s) { return byRaw }
-        switch s {
-        case "金额": return .monetary
-        case "礼品": return .gift
-        case "帮忙": return .favor
-        case "宴请": return .banquet
-        case "其他": return .favor
-        case "探望": return .favor
-        default: return .monetary
-        }
-    }
-
-    static func parseRelationshipWeight(_ str: String) -> RelationshipWeight {
-        let s = str.trimmingCharacters(in: .whitespaces)
-        if let byRaw = RelationshipWeight(rawValue: s) { return byRaw }
-        switch s {
-        case "举手之劳": return .trivial
-        case "点滴之恩": return .kindness
-        case "礼尚往来": return .reciprocal
-        case "倾力相助": return .support
-        case "重如泰山": return .profound
-        default: return .reciprocal
-        }
-    }
-
     static func parseDate(_ str: String) -> Date? {
+        csvDateFormatter.date(from: str.trimmingCharacters(in: .whitespaces))
+    }
+
+    private static var csvDateFormatter: DateFormatter {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "zh_Hans")
-        formatter.dateFormat = "yyyy-MM-dd HH:mm"
-        return formatter.date(from: str.trimmingCharacters(in: .whitespaces))
+        formatter.dateFormat = csvDateFormat
+        return formatter
     }
 }
 

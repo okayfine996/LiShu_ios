@@ -6154,7 +6154,6 @@
       }
     },
     "settings.data.downloadTemplate" : {
-      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -6212,6 +6211,22 @@
         }
       }
     },
+    "settings.data.exportType %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Export %@ CSV"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导出 %@ CSV"
+          }
+        }
+      }
+    },
     "settings.data.importCSV" : {
       "localizations" : {
         "en" : {
@@ -6241,10 +6256,16 @@
     },
     "settings.data.importHint" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Import CSV with type-specific templates. Recommended date format: yyyy-MM-dd HH:mm. If the date is missing, today's date will be used."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "支持拍照识别礼簿，或导入 Excel / CSV 文件"
+            "value" : "支持拍照识别礼簿，或导入按类型模板生成的 CSV。日期建议使用 yyyy-MM-dd HH:mm，缺失时默认使用当天时间。"
           }
         }
       }
@@ -6277,10 +6298,16 @@
     },
     "settings.data.proHint" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exporting CSV by record type is a Pro feature."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "此为 Pro 会员专享功能"
+            "value" : "按记录类型导出 CSV 为 Pro 会员专享功能"
           }
         }
       }
@@ -6301,6 +6328,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "导入数据"
+          }
+        }
+      }
+    },
+    "settings.data.templateType %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Download %@ Template"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下载 %@ 模板"
           }
         }
       }

@@ -4,13 +4,9 @@ import UniformTypeIdentifiers
 
 struct DataManagementView: View {
     @Environment(\.modelContext) private var modelContext
-    @Environment(SubscriptionManager.self) private var subscriptionManager
-    @Environment(DebugOverrideManager.self) private var debugOverrides
     @State private var showComingSoonToast = false
     @State private var toastMessage = ""
     @State private var showOCRImport = false
-    @State private var showProSheet = false
-    @State private var shareURL: URL?
     @State private var exportError: String?
     @State private var showCSVImporter = false
     @State private var importResult: String?
@@ -37,25 +33,6 @@ struct DataManagementView: View {
         .fullScreenCover(isPresented: $showOCRImport) {
             OCRImportView()
         }
-        .sheet(isPresented: $showProSheet) {
-            NavigationStack {
-                ProMembershipView()
-            }
-        }
-        .sheet(item: Binding(
-            get: { shareURL.map { ShareableFile(id: $0.absoluteString, url: $0) } },
-            set: {
-                if let url = shareURL, $0 == nil {
-                    try? FileManager.default.removeItem(at: url)
-                }
-                shareURL = $0?.url
-            }
-        )) { item in
-            ShareSheet(url: item.url) {
-                shareURL = nil
-                try? FileManager.default.removeItem(at: item.url)
-            }
-        }
         .alert(String(localized: "common.error"), isPresented: Binding(
             get: { exportError != nil },
             set: { if !$0 { exportError = nil } }
@@ -80,7 +57,7 @@ struct DataManagementView: View {
             sectionHeader(String(localized: "settings.data.section.import"))
 
             VStack(spacing: 0) {
-                dataRow(
+                actionRow(
                     icon: "doc.viewfinder",
                     title: String(localized: "settings.data.importOCR"),
                     action: { showOCRImport = true }
@@ -90,11 +67,20 @@ struct DataManagementView: View {
                     .background(DesignSystem.Colors.separator)
                     .padding(.leading, 56)
 
-                dataRow(
+                actionRow(
                     icon: "doc.text",
                     title: String(localized: "settings.data.importCSV"),
                     action: { showCSVImporter = true }
                 )
+
+                sectionDivider
+
+                navigationRow(
+                    icon: "arrow.down.doc",
+                    title: String(localized: "settings.data.downloadTemplate")
+                ) {
+                    CSVTypeActionListView(mode: .templateDownload)
+                }
             }
             .background(DesignSystem.Colors.bgSurface)
             .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
@@ -113,12 +99,13 @@ struct DataManagementView: View {
             sectionHeader(String(localized: "settings.data.section.export"))
 
             VStack(spacing: 0) {
-                dataRow(
-                    icon: "doc.richtext.fill",
+                navigationRow(
+                    icon: "square.and.arrow.up",
                     title: String(localized: "settings.data.exportCSV"),
-                    isPro: true,
-                    action: { performExportCSV() }
-                )
+                    isPro: true
+                ) {
+                    CSVTypeActionListView(mode: .typedExport)
+                }
             }
             .background(DesignSystem.Colors.bgSurface)
             .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
@@ -132,42 +119,60 @@ struct DataManagementView: View {
 
     // MARK: - Helpers
 
-    private var effectiveProAccessEnabled: Bool {
-        subscriptionManager.effectiveIsPro(overrides: debugOverrides)
+    private var sectionDivider: some View {
+        Divider()
+            .background(DesignSystem.Colors.separator)
+            .padding(.leading, 56)
     }
 
-    private func dataRow(icon: String, title: String, isPro: Bool = false, action: @escaping () -> Void) -> some View {
+    private func actionRow(icon: String, title: String, isPro: Bool = false, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            HStack(spacing: 12) {
-                Image(systemName: icon)
-                    .font(.system(size: 18))
-                    .foregroundStyle(DesignSystem.Colors.primary)
-                    .frame(width: 28, height: 28)
-
-                Text(title)
-                    .font(DesignSystem.Typography.body)
-                    .foregroundStyle(DesignSystem.Colors.textPrimary)
-
-                if isPro {
-                    Text("Pro")
-                        .font(DesignSystem.Typography.small)
-                        .foregroundStyle(DesignSystem.Colors.accentGold)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(DesignSystem.Colors.accentGold.opacity(0.15))
-                        .clipShape(Capsule())
-                }
-
-                Spacer()
-
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(DesignSystem.Colors.textTertiary)
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
+            rowContent(icon: icon, title: title, isPro: isPro)
         }
         .buttonStyle(.plain)
+    }
+
+    private func navigationRow(
+        icon: String,
+        title: String,
+        isPro: Bool = false,
+        @ViewBuilder destination: () -> some View
+    ) -> some View {
+        NavigationLink(destination: destination()) {
+            rowContent(icon: icon, title: title, isPro: isPro)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func rowContent(icon: String, title: String, isPro: Bool) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 18))
+                .foregroundStyle(DesignSystem.Colors.primary)
+                .frame(width: 28, height: 28)
+
+            Text(title)
+                .font(DesignSystem.Typography.body)
+                .foregroundStyle(DesignSystem.Colors.textPrimary)
+
+            if isPro {
+                Text("Pro")
+                    .font(DesignSystem.Typography.small)
+                    .foregroundStyle(DesignSystem.Colors.accentGold)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(DesignSystem.Colors.accentGold.opacity(0.15))
+                    .clipShape(Capsule())
+            }
+
+            Spacer()
+
+            Image(systemName: "chevron.right")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(DesignSystem.Colors.textTertiary)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
     }
 
     private func sectionHeader(_ title: String) -> some View {
@@ -175,33 +180,6 @@ struct DataManagementView: View {
             .font(DesignSystem.Typography.small)
             .foregroundStyle(DesignSystem.Colors.textSecondary)
             .padding(.leading, 4)
-    }
-
-    private func performExportCSV() {
-        guard effectiveProAccessEnabled else {
-            showProSheet = true
-            return
-        }
-
-        do {
-            let tempDir = FileManager.default.temporaryDirectory
-            let fileName = "lishu_export_\(dateSuffix()).csv"
-            guard let data = try ExportService.exportCSV(context: modelContext).data(using: .utf8) else {
-                exportError = String(localized: "settings.data.export_encoding_failed")
-                return
-            }
-            let fileURL = tempDir.appendingPathComponent(fileName)
-            try data.write(to: fileURL)
-            shareURL = fileURL
-        } catch {
-            exportError = error.localizedDescription
-        }
-    }
-
-    private func dateSuffix() -> String {
-        let f = DateFormatter()
-        f.dateFormat = "yyyyMMdd_HHmmss"
-        return f.string(from: Date())
     }
 
     private func showToast() {
@@ -256,17 +234,11 @@ struct DataManagementView: View {
     }
 }
 
-// MARK: - Shareable File
-
-private struct ShareableFile: Identifiable {
-    let id: String
-    let url: URL
-}
-
 #Preview {
     NavigationStack {
         DataManagementView()
             .environment(SubscriptionManager.shared)
+            .environment(DebugOverrideManager())
     }
     .modelContainer(for: [Contact.self, Record.self, Event.self], inMemory: true)
 }

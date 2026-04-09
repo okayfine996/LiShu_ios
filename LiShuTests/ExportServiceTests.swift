@@ -46,7 +46,7 @@ struct ExportServiceTests {
         #expect(ExportService.escapeCSV("第一行\n第二行") == "\"第一行\n第二行\"")
     }
 
-    // MARK: - Parse Event Type
+    // MARK: - Parse Helpers
 
     @Test func testParseEventType() {
         #expect(ExportService.parseEventType("婚礼") == .wedding)
@@ -60,8 +60,6 @@ struct ExportServiceTests {
         #expect(ExportService.parseEventType("未知类型") == .other)
     }
 
-    // MARK: - Parse Direction
-
     @Test func testParseDirection() {
         #expect(ExportService.parseDirection("送出") == .given)
         #expect(ExportService.parseDirection("随礼") == .given)
@@ -71,8 +69,6 @@ struct ExportServiceTests {
         #expect(ExportService.parseDirection("received") == .received)
         #expect(ExportService.parseDirection("未知") == .given)
     }
-
-    // MARK: - Parse Payment Method
 
     @Test func testParsePaymentMethod() {
         #expect(ExportService.parsePaymentMethod("现金") == .cash)
@@ -86,8 +82,6 @@ struct ExportServiceTests {
         #expect(ExportService.parsePaymentMethod("未知") == .cash)
     }
 
-    // MARK: - Parse Date
-
     @Test func testParseDate() {
         let date = ExportService.parseDate("2026-03-15 14:30")
         #expect(date != nil)
@@ -99,41 +93,57 @@ struct ExportServiceTests {
         #expect(emptyDate == nil)
     }
 
-    @Test func testParseRelationshipWeight() {
-        #expect(ExportService.parseRelationshipWeight("举手之劳") == .trivial)
-        #expect(ExportService.parseRelationshipWeight("礼尚往来") == .reciprocal)
-        #expect(ExportService.parseRelationshipWeight("profound") == .profound)
-        #expect(ExportService.parseRelationshipWeight("未知") == .reciprocal)
+    // MARK: - Template Export
+
+    @Test(arguments: [RecordType.monetary, .gift, .favor, .banquet])
+    func templateCSVContainsDateAndExample(for recordType: RecordType) {
+        let csv = ExportService.templateCSV(for: recordType)
+        let lines = csv.components(separatedBy: "\n")
+
+        #expect(lines.count == 2)
+        #expect(lines[0].contains("日期"))
+        #expect(lines[1].contains("2026-04-09 10:30"))
     }
 
-    @Test func parseRecordTypeBanquet() {
-        #expect(ExportService.parseRecordType("宴请") == .banquet)
-        #expect(ExportService.parseRecordType("banquet") == .banquet)
-    }
+    // MARK: - Type Export
 
-    // MARK: - CSV Export
-
-    @Test func testExportCSV() throws {
+    @Test func exportMonetaryCSVOnlyIncludesMonetaryColumns() throws {
         let db = try TestDB()
         let contact = SampleData.contact(name: "李四")
         let event = SampleData.event(name: "生日宴", type: .birthday)
         db.context.insert(contact)
         db.context.insert(event)
 
-        let record = SampleData.record(contact: contact, event: event, amount: 300, direction: .received)
-        db.context.insert(record)
+        db.context.insert(SampleData.record(contact: contact, event: event, amount: 300, direction: .received))
+        db.context.insert(SampleData.recordGift(contact: contact, event: event, giftName: "茶具", estimatedValue: 200))
         try db.context.save()
 
-        let csv = try ExportService.exportCSV(context: db.context)
+        let csv = try ExportService.exportCSV(context: db.context, recordType: .monetary)
         let lines = csv.components(separatedBy: "\n")
 
         #expect(lines.count == 2)
-        #expect(lines[0].contains("联系人"))
-        #expect(lines[0].contains("情分分量"))
-        #expect(lines[0].contains("礼品名称"))
-        #expect(lines[0].contains("宴请额外费用"))
-        #expect(!lines[0].contains("kvData"))
-        #expect(lines[1].contains("李四"))
+        #expect(lines[0] == "联系人,事件,事件类型,方向,日期,备注,金额,支付方式,已退金额")
         #expect(lines[1].contains("300.00"))
+        #expect(!lines[1].contains("茶具"))
+    }
+
+    @Test func exportGiftCSVUsesEstimatedValueInsteadOfAmountColumn() throws {
+        let db = try TestDB()
+        let contact = SampleData.contact(name: "礼品联系人")
+        let event = SampleData.event(name: "乔迁", type: .property)
+        db.context.insert(contact)
+        db.context.insert(event)
+        db.context.insert(SampleData.recordGift(contact: contact, event: event, giftName: "景德镇茶具", estimatedValue: 880))
+        try db.context.save()
+
+        let csv = try ExportService.exportCSV(context: db.context, recordType: .gift)
+        let lines = csv.components(separatedBy: "\n")
+
+        #expect(lines.count == 2)
+        #expect(lines[0] == "联系人,事件,事件类型,方向,日期,备注,礼品名称,礼品估值,人情描述")
+        #expect(lines[0].contains("礼品估值"))
+        #expect(!lines[0].contains("金额"))
+        #expect(lines[1].contains("景德镇茶具"))
+        #expect(lines[1].contains("880.00"))
     }
 }
