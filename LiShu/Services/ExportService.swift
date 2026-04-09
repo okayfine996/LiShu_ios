@@ -7,7 +7,7 @@ private let importLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.import
 
 enum ExportService {
     private static let csvDateFormat = "yyyy-MM-dd HH:mm"
-    private static let commonColumns = ["联系人", "事件", "事件类型", "方向", "日期", "备注"]
+    private static let commonColumns = ["联系人", "事件", "事件类型", "场景标签", "方向", "日期", "备注"]
     private static let typeSpecificColumns: [RecordType: [String]] = [
         .monetary: ["金额", "支付方式", "已退金额"],
         .gift: ["礼品名称", "礼品估值", "人情描述"],
@@ -52,11 +52,15 @@ enum ExportService {
 
     private static func exportRow(for record: Record, recordType: RecordType) -> String? {
         guard record.recordType == recordType, let contact = record.contact else { return nil }
+        guard let context = resolveExportContext(for: record) else {
+            return nil
+        }
 
         var values: [String: String] = [
             "联系人": contact.name,
-            "事件": record.event?.name ?? "",
-            "事件类型": record.event?.type.displayName ?? "",
+            "事件": context.eventName,
+            "事件类型": context.eventTypeName,
+            "场景标签": context.sceneTag,
             "方向": record.direction.csvValue,
             "日期": csvDateFormatter.string(from: record.date),
             "备注": record.note,
@@ -89,58 +93,122 @@ enum ExportService {
     }
 
     private static func templateRow(for recordType: RecordType) -> String {
-        let values: [String: String] = switch recordType {
+        let values: [[String: String]] = switch recordType {
         case .monetary:
             [
-                "联系人": "张三",
-                "事件": "婚礼",
-                "事件类型": "婚礼",
-                "方向": "送出",
-                "日期": "2026-04-09 10:30",
-                "备注": "示例备注",
-                "金额": "800.00",
-                "支付方式": "微信",
-                "已退金额": "0.00",
+                [
+                    "联系人": "张三",
+                    "事件": "婚礼",
+                    "事件类型": "婚礼",
+                    "场景标签": "",
+                    "方向": "送出",
+                    "日期": "2026-04-09 10:30",
+                    "备注": "示例备注",
+                    "金额": "800.00",
+                    "支付方式": "微信",
+                    "已退金额": "0.00",
+                ],
+                [
+                    "联系人": "李四",
+                    "事件": "",
+                    "事件类型": "",
+                    "场景标签": "节日看望",
+                    "方向": "送出",
+                    "日期": "2026-04-09 10:30",
+                    "备注": "日常礼金示例",
+                    "金额": "300.00",
+                    "支付方式": "现金",
+                    "已退金额": "0.00",
+                ],
             ]
         case .gift:
             [
-                "联系人": "李四",
-                "事件": "乔迁",
-                "事件类型": "乔迁",
-                "方向": "送出",
-                "日期": "2026-04-09 10:30",
-                "备注": "示例备注",
-                "礼品名称": "景德镇茶具",
-                "礼品估值": "880.00",
-                "人情描述": "乔迁随礼品",
+                [
+                    "联系人": "李四",
+                    "事件": "乔迁",
+                    "事件类型": "乔迁",
+                    "场景标签": "",
+                    "方向": "送出",
+                    "日期": "2026-04-09 10:30",
+                    "备注": "示例备注",
+                    "礼品名称": "景德镇茶具",
+                    "礼品估值": "880.00",
+                    "人情描述": "乔迁随礼品",
+                ],
+                [
+                    "联系人": "王五",
+                    "事件": "",
+                    "事件类型": "",
+                    "场景标签": "出差带特产",
+                    "方向": "送出",
+                    "日期": "2026-04-09 10:30",
+                    "备注": "日常礼品示例",
+                    "礼品名称": "地方特产礼盒",
+                    "礼品估值": "260.00",
+                    "人情描述": "出差顺手带回",
+                ],
             ]
         case .favor:
             [
-                "联系人": "王五",
-                "事件": "日常往来",
-                "事件类型": "其他",
-                "方向": "送出",
-                "日期": "2026-04-09 10:30",
-                "备注": "示例备注",
-                "帮忙说明": "帮忙挂号预约",
-                "人情描述": "医院陪同",
+                [
+                    "联系人": "王五",
+                    "事件": "探望",
+                    "事件类型": "探望",
+                    "场景标签": "",
+                    "方向": "送出",
+                    "日期": "2026-04-09 10:30",
+                    "备注": "示例备注",
+                    "帮忙说明": "帮忙挂号预约",
+                    "人情描述": "医院陪同",
+                ],
+                [
+                    "联系人": "赵六",
+                    "事件": "",
+                    "事件类型": "",
+                    "场景标签": "帮忙挂号",
+                    "方向": "送出",
+                    "日期": "2026-04-09 10:30",
+                    "备注": "日常帮忙示例",
+                    "帮忙说明": "帮忙代取检查报告",
+                    "人情描述": "顺路代办",
+                ],
             ]
         case .banquet:
             [
-                "联系人": "赵六",
-                "事件": "商务宴请",
-                "事件类型": "其他",
-                "方向": "送出",
-                "日期": "2026-04-09 10:30",
-                "备注": "示例备注",
-                "宴请地点": "兰亭包厢",
-                "宴请宾客": "张三、李四",
-                "宴请额外费用": "两瓶酒水",
-                "人情描述": "商务答谢宴",
+                [
+                    "联系人": "赵六",
+                    "事件": "商务宴请",
+                    "事件类型": "其他",
+                    "场景标签": "",
+                    "方向": "送出",
+                    "日期": "2026-04-09 10:30",
+                    "备注": "示例备注",
+                    "宴请地点": "兰亭包厢",
+                    "宴请宾客": "张三、李四",
+                    "宴请额外费用": "两瓶酒水",
+                    "人情描述": "商务答谢宴",
+                ],
+                [
+                    "联系人": "孙七",
+                    "事件": "",
+                    "事件类型": "",
+                    "场景标签": "接风洗尘",
+                    "方向": "送出",
+                    "日期": "2026-04-09 10:30",
+                    "备注": "日常宴请示例",
+                    "宴请地点": "家常馆包间",
+                    "宴请宾客": "老同学两位",
+                    "宴请额外费用": "带了两瓶红酒",
+                    "人情描述": "朋友聚餐接风",
+                ],
             ]
         }
 
-        return csvValues(for: recordType).map { escapeCSV(values[$0] ?? "") }.joined(separator: ",")
+        return values
+            .map { row in
+                csvValues(for: recordType).map { escapeCSV(row[$0] ?? "") }.joined(separator: ",")
+            }
+            .joined(separator: "\n")
     }
 
     private static func csvValues(for recordType: RecordType) -> [String] {
@@ -238,11 +306,25 @@ enum ExportService {
 
             let eventName = csvCell(fields, columnIndex: columnIndex, column: "事件")
             let eventTypeStr = csvCell(fields, columnIndex: columnIndex, column: "事件类型")
+            let sceneTag = csvCell(fields, columnIndex: columnIndex, column: "场景标签")
             let directionStr = csvCell(fields, columnIndex: columnIndex, column: "方向")
             let paymentStr = csvCell(fields, columnIndex: columnIndex, column: "支付方式")
             let returnedStr = csvCell(fields, columnIndex: columnIndex, column: "已退金额")
             let dateStr = csvCell(fields, columnIndex: columnIndex, column: "日期")
             let note = csvCell(fields, columnIndex: columnIndex, column: "备注")
+
+            let trimmedEventName = eventName.trimmingCharacters(in: .whitespacesAndNewlines)
+            let trimmedSceneTag = sceneTag.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmedEventName.isEmpty || !trimmedSceneTag.isEmpty else {
+                result.skipped += 1
+                importLogger.warning("Skipped CSV row", metadata: [
+                    "step": .string("import_csv"),
+                    "source": .string(url.lastPathComponent),
+                    "reason": .string("missing_context"),
+                    "count": .stringConvertible(rowIndex + 2),
+                ])
+                continue
+            }
 
             if inferredType == .monetary, amount <= 0 {
                 result.errors += 1
@@ -275,8 +357,8 @@ enum ExportService {
             }
 
             let contact = findOrCreateContact(name: contactName, context: context)
-            let eventType = parseEventType(eventTypeStr)
-            let event = findOrCreateEventIfNeeded(name: eventName, type: eventType, context: context)
+            let eventType = trimmedEventName.isEmpty ? .other : parseEventType(eventTypeStr)
+            let event = findOrCreateEventIfNeeded(name: trimmedEventName, type: eventType, context: context)
             let direction = parseDirection(directionStr)
             let paymentMethod = parsePaymentMethod(paymentStr)
             let returnedAmount = inferredType == .monetary ? (UserEnteredDecimal.parse(returnedStr) ?? 0) : 0
@@ -291,6 +373,7 @@ enum ExportService {
                 recordType: inferredType,
                 relationshipWeight: .reciprocal
             )
+            record.contextTag = trimmedEventName.isEmpty ? trimmedSceneTag : ""
             record.applyTypeData(buildTypeDataForImport(
                 recordType: inferredType,
                 amount: amount,
@@ -614,6 +697,18 @@ enum ExportService {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return nil }
         return findOrCreateEvent(name: trimmed, type: type, context: context)
+    }
+
+    private static func resolveExportContext(for record: Record) -> (eventName: String, eventTypeName: String, sceneTag: String)? {
+        if let event = record.event {
+            return (event.name, event.type.displayName, "")
+        }
+
+        let trimmedSceneTag = record.contextTag.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedSceneTag.isEmpty else {
+            return nil
+        }
+        return ("", "", trimmedSceneTag)
     }
 
     static func parseEventType(_ str: String) -> EventType {

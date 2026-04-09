@@ -38,6 +38,21 @@ struct AddRecordViewModelTests {
         #expect(vm.isValid == false)
     }
 
+    @Test func isValidMissingDailyTag() throws {
+        let db = try TestDB()
+        let vm = AddRecordViewModel()
+        vm.loadData(context: db.context)
+        let contact = SampleData.contact()
+        db.context.insert(contact)
+
+        vm.selectedContact = contact
+        vm.contextSelection = .daily
+        vm.selectedDailyTag = ""
+        vm.monetaryAmount = "500"
+
+        #expect(vm.isValid == false)
+    }
+
     @Test func isValidZeroAmount() throws {
         let db = try TestDB()
         let vm = AddRecordViewModel()
@@ -65,6 +80,21 @@ struct AddRecordViewModelTests {
 
         vm.selectedContact = contact
         vm.selectedEvent = event
+        vm.monetaryAmount = "500"
+
+        #expect(vm.isValid == true)
+    }
+
+    @Test func isValidDailyContextWithTag() throws {
+        let db = try TestDB()
+        let vm = AddRecordViewModel()
+        vm.loadData(context: db.context)
+        let contact = SampleData.contact()
+        db.context.insert(contact)
+
+        vm.selectedContact = contact
+        vm.contextSelection = .daily
+        vm.selectedDailyTag = "节日看望"
         vm.monetaryAmount = "500"
 
         #expect(vm.isValid == true)
@@ -159,6 +189,25 @@ struct AddRecordViewModelTests {
         #expect(records[0].banquetData?.location == "西贝莜面村包间，中档规格")
         #expect(records[0].banquetData?.attendeeList == "主客外还有两位同事陪同")
         #expect(records[0].banquetData?.extraCostNotes == "席间开了两瓶酒")
+    }
+
+    @Test func saveDailyRecordRequiresSceneTag() throws {
+        let db = try TestDB()
+        let contact = SampleData.contact()
+        db.context.insert(contact)
+        try db.context.save()
+
+        let vm = AddRecordViewModel()
+        vm.loadData(context: db.context)
+        vm.selectedContact = contact
+        vm.contextSelection = .daily
+        vm.selectedDailyTag = ""
+        vm.monetaryAmount = "520"
+
+        #expect(vm.save(context: db.context) == false)
+
+        let records = try db.context.fetch(FetchDescriptor<Record>())
+        #expect(records.isEmpty)
     }
 
     @Test func testLoadData() throws {

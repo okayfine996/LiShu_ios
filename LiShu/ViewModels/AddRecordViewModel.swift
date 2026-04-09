@@ -86,8 +86,12 @@ class AddRecordViewModel {
     var isValid: Bool {
         let hasContact = selectedContact != nil
         let hasEvent = selectedEvent != nil
+        let hasDailyTag = !selectedDailyTag.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         guard hasContact else { return false }
         if contextSelection == .event, !hasEvent {
+            return false
+        }
+        if contextSelection == .daily, !hasDailyTag {
             return false
         }
         switch recordType {

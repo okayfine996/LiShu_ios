@@ -100,9 +100,11 @@ struct ExportServiceTests {
         let csv = ExportService.templateCSV(for: recordType)
         let lines = csv.components(separatedBy: "\n")
 
-        #expect(lines.count == 2)
+        #expect(lines.count == 3)
         #expect(lines[0].contains("日期"))
+        #expect(lines[0].contains("场景标签"))
         #expect(lines[1].contains("2026-04-09 10:30"))
+        #expect(lines[2].contains("2026-04-09 10:30"))
     }
 
     // MARK: - Type Export
@@ -122,7 +124,7 @@ struct ExportServiceTests {
         let lines = csv.components(separatedBy: "\n")
 
         #expect(lines.count == 2)
-        #expect(lines[0] == "联系人,事件,事件类型,方向,日期,备注,金额,支付方式,已退金额")
+        #expect(lines[0] == "联系人,事件,事件类型,场景标签,方向,日期,备注,金额,支付方式,已退金额")
         #expect(lines[1].contains("300.00"))
         #expect(!lines[1].contains("茶具"))
     }
@@ -140,10 +142,26 @@ struct ExportServiceTests {
         let lines = csv.components(separatedBy: "\n")
 
         #expect(lines.count == 2)
-        #expect(lines[0] == "联系人,事件,事件类型,方向,日期,备注,礼品名称,礼品估值,人情描述")
+        #expect(lines[0] == "联系人,事件,事件类型,场景标签,方向,日期,备注,礼品名称,礼品估值,人情描述")
         #expect(lines[0].contains("礼品估值"))
         #expect(!lines[0].contains("金额"))
         #expect(lines[1].contains("景德镇茶具"))
         #expect(lines[1].contains("880.00"))
+    }
+
+    @Test func exportSkipsRecordWithoutEventAndSceneTag() throws {
+        let db = try TestDB()
+        let contact = SampleData.contact(name: "无效联系人")
+        db.context.insert(contact)
+
+        let invalidRecord = SampleData.record(contact: contact, event: nil, amount: 200)
+        db.context.insert(invalidRecord)
+        try db.context.save()
+
+        let csv = try ExportService.exportCSV(context: db.context, recordType: .monetary)
+        let lines = csv.components(separatedBy: "\n")
+
+        #expect(lines.count == 1)
+        #expect(lines[0] == "联系人,事件,事件类型,场景标签,方向,日期,备注,金额,支付方式,已退金额")
     }
 }
