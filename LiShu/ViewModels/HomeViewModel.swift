@@ -101,6 +101,14 @@ class HomeViewModel {
         "\(currentYear)"
     }
 
+    var lunarYearLabel: String {
+        let formatter = DateFormatter()
+        formatter.calendar = Calendar(identifier: .chinese)
+        formatter.locale = Locale(identifier: "zh_Hans_CN")
+        formatter.dateFormat = "U年"
+        return formatter.string(from: Date())
+    }
+
     var peopleSummary: String {
         String(format: String(localized: "home.peopleTxSummary"), contactCount, recordCount)
     }
@@ -113,6 +121,10 @@ class HomeViewModel {
             formatNumber(yearlyIncome),
             formatNumber(yearlyExpense)
         )
+    }
+
+    var formattedMonetaryNet: String {
+        formatNetValue(yearlyIncome - yearlyExpense)
     }
 
     /// 各类型统计（count > 0 的才展示）

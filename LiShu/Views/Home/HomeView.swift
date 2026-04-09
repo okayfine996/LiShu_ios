@@ -37,10 +37,19 @@ struct HomeView: View {
 
     private var summarySection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            // Header: title + add record button
-            Text(String(localized: "home.yearSummaryTitle"))
-                .font(DesignSystem.Typography.title2)
-                .foregroundStyle(DesignSystem.Colors.textPrimary)
+            HStack(alignment: .center, spacing: 12) {
+                Text(String(localized: "home.yearSummaryTitle"))
+                    .font(DesignSystem.Typography.title3)
+                    .foregroundStyle(DesignSystem.Colors.textPrimary)
+
+                Spacer()
+
+                Text(viewModel.lunarYearLabel)
+                    .font(DesignSystem.Typography.title3)
+                    .foregroundStyle(DesignSystem.Colors.primary)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 8)
+            }
 
             // Inner card: total interactions + type breakdown + monetary net
             summaryCardContent
@@ -49,25 +58,13 @@ struct HomeView: View {
 
     private var summaryCardContent: some View {
         VStack(alignment: .leading, spacing: 20) {
-            // Total interactions + chart button
+            // Monetary net + chart button
             HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(String(localized: "home.totalInteractions"))
-                        .font(DesignSystem.Typography.caption)
-                        .foregroundStyle(DesignSystem.Colors.textSecondary)
-
-                    HStack(alignment: .firstTextBaseline, spacing: 2) {
-                        Text("\(viewModel.recordCount)")
-                            .font(DesignSystem.Typography.display)
-                            .foregroundStyle(DesignSystem.Colors.textPrimary)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.85)
-
-                        Text(String(localized: "home.interactionUnit"))
-                            .font(DesignSystem.Typography.title3)
-                            .foregroundStyle(DesignSystem.Colors.textSecondary)
-                    }
-                }
+                summaryHeroMetric(
+                    title: String(localized: "home.monetaryNetTitle"),
+                    value: viewModel.formattedMonetaryNet,
+                    valueColor: DesignSystem.Colors.primary
+                )
 
                 Spacer()
 
@@ -83,35 +80,96 @@ struct HomeView: View {
                 .accessibilityIdentifier("home.openStatistics")
             }
 
-            // Type breakdown capsules
-            if !viewModel.typeBreakdown.isEmpty {
-                FlowLayout(spacing: 8) {
-                    ForEach(viewModel.typeBreakdown, id: \.type) { item in
-                        typeCountCapsule(type: item.type, count: item.count)
-                    }
-                }
-            }
-
-            // Monetary net summary
-            if viewModel.monetaryCount > 0 {
-                Divider()
-                    .foregroundStyle(DesignSystem.Colors.separator)
-
-                Text(viewModel.monetaryNetSummary)
-                    .font(DesignSystem.Typography.caption)
-                    .foregroundStyle(DesignSystem.Colors.textTertiary)
-            }
+            summaryMetricsSection
         }
         .padding(.horizontal, DesignSystem.Spacing.cardPadding)
         .padding(.vertical, DesignSystem.Spacing.heroCardPadding)
         .frame(maxWidth: .infinity, alignment: .leading)
         .contentShape(Rectangle())
-        .background(DesignSystem.Colors.bgSurface)
+        .background(DesignSystem.Colors.bgCard)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
         .overlay(
             RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
-                .stroke(DesignSystem.Colors.primary.opacity(0.05), lineWidth: 1)
+                .stroke(DesignSystem.Colors.primary.opacity(0.08), lineWidth: 1)
         )
+    }
+
+    private var summaryMetricsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 12) {
+                summaryAmountCard(
+                    title: String(localized: "home.income"),
+                    amount: viewModel.formattedIncome,
+                    amountColor: DesignSystem.Colors.primary
+                )
+
+                summaryAmountCard(
+                    title: String(localized: "home.expense"),
+                    amount: viewModel.formattedExpense,
+                    amountColor: DesignSystem.Colors.primary
+                )
+            }
+
+            VStack(alignment: .leading, spacing: 10) {
+                if !viewModel.typeBreakdown.isEmpty {
+                    FlowLayout(spacing: 8) {
+                        ForEach(viewModel.typeBreakdown, id: \.type) { item in
+                            typeCountCapsule(type: item.type, count: item.count)
+                        }
+                    }
+                }
+
+                Text(viewModel.peopleSummary)
+                    .font(DesignSystem.Typography.caption)
+                    .foregroundStyle(DesignSystem.Colors.textSecondary)
+            }
+        }
+    }
+
+    private func summaryAmountCard(title: String, amount: String, amountColor: Color) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
+                .font(DesignSystem.Typography.caption)
+                .foregroundStyle(DesignSystem.Colors.textSecondary)
+
+            Text(amount)
+                .font(DesignSystem.Typography.title3)
+                .foregroundStyle(amountColor)
+                .lineLimit(1)
+                .minimumScaleFactor(0.85)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .background(DesignSystem.Colors.bgInput)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.input))
+    }
+
+    private func summaryHeroMetric(
+        title: String,
+        value: String,
+        unit: String? = nil,
+        valueColor: Color
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
+                .font(DesignSystem.Typography.caption)
+                .foregroundStyle(DesignSystem.Colors.textSecondary)
+
+            HStack(alignment: .firstTextBaseline, spacing: 2) {
+                Text(value)
+                    .font(DesignSystem.Typography.display)
+                    .foregroundStyle(valueColor)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
+
+                if let unit {
+                    Text(unit)
+                        .font(DesignSystem.Typography.title3)
+                        .foregroundStyle(DesignSystem.Colors.textSecondary)
+                }
+            }
+        }
     }
 
     private func typeCountCapsule(type: RecordType, count: Int) -> some View {
@@ -121,7 +179,7 @@ struct HomeView: View {
                 .foregroundStyle(DesignSystem.Colors.primary)
             Text(String(format: String(localized: "home.typeCountFormat"), count))
                 .font(DesignSystem.Typography.caption)
-                .foregroundStyle(DesignSystem.Colors.textPrimary)
+                .foregroundStyle(DesignSystem.Colors.textSecondary)
                 .fontWeight(.medium)
         }
         .padding(.horizontal, 12)
