@@ -186,6 +186,58 @@ struct SubscriptionManagerTests {
         #expect(!overrides.proAccessOverrideEnabled)
     }
 
+    @Test("testflight override enables Pro without active entitlement")
+    func flightOverrideEnablesPro() {
+        let overrides = DebugOverrideManager()
+        overrides.configureBuildOverrides(isTestFlightBuild: true)
+
+        let manager = SubscriptionManager.shared
+        #expect(manager.hasActiveEntitlement == false)
+        #expect(manager.effectiveIsPro(overrides: overrides))
+        #expect(overrides.effectiveAccessSource(hasEntitlement: false) == .testFlight)
+    }
+
+    @Test("no entitlement and no overrides remains free")
+    func noEntitlementAndNoOverridesRemainsFree() {
+        let overrides = DebugOverrideManager()
+
+        let manager = SubscriptionManager.shared
+        #expect(manager.hasActiveEntitlement == false)
+        #expect(manager.effectiveIsPro(overrides: overrides) == false)
+        #expect(overrides.effectiveAccessSource(hasEntitlement: false) == .none)
+    }
+
+    @Test("storekit remains primary source when entitlement exists")
+    func storeKitRemainsPrimarySource() {
+        let overrides = DebugOverrideManager()
+        overrides.configureBuildOverrides(isTestFlightBuild: true)
+        overrides.proAccessOverrideEnabled = true
+
+        let manager = SubscriptionManager.shared
+        manager.debugSetPurchasedProductIDs([SubscriptionManager.monthlyID])
+        defer { manager.debugClearPurchases() }
+
+        #expect(manager.hasActiveEntitlement)
+        #expect(manager.effectiveIsPro(overrides: overrides))
+        #expect(overrides.effectiveAccessSource(hasEntitlement: true) == .storeKit)
+        #expect(overrides.overrideSourceDescription(hasEntitlement: true) == "StoreKit")
+    }
+
+    @Test("resetSessionOverrides preserves TestFlight override")
+    func resetSessionOverridesPreservesTestFlightOverride() {
+        let overrides = DebugOverrideManager()
+        overrides.configureBuildOverrides(isTestFlightBuild: true)
+        overrides.proAccessOverrideEnabled = true
+
+        overrides.resetSessionOverrides()
+
+        #expect(!overrides.proAccessOverrideEnabled)
+        #expect(overrides.testFlightAutoProEnabled)
+        #expect(overrides.hasActiveOverrides)
+        #expect(overrides.effectiveProAccessEnabled(hasEntitlement: false))
+        #expect(overrides.effectiveAccessSource(hasEntitlement: false) == .testFlight)
+    }
+
     @Test("reset OCR usage only updates OCR counters")
     func resetOCRUsageOnlyUpdatesOCRCounters() {
         let settings = AppSettings.shared
