@@ -2621,12 +2621,32 @@
         }
       }
     },
+    "home.activeContactsTitle" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "活跃亲友"
+          }
+        }
+      }
+    },
     "home.addRecord" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "记一笔"
+          }
+        }
+      }
+    },
+    "home.coreCircleShareFormat" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "核心圈层占比 %d%%"
           }
         }
       }
@@ -2641,12 +2661,42 @@
         }
       }
     },
+    "home.financialAxisTitle" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "礼金往来 · 收支概览"
+          }
+        }
+      }
+    },
     "home.income" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "收入"
+          }
+        }
+      }
+    },
+    "home.interactionsTitle" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "互动总次数"
+          }
+        }
+      }
+    },
+    "home.interactionsUnitSuffix" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "次往来"
           }
         }
       }
@@ -2699,7 +2749,27 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "礼金净值"
+            "value" : "礼金净额"
+          }
+        }
+      }
+    },
+    "home.nonFinancialInteractionsTitle" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "非金额互动"
+          }
+        }
+      }
+    },
+    "home.nonFinancialSummaryFormat" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "含礼物、帮忙、宴请记录"
           }
         }
       }
@@ -2734,6 +2804,46 @@
         }
       }
     },
+    "home.relationshipAxisTitle" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "人情关系 · 往来活跃"
+          }
+        }
+      }
+    },
+    "home.relationshipInsightFallbackFormat" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今年共有 %d 位亲友保持往来，关系网络仍在稳步沉淀。"
+          }
+        }
+      }
+    },
+    "home.relationshipInsightPlaceholder" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关系洞察整理中，继续记录礼金、礼物与日常往来，首页会逐步呈现更完整的人情脉络。"
+          }
+        }
+      }
+    },
+    "home.relationshipInsightTopContactFormat" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今年与 %@ 往来最频繁，共 %d 次，建议继续保持联络温度。"
+          }
+        }
+      }
+    },
     "home.title" : {
       "localizations" : {
         "zh-Hans" : {
@@ -2754,6 +2864,16 @@
         }
       }
     },
+    "home.totalExchangeAmountTitle" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "礼金总额"
+          }
+        }
+      }
+    },
     "home.totalInteractions" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -2766,6 +2886,7 @@
       }
     },
     "home.typeCountFormat" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {

@@ -51,19 +51,31 @@ struct HomeView: View {
                     .padding(.vertical, 8)
             }
 
-            // Inner card: total interactions + type breakdown + monetary net
-            summaryCardContent
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(alignment: .top, spacing: 12) {
+                    financialSummaryCard
+                        .frame(width: summaryCardWidth, alignment: .top)
+
+                    relationshipSummaryCard
+                        .frame(width: summaryCardWidth, alignment: .top)
+                }
+                .scrollTargetLayout()
+            }
+            .scrollTargetBehavior(.viewAligned)
+            .frame(height: 320)
         }
     }
 
-    private var summaryCardContent: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            // Monetary net + chart button
+    private var summaryCardWidth: CGFloat {
+        UIScreen.main.bounds.width - (DesignSystem.Spacing.pageHorizontal * 2) - 4
+    }
+
+    private var financialSummaryCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .top) {
-                summaryHeroMetric(
-                    title: String(localized: "home.monetaryNetTitle"),
-                    value: viewModel.formattedMonetaryNet,
-                    valueColor: DesignSystem.Colors.primary
+                summaryCardTitle(
+                    icon: "wallet.pass.fill",
+                    title: String(localized: "home.financialAxisTitle")
                 )
 
                 Spacer()
@@ -80,69 +92,178 @@ struct HomeView: View {
                 .accessibilityIdentifier("home.openStatistics")
             }
 
-            summaryMetricsSection
-        }
-        .padding(.horizontal, DesignSystem.Spacing.cardPadding)
-        .padding(.vertical, DesignSystem.Spacing.heroCardPadding)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .contentShape(Rectangle())
-        .background(DesignSystem.Colors.bgCard)
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
-        .overlay(
-            RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
-                .stroke(DesignSystem.Colors.primary.opacity(0.08), lineWidth: 1)
-        )
-    }
+            VStack(alignment: .leading, spacing: 8) {
+                Text(String(localized: "home.monetaryNetTitle"))
+                    .font(DesignSystem.Typography.body)
+                    .foregroundStyle(DesignSystem.Colors.textSecondary)
 
-    private var summaryMetricsSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 12) {
-                summaryAmountCard(
-                    title: String(localized: "home.income"),
-                    amount: viewModel.formattedIncome,
-                    amountColor: DesignSystem.Colors.primary
-                )
+                HStack(alignment: .center, spacing: 10) {
+                    Text(viewModel.formattedMonetaryNet)
+                        .font(DesignSystem.Typography.display)
+                        .foregroundStyle(DesignSystem.Colors.textPrimary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
 
-                summaryAmountCard(
-                    title: String(localized: "home.expense"),
-                    amount: viewModel.formattedExpense,
-                    amountColor: DesignSystem.Colors.primary
-                )
-            }
-
-            VStack(alignment: .leading, spacing: 10) {
-                if !viewModel.typeBreakdown.isEmpty {
-                    FlowLayout(spacing: 8) {
-                        ForEach(viewModel.typeBreakdown, id: \.type) { item in
-                            typeCountCapsule(type: item.type, count: item.count)
-                        }
+                    if let formattedYearOverYearChange = viewModel.formattedYearOverYearChange {
+                        Text(formattedYearOverYearChange)
+                            .font(DesignSystem.Typography.caption)
+                            .foregroundStyle(DesignSystem.Colors.primary)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 8)
+                            .background(DesignSystem.Colors.bgInput)
+                            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.input))
                     }
                 }
+            }
 
-                Text(viewModel.peopleSummary)
+            Divider()
+                .foregroundStyle(DesignSystem.Colors.separator)
+
+            HStack(spacing: 12) {
+                financialDetailMetric(
+                    title: String(localized: "home.income"),
+                    amount: viewModel.formattedIncome,
+                    ratio: viewModel.incomeRatio
+                )
+
+                financialDetailMetric(
+                    title: String(localized: "home.expense"),
+                    amount: viewModel.formattedExpense,
+                    ratio: viewModel.expenseRatio
+                )
+            }
+
+            HStack {
+                Text(String(localized: "home.totalExchangeAmountTitle"))
                     .font(DesignSystem.Typography.caption)
                     .foregroundStyle(DesignSystem.Colors.textSecondary)
+
+                Spacer()
+
+                Text(viewModel.formattedTotalExchangeAmount)
+                    .font(DesignSystem.Typography.title3)
+                    .foregroundStyle(DesignSystem.Colors.textPrimary)
             }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+            .background(DesignSystem.Colors.bgPage)
+            .clipShape(Capsule())
+        }
+        .summaryCardChrome()
+    }
+
+    private var relationshipSummaryCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            summaryCardTitle(
+                icon: "person.3.fill",
+                title: String(localized: "home.relationshipAxisTitle")
+            )
+
+            summaryHeroMetric(
+                title: String(localized: "home.interactionsTitle"),
+                value: "\(viewModel.recordCount)",
+                unit: String(localized: "home.interactionsUnitSuffix"),
+                valueColor: DesignSystem.Colors.textPrimary
+            )
+
+            Divider()
+                .foregroundStyle(DesignSystem.Colors.separator)
+
+            HStack(spacing: 12) {
+                relationshipDetailMetric(
+                    title: String(localized: "home.activeContactsTitle"),
+                    value: "\(viewModel.contactCount)",
+                    detail: viewModel.coreCircleSummary
+                )
+
+                relationshipDetailMetric(
+                    title: String(localized: "home.nonFinancialInteractionsTitle"),
+                    value: "\(viewModel.nonFinancialInteractionCount)",
+                    detail: viewModel.nonFinancialSummary
+                )
+            }
+
+            HStack(alignment: .top, spacing: 10) {
+                Image(systemName: "sparkles")
+                    .font(DesignSystem.Typography.caption)
+                    .foregroundStyle(DesignSystem.Colors.primary)
+                    .padding(.top, 2)
+
+                Text(String(localized: "home.relationshipInsightPlaceholder"))
+                    .font(DesignSystem.Typography.caption)
+                    .foregroundStyle(DesignSystem.Colors.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+            .background(DesignSystem.Colors.bgPage)
+            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+            // TODO: Replace with dynamic relationship insight when the final copy strategy is ready.
+        }
+        .summaryCardChrome()
+    }
+
+    private func summaryCardTitle(icon: String, title: String) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: icon)
+                .font(DesignSystem.Typography.title3)
+                .foregroundStyle(DesignSystem.Colors.primary)
+
+            Text(title)
+                .font(DesignSystem.Typography.title3)
+                .foregroundStyle(DesignSystem.Colors.primary)
         }
     }
 
-    private func summaryAmountCard(title: String, amount: String, amountColor: Color) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
+    private func financialDetailMetric(title: String, amount: String, ratio: Double) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
             Text(title)
                 .font(DesignSystem.Typography.caption)
                 .foregroundStyle(DesignSystem.Colors.textSecondary)
 
             Text(amount)
-                .font(DesignSystem.Typography.title3)
-                .foregroundStyle(amountColor)
+                .font(DesignSystem.Typography.title1)
+                .foregroundStyle(DesignSystem.Colors.textPrimary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.85)
+
+            progressBar(progress: ratio)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 14)
-        .padding(.vertical, 12)
-        .background(DesignSystem.Colors.bgInput)
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.input))
+    }
+
+    private func relationshipDetailMetric(title: String, value: String, detail: String) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(DesignSystem.Typography.caption)
+                .foregroundStyle(DesignSystem.Colors.textSecondary)
+
+            Text(value)
+                .font(DesignSystem.Typography.title1)
+                .foregroundStyle(DesignSystem.Colors.textPrimary)
+
+            Text(detail)
+                .font(DesignSystem.Typography.caption)
+                .foregroundStyle(DesignSystem.Colors.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func progressBar(progress: Double) -> some View {
+        GeometryReader { proxy in
+            let clampedProgress = min(max(progress, 0), 1)
+
+            ZStack(alignment: .leading) {
+                Capsule()
+                    .fill(DesignSystem.Colors.bgInput)
+
+                Capsule()
+                    .fill(DesignSystem.Colors.primary)
+                    .frame(width: clampedProgress == 0 ? 0 : max(proxy.size.width * clampedProgress, 36))
+            }
+        }
+        .frame(height: 8)
     }
 
     private func summaryHeroMetric(
@@ -170,22 +291,6 @@ struct HomeView: View {
                 }
             }
         }
-    }
-
-    private func typeCountCapsule(type: RecordType, count: Int) -> some View {
-        HStack(spacing: 5) {
-            Image(systemName: type.iconName)
-                .font(DesignSystem.Typography.small)
-                .foregroundStyle(DesignSystem.Colors.primary)
-            Text(String(format: String(localized: "home.typeCountFormat"), count))
-                .font(DesignSystem.Typography.caption)
-                .foregroundStyle(DesignSystem.Colors.textSecondary)
-                .fontWeight(.medium)
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 6)
-        .background(DesignSystem.Colors.bgTag)
-        .clipShape(Capsule())
     }
 
     // MARK: - Upcoming Events Section
@@ -562,5 +667,20 @@ private func makeHomePreviewContainer() -> ModelContainer? {
         } else {
             Text(String(localized: "common.preview.unavailable"))
         }
+    }
+}
+
+private extension View {
+    func summaryCardChrome() -> some View {
+        padding(.horizontal, DesignSystem.Spacing.cardPadding)
+            .padding(.vertical, 16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
+            .background(DesignSystem.Colors.bgSurface)
+            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+            .overlay(
+                RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
+                    .stroke(DesignSystem.Colors.primary.opacity(0.08), lineWidth: 1)
+            )
     }
 }
