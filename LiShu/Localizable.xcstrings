@@ -1712,9 +1712,6 @@
         }
       }
     },
-    "DEBUG: 清除购买状态" : {
-
-    },
     "debug.clearAllData" : {
       "extractionState" : "stale",
       "localizations" : {

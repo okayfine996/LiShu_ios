@@ -35,18 +35,43 @@
             DebugDataGenerator.generateSampleData(context: db.context)
 
             let records = try db.context.fetch(FetchDescriptor<Record>())
-            #expect(records.count >= 5)
+            #expect(records.count >= 12)
 
-            let recordTypes = Set(records.map(\.recordType))
-            #expect(recordTypes.contains(.monetary))
-            #expect(recordTypes.contains(.gift))
-            #expect(recordTypes.contains(.favor))
-            #expect(recordTypes.contains(.banquet))
+            let recordsByType = Dictionary(grouping: records, by: \.recordType)
+            #expect(recordsByType[.monetary]?.count ?? 0 > 1)
+            #expect(recordsByType[.gift]?.count ?? 0 > 1)
+            #expect(recordsByType[.favor]?.count ?? 0 > 1)
+            #expect(recordsByType[.banquet]?.count ?? 0 > 1)
 
-            let banquetRecord = records.first { $0.recordType == .banquet }
-            #expect(banquetRecord?.banquetData != nil)
-            #expect(banquetRecord?.banquetData?.location.isEmpty == false)
-            #expect(banquetRecord?.returnGiftBadge == .received)
+            let dailyTypes = Set(records.filter(\.isDailyInteraction).map(\.recordType))
+            #expect(dailyTypes.count >= 2)
+            #expect(dailyTypes.contains(.monetary))
+            #expect(dailyTypes.contains(.gift))
+
+            let monetaryRecords = recordsByType[.monetary] ?? []
+            #expect(monetaryRecords.contains { $0.resolvedReturnedAmount == 0 })
+            #expect(monetaryRecords.contains { $0.resolvedReturnedAmount > 0 && $0.resolvedReturnedAmount < $0.monetaryAmount })
+            #expect(monetaryRecords.contains { $0.monetaryAmount > 0 && $0.resolvedReturnedAmount == $0.monetaryAmount })
+
+            let giftRecords = recordsByType[.gift] ?? []
+            #expect(giftRecords.contains { $0.direction == .given })
+            #expect(giftRecords.contains { $0.direction == .received })
+            #expect(giftRecords.contains { $0.giftData?.estimatedValue != nil })
+            #expect(giftRecords.contains { $0.giftData?.estimatedValue == nil })
+
+            let favorRecords = recordsByType[.favor] ?? []
+            #expect(favorRecords.contains { $0.direction == .given })
+            #expect(favorRecords.contains { $0.direction == .received })
+            #expect(favorRecords.contains { ($0.favorData?.description.isEmpty == false) && $0.event == nil })
+
+            let banquetRecords = recordsByType[.banquet] ?? []
+            #expect(banquetRecords.contains { $0.direction == .given })
+            #expect(banquetRecords.contains { $0.direction == .received })
+            #expect(banquetRecords.contains { $0.banquetData?.location.isEmpty == false && $0.event == nil })
+            #expect(banquetRecords.contains {
+                ($0.banquetData?.attendeeList.isEmpty ?? true) &&
+                    ($0.banquetData?.extraCostNotes.isEmpty ?? true)
+            })
         }
 
         @Test func clearAllDataRemovesAll() throws {

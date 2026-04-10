@@ -292,4 +292,19 @@ struct StatisticsViewModelTests {
         #expect(vm.totalIncome == 0)
         #expect(vm.totalExpense == 0)
     }
+
+    @Test("demo sample data exposes all record types in recordTypeDistribution")
+    func demoSampleDataCoversRecordTypeDistribution() throws {
+        let db = try TestDB()
+        DebugDataGenerator.generateSampleData(context: db.context)
+
+        let vm = StatisticsViewModel()
+        vm.loadData(context: db.context)
+
+        let distributionTypes = Set(vm.recordTypeDistribution.map(\.type))
+        #expect(distributionTypes.contains(.monetary))
+        #expect(distributionTypes.contains(.gift))
+        #expect(distributionTypes.contains(.favor))
+        #expect(distributionTypes.contains(.banquet))
+    }
 }

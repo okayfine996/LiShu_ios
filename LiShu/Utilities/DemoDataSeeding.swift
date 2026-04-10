@@ -333,6 +333,7 @@ enum DemoDataSeeding {
         direction: RecordDirection = .given,
         returnedAmount: Double = 0,
         note: String = "",
+        contextTag: String = "",
         date: Date,
         recordType: RecordType,
         relationshipWeight: RelationshipWeight = .reciprocal,
@@ -348,6 +349,7 @@ enum DemoDataSeeding {
             recordType: recordType,
             relationshipWeight: relationshipWeight
         )
+        record.contextTag = contextTag
         record.applyTypeData(typeData)
         return record
     }
@@ -371,8 +373,11 @@ enum DemoDataSeeding {
         let fest = firstEvent(.festival, in: events)
         let edu = firstEvent(.education, in: events)
         let bday = firstEvent(.birthday, in: events)
+        let promotion = firstEvent(.promotion, in: events)
+        let visit = firstEvent(.visit, in: events)
+        let business = firstEvent(.business, in: events)
 
-        return [
+        let monetaryRecords: [Record] = [
             makeRecord(
                 contact: c[4],
                 event: w,
@@ -427,7 +432,6 @@ enum DemoDataSeeding {
                 recordType: .monetary,
                 typeData: .monetary(MonetaryData(amount: 200, paymentMethod: PaymentMethod.cash.rawValue, returnedAmount: 0))
             ),
-
             makeRecord(
                 contact: c[1],
                 event: long,
@@ -446,7 +450,6 @@ enum DemoDataSeeding {
                 recordType: .monetary,
                 typeData: .monetary(MonetaryData(amount: 1000, paymentMethod: PaymentMethod.wechat.rawValue, returnedAmount: 0))
             ),
-
             makeRecord(
                 contact: c[2],
                 event: prop,
@@ -456,7 +459,6 @@ enum DemoDataSeeding {
                 recordType: .monetary,
                 typeData: .monetary(MonetaryData(amount: 2000, paymentMethod: PaymentMethod.alipay.rawValue, returnedAmount: 0))
             ),
-
             makeRecord(
                 contact: c[12],
                 event: edu,
@@ -466,7 +468,6 @@ enum DemoDataSeeding {
                 recordType: .monetary,
                 typeData: .monetary(MonetaryData(amount: 888, paymentMethod: PaymentMethod.wechat.rawValue, returnedAmount: 0))
             ),
-
             makeRecord(
                 contact: c[3],
                 event: birth,
@@ -476,7 +477,6 @@ enum DemoDataSeeding {
                 recordType: .monetary,
                 typeData: .monetary(MonetaryData(amount: 1600, paymentMethod: PaymentMethod.cash.rawValue, returnedAmount: 0))
             ),
-
             makeRecord(
                 contact: c[4],
                 event: fun,
@@ -486,7 +486,6 @@ enum DemoDataSeeding {
                 recordType: .monetary,
                 typeData: .monetary(MonetaryData(amount: 1000, paymentMethod: PaymentMethod.cash.rawValue, returnedAmount: 0))
             ),
-
             makeRecord(
                 contact: c[6],
                 event: fest,
@@ -514,7 +513,6 @@ enum DemoDataSeeding {
                 recordType: .monetary,
                 typeData: .monetary(MonetaryData(amount: 600, paymentMethod: PaymentMethod.wechat.rawValue, returnedAmount: 0))
             ),
-
             makeRecord(
                 contact: c[8],
                 event: long,
@@ -524,7 +522,6 @@ enum DemoDataSeeding {
                 recordType: .monetary,
                 typeData: .monetary(MonetaryData(amount: 800, paymentMethod: PaymentMethod.cash.rawValue, returnedAmount: 300))
             ),
-
             makeRecord(
                 contact: c[10],
                 event: prop,
@@ -534,7 +531,6 @@ enum DemoDataSeeding {
                 recordType: .monetary,
                 typeData: .monetary(MonetaryData(amount: 500, paymentMethod: PaymentMethod.wechat.rawValue, returnedAmount: 500))
             ),
-
             makeRecord(
                 contact: c[0],
                 event: w,
@@ -544,7 +540,6 @@ enum DemoDataSeeding {
                 recordType: .monetary,
                 typeData: .monetary(MonetaryData(amount: 10000, paymentMethod: PaymentMethod.cash.rawValue, returnedAmount: 0))
             ),
-
             makeRecord(
                 contact: c[11],
                 event: fest,
@@ -554,7 +549,6 @@ enum DemoDataSeeding {
                 recordType: .monetary,
                 typeData: .monetary(MonetaryData(amount: 200, paymentMethod: PaymentMethod.cash.rawValue, returnedAmount: 0))
             ),
-
             makeRecord(
                 contact: c[5],
                 event: fest,
@@ -573,7 +567,31 @@ enum DemoDataSeeding {
                 recordType: .monetary,
                 typeData: .monetary(MonetaryData(amount: 800, paymentMethod: PaymentMethod.cash.rawValue, returnedAmount: 0))
             ),
+            makeRecord(
+                contact: c[13],
+                event: nil,
+                direction: .given,
+                note: "住院探望时包了红包",
+                contextTag: "探病心意",
+                date: visit.date,
+                recordType: .monetary,
+                relationshipWeight: .kindness,
+                typeData: .monetary(MonetaryData(amount: 300, paymentMethod: PaymentMethod.wechat.rawValue, returnedAmount: 0))
+            ),
+            makeRecord(
+                contact: c[14],
+                event: nil,
+                direction: .received,
+                note: "店里开张时收到了随礼",
+                contextTag: "开业随礼",
+                date: business.date,
+                recordType: .monetary,
+                relationshipWeight: .support,
+                typeData: .monetary(MonetaryData(amount: 666, paymentMethod: PaymentMethod.alipay.rawValue, returnedAmount: 0))
+            ),
+        ]
 
+        let giftRecords: [Record] = [
             makeRecord(
                 contact: c[9],
                 event: bday,
@@ -584,18 +602,86 @@ enum DemoDataSeeding {
                 relationshipWeight: .kindness,
                 typeData: .gift(GiftData(giftName: "茶叶礼盒", estimatedValue: 368))
             ),
+            makeRecord(
+                contact: c[6],
+                event: nil,
+                direction: .received,
+                note: "节后来家里看望时带来的礼盒",
+                contextTag: "节日看望",
+                date: fest.date,
+                recordType: .gift,
+                relationshipWeight: .reciprocal,
+                typeData: .gift(GiftData(giftName: "家乡糕点礼盒", estimatedValue: nil))
+            ),
+            makeRecord(
+                contact: c[15],
+                event: promotion,
+                direction: .received,
+                note: "庆祝晋升时收到的伴手礼",
+                date: promotion.date,
+                recordType: .gift,
+                relationshipWeight: .support,
+                typeData: .gift(GiftData(giftName: "钢笔礼盒", estimatedValue: 520))
+            ),
+            makeRecord(
+                contact: c[2],
+                event: nil,
+                direction: .given,
+                note: "探望长辈顺手带去营养品",
+                contextTag: "探望长辈",
+                date: visit.date,
+                recordType: .gift,
+                relationshipWeight: .kindness,
+                typeData: .gift(GiftData(giftName: "营养品礼篮", estimatedValue: nil))
+            ),
+        ]
 
+        let favorRecords: [Record] = [
             makeRecord(
                 contact: c[11],
                 event: nil,
                 direction: .given,
                 note: "日常照应记录",
+                contextTag: "邻里照应",
                 date: Date.now,
                 recordType: .favor,
                 relationshipWeight: .support,
                 typeData: .favor(FavorData(description: "临时帮忙接孩子放学并送回家"))
             ),
+            makeRecord(
+                contact: c[10],
+                event: nil,
+                direction: .received,
+                note: "装修期间帮忙盯工",
+                contextTag: "帮忙盯工",
+                date: prop.date,
+                recordType: .favor,
+                relationshipWeight: .profound,
+                typeData: .favor(FavorData(description: "连续两天帮忙协调师傅进场，还代收了快递和建材"))
+            ),
+            makeRecord(
+                contact: c[4],
+                event: promotion,
+                direction: .given,
+                note: "帮忙布置答谢场地",
+                date: promotion.date,
+                recordType: .favor,
+                relationshipWeight: .kindness,
+                typeData: .favor(FavorData(description: "提前到场协助签到、引导宾客和收尾清点物资"))
+            ),
+            makeRecord(
+                contact: c[12],
+                event: visit,
+                direction: .received,
+                note: "陪同就医",
+                date: visit.date,
+                recordType: .favor,
+                relationshipWeight: .support,
+                typeData: .favor(FavorData(description: "专程请假陪同挂号、取药并送回家"))
+            ),
+        ]
 
+        let banquetRecords: [Record] = [
             makeRecord(
                 contact: c[10],
                 event: bday,
@@ -610,7 +696,53 @@ enum DemoDataSeeding {
                     extraCostNotes: "席间开了两瓶红酒，另加一条烟"
                 ))
             ),
+            makeRecord(
+                contact: c[8],
+                event: nil,
+                direction: .given,
+                note: "项目收尾后请客吃饭",
+                contextTag: "聚餐答谢",
+                date: business.date,
+                recordType: .banquet,
+                relationshipWeight: .reciprocal,
+                typeData: .banquet(BanquetData(
+                    location: "南城小馆",
+                    attendeeList: "",
+                    extraCostNotes: ""
+                ))
+            ),
+            makeRecord(
+                contact: c[3],
+                event: long,
+                direction: .given,
+                note: "寿宴前一晚家宴招待",
+                date: long.date,
+                recordType: .banquet,
+                relationshipWeight: .support,
+                typeData: .banquet(BanquetData(
+                    location: "家宴包厢",
+                    attendeeList: "近亲四桌",
+                    extraCostNotes: ""
+                ))
+            ),
+            makeRecord(
+                contact: c[14],
+                event: nil,
+                direction: .received,
+                note: "对方请客聊合作",
+                contextTag: "商务接待",
+                date: business.date,
+                recordType: .banquet,
+                relationshipWeight: .support,
+                typeData: .banquet(BanquetData(
+                    location: "福满楼",
+                    attendeeList: "",
+                    extraCostNotes: "饭后又续了茶位"
+                ))
+            ),
         ]
+
+        return monetaryRecords + giftRecords + favorRecords + banquetRecords
     }
 }
 

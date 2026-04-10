@@ -116,4 +116,48 @@ struct RecordDetailViewModelTests {
         #expect(vm.record != nil)
         #expect(vm.record?.monetaryAmount == 500)
     }
+
+    @Test func directionLabelCoversAllRecordTypes() {
+        let event = SampleData.event()
+        let cases: [(Record, String)] = [
+            (
+                SampleData.record(contact: SampleData.contact(name: "金额送出"), event: event, direction: .given),
+                String(localized: "record.direction.monetary.given")
+            ),
+            (
+                SampleData.record(contact: SampleData.contact(name: "金额收到"), event: event, direction: .received),
+                String(localized: "record.direction.monetary.received")
+            ),
+            (
+                SampleData.recordGift(contact: SampleData.contact(name: "礼品送出"), event: event, direction: .given),
+                String(localized: "record.direction.gift.given")
+            ),
+            (
+                SampleData.recordGift(contact: SampleData.contact(name: "礼品收到"), event: event, direction: .received),
+                String(localized: "record.direction.gift.received")
+            ),
+            (
+                SampleData.recordFavor(contact: SampleData.contact(name: "帮忙送出"), event: event, direction: .given),
+                String(localized: "record.direction.favor.given")
+            ),
+            (
+                SampleData.recordFavor(contact: SampleData.contact(name: "帮忙收到"), event: event, direction: .received),
+                String(localized: "record.direction.favor.received")
+            ),
+            (
+                SampleData.recordBanquet(contact: SampleData.contact(name: "宴请送出"), event: event, direction: .given),
+                String(localized: "record.direction.banquet.given")
+            ),
+            (
+                SampleData.recordBanquet(contact: SampleData.contact(name: "宴请收到"), event: event, direction: .received),
+                String(localized: "record.direction.banquet.received")
+            ),
+        ]
+
+        for (record, expected) in cases {
+            let vm = RecordDetailViewModel()
+            vm.record = record
+            #expect(vm.directionLabel == expected)
+        }
+    }
 }

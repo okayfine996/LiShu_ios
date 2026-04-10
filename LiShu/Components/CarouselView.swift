@@ -91,6 +91,12 @@ struct CarouselView<Content: View>: View {
                 }
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
+            .onAppear {
+                clampCurrentPage()
+            }
+            .onChange(of: pageCount) { _, _ in
+                clampCurrentPage()
+            }
             .onReceive(autoScrollTimer) { _ in
                 guard pageCount > 1 else { return }
                 withAnimation(.easeInOut(duration: 0.25)) {
@@ -123,5 +129,16 @@ struct CarouselView<Content: View>: View {
                     .frame(width: 6, height: 6)
             }
         }
+    }
+
+    private func clampCurrentPage() {
+        let clampedPage = if pageCount > 0 {
+            min(currentPageBinding.wrappedValue, pageCount - 1)
+        } else {
+            0
+        }
+
+        guard currentPageBinding.wrappedValue != clampedPage else { return }
+        currentPageBinding.wrappedValue = clampedPage
     }
 }

@@ -309,15 +309,19 @@ struct HomeView: View {
                     pageCount: viewModel.upcomingEvents.count,
                     autoScrollInterval: 3
                 ) { index in
-                    let event = viewModel.upcomingEvents[index]
-
-                    VStack {
-                        NavigationLink(value: AppRoute.eventDetail(event.persistentModelID)) {
-                            upcomingEventCard(event)
+                    Group {
+                        if let event = viewModel.upcomingEvents.element(at: index) {
+                            VStack {
+                                NavigationLink(value: AppRoute.eventDetail(event.persistentModelID)) {
+                                    upcomingEventCard(event)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                        } else {
+                            Color.clear
                         }
-                        .buttonStyle(.plain)
                     }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                 }
                 .frame(height: 196)
             }
@@ -604,6 +608,13 @@ struct HomeView: View {
                 ProMembershipView()
             }
         }
+    }
+}
+
+private extension Array {
+    func element(at index: Int) -> Element? {
+        guard indices.contains(index) else { return nil }
+        return self[index]
     }
 }
 
