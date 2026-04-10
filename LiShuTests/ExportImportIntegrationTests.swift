@@ -8,10 +8,10 @@ struct ExportImportIntegrationTests {
     @Test func previewCSVParsesRowsWithoutImporting() throws {
         let tempURL = try writeCSV(
             """
-            联系人,事件,事件类型,场景标签,方向,日期,备注,金额,支付方式,已退金额
-            张三,婚礼,婚礼,,送出,2026-04-09 10:30,事件记录,888.00,微信,0.00
-            李四,,,节日看望,送出,2026-04-10 10:30,日常记录,200.00,现金,0.00
-            王五,,,,送出,2026-04-11 10:30,无上下文,100.00,现金,0.00
+            联系人,事件,事件类型,场景标签,方向,日期,备注,情分分量,金额,支付方式,已退金额
+            张三,婚礼,婚礼,,送出,2026-04-09 10:30,事件记录,礼尚往来,888.00,微信,0.00
+            李四,,,节日看望,送出,2026-04-10 10:30,日常记录,点滴之恩,200.00,现金,0.00
+            王五,,,,送出,2026-04-11 10:30,无上下文,礼尚往来,100.00,现金,0.00
             """,
             named: "test_preview_parse.csv"
         )
@@ -33,9 +33,9 @@ struct ExportImportIntegrationTests {
     @Test func importPreviewItemsOnlyImportsSelectedRows() throws {
         let tempURL = try writeCSV(
             """
-            联系人,事件,事件类型,场景标签,方向,日期,备注,金额,支付方式,已退金额
-            张三,婚礼,婚礼,,送出,2026-04-09 10:30,事件记录,888.00,微信,0.00
-            李四,,,节日看望,送出,2026-04-10 10:30,日常记录,200.00,现金,0.00
+            联系人,事件,事件类型,场景标签,方向,日期,备注,情分分量,金额,支付方式,已退金额
+            张三,婚礼,婚礼,,送出,2026-04-09 10:30,事件记录,礼尚往来,888.00,微信,0.00
+            李四,,,节日看望,送出,2026-04-10 10:30,日常记录,点滴之恩,200.00,现金,0.00
             """,
             named: "test_preview_import_selected.csv"
         )
@@ -215,8 +215,8 @@ struct ExportImportIntegrationTests {
     @Test func giftEstimatedValueDoesNotTriggerMonetaryImport() throws {
         let tempURL = try writeCSV(
             """
-            联系人,事件,事件类型,场景标签,方向,日期,备注,礼品名称,礼品估值,人情描述
-            张三,乔迁,乔迁,,送出,2026-04-09 10:30,礼品,景德镇茶具,880.00,乔迁随礼品
+            联系人,事件,事件类型,场景标签,方向,日期,备注,情分分量,礼品名称,礼品估值,人情描述
+            张三,乔迁,乔迁,,送出,2026-04-09 10:30,礼品,礼尚往来,景德镇茶具,880.00,乔迁随礼品
             """,
             named: "test_gift_estimated_value.csv"
         )
@@ -233,33 +233,11 @@ struct ExportImportIntegrationTests {
         #expect(importedRecords[0].giftData?.estimatedValue == 880)
     }
 
-    @Test func amountColumnWinsWhenAmountAndGiftFieldsCoexist() throws {
-        let tempURL = try writeCSV(
-            """
-            联系人,事件,事件类型,场景标签,方向,日期,备注,金额,支付方式,已退金额,礼品名称,礼品估值,人情描述
-            张三,婚礼,婚礼,,送出,2026-04-09 10:30,同一行,999.00,微信,0.00,景德镇茶具,880.00,乔迁随礼品
-            """,
-            named: "test_amount_priority.csv"
-        )
-        defer { try? FileManager.default.removeItem(at: tempURL) }
-
-        let db = try TestDB()
-        let result = try ExportService.importCSV(url: tempURL, context: db.context)
-
-        #expect(result.imported == 1)
-
-        let importedRecords = try db.context.fetch(FetchDescriptor<Record>())
-        #expect(importedRecords.count == 1)
-        #expect(importedRecords[0].recordType == .monetary)
-        #expect(importedRecords[0].monetaryAmount == 999)
-        #expect(importedRecords[0].giftData == nil)
-    }
-
     @Test func missingDateFallsBackToCurrentDate() throws {
         let tempURL = try writeCSV(
             """
-            联系人,事件,事件类型,场景标签,方向,日期,备注,金额,支付方式,已退金额
-            张三,婚礼,婚礼,,送出,,缺少日期,888.00,现金,0.00
+            联系人,事件,事件类型,场景标签,方向,日期,备注,情分分量,金额,支付方式,已退金额
+            张三,婚礼,婚礼,,送出,,缺少日期,礼尚往来,888.00,现金,0.00
             """,
             named: "test_missing_date.csv"
         )
@@ -278,34 +256,28 @@ struct ExportImportIntegrationTests {
         #expect(importedRecords[0].date <= after.addingTimeInterval(1))
     }
 
-    @Test func invalidDateFallsBackToCurrentDate() throws {
+    @Test func invalidDateIsRejectedDuringPreview() throws {
         let tempURL = try writeCSV(
             """
-            联系人,事件,事件类型,场景标签,方向,日期,备注,金额,支付方式,已退金额
-            张三,婚礼,婚礼,,送出,not-a-date,非法日期,888.00,现金,0.00
+            联系人,事件,事件类型,场景标签,方向,日期,备注,情分分量,金额,支付方式,已退金额
+            张三,婚礼,婚礼,,送出,not-a-date,非法日期,礼尚往来,888.00,现金,0.00
             """,
             named: "test_invalid_date.csv"
         )
         defer { try? FileManager.default.removeItem(at: tempURL) }
 
-        let before = Date()
-        let db = try TestDB()
-        let result = try ExportService.importCSV(url: tempURL, context: db.context)
-        let after = Date()
+        let preview = try ExportService.previewCSV(url: tempURL)
 
-        #expect(result.imported == 1)
-
-        let importedRecords = try db.context.fetch(FetchDescriptor<Record>())
-        #expect(importedRecords.count == 1)
-        #expect(importedRecords[0].date >= before.addingTimeInterval(-1))
-        #expect(importedRecords[0].date <= after.addingTimeInterval(1))
+        #expect(preview.items.count == 1)
+        #expect(preview.items[0].isImportable == false)
+        #expect(preview.items[0].statusMessage == String(localized: "csv.import.preview.invalid.invalidDate"))
     }
 
     @Test func oldCSVWithoutSceneTagIsRejected() throws {
         let tempURL = try writeCSV(
             """
-            联系人,事件,事件类型,方向,日期,备注,金额,支付方式,已退金额
-            张三,婚礼,婚礼,送出,2026-03-01 12:00,恭喜,888,现金,0
+            联系人,事件,事件类型,方向,日期,备注,情分分量,金额,支付方式,已退金额
+            张三,婚礼,婚礼,送出,2026-03-01 12:00,恭喜,礼尚往来,888,现金,0
             """,
             named: "test_old_csv_without_scene_tag.csv"
         )
@@ -324,9 +296,9 @@ struct ExportImportIntegrationTests {
     @Test func importDuplicateContactDedup() throws {
         let tempURL = try writeCSV(
             """
-            联系人,事件,事件类型,场景标签,方向,日期,备注,金额,支付方式,已退金额
-            张三,婚礼,婚礼,,送出,2026-03-01 12:00,,500.00,现金,0.00
-            张三,生日宴,生日,,送出,2026-03-05 12:00,,300.00,微信,0.00
+            联系人,事件,事件类型,场景标签,方向,日期,备注,情分分量,金额,支付方式,已退金额
+            张三,婚礼,婚礼,,送出,2026-03-01 12:00,,礼尚往来,500.00,现金,0.00
+            张三,生日宴,生日,,送出,2026-03-05 12:00,,点滴之恩,300.00,微信,0.00
             """,
             named: "test_dedup.csv"
         )
@@ -345,8 +317,8 @@ struct ExportImportIntegrationTests {
     @Test func importSceneTagRowCreatesDailyRecord() throws {
         let tempURL = try writeCSV(
             """
-            联系人,事件,事件类型,场景标签,方向,日期,备注,帮忙说明,人情描述
-            张三,,,帮忙挂号,送出,2026-04-09 10:30,日常帮忙,帮忙挂号预约,医院陪同
+            联系人,事件,事件类型,场景标签,方向,日期,备注,情分分量,帮忙说明,人情描述
+            张三,,,帮忙挂号,送出,2026-04-09 10:30,日常帮忙,礼尚往来,帮忙挂号预约,医院陪同
             """,
             named: "test_scene_tag_import.csv"
         )
@@ -367,8 +339,8 @@ struct ExportImportIntegrationTests {
     @Test func importMissingContextRowIsSkipped() throws {
         let tempURL = try writeCSV(
             """
-            联系人,事件,事件类型,场景标签,方向,日期,备注,金额,支付方式,已退金额
-            张三,,,,送出,2026-04-09 10:30,无上下文,888.00,现金,0.00
+            联系人,事件,事件类型,场景标签,方向,日期,备注,情分分量,金额,支付方式,已退金额
+            张三,,,,送出,2026-04-09 10:30,无上下文,礼尚往来,888.00,现金,0.00
             """,
             named: "test_missing_context.csv"
         )
@@ -388,8 +360,8 @@ struct ExportImportIntegrationTests {
     @Test func eventWinsWhenEventAndSceneTagCoexist() throws {
         let tempURL = try writeCSV(
             """
-            联系人,事件,事件类型,场景标签,方向,日期,备注,金额,支付方式,已退金额
-            张三,婚礼,婚礼,节日看望,送出,2026-04-09 10:30,事件优先,888.00,现金,0.00
+            联系人,事件,事件类型,场景标签,方向,日期,备注,情分分量,金额,支付方式,已退金额
+            张三,婚礼,婚礼,节日看望,送出,2026-04-09 10:30,事件优先,礼尚往来,888.00,现金,0.00
             """,
             named: "test_event_priority.csv"
         )
@@ -404,6 +376,54 @@ struct ExportImportIntegrationTests {
         #expect(importedRecords.count == 1)
         #expect(importedRecords[0].event?.name == "婚礼")
         #expect(importedRecords[0].contextTag.isEmpty)
+    }
+
+    @Test func mixedTypeSpecificColumnsAreRejected() throws {
+        let tempURL = try writeCSV(
+            """
+            联系人,事件,事件类型,场景标签,方向,日期,备注,情分分量,金额,支付方式,已退金额,礼品名称,礼品估值
+            张三,婚礼,婚礼,,送出,2026-04-09 10:30,混合模板,礼尚往来,888.00,现金,0.00,茶具,300.00
+            """,
+            named: "test_mixed_type_headers.csv"
+        )
+        defer { try? FileManager.default.removeItem(at: tempURL) }
+
+        let db = try TestDB()
+
+        #expect(throws: ImportError.invalidFormat) {
+            try ExportService.importCSV(url: tempURL, context: db.context)
+        }
+    }
+
+    @Test func relationshipWeightRoundTripPreservesValue() throws {
+        let db = try TestDB()
+        let contact = SampleData.contact(name: "张三")
+        let event = SampleData.event(name: "婚礼", type: .wedding)
+        db.context.insert(contact)
+        db.context.insert(event)
+
+        let record = SampleData.record(
+            contact: contact,
+            event: event,
+            amount: 520,
+            direction: .given,
+            relationshipWeight: .support
+        )
+        db.context.insert(record)
+        try db.context.save()
+
+        let csv = try ExportService.exportCSV(context: db.context, recordType: .monetary)
+        let tempURL = try writeCSV(csv, named: "test_relationship_weight_roundtrip.csv")
+        defer { try? FileManager.default.removeItem(at: tempURL) }
+
+        let importDB = try TestDB()
+        let result = try ExportService.importCSV(url: tempURL, context: importDB.context)
+
+        #expect(result.imported == 1)
+
+        let importedRecords = try importDB.context.fetch(FetchDescriptor<Record>())
+        #expect(importedRecords.count == 1)
+        #expect(importedRecords[0].relationshipWeight == .support)
     }
 
     @Test func oCRImportPreservesEventTypeAndReusesEvent() throws {

@@ -124,7 +124,7 @@ struct ExportServiceTests {
         let lines = csv.components(separatedBy: "\n")
 
         #expect(lines.count == 2)
-        #expect(lines[0] == "联系人,事件,事件类型,场景标签,方向,日期,备注,金额,支付方式,已退金额")
+        #expect(lines[0] == "联系人,事件,事件类型,场景标签,方向,日期,备注,情分分量,金额,支付方式,已退金额")
         #expect(lines[1].contains("300.00"))
         #expect(!lines[1].contains("茶具"))
     }
@@ -142,7 +142,7 @@ struct ExportServiceTests {
         let lines = csv.components(separatedBy: "\n")
 
         #expect(lines.count == 2)
-        #expect(lines[0] == "联系人,事件,事件类型,场景标签,方向,日期,备注,礼品名称,礼品估值,人情描述")
+        #expect(lines[0] == "联系人,事件,事件类型,场景标签,方向,日期,备注,情分分量,礼品名称,礼品估值,人情描述")
         #expect(lines[0].contains("礼品估值"))
         #expect(!lines[0].contains("金额"))
         #expect(lines[1].contains("景德镇茶具"))
@@ -162,7 +162,7 @@ struct ExportServiceTests {
         let lines = csv.components(separatedBy: "\n")
 
         #expect(lines.count == 1)
-        #expect(lines[0] == "联系人,事件,事件类型,场景标签,方向,日期,备注,金额,支付方式,已退金额")
+        #expect(lines[0] == "联系人,事件,事件类型,场景标签,方向,日期,备注,情分分量,金额,支付方式,已退金额")
     }
 
     @Test func previewExportMarksContextlessRowsAsSkipped() throws {
@@ -209,7 +209,7 @@ struct ExportServiceTests {
         let lines = csv.components(separatedBy: "\n")
 
         #expect(lines.count == 2)
-        #expect(lines[0] == "联系人,事件,事件类型,场景标签,方向,日期,备注,金额,支付方式,已退金额")
+        #expect(lines[0] == "联系人,事件,事件类型,场景标签,方向,日期,备注,情分分量,金额,支付方式,已退金额")
         #expect(lines[1].contains("李四"))
         #expect(lines[1].contains("600.00"))
         #expect(!lines[1].contains("张三"))

@@ -1584,6 +1584,22 @@
         }
       }
     },
+    "csv.import.preview.invalid.invalidDate" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Invalid date format"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "日期格式无效"
+          }
+        }
+      }
+    },
     "csv.import.preview.invalid.missingContact" : {
       "localizations" : {
         "en" : {

@@ -7,7 +7,7 @@ private let importLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.import
 
 enum ExportService {
     private nonisolated static let csvDateFormat = "yyyy-MM-dd HH:mm"
-    private nonisolated static let commonColumns = ["联系人", "事件", "事件类型", "场景标签", "方向", "日期", "备注"]
+    private nonisolated static let commonColumns = ["联系人", "事件", "事件类型", "场景标签", "方向", "日期", "备注", "情分分量"]
     private nonisolated static let typeSpecificColumns: [RecordType: [String]] = [
         .monetary: ["金额", "支付方式", "已退金额"],
         .gift: ["礼品名称", "礼品估值", "人情描述"],
@@ -136,6 +136,7 @@ enum ExportService {
             "方向": record.direction.csvValue,
             "日期": csvDateFormatter.string(from: record.date),
             "备注": record.note,
+            "情分分量": record.relationshipWeight.csvValue,
         ]
 
         switch recordType {
@@ -240,6 +241,7 @@ enum ExportService {
                     "方向": "送出",
                     "日期": "2026-04-09 10:30",
                     "备注": "示例备注",
+                    "情分分量": "礼尚往来",
                     "金额": "800.00",
                     "支付方式": "微信",
                     "已退金额": "0.00",
@@ -252,6 +254,7 @@ enum ExportService {
                     "方向": "送出",
                     "日期": "2026-04-09 10:30",
                     "备注": "日常礼金示例",
+                    "情分分量": "礼尚往来",
                     "金额": "300.00",
                     "支付方式": "现金",
                     "已退金额": "0.00",
@@ -267,6 +270,7 @@ enum ExportService {
                     "方向": "送出",
                     "日期": "2026-04-09 10:30",
                     "备注": "示例备注",
+                    "情分分量": "礼尚往来",
                     "礼品名称": "景德镇茶具",
                     "礼品估值": "880.00",
                     "人情描述": "乔迁随礼品",
@@ -279,6 +283,7 @@ enum ExportService {
                     "方向": "送出",
                     "日期": "2026-04-09 10:30",
                     "备注": "日常礼品示例",
+                    "情分分量": "礼尚往来",
                     "礼品名称": "地方特产礼盒",
                     "礼品估值": "260.00",
                     "人情描述": "出差顺手带回",
@@ -294,6 +299,7 @@ enum ExportService {
                     "方向": "送出",
                     "日期": "2026-04-09 10:30",
                     "备注": "示例备注",
+                    "情分分量": "礼尚往来",
                     "帮忙说明": "帮忙挂号预约",
                     "人情描述": "医院陪同",
                 ],
@@ -305,6 +311,7 @@ enum ExportService {
                     "方向": "送出",
                     "日期": "2026-04-09 10:30",
                     "备注": "日常帮忙示例",
+                    "情分分量": "礼尚往来",
                     "帮忙说明": "帮忙代取检查报告",
                     "人情描述": "顺路代办",
                 ],
@@ -319,6 +326,7 @@ enum ExportService {
                     "方向": "送出",
                     "日期": "2026-04-09 10:30",
                     "备注": "示例备注",
+                    "情分分量": "礼尚往来",
                     "宴请地点": "兰亭包厢",
                     "宴请宾客": "张三、李四",
                     "宴请额外费用": "两瓶酒水",
@@ -332,6 +340,7 @@ enum ExportService {
                     "方向": "送出",
                     "日期": "2026-04-09 10:30",
                     "备注": "日常宴请示例",
+                    "情分分量": "礼尚往来",
                     "宴请地点": "家常馆包间",
                     "宴请宾客": "老同学两位",
                     "宴请额外费用": "带了两瓶红酒",
@@ -434,12 +443,38 @@ enum ExportService {
 
         var result = baseResult
         let importableItems = items.filter { $0.isSelected && $0.isImportable }
+        var contactCache: [String: Contact] = [:]
+        var eventCache: [String: Event] = [:]
 
         for item in importableItems {
             guard let payload = item.payload else { continue }
 
-            let contact = findOrCreateContact(name: payload.contactName, context: context)
-            let event = findOrCreateEventIfNeeded(name: payload.eventName, type: payload.eventType, context: context)
+            let contactName = payload.contactName.trimmingCharacters(in: .whitespacesAndNewlines)
+            let contact: Contact
+            if let cachedContact = contactCache[contactName] {
+                contact = cachedContact
+            } else {
+                let resolvedContact = findOrCreateContact(name: contactName, context: context)
+                contactCache[contactName] = resolvedContact
+                contact = resolvedContact
+            }
+
+            let eventName = payload.eventName.trimmingCharacters(in: .whitespacesAndNewlines)
+            let event: Event?
+            if eventName.isEmpty {
+                event = nil
+            } else {
+                let eventKey = "\(eventName)|\(payload.eventType.rawValue)"
+                if let cachedEvent = eventCache[eventKey] {
+                    event = cachedEvent
+                } else {
+                    let resolvedEvent = findOrCreateEventIfNeeded(name: eventName, type: payload.eventType, context: context)
+                    if let resolvedEvent {
+                        eventCache[eventKey] = resolvedEvent
+                    }
+                    event = resolvedEvent
+                }
+            }
             let returnedAmount = payload.recordType == .monetary ? payload.returnedAmount : 0
 
             let record = Record(
@@ -450,7 +485,7 @@ enum ExportService {
                 note: payload.note,
                 date: payload.date,
                 recordType: payload.recordType,
-                relationshipWeight: .reciprocal
+                relationshipWeight: payload.relationshipWeight
             )
             record.contextTag = payload.eventName.isEmpty ? payload.sceneTag : ""
             record.applyTypeData(payload.typeData)
@@ -479,10 +514,12 @@ enum ExportService {
             throw ImportError.invalidFormat
         }
 
-        let hasTypeSpecificColumn = typeSpecificColumns.values
-            .flatMap(\.self)
-            .contains { Set(headerRow).contains($0) }
-        guard hasTypeSpecificColumn else {
+        let typeSpecificHeaderColumns = Set(headerRow).subtracting(commonColumns)
+        let matchedRecordType = typeSpecificColumns.first { _, columns in
+            Set(columns) == typeSpecificHeaderColumns
+        }
+
+        guard matchedRecordType != nil else {
             throw ImportError.invalidFormat
         }
     }
@@ -855,7 +892,9 @@ enum ExportService {
         let sceneTag = csvCell(fields, columnIndex: columnIndex, column: "场景标签").trimmingCharacters(in: .whitespacesAndNewlines)
         let direction = parseDirection(csvCell(fields, columnIndex: columnIndex, column: "方向"))
         let dateTextRaw = csvCell(fields, columnIndex: columnIndex, column: "日期")
+        let trimmedDateTextRaw = dateTextRaw.trimmingCharacters(in: .whitespacesAndNewlines)
         let note = csvCell(fields, columnIndex: columnIndex, column: "备注")
+        let relationshipWeight = parseRelationshipWeight(csvCell(fields, columnIndex: columnIndex, column: "情分分量"))
         let amountStr = csvCell(fields, columnIndex: columnIndex, column: "金额")
         let amount = UserEnteredDecimal.parse(amountStr) ?? 0
         let returnedAmount = UserEnteredDecimal.parse(csvCell(fields, columnIndex: columnIndex, column: "已退金额")) ?? 0
@@ -877,9 +916,41 @@ enum ExportService {
             humanDescription: humanDescription,
             columnIndex: columnIndex
         )
-        let parsedDate = parseDate(dateTextRaw) ?? Date()
-        let dateText = csvDateFormatter.string(from: parsedDate)
         let contextText = eventName.isEmpty ? sceneTag : eventName
+        let parsedDate = if trimmedDateTextRaw.isEmpty {
+            Date()
+        } else {
+            parseDate(dateTextRaw)
+        }
+        if !trimmedDateTextRaw.isEmpty, parsedDate == nil {
+            return CSVImportPreviewItem(
+                rowNumber: lineNumber,
+                isSelected: false,
+                contactName: contactName.isEmpty ? String(localized: "common.unknown") : contactName,
+                eventName: eventName,
+                eventTypeName: eventTypeName,
+                sceneTag: sceneTag,
+                direction: direction,
+                date: nil,
+                dateText: trimmedDateTextRaw,
+                note: note,
+                recordType: recordType,
+                contextText: contextText,
+                trailingText: previewTrailingText(
+                    recordType: recordType,
+                    amount: amount,
+                    giftName: giftName,
+                    favorHelp: favorHelp,
+                    banquetLocation: banquetLocation,
+                    humanDescription: humanDescription
+                ),
+                detailText: previewDetailText(dateText: trimmedDateTextRaw, direction: direction, recordType: recordType),
+                status: .error(String(localized: "csv.import.preview.invalid.invalidDate")),
+                payload: nil
+            )
+        }
+        let resolvedDate = parsedDate ?? Date()
+        let dateText = csvDateFormatter.string(from: resolvedDate)
 
         guard !contactName.isEmpty else {
             return CSVImportPreviewItem(
@@ -890,7 +961,7 @@ enum ExportService {
                 eventTypeName: eventTypeName,
                 sceneTag: sceneTag,
                 direction: direction,
-                date: parsedDate,
+                date: resolvedDate,
                 dateText: dateText,
                 note: note,
                 recordType: recordType,
@@ -918,7 +989,7 @@ enum ExportService {
                 eventTypeName: eventTypeName,
                 sceneTag: sceneTag,
                 direction: direction,
-                date: parsedDate,
+                date: resolvedDate,
                 dateText: dateText,
                 note: note,
                 recordType: nil,
@@ -939,7 +1010,7 @@ enum ExportService {
                 eventTypeName: eventTypeName,
                 sceneTag: sceneTag,
                 direction: direction,
-                date: parsedDate,
+                date: resolvedDate,
                 dateText: dateText,
                 note: note,
                 recordType: resolvedRecordType,
@@ -967,7 +1038,7 @@ enum ExportService {
                 eventTypeName: eventTypeName,
                 sceneTag: sceneTag,
                 direction: direction,
-                date: parsedDate,
+                date: resolvedDate,
                 dateText: dateText,
                 note: note,
                 recordType: resolvedRecordType,
@@ -993,9 +1064,10 @@ enum ExportService {
             eventType: resolvedEventType,
             sceneTag: eventName.isEmpty ? sceneTag : "",
             direction: direction,
-            date: parsedDate,
+            date: resolvedDate,
             note: note,
             recordType: resolvedRecordType,
+            relationshipWeight: relationshipWeight,
             returnedAmount: returnedAmount,
             typeData: buildTypeDataForImport(
                 recordType: resolvedRecordType,
@@ -1020,7 +1092,7 @@ enum ExportService {
             eventTypeName: eventTypeName,
             sceneTag: sceneTag,
             direction: direction,
-            date: parsedDate,
+            date: resolvedDate,
             dateText: dateText,
             note: note,
             recordType: resolvedRecordType,
@@ -1135,6 +1207,26 @@ enum ExportService {
 
     nonisolated static func parseDate(_ str: String) -> Date? {
         csvDateFormatter.date(from: str.trimmingCharacters(in: .whitespaces))
+    }
+
+    nonisolated static func parseRelationshipWeight(_ str: String) -> RelationshipWeight {
+        let trimmed = str.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return .reciprocal }
+
+        switch trimmed {
+        case RelationshipWeight.trivial.rawValue, String(localized: "record.relationshipWeight.trivial"):
+            return .trivial
+        case RelationshipWeight.kindness.rawValue, String(localized: "record.relationshipWeight.kindness"):
+            return .kindness
+        case RelationshipWeight.support.rawValue, String(localized: "record.relationshipWeight.support"):
+            return .support
+        case RelationshipWeight.profound.rawValue, String(localized: "record.relationshipWeight.profound"):
+            return .profound
+        case RelationshipWeight.reciprocal.rawValue, String(localized: "record.relationshipWeight.reciprocal"):
+            return .reciprocal
+        default:
+            return .reciprocal
+        }
     }
 
     private nonisolated static var csvDateFormatter: DateFormatter {
@@ -1268,6 +1360,7 @@ struct CSVImportPayload {
     let date: Date
     let note: String
     let recordType: RecordType
+    let relationshipWeight: RelationshipWeight
     let returnedAmount: Double
     let typeData: RecordTypeData
 }
@@ -1302,5 +1395,11 @@ private extension PaymentMethod {
         case .wechat: String(localized: "payment.wechat")
         case .alipay: String(localized: "payment.alipay")
         }
+    }
+}
+
+private extension RelationshipWeight {
+    var csvValue: String {
+        displayName
     }
 }

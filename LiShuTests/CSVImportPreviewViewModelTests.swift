@@ -33,6 +33,7 @@ struct CSVImportPreviewViewModelTests {
                         date: .now,
                         note: "",
                         recordType: .monetary,
+                        relationshipWeight: .reciprocal,
                         returnedAmount: 0,
                         typeData: .monetary(MonetaryData(amount: 800, paymentMethod: PaymentMethod.cash.rawValue, returnedAmount: 0))
                     )
@@ -99,6 +100,7 @@ struct CSVImportPreviewViewModelTests {
                         date: .now,
                         note: "",
                         recordType: .monetary,
+                        relationshipWeight: .reciprocal,
                         returnedAmount: 0,
                         typeData: .monetary(MonetaryData(amount: 800, paymentMethod: PaymentMethod.cash.rawValue, returnedAmount: 0))
                     )

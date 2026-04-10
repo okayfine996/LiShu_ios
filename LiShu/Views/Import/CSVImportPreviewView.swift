@@ -118,6 +118,7 @@ struct CSVImportPreviewView: View {
                                 date: .now,
                                 note: "示例备注",
                                 recordType: .monetary,
+                                relationshipWeight: .reciprocal,
                                 returnedAmount: 0,
                                 typeData: .monetary(
                                     MonetaryData(
