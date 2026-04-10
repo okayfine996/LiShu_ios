@@ -13,17 +13,20 @@ enum AppBuildInfo {
         isTestFlightBuild(
             appStoreReceiptURL: Bundle.main.appStoreReceiptURL,
             isSimulator: isSimulator,
-            isPreview: isRunningInPreview
+            isPreview: isRunningInPreview,
+            hasEmbeddedProvision: Bundle.main.path(forResource: "embedded", ofType: "mobileprovision") != nil
         )
     }
 
     static func isTestFlightBuild(
         appStoreReceiptURL: URL?,
         isSimulator: Bool,
-        isPreview: Bool
+        isPreview: Bool,
+        hasEmbeddedProvision: Bool
     ) -> Bool {
         guard !isSimulator, !isPreview else { return false }
-        return appStoreReceiptURL?.lastPathComponent == "sandboxReceipt"
+        guard appStoreReceiptURL?.lastPathComponent == "sandboxReceipt" else { return false }
+        return !hasEmbeddedProvision
     }
 
     private static var isRunningInPreview: Bool {

@@ -3,16 +3,31 @@ import Foundation
 import Testing
 
 struct AppBuildInfoTests {
-    @Test("sandbox receipt is treated as TestFlight on device builds")
-    func sandboxReceiptEnablesTestFlightBuild() {
+    @Test("sandbox receipt without embedded provision counts as TestFlight")
+    func sandboxReceiptWithoutProvisionEnablesTestFlightBuild() {
         let receiptURL = URL(fileURLWithPath: "/private/var/mobile/Containers/Data/Application/appStoreReceipt/sandboxReceipt")
 
         #expect(
             AppBuildInfo.isTestFlightBuild(
                 appStoreReceiptURL: receiptURL,
                 isSimulator: false,
-                isPreview: false
+                isPreview: false,
+                hasEmbeddedProvision: false
             )
+        )
+    }
+
+    @Test("sandbox receipt with embedded provision does not count as TestFlight")
+    func sandboxReceiptWithProvisionDisablesTestFlightBuild() {
+        let receiptURL = URL(fileURLWithPath: "/private/var/mobile/Containers/Data/Application/appStoreReceipt/sandboxReceipt")
+
+        #expect(
+            AppBuildInfo.isTestFlightBuild(
+                appStoreReceiptURL: receiptURL,
+                isSimulator: false,
+                isPreview: false,
+                hasEmbeddedProvision: true
+            ) == false
         )
     }
 
@@ -24,7 +39,8 @@ struct AppBuildInfoTests {
             AppBuildInfo.isTestFlightBuild(
                 appStoreReceiptURL: receiptURL,
                 isSimulator: true,
-                isPreview: false
+                isPreview: false,
+                hasEmbeddedProvision: false
             ) == false
         )
     }
@@ -37,7 +53,8 @@ struct AppBuildInfoTests {
             AppBuildInfo.isTestFlightBuild(
                 appStoreReceiptURL: receiptURL,
                 isSimulator: false,
-                isPreview: true
+                isPreview: true,
+                hasEmbeddedProvision: false
             ) == false
         )
     }
@@ -50,7 +67,8 @@ struct AppBuildInfoTests {
             AppBuildInfo.isTestFlightBuild(
                 appStoreReceiptURL: receiptURL,
                 isSimulator: false,
-                isPreview: false
+                isPreview: false,
+                hasEmbeddedProvision: false
             ) == false
         )
     }
