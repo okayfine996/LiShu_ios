@@ -13,17 +13,17 @@ struct CSVExportPreviewViewModelTests {
                     isSelected: true,
                     contactName: "张三",
                     contextText: "婚礼",
-                    detailText: "2026-04-09 10:30 · 送出 · 金额",
+                    detailText: "2026-04-09 · 送出 · 金额",
                     trailingText: "¥800",
                     status: .ready,
-                    payload: CSVExportPayload(csvRow: "张三,婚礼,婚礼,,送出,2026-04-09 10:30,备注,800.00,微信,0.00")
+                    payload: CSVExportPayload(csvRow: "张三,婚礼,婚礼,,送出,2026-04-09,备注,800.00,微信,0.00")
                 ),
                 CSVExportPreviewItem(
                     rowNumber: 3,
                     isSelected: false,
                     contactName: "李四",
                     contextText: String(localized: "record.context.daily"),
-                    detailText: "2026-04-09 10:30 · 送出 · 金额",
+                    detailText: "2026-04-09 · 送出 · 金额",
                     trailingText: "¥300",
                     status: .skipped(String(localized: "csv.export.preview.invalid.missingContext")),
                     payload: nil
@@ -51,7 +51,7 @@ struct CSVExportPreviewViewModelTests {
                     isSelected: true,
                     contactName: "张三",
                     contextText: "婚礼",
-                    detailText: "2026-04-09 10:30 · 送出 · 金额",
+                    detailText: "2026-04-09 · 送出 · 金额",
                     trailingText: "¥800",
                     status: .ready,
                     payload: CSVExportPayload(csvRow: "row")

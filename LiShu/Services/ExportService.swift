@@ -6,7 +6,8 @@ private let exportLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.export
 private let importLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.importFlow)
 
 enum ExportService {
-    private nonisolated static let csvDateFormat = "yyyy-MM-dd HH:mm"
+    private nonisolated static let csvDateFormat = "yyyy-MM-dd"
+    private nonisolated static let csvLegacyDateFormat = "yyyy-MM-dd HH:mm"
     private nonisolated static let commonColumns = ["联系人", "事件", "事件类型", "场景标签", "方向", "日期", "备注", "情分分量"]
     private nonisolated static let typeSpecificColumns: [RecordType: [String]] = [
         .monetary: ["金额", "支付方式", "已退金额"],
@@ -239,7 +240,7 @@ enum ExportService {
                     "事件类型": "婚礼",
                     "场景标签": "",
                     "方向": "送出",
-                    "日期": "2026-04-09 10:30",
+                    "日期": "2026-04-09",
                     "备注": "示例备注",
                     "情分分量": "礼尚往来",
                     "金额": "800.00",
@@ -252,7 +253,7 @@ enum ExportService {
                     "事件类型": "",
                     "场景标签": "节日看望",
                     "方向": "送出",
-                    "日期": "2026-04-09 10:30",
+                    "日期": "2026-04-09",
                     "备注": "日常礼金示例",
                     "情分分量": "礼尚往来",
                     "金额": "300.00",
@@ -268,7 +269,7 @@ enum ExportService {
                     "事件类型": "乔迁",
                     "场景标签": "",
                     "方向": "送出",
-                    "日期": "2026-04-09 10:30",
+                    "日期": "2026-04-09",
                     "备注": "示例备注",
                     "情分分量": "礼尚往来",
                     "礼品名称": "景德镇茶具",
@@ -281,7 +282,7 @@ enum ExportService {
                     "事件类型": "",
                     "场景标签": "出差带特产",
                     "方向": "送出",
-                    "日期": "2026-04-09 10:30",
+                    "日期": "2026-04-09",
                     "备注": "日常礼品示例",
                     "情分分量": "礼尚往来",
                     "礼品名称": "地方特产礼盒",
@@ -297,7 +298,7 @@ enum ExportService {
                     "事件类型": "探望",
                     "场景标签": "",
                     "方向": "送出",
-                    "日期": "2026-04-09 10:30",
+                    "日期": "2026-04-09",
                     "备注": "示例备注",
                     "情分分量": "礼尚往来",
                     "帮忙说明": "帮忙挂号预约",
@@ -309,7 +310,7 @@ enum ExportService {
                     "事件类型": "",
                     "场景标签": "帮忙挂号",
                     "方向": "送出",
-                    "日期": "2026-04-09 10:30",
+                    "日期": "2026-04-09",
                     "备注": "日常帮忙示例",
                     "情分分量": "礼尚往来",
                     "帮忙说明": "帮忙代取检查报告",
@@ -324,7 +325,7 @@ enum ExportService {
                     "事件类型": "其他",
                     "场景标签": "",
                     "方向": "送出",
-                    "日期": "2026-04-09 10:30",
+                    "日期": "2026-04-09",
                     "备注": "示例备注",
                     "情分分量": "礼尚往来",
                     "宴请地点": "兰亭包厢",
@@ -338,7 +339,7 @@ enum ExportService {
                     "事件类型": "",
                     "场景标签": "接风洗尘",
                     "方向": "送出",
-                    "日期": "2026-04-09 10:30",
+                    "日期": "2026-04-09",
                     "备注": "日常宴请示例",
                     "情分分量": "礼尚往来",
                     "宴请地点": "家常馆包间",
@@ -1206,7 +1207,8 @@ enum ExportService {
     }
 
     nonisolated static func parseDate(_ str: String) -> Date? {
-        csvDateFormatter.date(from: str.trimmingCharacters(in: .whitespaces))
+        let trimmed = str.trimmingCharacters(in: .whitespaces)
+        return csvDateFormatter.date(from: trimmed) ?? csvLegacyDateFormatter.date(from: trimmed)
     }
 
     nonisolated static func parseRelationshipWeight(_ str: String) -> RelationshipWeight {
@@ -1233,6 +1235,13 @@ enum ExportService {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "zh_Hans")
         formatter.dateFormat = csvDateFormat
+        return formatter
+    }
+
+    private nonisolated static var csvLegacyDateFormatter: DateFormatter {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "zh_Hans")
+        formatter.dateFormat = csvLegacyDateFormat
         return formatter
     }
 
