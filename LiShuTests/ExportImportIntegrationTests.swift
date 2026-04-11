@@ -314,6 +314,64 @@ struct ExportImportIntegrationTests {
         #expect(contacts[0].name == "张三")
     }
 
+    @Test func importNormalizesWhitespaceAcrossTextFields() throws {
+        let tempURL = try writeCSV(
+            """
+            联系人,事件,事件类型,场景标签,方向,日期,备注,情分分量,礼品名称,礼品估值,人情描述
+              张   三  ,  乔迁   宴  ,  乔迁  ,,送出,2026-04-09,  备注   内容  , 礼尚往来 ,  景德镇   茶具  ,880.00,  乔迁   随礼品
+            """,
+            named: "test_trim_all_text_fields.csv"
+        )
+        defer { try? FileManager.default.removeItem(at: tempURL) }
+
+        let db = try TestDB()
+        let result = try ExportService.importCSV(url: tempURL, context: db.context)
+
+        #expect(result.imported == 1)
+
+        let contacts = try db.context.fetch(FetchDescriptor<Contact>())
+        #expect(contacts.count == 1)
+        #expect(contacts[0].name == "张 三")
+
+        let events = try db.context.fetch(FetchDescriptor<Event>())
+        #expect(events.count == 1)
+        #expect(events[0].name == "乔迁 宴")
+
+        let importedRecords = try db.context.fetch(FetchDescriptor<Record>())
+        #expect(importedRecords.count == 1)
+        #expect(importedRecords[0].note == "备注 内容")
+        #expect(importedRecords[0].giftData?.giftName == "景德镇 茶具")
+    }
+
+    @Test func importNormalizesWhitespaceWhenReusingExistingEventAndContact() throws {
+        let tempURL = try writeCSV(
+            """
+            联系人,事件,事件类型,场景标签,方向,日期,备注,情分分量,金额,支付方式,已退金额
+              张   三  ,  王家   婚礼  ,婚礼,,送出,2026-04-09,  第一   条  ,礼尚往来,500.00,现金,0.00
+            张 三,王家 婚礼,婚礼,,送出,2026-04-10,第二条,礼尚往来,300.00,微信,0.00
+            """,
+            named: "test_reuse_normalized_event_contact.csv"
+        )
+        defer { try? FileManager.default.removeItem(at: tempURL) }
+
+        let db = try TestDB()
+        let result = try ExportService.importCSV(url: tempURL, context: db.context)
+
+        #expect(result.imported == 2)
+
+        let contacts = try db.context.fetch(FetchDescriptor<Contact>())
+        #expect(contacts.count == 1)
+        #expect(contacts[0].name == "张 三")
+
+        let events = try db.context.fetch(FetchDescriptor<Event>())
+        #expect(events.count == 1)
+        #expect(events[0].name == "王家 婚礼")
+
+        let importedRecords = try db.context.fetch(FetchDescriptor<Record>())
+        #expect(importedRecords.count == 2)
+        #expect(importedRecords.allSatisfy { $0.note == "第一 条" || $0.note == "第二条" })
+    }
+
     @Test func importSceneTagRowCreatesDailyRecord() throws {
         let tempURL = try writeCSV(
             """

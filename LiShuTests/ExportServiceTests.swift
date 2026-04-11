@@ -93,6 +93,12 @@ struct ExportServiceTests {
         #expect(emptyDate == nil)
     }
 
+    @Test func normalizeImportedTextTrimsAndCollapsesWhitespace() {
+        #expect(ExportService.normalizeImportedText("  张   三  ") == "张 三")
+        #expect(ExportService.normalizeImportedText("\n婚礼\t\t宴请  ") == "婚礼 宴请")
+        #expect(ExportService.normalizeImportedText("   \n\t ") == "")
+    }
+
     // MARK: - Template Export
 
     @Test(arguments: [RecordType.monetary, .gift, .favor, .banquet])
