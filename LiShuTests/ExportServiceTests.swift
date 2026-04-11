@@ -83,7 +83,7 @@ struct ExportServiceTests {
     }
 
     @Test func testParseDate() {
-        let date = ExportService.parseDate("2026-03-15 14:30")
+        let date = ExportService.parseDate("2026-03-15")
         #expect(date != nil)
 
         let invalidDate = ExportService.parseDate("not-a-date")
@@ -91,6 +91,12 @@ struct ExportServiceTests {
 
         let emptyDate = ExportService.parseDate("")
         #expect(emptyDate == nil)
+    }
+
+    @Test func normalizeImportedTextTrimsAndCollapsesWhitespace() {
+        #expect(ExportService.normalizeImportedText("  张   三  ") == "张 三")
+        #expect(ExportService.normalizeImportedText("\n婚礼\t\t宴请  ") == "婚礼 宴请")
+        #expect(ExportService.normalizeImportedText("   \n\t ") == "")
     }
 
     // MARK: - Template Export
@@ -103,8 +109,8 @@ struct ExportServiceTests {
         #expect(lines.count == 3)
         #expect(lines[0].contains("日期"))
         #expect(lines[0].contains("场景标签"))
-        #expect(lines[1].contains("2026-04-09 10:30"))
-        #expect(lines[2].contains("2026-04-09 10:30"))
+        #expect(lines[1].contains("2026-04-09"))
+        #expect(lines[2].contains("2026-04-09"))
     }
 
     // MARK: - Type Export

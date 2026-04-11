@@ -6,7 +6,8 @@ private let exportLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.export
 private let importLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.importFlow)
 
 enum ExportService {
-    private nonisolated static let csvDateFormat = "yyyy-MM-dd HH:mm"
+    private nonisolated static let csvDateFormat = "yyyy-MM-dd"
+    private nonisolated static let csvLegacyDateFormat = "yyyy-MM-dd HH:mm"
     private nonisolated static let commonColumns = ["联系人", "事件", "事件类型", "场景标签", "方向", "日期", "备注", "情分分量"]
     private nonisolated static let typeSpecificColumns: [RecordType: [String]] = [
         .monetary: ["金额", "支付方式", "已退金额"],
@@ -239,7 +240,7 @@ enum ExportService {
                     "事件类型": "婚礼",
                     "场景标签": "",
                     "方向": "送出",
-                    "日期": "2026-04-09 10:30",
+                    "日期": "2026-04-09",
                     "备注": "示例备注",
                     "情分分量": "礼尚往来",
                     "金额": "800.00",
@@ -252,7 +253,7 @@ enum ExportService {
                     "事件类型": "",
                     "场景标签": "节日看望",
                     "方向": "送出",
-                    "日期": "2026-04-09 10:30",
+                    "日期": "2026-04-09",
                     "备注": "日常礼金示例",
                     "情分分量": "礼尚往来",
                     "金额": "300.00",
@@ -268,7 +269,7 @@ enum ExportService {
                     "事件类型": "乔迁",
                     "场景标签": "",
                     "方向": "送出",
-                    "日期": "2026-04-09 10:30",
+                    "日期": "2026-04-09",
                     "备注": "示例备注",
                     "情分分量": "礼尚往来",
                     "礼品名称": "景德镇茶具",
@@ -281,7 +282,7 @@ enum ExportService {
                     "事件类型": "",
                     "场景标签": "出差带特产",
                     "方向": "送出",
-                    "日期": "2026-04-09 10:30",
+                    "日期": "2026-04-09",
                     "备注": "日常礼品示例",
                     "情分分量": "礼尚往来",
                     "礼品名称": "地方特产礼盒",
@@ -297,7 +298,7 @@ enum ExportService {
                     "事件类型": "探望",
                     "场景标签": "",
                     "方向": "送出",
-                    "日期": "2026-04-09 10:30",
+                    "日期": "2026-04-09",
                     "备注": "示例备注",
                     "情分分量": "礼尚往来",
                     "帮忙说明": "帮忙挂号预约",
@@ -309,7 +310,7 @@ enum ExportService {
                     "事件类型": "",
                     "场景标签": "帮忙挂号",
                     "方向": "送出",
-                    "日期": "2026-04-09 10:30",
+                    "日期": "2026-04-09",
                     "备注": "日常帮忙示例",
                     "情分分量": "礼尚往来",
                     "帮忙说明": "帮忙代取检查报告",
@@ -324,7 +325,7 @@ enum ExportService {
                     "事件类型": "其他",
                     "场景标签": "",
                     "方向": "送出",
-                    "日期": "2026-04-09 10:30",
+                    "日期": "2026-04-09",
                     "备注": "示例备注",
                     "情分分量": "礼尚往来",
                     "宴请地点": "兰亭包厢",
@@ -338,7 +339,7 @@ enum ExportService {
                     "事件类型": "",
                     "场景标签": "接风洗尘",
                     "方向": "送出",
-                    "日期": "2026-04-09 10:30",
+                    "日期": "2026-04-09",
                     "备注": "日常宴请示例",
                     "情分分量": "礼尚往来",
                     "宴请地点": "家常馆包间",
@@ -539,13 +540,13 @@ enum ExportService {
             return .monetary
         }
 
-        let trimmedDescription = humanDescription.trimmingCharacters(in: .whitespacesAndNewlines)
-        let hasGiftPayload = !giftName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        let normalizedDescription = normalizeImportedText(humanDescription)
+        let hasGiftPayload = !normalizeImportedText(giftName).isEmpty
             || UserEnteredDecimal.parse(giftEstimatedValueStr) != nil
-        let hasFavorPayload = !favorHelp.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        let hasBanquetPayload = !banquetLocation.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            || !banquetAttendees.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            || !banquetExtra.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        let hasFavorPayload = !normalizeImportedText(favorHelp).isEmpty
+        let hasBanquetPayload = !normalizeImportedText(banquetLocation).isEmpty
+            || !normalizeImportedText(banquetAttendees).isEmpty
+            || !normalizeImportedText(banquetExtra).isEmpty
         let hasGiftColumns = columnIndex["礼品名称"] != nil || columnIndex["礼品估值"] != nil
         let hasFavorColumns = columnIndex["帮忙说明"] != nil
         let hasBanquetColumns = columnIndex["宴请地点"] != nil
@@ -561,7 +562,7 @@ enum ExportService {
         if hasBanquetPayload {
             return .banquet
         }
-        if !trimmedDescription.isEmpty {
+        if !normalizedDescription.isEmpty {
             if hasFavorColumns {
                 return .favor
             }
@@ -616,7 +617,7 @@ enum ExportService {
         banquetAtt: String,
         banquetExtra: String
     ) -> RecordTypeData {
-        let trimmedDescription = humanDesc.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedDescription = normalizeImportedText(humanDesc)
 
         switch recordType {
         case .monetary:
@@ -626,21 +627,21 @@ enum ExportService {
                 returnedAmount: returnedAmount
             ))
         case .gift:
-            let name = giftName.trimmingCharacters(in: .whitespacesAndNewlines)
+            let name = normalizeImportedText(giftName)
             let estimatedValue = UserEnteredDecimal.parse(giftEstStr)
             return .gift(GiftData(
                 giftName: name.isEmpty ? trimmedDescription : name,
                 estimatedValue: estimatedValue
             ))
         case .favor:
-            let description = favorHelp.trimmingCharacters(in: .whitespacesAndNewlines)
+            let description = normalizeImportedText(favorHelp)
             return .favor(FavorData(description: description.isEmpty ? trimmedDescription : description))
         case .banquet:
-            let location = banquetLoc.trimmingCharacters(in: .whitespacesAndNewlines)
+            let location = normalizeImportedText(banquetLoc)
             return .banquet(BanquetData(
                 location: location.isEmpty ? trimmedDescription : location,
-                attendeeList: banquetAtt.trimmingCharacters(in: .whitespacesAndNewlines),
-                extraCostNotes: banquetExtra.trimmingCharacters(in: .whitespacesAndNewlines)
+                attendeeList: normalizeImportedText(banquetAtt),
+                extraCostNotes: normalizeImportedText(banquetExtra)
             ))
         }
     }
@@ -749,7 +750,7 @@ enum ExportService {
     }
 
     nonisolated static func findOrCreateContact(name: String, context: ModelContext) -> Contact {
-        let trimmed = name.trimmingCharacters(in: .whitespaces)
+        let trimmed = normalizeImportedText(name)
         let predicate = #Predicate<Contact> { $0.name == trimmed }
         var descriptor = FetchDescriptor<Contact>(predicate: predicate)
         descriptor.fetchLimit = 1
@@ -773,7 +774,7 @@ enum ExportService {
     }
 
     nonisolated static func findOrCreateEvent(name: String, type: EventType, context: ModelContext) -> Event {
-        let trimmed = name.trimmingCharacters(in: .whitespaces)
+        let trimmed = normalizeImportedText(name)
         let typeRaw = type.rawValue
         let predicate = #Predicate<Event> { $0.name == trimmed && $0.typeRaw == typeRaw }
         var descriptor = FetchDescriptor<Event>(predicate: predicate)
@@ -798,7 +799,7 @@ enum ExportService {
     }
 
     nonisolated static func findOrCreateEventIfNeeded(name: String, type: EventType, context: ModelContext) -> Event? {
-        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmed = normalizeImportedText(name)
         guard !trimmed.isEmpty else { return nil }
         return findOrCreateEvent(name: trimmed, type: type, context: context)
     }
@@ -886,25 +887,25 @@ enum ExportService {
     ) -> CSVImportPreviewItem {
         let lineNumber = rowIndex + 2
         let fields = alignFieldsToHeader(rawFields, headerColumnCount: headerColumnCount)
-        let contactName = csvCell(fields, columnIndex: columnIndex, column: "联系人").trimmingCharacters(in: .whitespacesAndNewlines)
-        let eventName = csvCell(fields, columnIndex: columnIndex, column: "事件").trimmingCharacters(in: .whitespacesAndNewlines)
-        let eventTypeName = csvCell(fields, columnIndex: columnIndex, column: "事件类型").trimmingCharacters(in: .whitespacesAndNewlines)
-        let sceneTag = csvCell(fields, columnIndex: columnIndex, column: "场景标签").trimmingCharacters(in: .whitespacesAndNewlines)
+        let contactName = normalizeImportedText(csvCell(fields, columnIndex: columnIndex, column: "联系人"))
+        let eventName = normalizeImportedText(csvCell(fields, columnIndex: columnIndex, column: "事件"))
+        let eventTypeName = normalizeImportedText(csvCell(fields, columnIndex: columnIndex, column: "事件类型"))
+        let sceneTag = normalizeImportedText(csvCell(fields, columnIndex: columnIndex, column: "场景标签"))
         let direction = parseDirection(csvCell(fields, columnIndex: columnIndex, column: "方向"))
         let dateTextRaw = csvCell(fields, columnIndex: columnIndex, column: "日期")
         let trimmedDateTextRaw = dateTextRaw.trimmingCharacters(in: .whitespacesAndNewlines)
-        let note = csvCell(fields, columnIndex: columnIndex, column: "备注")
+        let note = normalizeImportedText(csvCell(fields, columnIndex: columnIndex, column: "备注"))
         let relationshipWeight = parseRelationshipWeight(csvCell(fields, columnIndex: columnIndex, column: "情分分量"))
         let amountStr = csvCell(fields, columnIndex: columnIndex, column: "金额")
         let amount = UserEnteredDecimal.parse(amountStr) ?? 0
         let returnedAmount = UserEnteredDecimal.parse(csvCell(fields, columnIndex: columnIndex, column: "已退金额")) ?? 0
-        let giftName = csvCell(fields, columnIndex: columnIndex, column: "礼品名称")
+        let giftName = normalizeImportedText(csvCell(fields, columnIndex: columnIndex, column: "礼品名称"))
         let giftEstimatedValueStr = csvCell(fields, columnIndex: columnIndex, column: "礼品估值")
-        let favorHelp = csvCell(fields, columnIndex: columnIndex, column: "帮忙说明")
-        let banquetLocation = csvCell(fields, columnIndex: columnIndex, column: "宴请地点")
-        let banquetAttendees = csvCell(fields, columnIndex: columnIndex, column: "宴请宾客")
-        let banquetExtra = csvCell(fields, columnIndex: columnIndex, column: "宴请额外费用")
-        let humanDescription = csvCell(fields, columnIndex: columnIndex, column: "人情描述")
+        let favorHelp = normalizeImportedText(csvCell(fields, columnIndex: columnIndex, column: "帮忙说明"))
+        let banquetLocation = normalizeImportedText(csvCell(fields, columnIndex: columnIndex, column: "宴请地点"))
+        let banquetAttendees = normalizeImportedText(csvCell(fields, columnIndex: columnIndex, column: "宴请宾客"))
+        let banquetExtra = normalizeImportedText(csvCell(fields, columnIndex: columnIndex, column: "宴请额外费用"))
+        let humanDescription = normalizeImportedText(csvCell(fields, columnIndex: columnIndex, column: "人情描述"))
         let recordType = inferRecordType(
             amount: amount,
             giftName: giftName,
@@ -1163,7 +1164,7 @@ enum ExportService {
 
     private nonisolated static func firstNonEmpty(_ values: String...) -> String {
         for value in values {
-            let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+            let trimmed = normalizeImportedText(value)
             if !trimmed.isEmpty {
                 return trimmed
             }
@@ -1172,7 +1173,7 @@ enum ExportService {
     }
 
     nonisolated static func parseEventType(_ str: String) -> EventType {
-        let s = str.trimmingCharacters(in: .whitespaces)
+        let s = normalizeImportedText(str)
         switch s {
         case "婚礼": return .wedding
         case "丧葬": return .funeral
@@ -1187,7 +1188,7 @@ enum ExportService {
     }
 
     nonisolated static func parseDirection(_ str: String) -> RecordDirection {
-        let s = str.trimmingCharacters(in: .whitespaces)
+        let s = normalizeImportedText(str)
         switch s {
         case "送出", "随礼", "given": return .given
         case "收到", "收礼", "received": return .received
@@ -1196,7 +1197,7 @@ enum ExportService {
     }
 
     nonisolated static func parsePaymentMethod(_ str: String) -> PaymentMethod {
-        let s = str.trimmingCharacters(in: .whitespaces)
+        let s = normalizeImportedText(str)
         switch s {
         case "现金", "cash": return .cash
         case "微信", "wechat": return .wechat
@@ -1206,11 +1207,12 @@ enum ExportService {
     }
 
     nonisolated static func parseDate(_ str: String) -> Date? {
-        csvDateFormatter.date(from: str.trimmingCharacters(in: .whitespaces))
+        let trimmed = str.trimmingCharacters(in: .whitespaces)
+        return csvDateFormatter.date(from: trimmed) ?? csvLegacyDateFormatter.date(from: trimmed)
     }
 
     nonisolated static func parseRelationshipWeight(_ str: String) -> RelationshipWeight {
-        let trimmed = str.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmed = normalizeImportedText(str)
         guard !trimmed.isEmpty else { return .reciprocal }
 
         switch trimmed {
@@ -1229,10 +1231,24 @@ enum ExportService {
         }
     }
 
+    nonisolated static func normalizeImportedText(_ value: String) -> String {
+        value
+            .components(separatedBy: .whitespacesAndNewlines)
+            .filter { !$0.isEmpty }
+            .joined(separator: " ")
+    }
+
     private nonisolated static var csvDateFormatter: DateFormatter {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "zh_Hans")
         formatter.dateFormat = csvDateFormat
+        return formatter
+    }
+
+    private nonisolated static var csvLegacyDateFormatter: DateFormatter {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "zh_Hans")
+        formatter.dateFormat = csvLegacyDateFormat
         return formatter
     }
 

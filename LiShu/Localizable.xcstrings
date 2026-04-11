@@ -1712,6 +1712,9 @@
         }
       }
     },
+    "DEBUG: 清除购买状态" : {
+
+    },
     "debug.clearAllData" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -6697,13 +6700,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Import CSV generated from the latest type-specific templates. Fill either Event or Scene Tag for each row. Recommended date format: yyyy-MM-dd HH:mm. If the date is missing, today's date will be used."
+            "value" : "Import CSV generated from the latest type-specific templates. Fill either Event or Scene Tag for each row. Recommended date format: yyyy-MM-dd. If the date is missing, today's date will be used."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "支持拍照识别礼簿，或导入最新版按类型模板生成的 CSV。每行必须填写事件或场景标签其一；日期建议使用 yyyy-MM-dd HH:mm，缺失时默认使用当天时间。"
+            "value" : "支持拍照识别礼簿，或导入最新版按类型模板生成的 CSV。每行必须填写事件或场景标签其一；日期建议使用 yyyy-MM-dd，缺失时默认使用当天时间。"
           }
         }
       }

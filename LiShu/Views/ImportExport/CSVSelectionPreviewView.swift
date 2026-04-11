@@ -351,7 +351,7 @@ private struct LoadingOverlay: View {
                     isSelectable: true,
                     contactName: "张三",
                     contextText: "婚礼",
-                    detailText: "2026-04-09 10:30 · 送出 · 金额",
+                    detailText: "2026-04-09 · 送出 · 金额",
                     trailingText: "¥800",
                     statusMessage: nil,
                     highlightsTrailingText: true
@@ -362,7 +362,7 @@ private struct LoadingOverlay: View {
                     isSelectable: false,
                     contactName: "李四",
                     contextText: String(localized: "record.context.daily"),
-                    detailText: "2026-04-09 10:30 · 送出 · 礼品",
+                    detailText: "2026-04-09 · 送出 · 礼品",
                     trailingText: "茶具",
                     statusMessage: String(localized: "csv.import.preview.invalid.missingContext"),
                     highlightsTrailingText: false
