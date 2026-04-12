@@ -7,6 +7,7 @@ struct HomeLedgerCard: View {
     let event: Event
     let onPrimaryAction: () -> Void
 
+    /// 首页礼簿卡只统计主场事件下真正收到的记录，避免把普通随礼混进来。
     private var receivedRecords: [Record] {
         (event.records ?? [])
             .filter { $0.direction == .received }
@@ -36,10 +37,6 @@ struct HomeLedgerCard: View {
         .frame(width: DesignSystem.Layout.homeLedgerCardWidth, alignment: .leading)
         .background(DesignSystem.Colors.bgSurface)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
-        .overlay(
-            RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
-                .stroke(DesignSystem.Colors.border.opacity(0.6), lineWidth: 1)
-        )
         .shadow(
             color: DesignSystem.Colors.textPrimary.opacity(0.08),
             radius: DesignSystem.Spacing.dense,
@@ -78,6 +75,7 @@ struct HomeLedgerCard: View {
 
             Spacer(minLength: DesignSystem.Spacing.block)
 
+            // 右上角书本图标和整张卡片都进入详情，符合“看礼簿”的操作预期。
             Button {
                 isShowingEventDetail = true
             } label: {
@@ -124,6 +122,7 @@ struct HomeLedgerCard: View {
     }
 
     private var actionSection: some View {
+        // 卡片内部只保留一个强操作，减少“看详情”和“去登记”之间的抢焦点。
         Button(action: onPrimaryAction) {
             Label(String(localized: "event.ledger.primaryAction"), systemImage: "plus.circle.fill")
         }
@@ -213,6 +212,7 @@ private func makeHomeLedgerCardPreviewContainer() -> (ModelContainer, Event)? {
                 event: event,
                 onPrimaryAction: {}
             )
+            .frame(height: 320)
             .padding()
             .background(DesignSystem.Colors.bgPage)
         }

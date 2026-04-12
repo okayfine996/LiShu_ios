@@ -328,6 +328,8 @@ struct EventDetailView: View {
         }
     }
 
+    /// 普通事件默认是“我去参加别人场合”的语义，所以这里只突出一条主记录摘要，
+    /// 而不是继续展示多联系人、多记录列表的礼簿式结构。
     private func primaryRecordCard(_ record: Record) -> some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack(alignment: .top, spacing: 12) {
@@ -385,6 +387,8 @@ struct EventDetailView: View {
 
     @ViewBuilder
     private func primaryRecordTypeDetails(_ record: Record) -> some View {
+        // 不同记录类型关注的信息完全不同，这里按类型拼摘要，
+        // 避免把礼品、帮忙、宴请都硬套成“金额卡片”。
         switch record.resolvedTypeData {
         case let .monetary(data):
             primaryRecordMetaRow(
@@ -451,6 +455,7 @@ struct EventDetailView: View {
     }
 
     private func primaryRecordTitle(for record: Record) -> String {
+        // 标题优先使用用户真正录入的内容，让卡片读起来更像“这次人情的摘要”。
         switch record.resolvedTypeData {
         case .monetary:
             return String(localized: "event.detail.monetaryRecordTitle")

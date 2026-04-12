@@ -123,6 +123,7 @@ class AddRecordViewModel {
         String(localized: "record.add.navTitle")
     }
 
+    /// 只要当前记录挂在事件下面，方向就由事件身份唯一决定，不再允许用户自由切换。
     var isDirectionLockedBySelectedEvent: Bool {
         contextSelection == .event && selectedEvent != nil
     }
@@ -280,6 +281,7 @@ class AddRecordViewModel {
         return selectedEvent
     }
 
+    /// 统一从这里切换事件，避免界面层直接赋值后漏掉方向约束同步。
     func selectEvent(_ event: Event?) {
         selectedEvent = event
         if event != nil {
@@ -288,11 +290,16 @@ class AddRecordViewModel {
         applyDirectionConstraintForSelectedEvent()
     }
 
+    /// 事件往来和日常往来切换时，要同步刷新方向，防止残留上一次事件带来的方向状态。
     func setContextSelection(_ selection: RecordContextSelection) {
         contextSelection = selection
         applyDirectionConstraintForSelectedEvent()
     }
 
+    /// 业务约束：
+    /// 1. 自己办的事件只能记“收到”
+    /// 2. 参加别人的事件只能记“送出”
+    /// 这样可以避免同一事件下出现与业务语义相反的记录方向。
     func applyDirectionConstraintForSelectedEvent() {
         guard contextSelection == .event, let event = selectedEvent else { return }
         direction = event.hostMode == .host ? .received : .given
@@ -342,6 +349,7 @@ class AddRecordViewModel {
         }
 
         let event = resolveEvent(context: context)
+        // 保存前再次按事件身份兜底纠正方向，避免界面状态遗漏造成脏数据。
         let resolvedDirection = resolvedDirection(for: event)
         direction = resolvedDirection
 
@@ -497,6 +505,7 @@ class AddRecordViewModel {
         direction = preservedDirection
     }
 
+    /// 事件相关记录的方向由事件身份推导；只有脱离事件时才保留用户当前选择。
     private func resolvedDirection(for event: Event?) -> RecordDirection {
         guard contextSelection == .event, let event else { return direction }
         return event.hostMode == .host ? .received : .given

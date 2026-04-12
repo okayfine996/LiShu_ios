@@ -24,6 +24,7 @@ struct AddLedgerReceiptView: View {
                     inlineSuccessBanner(message)
                 }
                 if let event = viewModel.selectedEvent {
+                    // 礼簿收礼固定挂在当前事件下，这里只负责确认上下文，不再让用户切换事件。
                     RecordEventSummaryCard(
                         title: String(localized: "record.add.currentLedger"),
                         event: event
@@ -110,6 +111,7 @@ struct AddLedgerReceiptView: View {
                 selectedContactCard(contact)
             }
 
+            // 礼簿录入强调连续登记，因此直接给出横向常用联系人入口来降低操作成本。
             contactScrollSelector
         }
     }
@@ -354,6 +356,7 @@ struct AddLedgerReceiptView: View {
 
     private var continueButton: some View {
         VStack(spacing: 8) {
+            // 连续录入是礼簿场景的核心动作，所以保留为页面底部的次主按钮。
             Button {
                 saveRecord(andContinue: true)
             } label: {
@@ -462,6 +465,7 @@ struct AddLedgerReceiptView: View {
                     amount.isEmpty ? "0" : amount
                 )
             }
+            // 连续录入时保留礼簿上下文，只清掉每一笔都会变化的输入项。
             viewModel.resetForContinuousEntry()
             selectedPhotoItems = []
             Task { @MainActor in

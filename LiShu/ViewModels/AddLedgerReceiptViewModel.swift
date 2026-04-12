@@ -3,6 +3,7 @@ import SwiftData
 
 @Observable
 class AddLedgerReceiptViewModel {
+    /// 礼簿收礼页只是一层更专用的壳，底层仍复用通用记录表单的保存能力。
     private let form = AddRecordViewModel()
     private(set) var eventID: PersistentIdentifier
     private var hasLoaded = false
@@ -75,6 +76,7 @@ class AddLedgerReceiptViewModel {
         hasLoaded = true
         form.loadData(context: context)
         form.configure(direction: .received, contactID: nil, eventID: eventID, context: context)
+        // 礼簿场景固定为“当前事件 + 收到 + 礼金”，界面层不再暴露这些切换项。
         form.recordType = .monetary
         form.contextSelection = .event
     }
@@ -88,6 +90,7 @@ class AddLedgerReceiptViewModel {
 
     @MainActor
     func save(context: ModelContext) -> Bool {
+        // 保存前再次固定关键字段，保证礼簿入口不会落出非礼金、非收礼的数据。
         form.recordType = .monetary
         form.contextSelection = .event
         form.direction = .received

@@ -25,6 +25,7 @@ class EventDetailViewModel {
             .reduce(0.0) { $0 + $1.resolvedDisplayAmount }
     }
 
+    /// 普通事件默认是“我去参加别人的场合”，因此详情里只突出最新的一条主记录摘要。
     var primaryRecord: Record? {
         guard let event else { return nil }
         return (event.records ?? [])
@@ -32,6 +33,7 @@ class EventDetailViewModel {
             .first
     }
 
+    /// 礼簿详情只展示收礼记录，避免和普通送礼记录混在同一列表里。
     var receivedRecords: [Record] {
         guard let event else { return [] }
         return (event.records ?? [])
