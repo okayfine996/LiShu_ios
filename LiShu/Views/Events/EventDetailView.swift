@@ -17,14 +17,10 @@ struct EventDetailView: View {
                         if let coverData = event.coverImage {
                             eventCoverImage(coverData)
                         }
-                        heroCard(event)
-                        summaryCards(event)
-                        if !viewModel.relatedContacts.isEmpty {
-                            contactsSection
-                        }
-                        recordsSection(event)
-                        if !event.note.isEmpty {
-                            notesSection(event)
+                        if event.hostMode == .host {
+                            hostLedgerContent(event)
+                        } else {
+                            standardEventContent(event)
                         }
                     }
                     .padding(.horizontal, 16)
@@ -41,6 +37,13 @@ struct EventDetailView: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
+                    if viewModel.event?.hostMode == .host {
+                        Button {
+                            sheetRoute = .addLedgerReceipt(eventID: eventID)
+                        } label: {
+                            Label(String(localized: "event.ledger.primaryAction"), systemImage: "plus.circle")
+                        }
+                    }
                     Button {
                         sheetRoute = .editEvent(eventID)
                     } label: {
@@ -89,6 +92,27 @@ struct EventDetailView: View {
 
     // MARK: - Hero Card
 
+    private func hostLedgerContent(_ event: Event) -> some View {
+        Group {
+            heroCard(event)
+            ledgerSummaryCards
+            ledgerRecordsSection(event)
+            if !event.note.isEmpty {
+                notesSection(event)
+            }
+        }
+    }
+
+    private func standardEventContent(_ event: Event) -> some View {
+        Group {
+            heroCard(event)
+            primaryRecordSection(event)
+            if !event.note.isEmpty {
+                notesSection(event)
+            }
+        }
+    }
+
     private func heroCard(_ event: Event) -> some View {
         VStack(spacing: 12) {
             Image(systemName: event.type.iconName)
@@ -122,6 +146,16 @@ struct EventDetailView: View {
                     .foregroundStyle(DesignSystem.Colors.textSecondary)
             }
 
+            if event.hostMode == .host {
+                Text(String(localized: "event.ledger.hostBadge"))
+                    .font(DesignSystem.Typography.small)
+                    .foregroundStyle(DesignSystem.Colors.primary)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+                    .background(DesignSystem.Colors.primary.opacity(0.12))
+                    .clipShape(Capsule())
+            }
+
             // Location
             if !event.location.isEmpty {
                 HStack(spacing: 4) {
@@ -152,123 +186,107 @@ struct EventDetailView: View {
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
     }
 
-    // MARK: - Summary Cards (2-column)
-
-    private func summaryCards(_: Event) -> some View {
-        HStack(spacing: 12) {
-            // Given amount card
-            VStack(spacing: 8) {
-                Image(systemName: "arrow.up.right")
-                    .font(.system(size: 16))
-                    .foregroundStyle(DesignSystem.Colors.primary)
-                    .frame(width: 32, height: 32)
-                    .background(DesignSystem.Colors.primary.opacity(0.12))
-                    .clipShape(Circle())
-
-                Text(String(localized: "event.detail.totalGiven"))
-                    .font(DesignSystem.Typography.small)
-                    .foregroundStyle(DesignSystem.Colors.textSecondary)
-
-                Text("\u{00A5}" + String(format: "%.0f", viewModel.totalGiven))
-                    .font(DesignSystem.Typography.caption)
-                    .foregroundStyle(DesignSystem.Colors.primary)
-                    .fontWeight(.semibold)
+    private var ledgerSummaryCards: some View {
+        VStack(spacing: 12) {
+            HStack(spacing: 12) {
+                ledgerSummaryCard(
+                    icon: "banknote",
+                    title: String(localized: "event.ledger.totalAmount"),
+                    value: "¥" + String(format: "%.0f", viewModel.totalReceived),
+                    tint: DesignSystem.Colors.primary
+                )
+                ledgerSummaryCard(
+                    icon: "person.2.fill",
+                    title: String(localized: "event.ledger.totalCount"),
+                    value: String(format: String(localized: "event.ledger.countValue"), viewModel.receivedRecordCount),
+                    tint: DesignSystem.Colors.accentGold
+                )
             }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 16)
-            .background(DesignSystem.Colors.bgSurface)
-            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.smallCard))
 
-            // Received amount card
-            VStack(spacing: 8) {
-                Image(systemName: "arrow.down.left")
-                    .font(.system(size: 16))
-                    .foregroundStyle(DesignSystem.Colors.accentGold)
-                    .frame(width: 32, height: 32)
-                    .background(DesignSystem.Colors.accentGold.opacity(0.12))
-                    .clipShape(Circle())
-
-                Text(String(localized: "event.detail.totalReceived"))
-                    .font(DesignSystem.Typography.small)
-                    .foregroundStyle(DesignSystem.Colors.textSecondary)
-
-                Text("\u{00A5}" + String(format: "%.0f", viewModel.totalReceived))
-                    .font(DesignSystem.Typography.caption)
-                    .foregroundStyle(DesignSystem.Colors.accentGold)
-                    .fontWeight(.semibold)
+            HStack(spacing: 12) {
+                ledgerSummaryCard(
+                    icon: "arrow.up.forward.circle",
+                    title: String(localized: "event.ledger.maxAmount"),
+                    value: "¥" + String(format: "%.0f", viewModel.largestReceivedAmount),
+                    tint: DesignSystem.Colors.primary
+                )
+                ledgerSummaryCard(
+                    icon: "sun.max.fill",
+                    title: String(localized: "event.ledger.todaySummary"),
+                    value: String(
+                        format: String(localized: "event.ledger.todayValue"),
+                        viewModel.todayReceivedCount,
+                        viewModel.todayReceivedAmount
+                    ),
+                    tint: DesignSystem.Colors.accentGold
+                )
             }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 16)
-            .background(DesignSystem.Colors.bgSurface)
-            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.smallCard))
         }
     }
 
-    // MARK: - Related Contacts Section
+    private func ledgerSummaryCard(icon: String, title: String, value: String, tint: Color) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Image(systemName: icon)
+                .font(.system(size: 16))
+                .foregroundStyle(tint)
+                .frame(width: 32, height: 32)
+                .background(tint.opacity(0.12))
+                .clipShape(Circle())
 
-    private var contactsSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(String(localized: "event.detail.relatedContacts"))
-                .font(DesignSystem.Typography.title3)
+            Text(title)
+                .font(DesignSystem.Typography.small)
+                .foregroundStyle(DesignSystem.Colors.textSecondary)
+
+            Text(value)
+                .font(DesignSystem.Typography.caption)
                 .foregroundStyle(DesignSystem.Colors.textPrimary)
-
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 16) {
-                    ForEach(viewModel.relatedContacts) { contact in
-                        NavigationLink(value: AppRoute.contactDetail(contact.persistentModelID)) {
-                            VStack(spacing: 6) {
-                                AvatarView(imageData: contact.avatar, name: contact.name)
-
-                                Text(contact.name)
-                                    .font(DesignSystem.Typography.small)
-                                    .foregroundStyle(DesignSystem.Colors.textPrimary)
-                                    .lineLimit(1)
-                            }
-                            .frame(width: 64)
-                            .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-            }
+                .fontWeight(.semibold)
+                .lineLimit(2)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
         .background(DesignSystem.Colors.bgSurface)
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.smallCard))
     }
 
-    // MARK: - Records Section
+    // MARK: - Ledger Records Section
 
-    private func recordsSection(_ event: Event) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
+    private func ledgerRecordsSection(_ event: Event) -> some View {
+        let displayedRecords = viewModel.receivedRecords
+        return VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text(String(localized: "event.detail.relatedRecords"))
+                Text(String(localized: "event.ledger.allRecords"))
                     .font(DesignSystem.Typography.title3)
                     .foregroundStyle(DesignSystem.Colors.textPrimary)
 
                 Spacer()
 
-                Text(String(format: String(localized: "event.list.recordCount"), (event.records ?? []).count))
+                Text(String(format: String(localized: "event.list.recordCount"), displayedRecords.count))
                     .font(DesignSystem.Typography.small)
                     .foregroundStyle(DesignSystem.Colors.textTertiary)
             }
 
-            if (event.records ?? []).isEmpty {
+            if displayedRecords.isEmpty {
                 EmptyStateView(
-                    icon: "doc.text",
-                    message: String(localized: "event.detail.noRecords")
+                    icon: "book.closed",
+                    message: String(localized: "event.ledger.empty"),
+                    actionTitle: String(localized: "event.ledger.primaryAction"),
+                    action: {
+                        sheetRoute = .addLedgerReceipt(eventID: event.persistentModelID)
+                    }
                 )
                 .frame(height: 200)
             } else {
-                let sortedRecords = (event.records ?? []).sorted(by: { $0.date > $1.date })
                 VStack(spacing: 0) {
-                    ForEach(sortedRecords) { record in
-                        NavigationLink(value: AppRoute.recordDetail(record.persistentModelID)) {
+                    ForEach(displayedRecords) { record in
+                        NavigationLink {
+                            RecordDetailView(recordID: record.persistentModelID)
+                        } label: {
                             RecordRow(record: record)
                         }
                         .buttonStyle(.plain)
 
-                        if record.persistentModelID != sortedRecords.last?.persistentModelID {
+                        if record.persistentModelID != displayedRecords.last?.persistentModelID {
                             Divider()
                                 .foregroundStyle(DesignSystem.Colors.separator)
                                 .padding(.leading, 72)
@@ -279,6 +297,217 @@ struct EventDetailView: View {
                 .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
             }
         }
+    }
+
+    // MARK: - Primary Record Section
+
+    private func primaryRecordSection(_ event: Event) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(String(localized: "event.detail.primaryRecord"))
+                .font(DesignSystem.Typography.title3)
+                .foregroundStyle(DesignSystem.Colors.textPrimary)
+
+            if let record = viewModel.primaryRecord {
+                NavigationLink {
+                    RecordDetailView(recordID: record.persistentModelID)
+                } label: {
+                    primaryRecordCard(record)
+                }
+                .buttonStyle(.plain)
+            } else {
+                EmptyStateView(
+                    icon: "doc.text",
+                    message: String(localized: "event.detail.noPrimaryRecord"),
+                    actionTitle: String(localized: "event.detail.addRecord"),
+                    action: {
+                        sheetRoute = .addRecord(direction: .given, contactID: nil, eventID: event.persistentModelID)
+                    }
+                )
+                .frame(height: 180)
+            }
+        }
+    }
+
+    private func primaryRecordCard(_ record: Record) -> some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(alignment: .top, spacing: 12) {
+                Image(systemName: record.recordType.iconName)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(DesignSystem.Colors.primary)
+                    .frame(width: 40, height: 40)
+                    .background(DesignSystem.Colors.bgIconSubtle)
+                    .clipShape(Circle())
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(primaryRecordTitle(for: record))
+                        .font(DesignSystem.Typography.body)
+                        .foregroundStyle(DesignSystem.Colors.textPrimary)
+                        .fontWeight(.semibold)
+                        .lineLimit(2)
+
+                    Text(primaryRecordSubtitle(for: record))
+                        .font(DesignSystem.Typography.small)
+                        .foregroundStyle(DesignSystem.Colors.textSecondary)
+                        .lineLimit(2)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(DesignSystem.Colors.textTertiary)
+            }
+
+            VStack(spacing: 10) {
+                primaryRecordTypeDetails(record)
+                primaryRecordMetaRow(
+                    label: String(localized: "record.add.date"),
+                    value: primaryRecordDateText(record.date)
+                )
+                primaryRecordMetaRow(
+                    label: String(localized: "record.detail.relationshipWeight"),
+                    value: record.relationshipWeight.displayName
+                )
+
+                if !record.note.isEmpty {
+                    primaryRecordMetaRow(
+                        label: String(localized: "event.detail.notes"),
+                        value: record.note
+                    )
+                }
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(DesignSystem.Colors.bgSurface)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+    }
+
+    @ViewBuilder
+    private func primaryRecordTypeDetails(_ record: Record) -> some View {
+        switch record.resolvedTypeData {
+        case let .monetary(data):
+            primaryRecordMetaRow(
+                label: String(localized: "record.detail.giftAmount"),
+                value: formatCurrency(data.amount)
+            )
+            primaryRecordMetaRow(
+                label: String(localized: "record.add.paymentMethod"),
+                value: paymentMethodText(record.resolvedPaymentMethod)
+            )
+        case let .gift(data):
+            primaryRecordMetaRow(
+                label: String(localized: "record.detail.giftName"),
+                value: data.giftName
+            )
+            if let estimatedValue = data.estimatedValue, estimatedValue > 0 {
+                primaryRecordMetaRow(
+                    label: String(localized: "record.detail.estimatedValue"),
+                    value: formatCurrency(estimatedValue)
+                )
+            }
+        case let .favor(data):
+            if !data.description.isEmpty {
+                primaryRecordMetaRow(
+                    label: record.recordType.displayName,
+                    value: data.description
+                )
+            }
+        case let .banquet(data):
+            if !data.location.isEmpty {
+                primaryRecordMetaRow(
+                    label: String(localized: "record.add.banquet.location"),
+                    value: data.location
+                )
+            }
+            if !data.attendeeList.isEmpty {
+                primaryRecordMetaRow(
+                    label: String(localized: "record.add.banquet.attendees"),
+                    value: data.attendeeList
+                )
+            }
+            if !data.extraCostNotes.isEmpty {
+                primaryRecordMetaRow(
+                    label: String(localized: "record.add.banquet.extraCostNotes"),
+                    value: data.extraCostNotes
+                )
+            }
+        }
+    }
+
+    private func primaryRecordMetaRow(label: String, value: String) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            Text(label)
+                .font(DesignSystem.Typography.small)
+                .foregroundStyle(DesignSystem.Colors.textSecondary)
+
+            Spacer(minLength: 12)
+
+            Text(value)
+                .font(DesignSystem.Typography.caption)
+                .foregroundStyle(DesignSystem.Colors.textPrimary)
+                .multilineTextAlignment(.trailing)
+        }
+    }
+
+    private func primaryRecordTitle(for record: Record) -> String {
+        switch record.resolvedTypeData {
+        case .monetary:
+            return String(localized: "event.detail.monetaryRecordTitle")
+        case let .gift(data):
+            return data.giftName.isEmpty ? record.recordType.displayName : data.giftName
+        case let .favor(data):
+            return data.description.isEmpty ? record.recordType.displayName : data.description
+        case let .banquet(data):
+            if !data.location.isEmpty {
+                return data.location
+            }
+            if !data.attendeeList.isEmpty {
+                return data.attendeeList
+            }
+            return record.recordType.displayName
+        }
+    }
+
+    private func primaryRecordSubtitle(for record: Record) -> String {
+        let components: [String] = [
+            record.direction == .given
+                ? String(localized: "record.detail.directionSent")
+                : String(localized: "record.detail.directionReceived"),
+            record.contact?.name,
+        ]
+        .compactMap { value in
+            guard let value, !value.isEmpty else { return nil }
+            return value
+        }
+
+        return components.joined(separator: " · ")
+    }
+
+    private func primaryRecordDateText(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "zh_Hans")
+        formatter.dateFormat = "yyyy年M月d日 HH:mm"
+        return formatter.string(from: date)
+    }
+
+    private func paymentMethodText(_ method: PaymentMethod) -> String {
+        switch method {
+        case .cash:
+            String(localized: "payment.cash")
+        case .wechat:
+            String(localized: "payment.wechat")
+        case .alipay:
+            String(localized: "payment.alipay")
+        }
+    }
+
+    private func formatCurrency(_ amount: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.maximumFractionDigits = 0
+        let formatted = formatter.string(from: NSNumber(value: amount)) ?? String(format: "%.0f", amount)
+        return "\u{00A5}" + formatted
     }
 
     // MARK: - Cover Image
@@ -319,9 +548,13 @@ struct EventDetailView: View {
     @ViewBuilder
     private func sheetContent(for route: SheetRoute) -> some View {
         switch route {
-        case let .addRecord(direction, contactID):
+        case let .addRecord(direction, contactID, eventID):
             NavigationStack {
-                AddRecordView(direction: direction, contactID: contactID)
+                AddRecordView(direction: direction, contactID: contactID, eventID: eventID)
+            }
+        case let .addLedgerReceipt(eventID):
+            NavigationStack {
+                AddLedgerReceiptView(eventID: eventID)
             }
         case let .editEvent(eID):
             NavigationStack {

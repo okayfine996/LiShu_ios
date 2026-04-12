@@ -120,9 +120,11 @@ class AddRecordViewModel {
     }
 
     var navigationTitle: String {
-        direction == .given
-            ? String(localized: "record.add.titleGiven")
-            : String(localized: "record.add.titleReceived")
+        String(localized: "record.add.navTitle")
+    }
+
+    var isDirectionLockedBySelectedEvent: Bool {
+        contextSelection == .event && selectedEvent != nil
     }
 
     func directionTitle(for direction: RecordDirection) -> String {
@@ -184,16 +186,21 @@ class AddRecordViewModel {
         isCreatingCustomTag = false
     }
 
-    func configure(direction: RecordDirection?, contactID: PersistentIdentifier?, context: ModelContext) {
+    func configure(direction: RecordDirection?, contactID: PersistentIdentifier?, eventID: PersistentIdentifier?, context: ModelContext) {
         if let dir = direction {
             self.direction = dir
         }
         if let cID = contactID {
             selectedContact = context.model(for: cID) as? Contact
         }
+        if let eventID {
+            selectEvent(context.model(for: eventID) as? Event)
+        }
+        applyDirectionConstraintForSelectedEvent()
         recordsViewModelLogger.info("Configured add record context", metadata: [
             "step": .string("configure"),
             "contact_id": .string(contactID.map { String(describing: $0) } ?? "none"),
+            "event_id": .string(eventID.map { String(describing: $0) } ?? "none"),
             "result": .string(direction?.rawValue ?? "unchanged"),
         ])
     }
@@ -206,8 +213,9 @@ class AddRecordViewModel {
         editingRecord = record
         direction = record.direction
         selectedContact = record.contact
-        selectedEvent = record.event
         contextSelection = record.event == nil ? .daily : .event
+        selectedEvent = record.event
+        applyDirectionConstraintForSelectedEvent()
         selectedDailyTag = record.contextTag
         date = record.date
         note = record.note
@@ -272,7 +280,31 @@ class AddRecordViewModel {
         return selectedEvent
     }
 
-    private func buildDraftPayload(contact: Contact, event: Event?, typeData: RecordTypeData, contextTag: String) -> RecordLogPayload {
+    func selectEvent(_ event: Event?) {
+        selectedEvent = event
+        if event != nil {
+            contextSelection = .event
+        }
+        applyDirectionConstraintForSelectedEvent()
+    }
+
+    func setContextSelection(_ selection: RecordContextSelection) {
+        contextSelection = selection
+        applyDirectionConstraintForSelectedEvent()
+    }
+
+    func applyDirectionConstraintForSelectedEvent() {
+        guard contextSelection == .event, let event = selectedEvent else { return }
+        direction = event.hostMode == .host ? .received : .given
+    }
+
+    private func buildDraftPayload(
+        contact: Contact,
+        event: Event?,
+        direction: RecordDirection,
+        typeData: RecordTypeData,
+        contextTag: String
+    ) -> RecordLogPayload {
         RecordLogPayload(
             id: editingRecord.map { String(describing: $0.persistentModelID) } ?? "pending",
             direction: direction.rawValue,
@@ -310,11 +342,19 @@ class AddRecordViewModel {
         }
 
         let event = resolveEvent(context: context)
+        let resolvedDirection = resolvedDirection(for: event)
+        direction = resolvedDirection
 
         let typeData = buildTypeData()
 
         let resolvedTag = contextSelection == .daily ? selectedDailyTag : ""
-        let submissionPayload = buildDraftPayload(contact: contact, event: event, typeData: typeData, contextTag: resolvedTag)
+        let submissionPayload = buildDraftPayload(
+            contact: contact,
+            event: event,
+            direction: resolvedDirection,
+            typeData: typeData,
+            contextTag: resolvedTag
+        )
 
         if let existing = editingRecord {
             BusinessDataLogger.recordMutation(
@@ -324,7 +364,7 @@ class AddRecordViewModel {
             )
             existing.contact = contact
             existing.event = event
-            existing.direction = direction
+            existing.direction = resolvedDirection
             existing.note = note
             existing.date = date
             existing.recordType = recordType
@@ -380,7 +420,7 @@ class AddRecordViewModel {
             let record = Record(
                 contact: contact,
                 event: event,
-                direction: direction,
+                direction: resolvedDirection,
                 note: note,
                 date: date,
                 recordType: recordType,
@@ -430,5 +470,35 @@ class AddRecordViewModel {
                 return false
             }
         }
+    }
+
+    func resetForContinuousEntry() {
+        let preservedEvent = selectedEvent
+        let preservedDirection = resolvedDirection(for: preservedEvent)
+        let preservedPaymentMethod = monetaryPaymentMethod
+        let preservedDate = Calendar.current.startOfDay(for: date)
+
+        selectedContact = nil
+        selectedEvent = preservedEvent
+        contextSelection = preservedEvent == nil ? .daily : .event
+        note = ""
+        date = preservedDate
+        newPhotoItems = []
+        recordType = .monetary
+        relationshipWeight = .reciprocal
+        monetaryAmount = ""
+        monetaryPaymentMethod = preservedPaymentMethod
+        giftName = ""
+        giftEstimatedValue = ""
+        favorDesc = ""
+        banquetLocation = ""
+        banquetAttendeeList = ""
+        banquetExtraCostNotes = ""
+        direction = preservedDirection
+    }
+
+    private func resolvedDirection(for event: Event?) -> RecordDirection {
+        guard contextSelection == .event, let event else { return direction }
+        return event.hostMode == .host ? .received : .given
     }
 }

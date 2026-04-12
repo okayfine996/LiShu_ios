@@ -333,6 +333,16 @@
         }
       }
     },
+    "common.new" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新建"
+          }
+        }
+      }
+    },
     "common.ok" : {
       "localizations" : {
         "zh-Hans" : {
@@ -1923,7 +1933,6 @@
       }
     },
     "event.detail.addRecord" : {
-      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1973,7 +1982,28 @@
         }
       }
     },
+    "event.detail.monetaryRecordTitle" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "礼金"
+          }
+        }
+      }
+    },
+    "event.detail.noPrimaryRecord" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "还没有记录这次人情"
+          }
+        }
+      }
+    },
     "event.detail.noRecords" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1989,6 +2019,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "备注"
+          }
+        }
+      }
+    },
+    "event.detail.primaryRecord" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这次人情"
           }
         }
       }
@@ -2016,6 +2056,7 @@
       }
     },
     "event.detail.relatedContacts" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -2026,6 +2067,7 @@
       }
     },
     "event.detail.relatedRecords" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -2036,6 +2078,7 @@
       }
     },
     "event.detail.totalGiven" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -2046,6 +2089,7 @@
       }
     },
     "event.detail.totalReceived" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -2061,6 +2105,218 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "编辑事件"
+          }
+        }
+      }
+    },
+    "event.hostMode.guest" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "我去参加别人的"
+          }
+        }
+      }
+    },
+    "event.hostMode.guestHint" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "适合参加婚礼、满月、乔迁等，默认记录我送出的礼"
+          }
+        }
+      }
+    },
+    "event.hostMode.host" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这是我办的"
+          }
+        }
+      }
+    },
+    "event.hostMode.hostHint" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "适合婚礼、满月、寿宴等，默认记录别人送给我的礼"
+          }
+        }
+      }
+    },
+    "event.hostMode.subtitle" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选一下这场事是我去参加，还是我自己办的"
+          }
+        }
+      }
+    },
+    "event.hostMode.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这是谁的场合"
+          }
+        }
+      }
+    },
+    "event.ledger.allRecords" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "收礼记录"
+          }
+        }
+      }
+    },
+    "event.ledger.continueAction" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "继续录入"
+          }
+        }
+      }
+    },
+    "event.ledger.countValue" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%d 笔"
+          }
+        }
+      }
+    },
+    "event.ledger.createHostEvent" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新建一场"
+          }
+        }
+      }
+    },
+    "event.ledger.empty" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "还没有收礼记录，先登记第一笔礼金吧"
+          }
+        }
+      }
+    },
+    "event.ledger.homeEmpty" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "尚无可记之礼筵，先新建一场吧"
+          }
+        }
+      }
+    },
+    "event.ledger.hostBadge" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "主场礼簿"
+          }
+        }
+      }
+    },
+    "event.ledger.latestRecords" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最新收礼"
+          }
+        }
+      }
+    },
+    "event.ledger.maxAmount" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最大单笔"
+          }
+        }
+      }
+    },
+    "event.ledger.primaryAction" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "登记收礼"
+          }
+        }
+      }
+    },
+    "event.ledger.sectionTitle" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "礼簿"
+          }
+        }
+      }
+    },
+    "event.ledger.todaySummary" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今日新增"
+          }
+        }
+      }
+    },
+    "event.ledger.todayValue" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$d 笔 / ¥%2$.0f"
+          }
+        }
+      }
+    },
+    "event.ledger.totalAmount" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "收礼总额"
+          }
+        }
+      }
+    },
+    "event.ledger.totalCount" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "收礼人数"
           }
         }
       }
@@ -4921,7 +5177,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "往来对象"
+            "value" : "对方"
           }
         }
       }
@@ -4931,7 +5187,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "往来场景"
+            "value" : "记录到哪里"
           }
         }
       }
@@ -4984,7 +5240,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "有明确场合就关联事件，没有特定场合就记为日常往来。"
+            "value" : "有具体场合就关联事件，没有固定场合就记到日常往来。"
           }
         }
       }
@@ -5017,6 +5273,36 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "归到具体事件"
+          }
+        }
+      }
+    },
+    "record.add.continueSuccess" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已登记 %@ · ¥%@"
+          }
+        }
+      }
+    },
+    "record.add.currentEvent" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前事件"
+          }
+        }
+      }
+    },
+    "record.add.currentLedger" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前礼簿"
           }
         }
       }
@@ -5088,7 +5374,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "往来方向"
+            "value" : "这笔是"
           }
         }
       }
@@ -5098,7 +5384,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "根据当前记录类型，选择你是发起方还是接收方。"
+            "value" : "按这次记录的类型，选这是你送出的，还是对方给你的。"
           }
         }
       }
@@ -5204,12 +5490,45 @@
         }
       }
     },
+    "record.add.hostModeLockedDirection" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前从礼簿进入，默认登记为“收到”，可以直接继续录入。"
+          }
+        }
+      }
+    },
+    "record.add.hostModeLockedRecordType" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "礼簿收礼只登记礼金，这里默认帮你固定好了。"
+          }
+        }
+      }
+    },
+    "record.add.hostModeLockedRecordType.detail" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "如果是礼品、帮忙或宴请，建议走普通人情记录。"
+          }
+        }
+      }
+    },
     "record.add.navTitle" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "记录情分"
+            "value" : "记录人情"
           }
         }
       }
@@ -5350,7 +5669,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "先选择这次往来的性质，下面的字段和方向文案会随类型自动调整。"
+            "value" : "先选这次记的是礼金、礼品、帮忙还是宴请，下面的字段会跟着变化。"
           }
         }
       }
@@ -5370,7 +5689,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "情分分量"
+            "value" : "关系分量"
           }
         }
       }
@@ -5380,7 +5699,28 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "记录这次往来在人情轻重上的分量，方便后续判断关系投入。"
+            "value" : "标记这次往来在关系里的轻重，后面回看会更容易判断。"
+          }
+        }
+      }
+    },
+    "record.add.saveAndBackToEvent" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保存并返回事件详情"
+          }
+        }
+      }
+    },
+    "record.add.saveAndContinue" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保存并继续录入"
           }
         }
       }
@@ -5460,6 +5800,7 @@
       }
     },
     "record.add.titleGiven" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -5470,6 +5811,7 @@
       }
     },
     "record.add.titleReceived" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -5757,7 +6099,6 @@
       }
     },
     "record.detail.directionReceived" : {
-      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -5768,7 +6109,6 @@
       }
     },
     "record.detail.directionSent" : {
-      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {

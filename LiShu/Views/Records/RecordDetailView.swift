@@ -471,7 +471,9 @@ struct RecordDetailView: View {
                     .fontWeight(.semibold)
                     .padding(.leading, 4)
 
-                NavigationLink(value: AppRoute.contactDetail(contact.persistentModelID)) {
+                NavigationLink {
+                    ContactDetailView(contactID: contact.persistentModelID)
+                } label: {
                     HStack(spacing: 12) {
                         AvatarView(imageData: contact.avatar, name: contact.name)
 

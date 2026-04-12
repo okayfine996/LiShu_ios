@@ -4,7 +4,8 @@ import SwiftData
 enum AppRoute: Hashable {
     // 记录
     case recordDetail(PersistentIdentifier)
-    case addRecord(direction: RecordDirection?, contactID: PersistentIdentifier?)
+    case addRecord(direction: RecordDirection?, contactID: PersistentIdentifier?, eventID: PersistentIdentifier?)
+    case addLedgerReceipt(eventID: PersistentIdentifier)
     case monthlyDetail(year: Int, month: Int)
     case periodDetail(StatsPeriod)
     // 联系人
@@ -36,6 +37,7 @@ enum AppRoute: Hashable {
         switch self {
         case .recordDetail: "records.detail"
         case .addRecord: "records.add"
+        case .addLedgerReceipt: "records.addLedgerReceipt"
         case .monthlyDetail: "statistics.monthlyDetail"
         case .periodDetail: "statistics.periodDetail"
         case .contactExchange: "contacts.exchange"
@@ -62,7 +64,8 @@ enum AppRoute: Hashable {
 }
 
 enum SheetRoute: Identifiable, Equatable {
-    case addRecord(direction: RecordDirection?, contactID: PersistentIdentifier?)
+    case addRecord(direction: RecordDirection?, contactID: PersistentIdentifier?, eventID: PersistentIdentifier?)
+    case addLedgerReceipt(eventID: PersistentIdentifier)
     case addContact
     case addEvent
     case editContact(PersistentIdentifier)
@@ -75,6 +78,7 @@ enum SheetRoute: Identifiable, Equatable {
     var id: String {
         switch self {
         case .addRecord: "addRecord"
+        case let .addLedgerReceipt(eventID): "addLedgerReceipt-\(eventID)"
         case .addContact: "addContact"
         case .addEvent: "addEvent"
         case let .editContact(id): "editContact-\(id)"
@@ -89,6 +93,7 @@ enum SheetRoute: Identifiable, Equatable {
     var logName: String {
         switch self {
         case .addRecord: "sheet.records.add"
+        case .addLedgerReceipt: "sheet.records.addLedgerReceipt"
         case .addContact: "sheet.contacts.add"
         case .addEvent: "sheet.events.add"
         case .editContact: "sheet.contacts.edit"

@@ -18,12 +18,14 @@ class HomeViewModel {
     var mostActiveContactRecordCount: Int = 0
     var recentRecords: [Record] = []
     var upcomingEvents: [Event] = []
+    var hostLedgerEvents: [Event] = []
     var currentYear: Int = Calendar.current.component(.year, from: Date())
 
     func load(context: ModelContext) {
         loadYearlySummary(context: context)
         loadRecentRecords(context: context)
         loadUpcomingEvents(context: context)
+        loadHostLedgerEvents(context: context)
     }
 
     private func loadYearlySummary(context: ModelContext) {
@@ -127,6 +129,28 @@ class HomeViewModel {
             upcomingEvents = try context.fetch(descriptor)
         } catch {
             upcomingEvents = []
+        }
+    }
+
+    private func loadHostLedgerEvents(context: ModelContext) {
+        do {
+            let today = Calendar.current.startOfDay(for: Date())
+            let events = try context.fetch(FetchDescriptor<Event>())
+            hostLedgerEvents = events
+                .filter { $0.hostMode == .host }
+                .sorted { lhs, rhs in
+                    let lhsUpcoming = lhs.date >= today
+                    let rhsUpcoming = rhs.date >= today
+                    if lhsUpcoming != rhsUpcoming {
+                        return lhsUpcoming && !rhsUpcoming
+                    }
+                    if lhsUpcoming {
+                        return lhs.date < rhs.date
+                    }
+                    return lhs.date > rhs.date
+                }
+        } catch {
+            hostLedgerEvents = []
         }
     }
 

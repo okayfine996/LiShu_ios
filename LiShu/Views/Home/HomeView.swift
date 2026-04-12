@@ -10,6 +10,7 @@ struct HomeView: View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 20) {
                 summarySection
+                ledgerSection
                 upcomingSection
                 recentRecordsSection
             }
@@ -295,6 +296,50 @@ struct HomeView: View {
 
     // MARK: - Upcoming Events Section
 
+    private var ledgerSection: some View {
+        VStack(spacing: 12) {
+            HStack {
+                Text(String(localized: "event.ledger.sectionTitle"))
+                    .font(DesignSystem.Typography.title3)
+                    .foregroundStyle(DesignSystem.Colors.textPrimary)
+
+                Spacer()
+
+                Button(String(localized: "common.new")) {
+                    sheetRoute = .addEvent
+                }
+                .font(DesignSystem.Typography.caption)
+                .foregroundStyle(DesignSystem.Colors.primary)
+            }
+
+            if viewModel.hostLedgerEvents.isEmpty {
+                EmptyStateView(
+                    icon: "book.closed",
+                    message: String(localized: "event.ledger.homeEmpty"),
+                    actionTitle: String(localized: "event.ledger.createHostEvent"),
+                    action: {
+                        sheetRoute = .addEvent
+                    }
+                )
+                .frame(height: 220)
+            } else {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(alignment: .top, spacing: 12) {
+                        ForEach(viewModel.hostLedgerEvents) { event in
+                            HomeLedgerCard(
+                                event: event,
+                                onPrimaryAction: {
+                                    sheetRoute = .addLedgerReceipt(eventID: event.persistentModelID)
+                                }
+                            )
+                        }
+                    }
+                    .padding(.horizontal, 2)
+                }
+            }
+        }
+    }
+
     private var upcomingSection: some View {
         VStack(spacing: 12) {
             sectionHeader(
@@ -431,7 +476,7 @@ struct HomeView: View {
                     message: String(localized: "record.list.empty"),
                     actionTitle: String(localized: "home.addRecord"),
                     action: {
-                        sheetRoute = .addRecord(direction: nil, contactID: nil)
+                        sheetRoute = .addRecord(direction: nil, contactID: nil, eventID: nil)
                     }
                 )
                 .accessibilityIdentifier("home.addRecordButton")
@@ -573,9 +618,13 @@ struct HomeView: View {
     @ViewBuilder
     private func sheetContent(for route: SheetRoute) -> some View {
         switch route {
-        case let .addRecord(direction, contactID):
+        case let .addRecord(direction, contactID, eventID):
             NavigationStack {
-                AddRecordView(direction: direction, contactID: contactID)
+                AddRecordView(direction: direction, contactID: contactID, eventID: eventID)
+            }
+        case let .addLedgerReceipt(eventID):
+            NavigationStack {
+                AddLedgerReceiptView(eventID: eventID)
             }
         case .addContact:
             NavigationStack {
@@ -583,7 +632,7 @@ struct HomeView: View {
             }
         case .addEvent:
             NavigationStack {
-                AddEventView()
+                AddEventView(defaultHostMode: .host)
             }
         case let .editContact(contactID):
             NavigationStack {
@@ -621,49 +670,10 @@ private extension Array {
 @MainActor
 private func makeHomePreviewContainer() -> ModelContainer? {
     guard let container = try? ModelContainer(
-        for: Contact.self, Record.self, Event.self,
+        for: Contact.self, Record.self, Event.self, RecordPhoto.self,
         configurations: ModelConfiguration(isStoredInMemoryOnly: true)
     ) else { return nil }
-    let ctx = container.mainContext
-
-    let c1 = Contact(name: "张三", relation: "同事")
-    let c2 = Contact(name: "李四", relation: "朋友")
-    let c3 = Contact(name: "王五", relation: "亲戚")
-    [c1, c2, c3].forEach { ctx.insert($0) }
-
-    let cal = Calendar.current
-    let e1 = Event(name: "表哥的婚礼", type: .wedding, date: cal.liShuDateByAddingDays(3), location: "北京")
-    let e2 = Event(name: "小李的30岁生日", type: .birthday, date: cal.liShuDateByAddingDays(7), location: "上海")
-    let e3 = Event(name: "硕士毕业", type: .education, date: cal.liShuDateByAddingDays(14), location: "广州")
-    [e1, e2, e3].forEach { ctx.insert($0) }
-
-    let r1 = Record.makeMonetaryRecord(contact: c1, event: e1, amount: 500, direction: .given, paymentMethod: .wechat, date: .now)
-    let r2 = Record.makeMonetaryRecord(
-        contact: c2,
-        event: e2,
-        amount: 200,
-        direction: .given,
-        paymentMethod: .cash,
-        date: cal.liShuDateByAddingDays(-1)
-    )
-    let r3 = Record.makeMonetaryRecord(
-        contact: c3,
-        event: e1,
-        amount: 350,
-        direction: .given,
-        paymentMethod: .alipay,
-        date: cal.liShuDateByAddingDays(-3)
-    )
-    let r4 = Record.makeMonetaryRecord(
-        contact: c1,
-        event: e2,
-        amount: 600,
-        direction: .received,
-        paymentMethod: .wechat,
-        date: cal.liShuDateByAddingDays(-10)
-    )
-    [r1, r2, r3, r4].forEach { ctx.insert($0) }
-
+    DemoDataSeeding.insertSampleData(context: container.mainContext, attachDemoMedia: false)
     return container
 }
 

@@ -99,4 +99,19 @@ struct HomeViewModelTests {
         #expect(vm.upcomingEvents.allSatisfy { $0.date >= Calendar.current.startOfDay(for: Date()) })
         #expect(vm.upcomingEvents.contains { $0.name == "未来" })
     }
+
+    @Test func testHostLedgerEvents() throws {
+        let db = try TestDB()
+        let hostEvent = SampleData.event(name: "我的婚礼", hostMode: .host)
+        let guestEvent = SampleData.event(name: "别人的婚礼", hostMode: .guest)
+        db.context.insert(hostEvent)
+        db.context.insert(guestEvent)
+        try db.context.save()
+
+        let vm = HomeViewModel()
+        vm.load(context: db.context)
+
+        #expect(vm.hostLedgerEvents.count == 1)
+        #expect(vm.hostLedgerEvents.first?.name == "我的婚礼")
+    }
 }

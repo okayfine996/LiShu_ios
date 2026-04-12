@@ -123,8 +123,10 @@ struct MainTabView: View {
         switch route {
         case let .recordDetail(id):
             RecordDetailView(recordID: id)
-        case let .addRecord(direction, contactID):
-            AddRecordView(direction: direction, contactID: contactID)
+        case let .addRecord(direction, contactID, eventID):
+            AddRecordView(direction: direction, contactID: contactID, eventID: eventID)
+        case let .addLedgerReceipt(eventID):
+            AddLedgerReceiptView(eventID: eventID)
         case let .monthlyDetail(year, month):
             MonthlyDetailView(period: .month(year: year, month: month))
         case let .periodDetail(period):
@@ -177,9 +179,13 @@ struct MainTabView: View {
     @ViewBuilder
     private func sheetContent(for route: SheetRoute) -> some View {
         switch route {
-        case let .addRecord(direction, contactID):
+        case let .addRecord(direction, contactID, eventID):
             NavigationStack {
-                AddRecordView(direction: direction, contactID: contactID)
+                AddRecordView(direction: direction, contactID: contactID, eventID: eventID)
+            }
+        case let .addLedgerReceipt(eventID):
+            NavigationStack {
+                AddLedgerReceiptView(eventID: eventID)
             }
         case .addContact:
             NavigationStack {

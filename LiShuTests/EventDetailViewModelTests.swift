@@ -29,7 +29,7 @@ struct EventDetailViewModelTests {
         #expect(vm.totalReceived == 1000)
     }
 
-    @Test func testRelatedContacts() throws {
+    @Test func primaryRecordPrefersLatestEventRecord() throws {
         let db = try TestDB()
         let contact1 = SampleData.contact(name: "张三")
         let contact2 = SampleData.contact(name: "李四")
@@ -38,9 +38,27 @@ struct EventDetailViewModelTests {
         db.context.insert(contact2)
         db.context.insert(event)
 
-        let r1 = SampleData.record(contact: contact1, event: event, amount: 500, direction: .given)
-        let r2 = SampleData.record(contact: contact2, event: event, amount: 300, direction: .given)
-        let r3 = SampleData.record(contact: contact1, event: event, amount: 200, direction: .received)
+        let r1 = SampleData.record(
+            contact: contact1,
+            event: event,
+            amount: 500,
+            direction: .given,
+            date: Calendar.current.date(byAdding: .day, value: -2, to: .now) ?? .now
+        )
+        let r2 = SampleData.record(
+            contact: contact2,
+            event: event,
+            amount: 300,
+            direction: .given,
+            date: Calendar.current.date(byAdding: .day, value: -1, to: .now) ?? .now
+        )
+        let r3 = SampleData.record(
+            contact: contact1,
+            event: event,
+            amount: 200,
+            direction: .received,
+            date: .now
+        )
         db.context.insert(r1)
         db.context.insert(r2)
         db.context.insert(r3)
@@ -49,7 +67,7 @@ struct EventDetailViewModelTests {
         let vm = EventDetailViewModel()
         vm.load(id: event.persistentModelID, context: db.context)
 
-        #expect(vm.relatedContacts.count == 2)
+        #expect(vm.primaryRecord?.persistentModelID == r3.persistentModelID)
     }
 
     @Test func testDaysUntilEvent() throws {
@@ -115,5 +133,37 @@ struct EventDetailViewModelTests {
         #expect(vm.formattedDate.contains("2026"))
         #expect(vm.formattedDate.contains("3"))
         #expect(vm.formattedDate.contains("15"))
+    }
+
+    @Test func hostLedgerSummaryMetrics() throws {
+        let db = try TestDB()
+        let contact1 = SampleData.contact(name: "张三")
+        let contact2 = SampleData.contact(name: "李四")
+        let event = SampleData.event(name: "我的婚礼", hostMode: .host)
+        db.context.insert(contact1)
+        db.context.insert(contact2)
+        db.context.insert(event)
+
+        let todayFirst = SampleData.record(contact: contact1, event: event, amount: 1000, direction: .received)
+        let todaySecond = SampleData.record(contact: contact2, event: event, amount: 1500, direction: .received)
+        let oldGiven = SampleData.record(
+            contact: contact1,
+            event: event,
+            amount: 600,
+            direction: .given,
+            date: Calendar.current.date(byAdding: .day, value: -3, to: .now) ?? .now
+        )
+        db.context.insert(todayFirst)
+        db.context.insert(todaySecond)
+        db.context.insert(oldGiven)
+        try db.context.save()
+
+        let vm = EventDetailViewModel()
+        vm.load(id: event.persistentModelID, context: db.context)
+
+        #expect(vm.receivedRecordCount == 2)
+        #expect(vm.largestReceivedAmount == 1500)
+        #expect(vm.todayReceivedCount == 2)
+        #expect(vm.todayReceivedAmount == 2500)
     }
 }

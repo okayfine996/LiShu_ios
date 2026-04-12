@@ -24,10 +24,10 @@ struct RecordListView: View {
                         InteractionLogger.tap(
                             screen: "records.list",
                             target: "records.list.addRecord",
-                            route: SheetRoute.addRecord(direction: nil, contactID: nil).logName,
+                            route: SheetRoute.addRecord(direction: nil, contactID: nil, eventID: nil).logName,
                             presentation: .sheet
                         )
-                        sheetRoute = .addRecord(direction: nil, contactID: nil)
+                        sheetRoute = .addRecord(direction: nil, contactID: nil, eventID: nil)
                     } label: {
                         Label(String(localized: "home.addRecord"), systemImage: "square.and.pencil")
                     }
@@ -119,10 +119,10 @@ struct RecordListView: View {
                         InteractionLogger.tap(
                             screen: "records.list",
                             target: "records.list.empty.addRecord",
-                            route: SheetRoute.addRecord(direction: nil, contactID: nil).logName,
+                            route: SheetRoute.addRecord(direction: nil, contactID: nil, eventID: nil).logName,
                             presentation: .sheet
                         )
-                        sheetRoute = .addRecord(direction: nil, contactID: nil)
+                        sheetRoute = .addRecord(direction: nil, contactID: nil, eventID: nil)
                     }
                 )
             }
@@ -284,9 +284,13 @@ struct RecordListView: View {
     @ViewBuilder
     private func sheetContent(for route: SheetRoute) -> some View {
         switch route {
-        case let .addRecord(direction, contactID):
+        case let .addRecord(direction, contactID, eventID):
             NavigationStack {
-                AddRecordView(direction: direction, contactID: contactID)
+                AddRecordView(direction: direction, contactID: contactID, eventID: eventID)
+            }
+        case let .addLedgerReceipt(eventID):
+            NavigationStack {
+                AddLedgerReceiptView(eventID: eventID)
             }
         case .addContact:
             NavigationStack {

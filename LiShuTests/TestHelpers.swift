@@ -23,8 +23,13 @@ struct SampleData {
         Contact(name: name, relation: relation, category: category, circle: circle)
     }
 
-    static func event(name: String = "测试婚礼", type: EventType = .wedding, date: Date = .now) -> Event {
-        Event(name: name, type: type, date: date, location: "北京")
+    static func event(
+        name: String = "测试婚礼",
+        type: EventType = .wedding,
+        hostMode: EventHostMode = .guest,
+        date: Date = .now
+    ) -> Event {
+        Event(name: name, type: type, hostMode: hostMode, date: date, location: "北京")
     }
 
     static func typedRecord(

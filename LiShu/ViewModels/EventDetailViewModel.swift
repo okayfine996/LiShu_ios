@@ -25,19 +25,46 @@ class EventDetailViewModel {
             .reduce(0.0) { $0 + $1.resolvedDisplayAmount }
     }
 
+    var primaryRecord: Record? {
+        guard let event else { return nil }
+        return (event.records ?? [])
+            .sorted { $0.date > $1.date }
+            .first
+    }
+
+    var receivedRecords: [Record] {
+        guard let event else { return [] }
+        return (event.records ?? [])
+            .filter { $0.direction == .received }
+            .sorted { $0.date > $1.date }
+    }
+
+    var receivedRecordCount: Int {
+        receivedRecords.count
+    }
+
+    var largestReceivedAmount: Double {
+        receivedRecords.map(\.resolvedDisplayAmount).max() ?? 0
+    }
+
+    var todayReceivedAmount: Double {
+        let calendar = Calendar.current
+        return receivedRecords
+            .filter { calendar.isDateInToday($0.date) }
+            .reduce(0.0) { $0 + $1.resolvedDisplayAmount }
+    }
+
+    var todayReceivedCount: Int {
+        let calendar = Calendar.current
+        return receivedRecords.filter { calendar.isDateInToday($0.date) }.count
+    }
+
     var formattedDate: String {
         guard let event else { return "" }
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "zh_Hans")
         formatter.dateFormat = "yyyy年M月d日"
         return formatter.string(from: event.date)
-    }
-
-    var relatedContacts: [Contact] {
-        guard let event else { return [] }
-        let contacts = (event.records ?? []).compactMap(\.contact)
-        var seen = Set<PersistentIdentifier>()
-        return contacts.filter { seen.insert($0.persistentModelID).inserted }
     }
 
     var daysUntilEvent: Int? {

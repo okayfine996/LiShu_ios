@@ -41,6 +41,20 @@ struct AddEventViewModelTests {
         #expect(events[0].type == .wedding)
         #expect(events[0].location == "北京")
         #expect(events[0].note == "提前准备红包")
+        #expect(events[0].hostMode == .guest)
+    }
+
+    @Test func saveHostEvent() throws {
+        let db = try TestDB()
+        let vm = AddEventViewModel()
+        vm.name = "我的婚礼"
+        vm.hostMode = .host
+
+        #expect(vm.save(context: db.context) == true)
+
+        let events = try db.context.fetch(FetchDescriptor<Event>())
+        #expect(events.count == 1)
+        #expect(events[0].hostMode == .host)
     }
 
     @Test func saveInvalidReturnsFalse() throws {
@@ -67,6 +81,7 @@ struct AddEventViewModelTests {
         #expect(vm.editingEvent === event)
         #expect(vm.name == "生日宴")
         #expect(vm.eventType == .birthday)
+        #expect(vm.hostMode == .guest)
         #expect(vm.location == "上海")
         #expect(vm.note == "备注")
         #expect(vm.coverImageData == Data([0x01, 0x02]))
