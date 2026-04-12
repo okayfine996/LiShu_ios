@@ -2120,6 +2120,7 @@
       }
     },
     "event.hostMode.guestHint" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -2140,6 +2141,7 @@
       }
     },
     "event.hostMode.hostHint" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -2150,6 +2152,7 @@
       }
     },
     "event.hostMode.subtitle" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -2160,6 +2163,7 @@
       }
     },
     "event.hostMode.title" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {

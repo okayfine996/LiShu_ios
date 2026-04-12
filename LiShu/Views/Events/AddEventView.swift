@@ -25,7 +25,6 @@ struct AddEventView: View {
                     typeSection
                     dateSection
                     locationSection
-                    hostModeSection
                     notesSection
                 }
                 .padding(.horizontal, 16)
@@ -194,84 +193,6 @@ struct AddEventView: View {
 
             TextField(String(localized: "event.add.locationPlaceholder"), text: $viewModel.location)
                 .textFieldStyle(StandardTextFieldStyle())
-        }
-    }
-
-    // MARK: - Host Mode Section
-
-    private var hostModeSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(String(localized: "event.hostMode.title"))
-                .font(DesignSystem.Typography.caption)
-                .foregroundStyle(DesignSystem.Colors.textSecondary)
-                .fontWeight(.semibold)
-
-            Text(String(localized: "event.hostMode.subtitle"))
-                .font(DesignSystem.Typography.small)
-                .foregroundStyle(DesignSystem.Colors.textSecondary)
-
-            VStack(spacing: 10) {
-                ForEach(EventHostMode.allCases, id: \.self) { mode in
-                    hostModeRow(mode)
-                }
-            }
-            .disabled(!viewModel.isHostModeEditable)
-            .opacity(viewModel.isHostModeEditable ? 1.0 : DesignSystem.Effects.disabledOpacity)
-        }
-    }
-
-    private func hostModeRow(_ mode: EventHostMode) -> some View {
-        Button {
-            viewModel.hostMode = mode
-        } label: {
-            HStack(spacing: 12) {
-                ZStack {
-                    Circle()
-                        .stroke(
-                            viewModel.hostMode == mode ? DesignSystem.Colors.primary : DesignSystem.Colors.border,
-                            lineWidth: 1
-                        )
-                        .frame(width: 22, height: 22)
-
-                    if viewModel.hostMode == mode {
-                        Circle()
-                            .fill(DesignSystem.Colors.primary)
-                            .frame(width: 10, height: 10)
-                    }
-                }
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(mode.displayName)
-                        .font(DesignSystem.Typography.body)
-                        .foregroundStyle(DesignSystem.Colors.textPrimary)
-
-                    Text(hostModeHint(for: mode))
-                        .font(DesignSystem.Typography.small)
-                        .foregroundStyle(DesignSystem.Colors.textSecondary)
-                }
-
-                Spacer()
-            }
-            .padding(14)
-            .background(DesignSystem.Colors.bgSurface)
-            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.input))
-            .overlay(
-                RoundedRectangle(cornerRadius: DesignSystem.Radius.input)
-                    .stroke(
-                        viewModel.hostMode == mode ? DesignSystem.Colors.primary.opacity(0.4) : DesignSystem.Colors.border,
-                        lineWidth: 1
-                    )
-            )
-        }
-        .buttonStyle(.plain)
-    }
-
-    private func hostModeHint(for mode: EventHostMode) -> String {
-        switch mode {
-        case .guest:
-            String(localized: "event.hostMode.guestHint")
-        case .host:
-            String(localized: "event.hostMode.hostHint")
         }
     }
 
