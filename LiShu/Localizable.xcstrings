@@ -1829,9 +1829,6 @@
         }
       }
     },
-    "DEBUG: 清除购买状态" : {
-
-    },
     "debug.clearAllData" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -2025,16 +2022,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "新建事件"
-          }
-        }
-      }
-    },
-    "event.ledger.add.title" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "新建礼簿"
           }
         }
       }
@@ -2290,6 +2277,16 @@
         }
       }
     },
+    "event.ledger.add.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新建礼簿"
+          }
+        }
+      }
+    },
     "event.ledger.allRecords" : {
       "localizations" : {
         "zh-Hans" : {
@@ -2391,16 +2388,6 @@
         }
       }
     },
-    "event.ledger.legacyWarning %lld" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "检测到 %1$lld 条旧记录不符合礼簿规则，请手动删除或修改。"
-          }
-        }
-      }
-    },
     "event.ledger.latestRecords" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -2408,6 +2395,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "最新收礼"
+          }
+        }
+      }
+    },
+    "event.ledger.legacyWarning %lld" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "检测到 %1$lld 条旧记录不符合礼簿规则，请手动删除或修改。"
           }
         }
       }
@@ -3152,6 +3149,7 @@
       }
     },
     "home.monetaryNetSummary" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -3202,6 +3200,7 @@
       }
     },
     "home.peopleTxSummary" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -3232,6 +3231,7 @@
       }
     },
     "home.relationshipInsightFallbackFormat" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -3252,6 +3252,7 @@
       }
     },
     "home.relationshipInsightTopContactFormat" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
