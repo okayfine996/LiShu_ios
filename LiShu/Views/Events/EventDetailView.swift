@@ -201,6 +201,12 @@ struct EventDetailView: View {
                 heroCard(event)
             }
 
+            if viewModel.hasLegacyLedgerAnomalies {
+                cardListRow {
+                    legacyLedgerWarningBanner
+                }
+            }
+
             cardListRow {
                 ledgerSummaryCards
             }
@@ -216,6 +222,29 @@ struct EventDetailView: View {
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .background(DesignSystem.Colors.bgPage)
+    }
+
+    private var legacyLedgerWarningBanner: some View {
+        HStack(alignment: .top, spacing: 8) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(DesignSystem.Typography.caption)
+                .foregroundStyle(DesignSystem.Colors.accentGold)
+
+            Text(
+                String(
+                    format: String(localized: "event.ledger.legacyWarning %lld"),
+                    Int64(viewModel.legacyLedgerAnomalyCount)
+                )
+            )
+            .font(DesignSystem.Typography.caption)
+            .foregroundStyle(DesignSystem.Colors.textPrimary)
+            .fixedSize(horizontal: false, vertical: true)
+
+            Spacer(minLength: 0)
+        }
+        .padding(16)
+        .background(DesignSystem.Colors.accentGold.opacity(0.12))
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.smallCard))
     }
 
     private func standardEventScroll(_ event: Event) -> some View {

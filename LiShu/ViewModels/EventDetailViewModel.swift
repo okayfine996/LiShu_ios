@@ -43,6 +43,21 @@ class EventDetailViewModel {
         receivedRecords.count
     }
 
+    var legacyNonLedgerRecords: [Record] {
+        guard let event else { return [] }
+        return (event.records ?? [])
+            .filter { !($0.direction == .received && $0.recordType == .monetary) }
+            .sorted { $0.date > $1.date }
+    }
+
+    var hasLegacyLedgerAnomalies: Bool {
+        !legacyNonLedgerRecords.isEmpty
+    }
+
+    var legacyLedgerAnomalyCount: Int {
+        legacyNonLedgerRecords.count
+    }
+
     var largestReceivedAmount: Double {
         receivedRecords.map(\.resolvedDisplayAmount).max() ?? 0
     }

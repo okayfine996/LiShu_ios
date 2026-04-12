@@ -2029,6 +2029,16 @@
         }
       }
     },
+    "event.ledger.add.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新建礼簿"
+          }
+        }
+      }
+    },
     "event.add.type" : {
       "localizations" : {
         "zh-Hans" : {
@@ -2377,6 +2387,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "导入礼簿 CSV"
+          }
+        }
+      }
+    },
+    "event.ledger.legacyWarning %lld" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "检测到 %1$lld 条旧记录不符合礼簿规则，请手动删除或修改。"
           }
         }
       }

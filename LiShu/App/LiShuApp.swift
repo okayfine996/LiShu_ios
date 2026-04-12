@@ -81,6 +81,7 @@ struct LiShuApp: App {
                 appBootstrapLogger.info("Inserted demo data", metadata: ["step": .string("demo_seed")])
             }
             RecordTypeStorageNormalizer.runMigrationIfNeeded(context: sharedModelContainer.mainContext)
+            EventHostModeNormalizer.run(context: sharedModelContainer.mainContext)
         } catch {
             appBootstrapLogger.error("Failed to create model container", metadata: [
                 "step": .string("bootstrap"),

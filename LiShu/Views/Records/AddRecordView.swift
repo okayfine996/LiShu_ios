@@ -95,9 +95,13 @@ struct AddRecordView: View {
             }
             contactIdentitySection
             recordTypeGrid
-            contextSelectionSection
+            if !locksContextToInitialEvent {
+                contextSelectionSection
+            }
             if viewModel.contextSelection == .event {
-                eventSection
+                if !locksContextToInitialEvent {
+                    eventSection
+                }
             } else if viewModel.contextSelection == .daily {
                 dailyTagSection
             }
@@ -201,6 +205,10 @@ struct AddRecordView: View {
 
     private var currentEventSectionTitle: String {
         String(localized: "record.add.currentEvent")
+    }
+
+    private var locksContextToInitialEvent: Bool {
+        recordID == nil && eventID != nil
     }
 
     // MARK: - Contact Identity Section

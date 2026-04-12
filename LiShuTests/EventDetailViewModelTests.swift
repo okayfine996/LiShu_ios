@@ -187,4 +187,43 @@ struct EventDetailViewModelTests {
         #expect(vm.largestReceivedAmount == 1200)
         #expect(vm.todayReceivedAmount == 1200)
     }
+
+    @Test func hostLedgerFlagsLegacyAnomalies() throws {
+        let db = try TestDB()
+        let contact = SampleData.contact(name: "张三")
+        let event = SampleData.event(name: "我的婚礼", hostMode: .host)
+        db.context.insert(contact)
+        db.context.insert(event)
+
+        db.context.insert(SampleData.record(contact: contact, event: event, amount: 1200, direction: .received))
+        db.context.insert(SampleData.record(contact: contact, event: event, amount: 800, direction: .received))
+        db.context.insert(SampleData.recordGift(contact: contact, event: event, direction: .received))
+        db.context.insert(SampleData.record(contact: contact, event: event, amount: 300, direction: .given))
+        try db.context.save()
+
+        let vm = EventDetailViewModel()
+        vm.load(id: event.persistentModelID, context: db.context)
+
+        #expect(vm.hasLegacyLedgerAnomalies == true)
+        #expect(vm.legacyLedgerAnomalyCount == 2)
+        #expect(vm.receivedRecordCount == 2)
+    }
+
+    @Test func pureHostLedgerDoesNotFlagLegacyAnomalies() throws {
+        let db = try TestDB()
+        let contact = SampleData.contact(name: "张三")
+        let event = SampleData.event(name: "我的婚礼", hostMode: .host)
+        db.context.insert(contact)
+        db.context.insert(event)
+
+        db.context.insert(SampleData.record(contact: contact, event: event, amount: 1200, direction: .received))
+        db.context.insert(SampleData.record(contact: contact, event: event, amount: 800, direction: .received))
+        try db.context.save()
+
+        let vm = EventDetailViewModel()
+        vm.load(id: event.persistentModelID, context: db.context)
+
+        #expect(vm.hasLegacyLedgerAnomalies == false)
+        #expect(vm.legacyLedgerAnomalyCount == 0)
+    }
 }

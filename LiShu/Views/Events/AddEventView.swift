@@ -35,7 +35,7 @@ struct AddEventView: View {
             bottomButtons
         }
         .background(DesignSystem.Colors.bgPage)
-        .navigationTitle(viewModel.editingEvent != nil ? String(localized: "event.edit.title") : String(localized: "event.add.title"))
+        .navigationTitle(navigationTitleText)
         .navigationBarTitleDisplayMode(.inline)
         .trackScreen(eventID == nil ? "events.add" : "events.edit")
         .onAppear {
@@ -62,6 +62,15 @@ struct AddEventView: View {
                 }
             }
         }
+    }
+
+    private var navigationTitleText: String {
+        if viewModel.editingEvent != nil {
+            return String(localized: "event.edit.title")
+        }
+        return defaultHostMode == .host
+            ? String(localized: "event.ledger.add.title")
+            : String(localized: "event.add.title")
     }
 
     // MARK: - Cover Image Section
