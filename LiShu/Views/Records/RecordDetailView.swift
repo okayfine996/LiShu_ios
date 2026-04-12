@@ -18,7 +18,6 @@ struct RecordDetailView: View {
                         VStack(spacing: 16) {
                             profileSection(record)
                             amountGrid(record)
-                            contextSummaryCard(record)
                             favorDescriptionSection(record)
                             detailsCard(record)
                             notesSection(record)
@@ -196,41 +195,6 @@ struct RecordDetailView: View {
 
     // MARK: - Type Specific Detail Section
 
-    private func contextSummaryCard(_ record: Record) -> some View {
-        HStack(alignment: .top, spacing: 12) {
-            Image(systemName: record.isDailyInteraction ? "bubble.left.and.bubble.right" : "calendar")
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(DesignSystem.Colors.primary)
-                .frame(width: 36, height: 36)
-                .background(DesignSystem.Colors.bgIconSubtle)
-                .clipShape(Circle())
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(record
-                    .isDailyInteraction ? String(localized: "record.detail.context.dailyTitle") :
-                    String(localized: "record.detail.context.eventTitle"))
-                    .font(DesignSystem.Typography.caption)
-                    .foregroundStyle(DesignSystem.Colors.textSecondary)
-
-                Text(record.isDailyInteraction ? String(localized: "record.detail.context.dailyName") : record.contextDisplayName)
-                    .font(DesignSystem.Typography.body)
-                    .foregroundStyle(DesignSystem.Colors.textPrimary)
-                    .fontWeight(.semibold)
-
-                Text(contextSummaryMessage(record))
-                    .font(DesignSystem.Typography.small)
-                    .foregroundStyle(DesignSystem.Colors.textTertiary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-
-            Spacer()
-        }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(DesignSystem.Colors.bgSurface)
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
-    }
-
     @ViewBuilder
     private func favorDescriptionSection(_ record: Record) -> some View {
         if !record.isMonetary {
@@ -334,24 +298,10 @@ struct RecordDetailView: View {
                 Divider().foregroundStyle(DesignSystem.Colors.separator).padding(.leading, 56)
             }
             infoRow(
-                icon: "calendar",
-                label: String(localized: "record.add.context"),
-                value: record.contextDisplayName
-            )
-            Divider().foregroundStyle(DesignSystem.Colors.separator).padding(.leading, 56)
-            infoRow(
                 icon: "calendar.badge.clock",
                 label: String(localized: "record.add.date"),
                 value: viewModel.formattedDate
             )
-            if let eventTypeName = record.event?.type.displayName {
-                Divider().foregroundStyle(DesignSystem.Colors.separator).padding(.leading, 56)
-                infoRow(
-                    icon: "tag",
-                    label: String(localized: "record.add.eventType"),
-                    value: eventTypeName
-                )
-            }
         }
         .background(DesignSystem.Colors.bgSurface)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
@@ -379,13 +329,6 @@ struct RecordDetailView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
-    }
-
-    private func contextSummaryMessage(_ record: Record) -> String {
-        if let event = record.event {
-            return String(format: String(localized: "record.detail.context.eventMessage"), event.type.displayName)
-        }
-        return String(localized: "record.detail.context.dailyMessage")
     }
 
     // MARK: - Notes Section

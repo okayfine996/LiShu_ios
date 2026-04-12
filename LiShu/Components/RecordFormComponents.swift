@@ -82,7 +82,7 @@ struct MonetaryAmountInputCard: View {
                     .font(DesignSystem.Typography.title2)
                     .foregroundStyle(DesignSystem.Colors.primary)
 
-                TextField("0.00", text: $amount)
+                TextField(String(localized: "record.add.amountPlaceholder"), text: $amount)
                     .font(DesignSystem.Typography.display)
                     .foregroundStyle(DesignSystem.Colors.textPrimary)
                     .keyboardType(.decimalPad)

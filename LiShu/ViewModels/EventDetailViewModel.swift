@@ -19,9 +19,7 @@ class EventDetailViewModel {
     }
 
     var totalReceived: Double {
-        guard let event else { return 0 }
-        return (event.records ?? [])
-            .filter { $0.direction == .received }
+        receivedRecords
             .reduce(0.0) { $0 + $1.resolvedDisplayAmount }
     }
 
@@ -90,6 +88,21 @@ class EventDetailViewModel {
         context.delete(event)
         do {
             try context.save()
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    @MainActor
+    func deleteRecord(_ record: Record, context: ModelContext) -> Bool {
+        guard let event else { return false }
+        let eventID = event.persistentModelID
+
+        context.delete(record)
+        do {
+            try context.save()
+            load(id: eventID, context: context)
             return true
         } catch {
             return false

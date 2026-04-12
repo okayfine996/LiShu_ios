@@ -220,4 +220,56 @@ struct ExportServiceTests {
         #expect(lines[1].contains("600.00"))
         #expect(!lines[1].contains("张三"))
     }
+
+    @Test func ledgerTemplateCSVUsesLedgerColumnsOnly() {
+        let csv = ExportService.ledgerTemplateCSV()
+        let lines = csv.components(separatedBy: "\n")
+
+        #expect(lines.count == 3)
+        #expect(lines[0] == "联系人,日期,备注,情分分量,金额,支付方式")
+        #expect(!lines[0].contains("事件"))
+        #expect(lines[1].contains("2026-04-09"))
+        #expect(lines[2].contains("2026-04-09"))
+    }
+
+    @Test func ledgerExportOnlyIncludesReceivedMonetaryRowsForHostEvent() throws {
+        let db = try TestDB()
+        let hostEvent = SampleData.event(name: "我的婚礼", hostMode: .host)
+        let contactA = SampleData.contact(name: "张三")
+        let contactB = SampleData.contact(name: "李四")
+        let contactC = SampleData.contact(name: "王五")
+        db.context.insert(hostEvent)
+        db.context.insert(contactA)
+        db.context.insert(contactB)
+        db.context.insert(contactC)
+
+        db.context.insert(SampleData.record(contact: contactA, event: hostEvent, amount: 1200, direction: .received))
+        db.context.insert(SampleData.record(contact: contactB, event: hostEvent, amount: 600, direction: .given))
+        db.context.insert(
+            SampleData.recordGift(
+                contact: contactC,
+                event: hostEvent,
+                giftName: "茶具",
+                estimatedValue: 880,
+                direction: .received
+            )
+        )
+        try db.context.save()
+
+        let preview = try ExportService.previewLedgerExportCSV(
+            context: db.context,
+            eventID: hostEvent.persistentModelID
+        )
+        let csv = try ExportService.exportLedgerPreviewItems(preview.items)
+        let lines = csv.components(separatedBy: "\n")
+
+        #expect(preview.items.count == 1)
+        #expect(preview.skipped == 0)
+        #expect(lines.count == 2)
+        #expect(lines[0] == "联系人,日期,备注,情分分量,金额,支付方式")
+        #expect(lines[1].contains("张三"))
+        #expect(lines[1].contains("1200.00"))
+        #expect(!lines[1].contains("李四"))
+        #expect(!lines[1].contains("茶具"))
+    }
 }

@@ -163,6 +163,55 @@ struct AddRecordViewModelTests {
         #expect(records[0].monetaryAmount == 600)
     }
 
+    @Test func saveEditModePreservesExistingDirectionWhenEventIsUnchanged() throws {
+        let db = try TestDB()
+        let contact = SampleData.contact()
+        let event = SampleData.event(hostMode: .host)
+        db.context.insert(contact)
+        db.context.insert(event)
+        let record = SampleData.record(contact: contact, event: event, amount: 500, direction: .given)
+        db.context.insert(record)
+        try db.context.save()
+
+        let vm = AddRecordViewModel()
+        vm.loadData(context: db.context)
+        vm.configure(with: record)
+        vm.monetaryAmount = "600"
+
+        #expect(vm.direction == .given)
+        #expect(vm.save(context: db.context) == true)
+
+        let records = try db.context.fetch(FetchDescriptor<Record>())
+        #expect(records.count == 1)
+        #expect(records[0].direction == .given)
+        #expect(records[0].monetaryAmount == 600)
+    }
+
+    @Test func saveEditModeUsesUserSelectedDirectionForDailyRecord() throws {
+        let db = try TestDB()
+        let contact = SampleData.contact()
+        db.context.insert(contact)
+
+        let record = SampleData.record(contact: contact, event: nil, amount: 500, direction: .given)
+        record.contextTag = "节日看望"
+        db.context.insert(record)
+        try db.context.save()
+
+        let vm = AddRecordViewModel()
+        vm.loadData(context: db.context)
+        vm.configure(with: record)
+        vm.direction = .received
+        vm.monetaryAmount = "600"
+
+        #expect(vm.save(context: db.context) == true)
+
+        let records = try db.context.fetch(FetchDescriptor<Record>())
+        #expect(records.count == 1)
+        #expect(records[0].direction == .received)
+        #expect(records[0].contextTag == "节日看望")
+        #expect(records[0].monetaryAmount == 600)
+    }
+
     @Test func saveBanquetRecord() throws {
         let db = try TestDB()
         let contact = SampleData.contact()

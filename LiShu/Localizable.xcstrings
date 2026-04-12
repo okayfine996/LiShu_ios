@@ -60,9 +60,6 @@
         }
       }
     },
-    "0.00" : {
-
-    },
     "about.feedback.subject" : {
       "localizations" : {
         "en" : {
@@ -1706,6 +1703,116 @@
         }
       }
     },
+    "csv.ledger.export.preview.confirm %lld" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导出 %1$lld 条礼簿记录"
+          }
+        }
+      }
+    },
+    "csv.ledger.export.preview.empty" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前礼簿还没有可导出的收礼记录"
+          }
+        }
+      }
+    },
+    "csv.ledger.export.preview.loading" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在生成礼簿 CSV…"
+          }
+        }
+      }
+    },
+    "csv.ledger.export.preview.summary %lld %lld" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已选 %1$lld 条，可忽略 %2$lld 条异常记录"
+          }
+        }
+      }
+    },
+    "csv.ledger.export.preview.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导出礼簿预览"
+          }
+        }
+      }
+    },
+    "csv.ledger.import.preview.confirm %lld" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导入 %1$lld 条礼簿记录"
+          }
+        }
+      }
+    },
+    "csv.ledger.import.preview.empty" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "文件里还没有可导入的礼簿记录"
+          }
+        }
+      }
+    },
+    "csv.ledger.import.preview.loading" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在导入礼簿记录…"
+          }
+        }
+      }
+    },
+    "csv.ledger.import.preview.summary %lld %lld" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已选 %1$lld 条，可忽略 %2$lld 条异常记录"
+          }
+        }
+      }
+    },
+    "csv.ledger.import.preview.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导入礼簿预览"
+          }
+        }
+      }
+    },
+    "csv.ledger.loading" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在准备礼簿 CSV…"
+          }
+        }
+      }
+    },
     "csv.selection.preview.selectedCount %lld" : {
       "localizations" : {
         "en" : {
@@ -2214,12 +2321,32 @@
         }
       }
     },
+    "event.ledger.downloadTemplate" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下载礼簿模板"
+          }
+        }
+      }
+    },
     "event.ledger.empty" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "还没有收礼记录，先登记第一笔礼金吧"
+          }
+        }
+      }
+    },
+    "event.ledger.exportCSV" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导出礼簿 CSV"
           }
         }
       }
@@ -2240,6 +2367,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "主场礼簿"
+          }
+        }
+      }
+    },
+    "event.ledger.importCSV" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导入礼簿 CSV"
           }
         }
       }
@@ -5047,6 +5184,22 @@
         }
       }
     },
+    "record.add.amountPlaceholder" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "0.00"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "0.00"
+          }
+        }
+      }
+    },
     "record.add.banquet.attendees" : {
       "localizations" : {
         "en" : {
@@ -5410,6 +5563,7 @@
       }
     },
     "record.add.eventType" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -6033,6 +6187,7 @@
       }
     },
     "record.detail.context.dailyMessage" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -6043,6 +6198,7 @@
       }
     },
     "record.detail.context.dailyName" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -6053,6 +6209,7 @@
       }
     },
     "record.detail.context.dailyTitle" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -6063,6 +6220,7 @@
       }
     },
     "record.detail.context.eventMessage" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -6073,6 +6231,7 @@
       }
     },
     "record.detail.context.eventTitle" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -6425,6 +6584,7 @@
       }
     },
     "record.ocr.import" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -6943,7 +7103,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "下载导入模板"
+            "value" : "下载普通数据模板"
           }
         }
       }
@@ -6969,7 +7129,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "导出为 CSV"
+            "value" : "导出普通 CSV"
           }
         }
       }
@@ -7017,13 +7177,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Import CSV"
+            "value" : "Import Standard CSV"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "导入 CSV"
+            "value" : "导入普通 CSV"
           }
         }
       }
@@ -7044,18 +7204,19 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Import CSV generated from the latest type-specific templates. Fill either Event or Scene Tag for each row. Recommended date format: yyyy-MM-dd. If the date is missing, today's date will be used."
+            "value" : "Import standard CSV generated from the latest type-specific templates. Fill either Event or Scene Tag for each row. Recommended date format: yyyy-MM-dd. If the date is missing, today's date will be used."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "支持拍照识别礼簿，或导入最新版按类型模板生成的 CSV。每行必须填写事件或场景标签其一；日期建议使用 yyyy-MM-dd，缺失时默认使用当天时间。"
+            "value" : "导入最新版普通数据 CSV。每行必须填写事件或场景标签其一；日期建议使用 yyyy-MM-dd，缺失时默认使用当天时间。礼簿 CSV 请在主场事件详情中单独导入。"
           }
         }
       }
     },
     "settings.data.importOCR" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {

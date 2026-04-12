@@ -6,7 +6,6 @@ struct DataManagementView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var showComingSoonToast = false
     @State private var toastMessage = ""
-    @State private var showOCRImport = false
     @State private var showCSVPreview = false
     @State private var csvPreviewViewModel: CSVImportPreviewViewModel?
     @State private var exportError: String?
@@ -50,9 +49,6 @@ struct DataManagementView: View {
                     .accessibilityIdentifier("csv.importer.requested")
             }
         }
-        .fullScreenCover(isPresented: $showOCRImport) {
-            OCRImportView()
-        }
         .alert(String(localized: "common.error"), isPresented: Binding(
             get: { exportError != nil },
             set: { if !$0 { exportError = nil } }
@@ -90,16 +86,6 @@ struct DataManagementView: View {
             sectionHeader(String(localized: "settings.data.section.import"))
 
             VStack(spacing: 0) {
-                actionRow(
-                    icon: "doc.viewfinder",
-                    title: String(localized: "settings.data.importOCR"),
-                    action: { showOCRImport = true }
-                )
-
-                Divider()
-                    .background(DesignSystem.Colors.separator)
-                    .padding(.leading, 56)
-
                 actionRow(
                     icon: "doc.text",
                     title: String(localized: "settings.data.importCSV"),

@@ -5,7 +5,6 @@ struct RecordListView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var viewModel = RecordListViewModel()
     @State private var sheetRoute: SheetRoute?
-    @State private var showOCRImport = false
     @State private var pendingSearchTask: Task<Void, Never>?
 
     var body: some View {
@@ -30,17 +29,6 @@ struct RecordListView: View {
                         sheetRoute = .addRecord(direction: nil, contactID: nil, eventID: nil)
                     } label: {
                         Label(String(localized: "home.addRecord"), systemImage: "square.and.pencil")
-                    }
-                    Button {
-                        InteractionLogger.tap(
-                            screen: "records.list",
-                            target: "records.list.ocrImport",
-                            route: "fullScreen.import.ocr",
-                            presentation: .fullScreen
-                        )
-                        showOCRImport = true
-                    } label: {
-                        Label(String(localized: "record.ocr.import"), systemImage: "doc.viewfinder")
                     }
                 } label: {
                     Image(systemName: "plus")
@@ -73,14 +61,6 @@ struct RecordListView: View {
             if newValue == nil {
                 viewModel.load(context: modelContext)
             }
-        }
-        .fullScreenCover(isPresented: $showOCRImport, onDismiss: {
-            viewModel.load(context: modelContext)
-        }) {
-            OCRImportView()
-        }
-        .onChange(of: showOCRImport) { _, newValue in
-            InteractionLogger.fullScreenPresentation(screen: "records.list", route: "fullScreen.import.ocr", isPresented: newValue)
         }
         .onDisappear {
             pendingSearchTask?.cancel()

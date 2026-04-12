@@ -61,6 +61,62 @@ struct ExportImportIntegrationTests {
         #expect(importedRecords[0].contact?.name == "张三")
     }
 
+    @Test func genericCSVImportCreatesGuestEventForEventRows() throws {
+        let tempURL = try writeCSV(
+            """
+            联系人,事件,事件类型,场景标签,方向,日期,备注,情分分量,金额,支付方式,已退金额
+            张三,婚礼,婚礼,,送出,2026-04-09,事件记录,礼尚往来,888.00,微信,0.00
+            """,
+            named: "test_generic_event_import_guest.csv"
+        )
+        defer { try? FileManager.default.removeItem(at: tempURL) }
+
+        let db = try TestDB()
+        let result = try ExportService.importCSV(url: tempURL, context: db.context)
+
+        #expect(result.imported == 1)
+
+        let events = try db.context.fetch(FetchDescriptor<Event>())
+        #expect(events.count == 1)
+        #expect(events[0].name == "婚礼")
+        #expect(events[0].hostMode == .guest)
+    }
+
+    @Test func ledgerCSVImportBindsAllRowsToHostEvent() throws {
+        let db = try TestDB()
+        let hostEvent = SampleData.event(name: "我的婚礼", hostMode: .host)
+        db.context.insert(hostEvent)
+        try db.context.save()
+
+        let tempURL = try writeCSV(
+            """
+            联系人,日期,备注,情分分量,金额,支付方式
+            张三,2026-04-09,婚礼签到时登记,礼尚往来,1000.00,微信
+            李四,2026-04-09,亲友到场随礼,情深义重,2000.00,现金
+            """,
+            named: "test_ledger_import.csv"
+        )
+        defer { try? FileManager.default.removeItem(at: tempURL) }
+
+        let preview = try ExportService.previewLedgerCSV(url: tempURL, eventName: hostEvent.name)
+        let result = try ExportService.importLedgerPreviewItems(
+            preview.items,
+            baseResult: ImportResult(imported: 0, skipped: preview.skipped, errors: preview.errors),
+            sourceFileName: preview.sourceFileName,
+            eventID: hostEvent.persistentModelID,
+            context: db.context
+        )
+
+        #expect(result.imported == 2)
+        #expect(result.errors == 0)
+
+        let records = try db.context.fetch(FetchDescriptor<Record>())
+        #expect(records.count == 2)
+        #expect(records.allSatisfy { $0.event?.persistentModelID == hostEvent.persistentModelID })
+        #expect(records.allSatisfy { $0.direction == .received })
+        #expect(records.allSatisfy { $0.recordType == .monetary })
+    }
+
     @Test func monetaryExportImportRoundTrip() throws {
         let db = try TestDB()
         let contact = SampleData.contact(name: "张三")

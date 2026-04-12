@@ -1,30 +1,31 @@
 import SwiftData
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct EventDetailView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @State private var viewModel = EventDetailViewModel()
+    @State private var pendingDeleteRecord: Record?
     @State private var sheetRoute: SheetRoute?
+    @State private var ledgerImportPreviewViewModel: LedgerCSVImportPreviewViewModel?
+    @State private var ledgerExportPreviewViewModel: LedgerCSVExportPreviewViewModel?
+    @State private var showLedgerCSVImporter = false
+    @State private var showLedgerImportPreview = false
+    @State private var showLedgerExportPreview = false
+    @State private var ledgerShareURL: URL?
+    @State private var ledgerCSVError: String?
+    @State private var isPreparingLedgerCSV = false
 
     let eventID: PersistentIdentifier
 
     var body: some View {
         Group {
             if let event = viewModel.event {
-                ScrollView(showsIndicators: false) {
-                    VStack(spacing: 16) {
-                        if let coverData = event.coverImage {
-                            eventCoverImage(coverData)
-                        }
-                        if event.hostMode == .host {
-                            hostLedgerContent(event)
-                        } else {
-                            standardEventContent(event)
-                        }
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 16)
+                if event.hostMode == .host {
+                    hostLedgerList(event)
+                } else {
+                    standardEventScroll(event)
                 }
             } else {
                 ProgressView()
@@ -42,6 +43,22 @@ struct EventDetailView: View {
                             sheetRoute = .addLedgerReceipt(eventID: eventID)
                         } label: {
                             Label(String(localized: "event.ledger.primaryAction"), systemImage: "plus.circle")
+                        }
+                        Button {
+                            guard !isPreparingLedgerCSV else { return }
+                            showLedgerCSVImporter = true
+                        } label: {
+                            Label(String(localized: "event.ledger.importCSV"), systemImage: "square.and.arrow.down")
+                        }
+                        Button {
+                            prepareLedgerExportPreview()
+                        } label: {
+                            Label(String(localized: "event.ledger.exportCSV"), systemImage: "square.and.arrow.up")
+                        }
+                        Button {
+                            downloadLedgerTemplate()
+                        } label: {
+                            Label(String(localized: "event.ledger.downloadTemplate"), systemImage: "arrow.down.doc")
                         }
                     }
                     Button {
@@ -80,26 +97,137 @@ struct EventDetailView: View {
         } message: {
             Text(String(localized: "event.detail.deleteBlockedMessage"))
         }
+        .alert(
+            String(localized: "record.detail.deleteConfirm"),
+            isPresented: Binding(
+                get: { pendingDeleteRecord != nil },
+                set: { if !$0 { pendingDeleteRecord = nil } }
+            )
+        ) {
+            Button(String(localized: "common.cancel"), role: .cancel) {
+                pendingDeleteRecord = nil
+            }
+            Button(String(localized: "common.delete"), role: .destructive) {
+                guard let pendingDeleteRecord else { return }
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    _ = viewModel.deleteRecord(pendingDeleteRecord, context: modelContext)
+                }
+                self.pendingDeleteRecord = nil
+            }
+        }
         .sheet(item: $sheetRoute) { route in
             sheetContent(for: route)
+        }
+        .sheet(item: Binding(
+            get: { ledgerShareURL.map { EventDetailShareableFile(id: $0.absoluteString, url: $0) } },
+            set: {
+                if let url = ledgerShareURL, $0 == nil {
+                    try? FileManager.default.removeItem(at: url)
+                }
+                ledgerShareURL = $0?.url
+            }
+        )) { item in
+            ShareSheet(url: item.url) {
+                ledgerShareURL = nil
+                try? FileManager.default.removeItem(at: item.url)
+            }
+        }
+        .navigationDestination(isPresented: $showLedgerImportPreview) {
+            if let ledgerImportPreviewViewModel {
+                LedgerCSVImportPreviewView(viewModel: ledgerImportPreviewViewModel) { result in
+                    handleCompletedLedgerImport(result)
+                }
+            }
+        }
+        .navigationDestination(isPresented: $showLedgerExportPreview) {
+            if let ledgerExportPreviewViewModel {
+                LedgerCSVExportPreviewView(viewModel: ledgerExportPreviewViewModel) { fileURL in
+                    handleConfirmedLedgerExport(fileURL: fileURL)
+                }
+            }
+        }
+        .alert(String(localized: "common.error"), isPresented: Binding(
+            get: { ledgerCSVError != nil },
+            set: { if !$0 { ledgerCSVError = nil } }
+        )) {
+            Button(String(localized: "common.ok")) {
+                ledgerCSVError = nil
+            }
+        } message: {
+            if let ledgerCSVError {
+                Text(ledgerCSVError)
+            }
+        }
+        .overlay {
+            if isPreparingLedgerCSV {
+                ledgerCSVLoadingOverlay
+            }
+        }
+        .fileImporter(
+            isPresented: $showLedgerCSVImporter,
+            allowedContentTypes: [.commaSeparatedText],
+            allowsMultipleSelection: false
+        ) { result in
+            handleLedgerCSVImport(result)
         }
         .onChange(of: sheetRoute) { _, newValue in
             if newValue == nil {
                 viewModel.load(id: eventID, context: modelContext)
             }
         }
+        .onChange(of: showLedgerImportPreview) { _, newValue in
+            if !newValue {
+                ledgerImportPreviewViewModel = nil
+            }
+        }
+        .onChange(of: showLedgerExportPreview) { _, newValue in
+            if !newValue {
+                ledgerExportPreviewViewModel = nil
+            }
+        }
     }
 
     // MARK: - Hero Card
 
-    private func hostLedgerContent(_ event: Event) -> some View {
-        Group {
-            heroCard(event)
-            ledgerSummaryCards
-            ledgerRecordsSection(event)
-            if !event.note.isEmpty {
-                notesSection(event)
+    private func hostLedgerList(_ event: Event) -> some View {
+        List {
+            if let coverData = event.coverImage {
+                cardListRow {
+                    eventCoverImage(coverData)
+                }
             }
+
+            cardListRow {
+                heroCard(event)
+            }
+
+            cardListRow {
+                ledgerSummaryCards
+            }
+
+            ledgerRecordsSection(event)
+
+            if !event.note.isEmpty {
+                cardListRow {
+                    notesSection(event)
+                }
+            }
+        }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .background(DesignSystem.Colors.bgPage)
+    }
+
+    private func standardEventScroll(_ event: Event) -> some View {
+        ScrollView(showsIndicators: false) {
+            VStack(spacing: 16) {
+                if let coverData = event.coverImage {
+                    eventCoverImage(coverData)
+                }
+                standardEventContent(event)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 16)
         }
     }
 
@@ -116,7 +244,7 @@ struct EventDetailView: View {
     private func heroCard(_ event: Event) -> some View {
         VStack(spacing: 12) {
             Image(systemName: event.type.iconName)
-                .font(.system(size: 28))
+                .font(DesignSystem.Typography.title1)
                 .foregroundStyle(DesignSystem.Colors.primary)
                 .frame(width: 72, height: 72)
                 .background(DesignSystem.Colors.bgIconSubtle)
@@ -160,7 +288,7 @@ struct EventDetailView: View {
             if !event.location.isEmpty {
                 HStack(spacing: 4) {
                     Image(systemName: "mappin.and.ellipse")
-                        .font(.system(size: 12))
+                        .font(DesignSystem.Typography.small)
                     Text(event.location)
                         .font(DesignSystem.Typography.small)
                 }
@@ -227,7 +355,7 @@ struct EventDetailView: View {
     private func ledgerSummaryCard(icon: String, title: String, value: String, tint: Color) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Image(systemName: icon)
-                .font(.system(size: 16))
+                .font(DesignSystem.Typography.body)
                 .foregroundStyle(tint)
                 .frame(width: 32, height: 32)
                 .background(tint.opacity(0.12))
@@ -253,7 +381,53 @@ struct EventDetailView: View {
 
     private func ledgerRecordsSection(_ event: Event) -> some View {
         let displayedRecords = viewModel.receivedRecords
-        return VStack(alignment: .leading, spacing: 12) {
+        return Section {
+            if displayedRecords.isEmpty {
+                EmptyStateView(
+                    icon: "book.closed",
+                    message: String(localized: "event.ledger.empty"),
+                    actionTitle: String(localized: "event.ledger.primaryAction"),
+                    action: {
+                        sheetRoute = .addLedgerReceipt(eventID: event.persistentModelID)
+                    }
+                )
+                .frame(height: 200)
+                .listRowInsets(EdgeInsets(
+                    top: 0,
+                    leading: DesignSystem.Spacing.pageHorizontal,
+                    bottom: DesignSystem.Spacing.block,
+                    trailing: DesignSystem.Spacing.pageHorizontal
+                ))
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
+            } else {
+                ForEach(displayedRecords) { record in
+                    NavigationLink {
+                        RecordDetailView(recordID: record.persistentModelID)
+                    } label: {
+                        RecordRow(record: record)
+                    }
+                    .buttonStyle(.plain)
+                    .background(DesignSystem.Colors.bgSurface)
+                    .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.smallCard))
+                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                        Button(role: .destructive) {
+                            pendingDeleteRecord = record
+                        } label: {
+                            Label(String(localized: "common.delete"), systemImage: "trash")
+                        }
+                    }
+                    .listRowInsets(EdgeInsets(
+                        top: 0,
+                        leading: DesignSystem.Spacing.pageHorizontal,
+                        bottom: DesignSystem.Spacing.block,
+                        trailing: DesignSystem.Spacing.pageHorizontal
+                    ))
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
+                }
+            }
+        } header: {
             HStack {
                 Text(String(localized: "event.ledger.allRecords"))
                     .font(DesignSystem.Typography.title3)
@@ -265,38 +439,22 @@ struct EventDetailView: View {
                     .font(DesignSystem.Typography.small)
                     .foregroundStyle(DesignSystem.Colors.textTertiary)
             }
-
-            if displayedRecords.isEmpty {
-                EmptyStateView(
-                    icon: "book.closed",
-                    message: String(localized: "event.ledger.empty"),
-                    actionTitle: String(localized: "event.ledger.primaryAction"),
-                    action: {
-                        sheetRoute = .addLedgerReceipt(eventID: event.persistentModelID)
-                    }
-                )
-                .frame(height: 200)
-            } else {
-                VStack(spacing: 0) {
-                    ForEach(displayedRecords) { record in
-                        NavigationLink {
-                            RecordDetailView(recordID: record.persistentModelID)
-                        } label: {
-                            RecordRow(record: record)
-                        }
-                        .buttonStyle(.plain)
-
-                        if record.persistentModelID != displayedRecords.last?.persistentModelID {
-                            Divider()
-                                .foregroundStyle(DesignSystem.Colors.separator)
-                                .padding(.leading, 72)
-                        }
-                    }
-                }
-                .background(DesignSystem.Colors.bgSurface)
-                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
-            }
+            .padding(.horizontal, DesignSystem.Spacing.pageHorizontal)
+            .padding(.bottom, DesignSystem.Spacing.block)
         }
+        .textCase(nil)
+    }
+
+    private func cardListRow(@ViewBuilder content: () -> some View) -> some View {
+        content()
+            .listRowInsets(EdgeInsets(
+                top: 0,
+                leading: DesignSystem.Spacing.pageHorizontal,
+                bottom: DesignSystem.Spacing.block,
+                trailing: DesignSystem.Spacing.pageHorizontal
+            ))
+            .listRowSeparator(.hidden)
+            .listRowBackground(Color.clear)
     }
 
     // MARK: - Primary Record Section
@@ -334,7 +492,8 @@ struct EventDetailView: View {
         VStack(alignment: .leading, spacing: 16) {
             HStack(alignment: .top, spacing: 12) {
                 Image(systemName: record.recordType.iconName)
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(DesignSystem.Typography.body)
+                    .fontWeight(.semibold)
                     .foregroundStyle(DesignSystem.Colors.primary)
                     .frame(width: 40, height: 40)
                     .background(DesignSystem.Colors.bgIconSubtle)
@@ -356,7 +515,8 @@ struct EventDetailView: View {
                 Spacer()
 
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 12, weight: .medium))
+                    .font(DesignSystem.Typography.small)
+                    .fontWeight(.medium)
                     .foregroundStyle(DesignSystem.Colors.textTertiary)
             }
 
@@ -569,11 +729,118 @@ struct EventDetailView: View {
             EmptyView()
         }
     }
+
+    private func handleLedgerCSVImport(_ result: Result<[URL], Error>) {
+        switch result {
+        case let .success(urls):
+            guard let url = urls.first, let event = viewModel.event else { return }
+            guard !isPreparingLedgerCSV else { return }
+            isPreparingLedgerCSV = true
+
+            Task {
+                do {
+                    let preview = try await ExportService.previewLedgerCSVAsync(url: url, eventName: event.name)
+                    await MainActor.run {
+                        ledgerImportPreviewViewModel = LedgerCSVImportPreviewViewModel(
+                            previewResult: preview,
+                            eventID: eventID
+                        )
+                        showLedgerImportPreview = true
+                        isPreparingLedgerCSV = false
+                    }
+                } catch {
+                    await MainActor.run {
+                        ledgerCSVError = error.localizedDescription
+                        isPreparingLedgerCSV = false
+                    }
+                }
+            }
+        case let .failure(error):
+            ledgerCSVError = error.localizedDescription
+        }
+    }
+
+    private func prepareLedgerExportPreview() {
+        guard !isPreparingLedgerCSV else { return }
+        isPreparingLedgerCSV = true
+
+        Task {
+            do {
+                let preview = try await ExportService.previewLedgerExportCSVAsync(
+                    container: modelContext.container,
+                    eventID: eventID
+                )
+                await MainActor.run {
+                    ledgerExportPreviewViewModel = LedgerCSVExportPreviewViewModel(previewResult: preview)
+                    showLedgerExportPreview = true
+                    isPreparingLedgerCSV = false
+                }
+            } catch {
+                await MainActor.run {
+                    ledgerCSVError = error.localizedDescription
+                    isPreparingLedgerCSV = false
+                }
+            }
+        }
+    }
+
+    @MainActor
+    private func handleCompletedLedgerImport(_: ImportResult) {
+        showLedgerImportPreview = false
+        viewModel.load(id: eventID, context: modelContext)
+        ledgerCSVError = nil
+    }
+
+    @MainActor
+    private func handleConfirmedLedgerExport(fileURL: URL) {
+        showLedgerExportPreview = false
+        ledgerShareURL = fileURL
+    }
+
+    private func downloadLedgerTemplate() {
+        do {
+            let tempDir = FileManager.default.temporaryDirectory
+            let fileURL = tempDir.appendingPathComponent("lishu_ledger_template.csv")
+            guard let data = ExportService.ledgerTemplateCSV().data(using: .utf8) else {
+                ledgerCSVError = String(localized: "settings.data.export_encoding_failed")
+                return
+            }
+            try data.write(to: fileURL, options: .atomic)
+            ledgerShareURL = fileURL
+        } catch {
+            ledgerCSVError = error.localizedDescription
+        }
+    }
+
+    private var ledgerCSVLoadingOverlay: some View {
+        ZStack {
+            DesignSystem.Colors.bgPage.opacity(0.7)
+                .ignoresSafeArea()
+
+            VStack(spacing: DesignSystem.Spacing.block) {
+                ProgressView()
+                    .tint(DesignSystem.Colors.primary)
+
+                Text(String(localized: "csv.ledger.loading"))
+                    .font(DesignSystem.Typography.caption)
+                    .foregroundStyle(DesignSystem.Colors.textPrimary)
+            }
+            .padding(DesignSystem.Spacing.cardPadding)
+            .background(DesignSystem.Colors.bgSurface)
+            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+        }
+    }
+}
+
+private struct EventDetailShareableFile: Identifiable {
+    let id: String
+    let url: URL
 }
 
 private struct EventDetailPreview: View {
     @Environment(\.modelContext) private var modelContext
     @State private var eventID: PersistentIdentifier?
+    let hostMode: EventHostMode
 
     var body: some View {
         NavigationStack {
@@ -595,8 +862,9 @@ private struct EventDetailPreview: View {
         [c1, c2, c3].forEach { modelContext.insert($0) }
 
         let event = Event(
-            name: "张三的婚礼",
+            name: hostMode == .host ? "我的婚礼礼簿" : "张三的婚礼",
             type: .wedding,
+            hostMode: hostMode,
             date: cal.liShuDateByAddingDays(3),
             location: "北京国贸大酒店",
             note: "提前一天到达，需要帮忙布置场地。记得带红包和礼物。"
@@ -607,7 +875,7 @@ private struct EventDetailPreview: View {
             contact: c1,
             event: event,
             amount: 1000,
-            direction: .given,
+            direction: hostMode == .host ? .received : .given,
             paymentMethod: .wechat,
             date: cal.liShuDateByAddingDays(-5)
         )
@@ -623,7 +891,7 @@ private struct EventDetailPreview: View {
             contact: c3,
             event: event,
             amount: 800,
-            direction: .given,
+            direction: hostMode == .host ? .received : .given,
             paymentMethod: .alipay,
             date: cal.liShuDateByAddingDays(-1)
         )
@@ -634,7 +902,12 @@ private struct EventDetailPreview: View {
     }
 }
 
-#Preview {
-    EventDetailPreview()
+#Preview("Standard Event") {
+    EventDetailPreview(hostMode: .guest)
+        .modelContainer(for: [Contact.self, Record.self, Event.self], inMemory: true)
+}
+
+#Preview("Host Ledger") {
+    EventDetailPreview(hostMode: .host)
         .modelContainer(for: [Contact.self, Record.self, Event.self], inMemory: true)
 }
