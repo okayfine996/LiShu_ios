@@ -107,10 +107,6 @@ struct MonetaryAmountInputCard: View {
         .padding(20)
         .background(DesignSystem.Colors.bgSurface)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
-        .overlay(
-            RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
-                .stroke(DesignSystem.Colors.border.opacity(0.3), lineWidth: 1)
-        )
         .shadow(color: DesignSystem.Colors.textPrimary.opacity(0.03), radius: 4, y: 2)
     }
 }
