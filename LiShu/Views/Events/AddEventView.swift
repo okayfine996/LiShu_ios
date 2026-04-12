@@ -215,6 +215,8 @@ struct AddEventView: View {
                     hostModeRow(mode)
                 }
             }
+            .disabled(!viewModel.isHostModeEditable)
+            .opacity(viewModel.isHostModeEditable ? 1.0 : DesignSystem.Effects.disabledOpacity)
         }
     }
 

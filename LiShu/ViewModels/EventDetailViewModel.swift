@@ -37,7 +37,7 @@ class EventDetailViewModel {
     var receivedRecords: [Record] {
         guard let event else { return [] }
         return (event.records ?? [])
-            .filter { $0.direction == .received }
+            .filter { $0.direction == .received && $0.recordType == .monetary }
             .sorted { $0.date > $1.date }
     }
 

@@ -108,6 +108,29 @@ struct AddEventViewModelTests {
         #expect(events[0].location == "新地点")
     }
 
+    @Test func saveEditModePreservesHostModeWhenEventAlreadyHasRecords() throws {
+        let db = try TestDB()
+        let contact = SampleData.contact()
+        let event = SampleData.event(name: "我的婚礼", hostMode: .host)
+        db.context.insert(contact)
+        db.context.insert(event)
+        db.context.insert(SampleData.record(contact: contact, event: event, amount: 888, direction: .received))
+        try db.context.save()
+
+        let vm = AddEventViewModel()
+        vm.configure(with: event)
+        vm.hostMode = .guest
+        vm.name = "我的婚礼-已更新"
+
+        #expect(vm.isHostModeEditable == false)
+        #expect(vm.save(context: db.context) == true)
+
+        let events = try db.context.fetch(FetchDescriptor<Event>())
+        #expect(events.count == 1)
+        #expect(events[0].name == "我的婚礼-已更新")
+        #expect(events[0].hostMode == .host)
+    }
+
     @Test func saveEventCompressesCoverImage() throws {
         let db = try TestDB()
         let vm = AddEventViewModel()

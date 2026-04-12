@@ -166,4 +166,25 @@ struct EventDetailViewModelTests {
         #expect(vm.todayReceivedCount == 2)
         #expect(vm.todayReceivedAmount == 2500)
     }
+
+    @Test func hostLedgerSummaryMetricsIgnoreNonMonetaryReceivedRecords() throws {
+        let db = try TestDB()
+        let contact = SampleData.contact(name: "张三")
+        let event = SampleData.event(name: "我的婚礼", hostMode: .host)
+        db.context.insert(contact)
+        db.context.insert(event)
+
+        db.context.insert(SampleData.record(contact: contact, event: event, amount: 1200, direction: .received))
+        db.context.insert(SampleData.recordGift(contact: contact, event: event, estimatedValue: 8888, direction: .received))
+        db.context.insert(SampleData.recordFavor(contact: contact, event: event, direction: .received))
+        try db.context.save()
+
+        let vm = EventDetailViewModel()
+        vm.load(id: event.persistentModelID, context: db.context)
+
+        #expect(vm.receivedRecordCount == 1)
+        #expect(vm.totalReceived == 1200)
+        #expect(vm.largestReceivedAmount == 1200)
+        #expect(vm.todayReceivedAmount == 1200)
+    }
 }

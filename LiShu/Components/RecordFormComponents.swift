@@ -18,10 +18,10 @@ struct RecordEventSummaryCard: View {
                     size: 52,
                     placeholderBackground: DesignSystem.Colors.bgSurface
                 )
-                .overlay(
-                    RoundedRectangle(cornerRadius: DesignSystem.Radius.input)
-                        .stroke(DesignSystem.Colors.border, lineWidth: 1)
-                )
+//                .overlay(
+//                    RoundedRectangle(cornerRadius: DesignSystem.Radius.input)
+//                        .stroke(DesignSystem.Colors.border, lineWidth: 1)
+//                )
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(event.name)
@@ -38,10 +38,6 @@ struct RecordEventSummaryCard: View {
                             .padding(.vertical, 2)
                             .background(DesignSystem.Colors.primary.opacity(0.1))
                             .clipShape(Capsule())
-                            .overlay(
-                                Capsule()
-                                    .stroke(DesignSystem.Colors.primary.opacity(0.2), lineWidth: 1)
-                            )
 
                         Text(formattedEventDate)
                             .font(DesignSystem.Typography.small)
@@ -55,10 +51,6 @@ struct RecordEventSummaryCard: View {
             .padding(14)
             .background(DesignSystem.Colors.bgSurface)
             .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
-            .overlay(
-                RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
-                    .stroke(DesignSystem.Colors.border, lineWidth: 1)
-            )
         }
     }
 

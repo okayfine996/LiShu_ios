@@ -10,7 +10,7 @@ struct HomeLedgerCard: View {
     /// 首页礼簿卡只统计主场事件下真正收到的记录，避免把普通随礼混进来。
     private var receivedRecords: [Record] {
         (event.records ?? [])
-            .filter { $0.direction == .received }
+            .filter { $0.direction == .received && $0.recordType == .monetary }
             .sorted { $0.date > $1.date }
     }
 

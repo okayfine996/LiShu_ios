@@ -19,6 +19,10 @@ class AddEventViewModel {
         !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
+    var isHostModeEditable: Bool {
+        (editingEvent?.records ?? []).isEmpty
+    }
+
     private var draftPayload: EventLogPayload {
         EventLogPayload(
             id: editingEvent.map { String(describing: $0.persistentModelID) } ?? "pending",
@@ -68,7 +72,11 @@ class AddEventViewModel {
             )
             existing.name = name.trimmingCharacters(in: .whitespacesAndNewlines)
             existing.type = eventType
-            existing.hostMode = hostMode
+            if isHostModeEditable {
+                existing.hostMode = hostMode
+            } else {
+                hostMode = existing.hostMode
+            }
             existing.date = date
             existing.location = location.trimmingCharacters(in: .whitespacesAndNewlines)
             existing.note = note.trimmingCharacters(in: .whitespacesAndNewlines)
