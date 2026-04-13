@@ -8,6 +8,8 @@ final class Event {
     var name: String = ""
     /// 事件类型原始值，通过 `type` 计算属性读写枚举
     var typeRaw: String = "other"
+    /// 事件身份原始值，通过 `hostMode` 计算属性读写枚举
+    var hostModeRaw: String = "guest"
     /// 事件日期
     var date: Date = Date()
     /// 事件地点
@@ -29,19 +31,39 @@ final class Event {
         set { typeRaw = newValue.rawValue }
     }
 
+    /// 是否为主场礼簿事件
+    var hostMode: EventHostMode {
+        get { EventHostMode(rawValue: hostModeRaw) ?? .guest }
+        set { hostModeRaw = newValue.rawValue }
+    }
+
     init(
         name: String,
         type: EventType = .other,
+        hostMode: EventHostMode = .guest,
         date: Date = .now,
         location: String = "",
         note: String = ""
     ) {
         self.name = name
         typeRaw = type.rawValue
+        hostModeRaw = hostMode.rawValue
         self.date = date
         self.location = location
         self.note = note
         createdAt = .now
+    }
+}
+
+enum EventHostMode: String, Codable, CaseIterable {
+    case guest
+    case host
+
+    var displayName: String {
+        switch self {
+        case .guest: String(localized: "event.hostMode.guest")
+        case .host: String(localized: "event.hostMode.host")
+        }
     }
 }
 

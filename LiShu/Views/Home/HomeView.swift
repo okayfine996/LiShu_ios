@@ -2,16 +2,22 @@ import SwiftData
 import SwiftUI
 
 struct HomeView: View {
-    @Environment(\.modelContext) private var modelContext
-    @State private var viewModel = HomeViewModel()
+    @Query(sort: \Record.date, order: .reverse) private var records: [Record]
+    @Query private var contacts: [Contact]
+    @Query private var events: [Event]
     @State private var sheetRoute: SheetRoute?
+
+    private var snapshot: HomeDashboardSnapshot {
+        HomeDashboardSnapshot.build(records: records, events: events, contacts: contacts)
+    }
 
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 20) {
-                summarySection
-                upcomingSection
-                recentRecordsSection
+                summarySection(snapshot)
+                ledgerSection(snapshot)
+                upcomingSection(snapshot)
+                recentRecordsSection(snapshot)
             }
             .padding(.horizontal, 16)
             .padding(.top, 8)
@@ -20,22 +26,14 @@ struct HomeView: View {
         .background(DesignSystem.Colors.bgPage)
         .navigationTitle(String(localized: "home.title"))
         .navigationBarTitleDisplayMode(.automatic)
-        .onAppear {
-            viewModel.load(context: modelContext)
-        }
         .sheet(item: $sheetRoute) { route in
             sheetContent(for: route)
-        }
-        .onChange(of: sheetRoute) { _, newValue in
-            if newValue == nil {
-                viewModel.load(context: modelContext)
-            }
         }
     }
 
     // MARK: - Summary Section
 
-    private var summarySection: some View {
+    private func summarySection(_ snapshot: HomeDashboardSnapshot) -> some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack(alignment: .center, spacing: 12) {
                 Text(String(localized: "home.yearSummaryTitle"))
@@ -44,7 +42,7 @@ struct HomeView: View {
 
                 Spacer()
 
-                Text(viewModel.lunarYearLabel)
+                Text(lunarYearLabel)
                     .font(DesignSystem.Typography.title3)
                     .foregroundStyle(DesignSystem.Colors.primary)
                     .padding(.horizontal, 10)
@@ -53,10 +51,10 @@ struct HomeView: View {
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(alignment: .top, spacing: 12) {
-                    financialSummaryCard
+                    financialSummaryCard(snapshot)
                         .frame(width: summaryCardWidth, alignment: .top)
 
-                    relationshipSummaryCard
+                    relationshipSummaryCard(snapshot)
                         .frame(width: summaryCardWidth, alignment: .top)
                 }
                 .scrollTargetLayout()
@@ -70,7 +68,7 @@ struct HomeView: View {
         UIScreen.main.bounds.width - (DesignSystem.Spacing.pageHorizontal * 2) - 4
     }
 
-    private var financialSummaryCard: some View {
+    private func financialSummaryCard(_ snapshot: HomeDashboardSnapshot) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .top) {
                 summaryCardTitle(
@@ -98,13 +96,13 @@ struct HomeView: View {
                     .foregroundStyle(DesignSystem.Colors.textSecondary)
 
                 HStack(alignment: .center, spacing: 10) {
-                    Text(viewModel.formattedMonetaryNet)
+                    Text(formattedMonetaryNet(snapshot))
                         .font(DesignSystem.Typography.display)
                         .foregroundStyle(DesignSystem.Colors.textPrimary)
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
 
-                    if let formattedYearOverYearChange = viewModel.formattedYearOverYearChange {
+                    if let formattedYearOverYearChange = formattedYearOverYearChange(snapshot) {
                         Text(formattedYearOverYearChange)
                             .font(DesignSystem.Typography.caption)
                             .foregroundStyle(DesignSystem.Colors.primary)
@@ -122,14 +120,14 @@ struct HomeView: View {
             HStack(spacing: 12) {
                 financialDetailMetric(
                     title: String(localized: "home.income"),
-                    amount: viewModel.formattedIncome,
-                    ratio: viewModel.incomeRatio
+                    amount: formattedIncome(snapshot),
+                    ratio: snapshot.incomeRatio
                 )
 
                 financialDetailMetric(
                     title: String(localized: "home.expense"),
-                    amount: viewModel.formattedExpense,
-                    ratio: viewModel.expenseRatio
+                    amount: formattedExpense(snapshot),
+                    ratio: snapshot.expenseRatio
                 )
             }
 
@@ -140,7 +138,7 @@ struct HomeView: View {
 
                 Spacer()
 
-                Text(viewModel.formattedTotalExchangeAmount)
+                Text(formattedTotalExchangeAmount(snapshot))
                     .font(DesignSystem.Typography.title3)
                     .foregroundStyle(DesignSystem.Colors.textPrimary)
             }
@@ -152,7 +150,7 @@ struct HomeView: View {
         .summaryCardChrome()
     }
 
-    private var relationshipSummaryCard: some View {
+    private func relationshipSummaryCard(_ snapshot: HomeDashboardSnapshot) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             summaryCardTitle(
                 icon: "person.3.fill",
@@ -161,7 +159,7 @@ struct HomeView: View {
 
             summaryHeroMetric(
                 title: String(localized: "home.interactionsTitle"),
-                value: "\(viewModel.recordCount)",
+                value: "\(snapshot.recordCount)",
                 unit: String(localized: "home.interactionsUnitSuffix"),
                 valueColor: DesignSystem.Colors.textPrimary
             )
@@ -172,14 +170,14 @@ struct HomeView: View {
             HStack(spacing: 12) {
                 relationshipDetailMetric(
                     title: String(localized: "home.activeContactsTitle"),
-                    value: "\(viewModel.contactCount)",
-                    detail: viewModel.coreCircleSummary
+                    value: "\(snapshot.contactCount)",
+                    detail: coreCircleSummary(snapshot)
                 )
 
                 relationshipDetailMetric(
                     title: String(localized: "home.nonFinancialInteractionsTitle"),
-                    value: "\(viewModel.nonFinancialInteractionCount)",
-                    detail: viewModel.nonFinancialSummary
+                    value: "\(snapshot.nonFinancialInteractionCount)",
+                    detail: nonFinancialSummary(snapshot)
                 )
             }
 
@@ -295,22 +293,66 @@ struct HomeView: View {
 
     // MARK: - Upcoming Events Section
 
-    private var upcomingSection: some View {
+    private func ledgerSection(_ snapshot: HomeDashboardSnapshot) -> some View {
+        VStack(spacing: 12) {
+            HStack {
+                Text(String(localized: "event.ledger.sectionTitle"))
+                    .font(DesignSystem.Typography.title3)
+                    .foregroundStyle(DesignSystem.Colors.textPrimary)
+
+                Spacer()
+
+                Button(String(localized: "common.new")) {
+                    sheetRoute = .addEvent
+                }
+                .font(DesignSystem.Typography.caption)
+                .foregroundStyle(DesignSystem.Colors.primary)
+            }
+
+            if snapshot.hostLedgerEvents.isEmpty {
+                EmptyStateView(
+                    icon: "book.closed",
+                    message: String(localized: "event.ledger.homeEmpty"),
+                    actionTitle: String(localized: "event.ledger.createHostEvent"),
+                    action: {
+                        sheetRoute = .addEvent
+                    }
+                )
+                .frame(height: 220)
+            } else {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(alignment: .top, spacing: 12) {
+                        ForEach(snapshot.hostLedgerEvents) { event in
+                            HomeLedgerCard(
+                                event: event,
+                                onPrimaryAction: {
+                                    sheetRoute = .addLedgerReceipt(eventID: event.persistentModelID)
+                                }
+                            )
+                        }
+                    }
+                    .padding(.horizontal, 2)
+                }
+            }
+        }
+    }
+
+    private func upcomingSection(_ snapshot: HomeDashboardSnapshot) -> some View {
         VStack(spacing: 12) {
             sectionHeader(
                 title: String(localized: "home.upcoming"),
                 route: .eventList
             )
 
-            if viewModel.upcomingEvents.isEmpty {
+            if snapshot.upcomingEvents.isEmpty {
                 emptyUpcomingCard
             } else {
                 CarouselView(
-                    pageCount: viewModel.upcomingEvents.count,
+                    pageCount: snapshot.upcomingEvents.count,
                     autoScrollInterval: 3
                 ) { index in
                     Group {
-                        if let event = viewModel.upcomingEvents.element(at: index) {
+                        if let event = snapshot.upcomingEvents.element(at: index) {
                             VStack {
                                 NavigationLink(value: AppRoute.eventDetail(event.persistentModelID)) {
                                     upcomingEventCard(event)
@@ -419,26 +461,26 @@ struct HomeView: View {
 
     // MARK: - Recent Records Section
 
-    private var recentRecordsSection: some View {
+    private func recentRecordsSection(_ snapshot: HomeDashboardSnapshot) -> some View {
         VStack(spacing: 12) {
             sectionHeader(
                 title: String(localized: "home.recentRecords")
             )
 
-            if viewModel.recentRecords.isEmpty {
+            if snapshot.recentRecords.isEmpty {
                 EmptyStateView(
                     icon: "doc.text",
                     message: String(localized: "record.list.empty"),
                     actionTitle: String(localized: "home.addRecord"),
                     action: {
-                        sheetRoute = .addRecord(direction: nil, contactID: nil)
+                        sheetRoute = .addRecord(direction: nil, contactID: nil, eventID: nil)
                     }
                 )
                 .accessibilityIdentifier("home.addRecordButton")
                 .frame(height: 200)
             } else {
                 VStack(spacing: 10) {
-                    ForEach(viewModel.recentRecords) { record in
+                    ForEach(snapshot.recentRecords) { record in
                         NavigationLink(value: AppRoute.recordDetail(record.persistentModelID)) {
                             recentRecordCard(record)
                         }
@@ -522,6 +564,67 @@ struct HomeView: View {
         return formatter.string(from: date)
     }
 
+    private var lunarYearLabel: String {
+        let formatter = DateFormatter()
+        formatter.calendar = Calendar(identifier: .chinese)
+        formatter.locale = Locale(identifier: "zh_Hans_CN")
+        formatter.dateFormat = "U年"
+        return formatter.string(from: Date())
+    }
+
+    private func formattedIncome(_ snapshot: HomeDashboardSnapshot) -> String {
+        "¥" + formatCompactNumber(snapshot.yearlyIncome)
+    }
+
+    private func formattedExpense(_ snapshot: HomeDashboardSnapshot) -> String {
+        "¥" + formatCompactNumber(snapshot.yearlyExpense)
+    }
+
+    private func formattedTotalExchangeAmount(_ snapshot: HomeDashboardSnapshot) -> String {
+        "¥" + formatAmountWithComma(snapshot.totalExchangeAmount)
+    }
+
+    private func formattedMonetaryNet(_ snapshot: HomeDashboardSnapshot) -> String {
+        formatNetValue(snapshot.yearlyIncome - snapshot.yearlyExpense)
+    }
+
+    private func formattedYearOverYearChange(_ snapshot: HomeDashboardSnapshot) -> String? {
+        guard let yearOverYearChangeRate = snapshot.yearOverYearChangeRate else { return nil }
+        let sign = yearOverYearChangeRate >= 0 ? "+" : "-"
+        return String(
+            format: String(localized: "statistics.hero.yoy"),
+            sign,
+            abs(yearOverYearChangeRate) * 100
+        )
+    }
+
+    private func coreCircleSummary(_ snapshot: HomeDashboardSnapshot) -> String {
+        String(format: String(localized: "home.coreCircleShareFormat"), snapshot.coreCircleRatioPercent)
+    }
+
+    private func nonFinancialSummary(_ snapshot: HomeDashboardSnapshot) -> String {
+        String(format: String(localized: "home.nonFinancialSummaryFormat"), snapshot.nonFinancialInteractionCount)
+    }
+
+    private func formatCompactNumber(_ value: Double) -> String {
+        if value >= 10000 {
+            return String(format: String(localized: "number.tenThousandsFormat"), value / 10000)
+        }
+        return String(format: "%.0f", value)
+    }
+
+    private func formatAmountWithComma(_ amount: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.maximumFractionDigits = 0
+        return formatter.string(from: NSNumber(value: amount)) ?? String(format: "%.0f", amount)
+    }
+
+    private func formatNetValue(_ value: Double) -> String {
+        let prefix = value >= 0 ? "+" : ""
+        return prefix + "¥" + formatAmountWithComma(value)
+    }
+
     private func relativeDateText(_ date: Date) -> String {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
@@ -573,9 +676,13 @@ struct HomeView: View {
     @ViewBuilder
     private func sheetContent(for route: SheetRoute) -> some View {
         switch route {
-        case let .addRecord(direction, contactID):
+        case let .addRecord(direction, contactID, eventID):
             NavigationStack {
-                AddRecordView(direction: direction, contactID: contactID)
+                AddRecordView(direction: direction, contactID: contactID, eventID: eventID)
+            }
+        case let .addLedgerReceipt(eventID):
+            NavigationStack {
+                AddLedgerReceiptView(eventID: eventID)
             }
         case .addContact:
             NavigationStack {
@@ -583,7 +690,7 @@ struct HomeView: View {
             }
         case .addEvent:
             NavigationStack {
-                AddEventView()
+                AddEventView(defaultHostMode: .host)
             }
         case let .editContact(contactID):
             NavigationStack {
@@ -621,49 +728,10 @@ private extension Array {
 @MainActor
 private func makeHomePreviewContainer() -> ModelContainer? {
     guard let container = try? ModelContainer(
-        for: Contact.self, Record.self, Event.self,
+        for: Contact.self, Record.self, Event.self, RecordPhoto.self,
         configurations: ModelConfiguration(isStoredInMemoryOnly: true)
     ) else { return nil }
-    let ctx = container.mainContext
-
-    let c1 = Contact(name: "张三", relation: "同事")
-    let c2 = Contact(name: "李四", relation: "朋友")
-    let c3 = Contact(name: "王五", relation: "亲戚")
-    [c1, c2, c3].forEach { ctx.insert($0) }
-
-    let cal = Calendar.current
-    let e1 = Event(name: "表哥的婚礼", type: .wedding, date: cal.liShuDateByAddingDays(3), location: "北京")
-    let e2 = Event(name: "小李的30岁生日", type: .birthday, date: cal.liShuDateByAddingDays(7), location: "上海")
-    let e3 = Event(name: "硕士毕业", type: .education, date: cal.liShuDateByAddingDays(14), location: "广州")
-    [e1, e2, e3].forEach { ctx.insert($0) }
-
-    let r1 = Record.makeMonetaryRecord(contact: c1, event: e1, amount: 500, direction: .given, paymentMethod: .wechat, date: .now)
-    let r2 = Record.makeMonetaryRecord(
-        contact: c2,
-        event: e2,
-        amount: 200,
-        direction: .given,
-        paymentMethod: .cash,
-        date: cal.liShuDateByAddingDays(-1)
-    )
-    let r3 = Record.makeMonetaryRecord(
-        contact: c3,
-        event: e1,
-        amount: 350,
-        direction: .given,
-        paymentMethod: .alipay,
-        date: cal.liShuDateByAddingDays(-3)
-    )
-    let r4 = Record.makeMonetaryRecord(
-        contact: c1,
-        event: e2,
-        amount: 600,
-        direction: .received,
-        paymentMethod: .wechat,
-        date: cal.liShuDateByAddingDays(-10)
-    )
-    [r1, r2, r3, r4].forEach { ctx.insert($0) }
-
+    DemoDataSeeding.insertSampleData(context: container.mainContext, attachDemoMedia: false)
     return container
 }
 

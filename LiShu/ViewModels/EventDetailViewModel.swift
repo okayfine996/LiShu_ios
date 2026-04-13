@@ -19,10 +19,59 @@ class EventDetailViewModel {
     }
 
     var totalReceived: Double {
-        guard let event else { return 0 }
-        return (event.records ?? [])
-            .filter { $0.direction == .received }
+        receivedRecords
             .reduce(0.0) { $0 + $1.resolvedDisplayAmount }
+    }
+
+    /// 普通事件默认是“我去参加别人的场合”，因此详情里只突出最新的一条主记录摘要。
+    var primaryRecord: Record? {
+        guard let event else { return nil }
+        return (event.records ?? [])
+            .sorted { $0.date > $1.date }
+            .first
+    }
+
+    /// 礼簿详情只展示收礼记录，避免和普通送礼记录混在同一列表里。
+    var receivedRecords: [Record] {
+        guard let event else { return [] }
+        return (event.records ?? [])
+            .filter { $0.direction == .received && $0.recordType == .monetary }
+            .sorted { $0.date > $1.date }
+    }
+
+    var receivedRecordCount: Int {
+        receivedRecords.count
+    }
+
+    var legacyNonLedgerRecords: [Record] {
+        guard let event else { return [] }
+        return (event.records ?? [])
+            .filter { !($0.direction == .received && $0.recordType == .monetary) }
+            .sorted { $0.date > $1.date }
+    }
+
+    var hasLegacyLedgerAnomalies: Bool {
+        !legacyNonLedgerRecords.isEmpty
+    }
+
+    var legacyLedgerAnomalyCount: Int {
+        legacyNonLedgerRecords.count
+    }
+
+    var largestReceivedAmount: Double {
+        receivedRecords.map(\.resolvedDisplayAmount).max() ?? 0
+    }
+
+    var todayReceivedAmount: Double {
+        let calendar = Calendar.current
+        return receivedRecords
+            .filter { calendar.isDateInToday($0.date) }
+            .reduce(0.0) { $0 + $1.resolvedDisplayAmount }
+    }
+
+    var todayReceivedCount: Int {
+        let calendar = Calendar.current
+        return receivedRecords.filter { calendar.isDateInToday($0.date) }.count
     }
 
     var formattedDate: String {
@@ -31,13 +80,6 @@ class EventDetailViewModel {
         formatter.locale = Locale(identifier: "zh_Hans")
         formatter.dateFormat = "yyyy年M月d日"
         return formatter.string(from: event.date)
-    }
-
-    var relatedContacts: [Contact] {
-        guard let event else { return [] }
-        let contacts = (event.records ?? []).compactMap(\.contact)
-        var seen = Set<PersistentIdentifier>()
-        return contacts.filter { seen.insert($0.persistentModelID).inserted }
     }
 
     var daysUntilEvent: Int? {
@@ -61,6 +103,21 @@ class EventDetailViewModel {
         context.delete(event)
         do {
             try context.save()
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    @MainActor
+    func deleteRecord(_ record: Record, context: ModelContext) -> Bool {
+        guard let event else { return false }
+        let eventID = event.persistentModelID
+
+        context.delete(record)
+        do {
+            try context.save()
+            load(id: eventID, context: context)
             return true
         } catch {
             return false

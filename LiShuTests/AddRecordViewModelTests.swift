@@ -163,6 +163,55 @@ struct AddRecordViewModelTests {
         #expect(records[0].monetaryAmount == 600)
     }
 
+    @Test func saveEditModePreservesExistingDirectionWhenEventIsUnchanged() throws {
+        let db = try TestDB()
+        let contact = SampleData.contact()
+        let event = SampleData.event(hostMode: .host)
+        db.context.insert(contact)
+        db.context.insert(event)
+        let record = SampleData.record(contact: contact, event: event, amount: 500, direction: .given)
+        db.context.insert(record)
+        try db.context.save()
+
+        let vm = AddRecordViewModel()
+        vm.loadData(context: db.context)
+        vm.configure(with: record)
+        vm.monetaryAmount = "600"
+
+        #expect(vm.direction == .given)
+        #expect(vm.save(context: db.context) == true)
+
+        let records = try db.context.fetch(FetchDescriptor<Record>())
+        #expect(records.count == 1)
+        #expect(records[0].direction == .given)
+        #expect(records[0].monetaryAmount == 600)
+    }
+
+    @Test func saveEditModeUsesUserSelectedDirectionForDailyRecord() throws {
+        let db = try TestDB()
+        let contact = SampleData.contact()
+        db.context.insert(contact)
+
+        let record = SampleData.record(contact: contact, event: nil, amount: 500, direction: .given)
+        record.contextTag = "节日看望"
+        db.context.insert(record)
+        try db.context.save()
+
+        let vm = AddRecordViewModel()
+        vm.loadData(context: db.context)
+        vm.configure(with: record)
+        vm.direction = .received
+        vm.monetaryAmount = "600"
+
+        #expect(vm.save(context: db.context) == true)
+
+        let records = try db.context.fetch(FetchDescriptor<Record>())
+        #expect(records.count == 1)
+        #expect(records[0].direction == .received)
+        #expect(records[0].contextTag == "节日看望")
+        #expect(records[0].monetaryAmount == 600)
+    }
+
     @Test func saveBanquetRecord() throws {
         let db = try TestDB()
         let contact = SampleData.contact()
@@ -225,6 +274,118 @@ struct AddRecordViewModelTests {
 
         #expect(vm.allContacts.count == 2)
         #expect(vm.allEvents.count == 1)
+    }
+
+    @Test func configureWithEventPrefillsEventAndDirection() throws {
+        let db = try TestDB()
+        let event = SampleData.event(hostMode: .host)
+        db.context.insert(event)
+        try db.context.save()
+
+        let vm = AddRecordViewModel()
+        vm.loadData(context: db.context)
+        vm.configure(direction: .received, contactID: nil, eventID: event.persistentModelID, context: db.context)
+
+        #expect(vm.selectedEvent?.persistentModelID == event.persistentModelID)
+        #expect(vm.direction == .received)
+        #expect(vm.contextSelection == .event)
+    }
+
+    @Test func selectingGuestEventLocksDirectionToGiven() throws {
+        let db = try TestDB()
+        let event = SampleData.event(hostMode: .guest)
+        db.context.insert(event)
+        try db.context.save()
+
+        let vm = AddRecordViewModel()
+        vm.direction = .received
+
+        vm.selectEvent(event)
+
+        #expect(vm.selectedEvent?.persistentModelID == event.persistentModelID)
+        #expect(vm.contextSelection == .event)
+        #expect(vm.direction == .given)
+        #expect(vm.isDirectionLockedBySelectedEvent == true)
+    }
+
+    @Test func savingHostEventForcesReceivedDirection() throws {
+        let db = try TestDB()
+        let contact = SampleData.contact()
+        let event = SampleData.event(hostMode: .host)
+        db.context.insert(contact)
+        db.context.insert(event)
+        try db.context.save()
+
+        let vm = AddRecordViewModel()
+        vm.loadData(context: db.context)
+        vm.selectedContact = contact
+        vm.selectEvent(event)
+        vm.direction = .given
+        vm.monetaryAmount = "666"
+
+        #expect(vm.save(context: db.context) == true)
+
+        let records = try db.context.fetch(FetchDescriptor<Record>())
+        #expect(records.count == 1)
+        #expect(records[0].direction == .received)
+    }
+
+    @Test func savingGuestEventForcesGivenDirection() throws {
+        let db = try TestDB()
+        let contact = SampleData.contact()
+        let event = SampleData.event(hostMode: .guest)
+        db.context.insert(contact)
+        db.context.insert(event)
+        try db.context.save()
+
+        let vm = AddRecordViewModel()
+        vm.loadData(context: db.context)
+        vm.selectedContact = contact
+        vm.selectEvent(event)
+        vm.direction = .received
+        vm.monetaryAmount = "520"
+
+        #expect(vm.save(context: db.context) == true)
+
+        let records = try db.context.fetch(FetchDescriptor<Record>())
+        #expect(records.count == 1)
+        #expect(records[0].direction == .given)
+    }
+
+    @Test func ledgerReceiptViewModelPrefillsLockedReceiptContext() throws {
+        let db = try TestDB()
+        let event = SampleData.event(hostMode: .host)
+        db.context.insert(event)
+        try db.context.save()
+
+        let vm = AddLedgerReceiptViewModel(eventID: event.persistentModelID)
+        vm.load(context: db.context)
+
+        #expect(vm.selectedEvent?.persistentModelID == event.persistentModelID)
+        #expect(vm.direction == .received)
+        #expect(vm.recordType == .monetary)
+        #expect(vm.contextSelection == .event)
+    }
+
+    @Test func resetForContinuousEntryPreservesEventAndPaymentMethod() {
+        let event = SampleData.event(hostMode: .host)
+        let contact = SampleData.contact()
+        let vm = AddRecordViewModel()
+        vm.selectedEvent = event
+        vm.selectedContact = contact
+        vm.direction = .received
+        vm.monetaryPaymentMethod = .wechat
+        vm.monetaryAmount = "888"
+        vm.note = "测试"
+
+        vm.resetForContinuousEntry()
+
+        #expect(vm.selectedEvent?.persistentModelID == event.persistentModelID)
+        #expect(vm.selectedContact == nil)
+        #expect(vm.direction == .received)
+        #expect(vm.monetaryPaymentMethod == .wechat)
+        #expect(vm.monetaryAmount.isEmpty)
+        #expect(vm.note.isEmpty)
     }
 
     @Test func saveRecordCompressesNewPhotoData() throws {

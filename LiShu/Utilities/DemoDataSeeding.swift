@@ -269,14 +269,14 @@ enum DemoDataSeeding {
 
     private static func demoEventTitle(for type: EventType) -> String {
         switch type {
-        case .wedding: "张伟的婚礼"
+        case .wedding: "我的婚礼"
         case .engagement: "表妹订婚酒"
         case .funeral: "陈明之父丧事"
-        case .birth: "刘芳宝宝满月"
+        case .birth: "宝宝满月酒"
         case .birthday: "吴刚生日聚餐"
-        case .longevity: "李娜六十大寿"
+        case .longevity: "父亲寿宴"
         case .festival: "春节聚会"
-        case .property: "王强乔迁新居"
+        case .property: "乔迁家宴"
         case .education: "黄杰孩子升学宴"
         case .business: "朋友新店开业"
         case .promotion: "同事晋升答谢"
@@ -287,14 +287,14 @@ enum DemoDataSeeding {
 
     private static func demoEventLocation(for type: EventType) -> String {
         switch type {
-        case .wedding: "北京国贸大酒店"
+        case .wedding: "上海静安瑞吉酒店"
         case .engagement: "杭州"
         case .funeral: "深圳南山殡仪馆"
-        case .birth: "广州天河"
+        case .birth: "上海虹桥喜来登"
         case .birthday: "北京三里屯"
-        case .longevity: "上海外滩花园"
+        case .longevity: "苏州金鸡湖国宾馆"
         case .festival: "老家"
-        case .property: "上海浦东"
+        case .property: "上海浦东前滩"
         case .education: "重庆解放碑"
         case .business: "深圳南山"
         case .promotion: "北京国贸"
@@ -307,21 +307,59 @@ enum DemoDataSeeding {
         let now = Date.now
         let calendar = Calendar.current
 
-        func date(byAddingMonths months: Int, day: Int = 15) -> Date {
-            var comps = calendar.dateComponents([.year, .month], from: now)
-            comps.month = (comps.month ?? 1) + months
-            comps.day = day
-            return calendar.date(from: comps) ?? now
+        func date(daysFromNow days: Int, hour: Int = 12, minute: Int = 0) -> Date {
+            let day = calendar.date(byAdding: .day, value: days, to: now) ?? now
+            return calendar.date(bySettingHour: hour, minute: minute, second: 0, of: day) ?? day
         }
 
         return EventType.allCases.enumerated().map { idx, type in
-            let day = min(8 + idx, 28)
-            return Event(
-                name: demoEventTitle(for: type),
-                type: type,
-                date: date(byAddingMonths: -11 + idx, day: day),
-                location: demoEventLocation(for: type)
-            )
+            let defaultDate = date(daysFromNow: -320 + idx * 26)
+            switch type {
+            case .wedding:
+                return Event(
+                    name: demoEventTitle(for: type),
+                    type: type,
+                    hostMode: .host,
+                    date: date(daysFromNow: 7, hour: 12),
+                    location: demoEventLocation(for: type),
+                    note: "主场礼簿示例：午宴，酒店三楼星河厅"
+                )
+            case .birth:
+                return Event(
+                    name: demoEventTitle(for: type),
+                    type: type,
+                    hostMode: .host,
+                    date: date(daysFromNow: -68, hour: 11),
+                    location: demoEventLocation(for: type),
+                    note: "主场礼簿示例：满月答谢，亲友午宴"
+                )
+            case .longevity:
+                return Event(
+                    name: demoEventTitle(for: type),
+                    type: type,
+                    hostMode: .host,
+                    date: date(daysFromNow: -156, hour: 18),
+                    location: demoEventLocation(for: type),
+                    note: "主场礼簿示例：父亲七十大寿，晚宴六桌"
+                )
+            case .property:
+                return Event(
+                    name: demoEventTitle(for: type),
+                    type: type,
+                    hostMode: .host,
+                    date: date(daysFromNow: 46, hour: 18),
+                    location: demoEventLocation(for: type),
+                    note: "主场礼簿示例：新房暖居，暂未开始记礼"
+                )
+            default:
+                return Event(
+                    name: demoEventTitle(for: type),
+                    type: type,
+                    hostMode: .guest,
+                    date: defaultDate,
+                    location: demoEventLocation(for: type)
+                )
+            }
         }
     }
 
@@ -365,9 +403,20 @@ enum DemoDataSeeding {
         guard contacts.count >= 12, events.count >= EventType.allCases.count else { return [] }
 
         let c = contacts
+        let calendar = Calendar.current
+
+        func date(daysFromToday days: Int, hour: Int, minute: Int) -> Date {
+            let day = calendar.date(byAdding: .day, value: days, to: Date.now) ?? Date.now
+            return calendar.date(bySettingHour: hour, minute: minute, second: 0, of: day) ?? day
+        }
+
+        func date(around eventDate: Date, daysOffset: Int = 0, hour: Int, minute: Int) -> Date {
+            let day = calendar.date(byAdding: .day, value: daysOffset, to: eventDate) ?? eventDate
+            return calendar.date(bySettingHour: hour, minute: minute, second: 0, of: day) ?? day
+        }
+
         let w = firstEvent(.wedding, in: events)
         let long = firstEvent(.longevity, in: events)
-        let prop = firstEvent(.property, in: events)
         let birth = firstEvent(.birth, in: events)
         let fun = firstEvent(.funeral, in: events)
         let fest = firstEvent(.festival, in: events)
@@ -379,85 +428,274 @@ enum DemoDataSeeding {
 
         let monetaryRecords: [Record] = [
             makeRecord(
+                contact: c[1],
+                event: w,
+                direction: .received,
+                note: "改口红包，上午先转来",
+                date: date(daysFromToday: -1, hour: 9, minute: 12),
+                recordType: .monetary,
+                relationshipWeight: .profound,
+                typeData: .monetary(MonetaryData(amount: 6600, paymentMethod: PaymentMethod.wechat.rawValue, returnedAmount: 0))
+            ),
+            makeRecord(
+                contact: c[2],
+                event: w,
+                direction: .received,
+                note: "和母亲一起到场，另带了整套床品",
+                date: date(daysFromToday: -1, hour: 9, minute: 20),
+                recordType: .monetary,
+                relationshipWeight: .profound,
+                typeData: .monetary(MonetaryData(amount: 8800, paymentMethod: PaymentMethod.cash.rawValue, returnedAmount: 0))
+            ),
+            makeRecord(
+                contact: c[3],
+                event: w,
+                direction: .received,
+                note: "姐妹团一起封的红包",
+                date: date(daysFromToday: -1, hour: 10, minute: 15),
+                recordType: .monetary,
+                relationshipWeight: .support,
+                typeData: .monetary(MonetaryData(amount: 2000, paymentMethod: PaymentMethod.alipay.rawValue, returnedAmount: 0))
+            ),
+            makeRecord(
                 contact: c[4],
                 event: w,
                 direction: .received,
-                note: "",
-                date: w.date,
+                note: "夫妻同到，代外婆也封了一份",
+                date: date(daysFromToday: -1, hour: 10, minute: 42),
                 recordType: .monetary,
-                typeData: .monetary(MonetaryData(amount: 2000, paymentMethod: PaymentMethod.wechat.rawValue, returnedAmount: 0))
+                relationshipWeight: .support,
+                typeData: .monetary(MonetaryData(amount: 3000, paymentMethod: PaymentMethod.wechat.rawValue, returnedAmount: 0))
             ),
             makeRecord(
                 contact: c[5],
                 event: w,
                 direction: .received,
-                note: "",
-                date: w.date,
+                note: "夫妻同到，另外送来一对喜庆摆件",
+                date: date(daysFromToday: -1, hour: 11, minute: 6),
                 recordType: .monetary,
-                typeData: .monetary(MonetaryData(amount: 1000, paymentMethod: PaymentMethod.cash.rawValue, returnedAmount: 0))
+                relationshipWeight: .support,
+                typeData: .monetary(MonetaryData(amount: 2600, paymentMethod: PaymentMethod.cash.rawValue, returnedAmount: 0))
+            ),
+            makeRecord(
+                contact: c[6],
+                event: w,
+                direction: .received,
+                note: "表兄弟一家三口到场",
+                date: date(daysFromToday: -1, hour: 11, minute: 24),
+                recordType: .monetary,
+                relationshipWeight: .reciprocal,
+                typeData: .monetary(MonetaryData(amount: 1800, paymentMethod: PaymentMethod.wechat.rawValue, returnedAmount: 0))
+            ),
+            makeRecord(
+                contact: c[7],
+                event: w,
+                direction: .received,
+                note: "代舅妈一起送来",
+                date: date(daysFromToday: -1, hour: 11, minute: 40),
+                recordType: .monetary,
+                relationshipWeight: .reciprocal,
+                typeData: .monetary(MonetaryData(amount: 1600, paymentMethod: PaymentMethod.alipay.rawValue, returnedAmount: 0))
             ),
             makeRecord(
                 contact: c[8],
                 event: w,
                 direction: .received,
-                note: "",
-                date: w.date,
+                note: "项目组同事代表，微信转来",
+                date: date(daysFromToday: 0, hour: 9, minute: 36),
                 recordType: .monetary,
-                typeData: .monetary(MonetaryData(amount: 600, paymentMethod: PaymentMethod.alipay.rawValue, returnedAmount: 0))
+                relationshipWeight: .reciprocal,
+                typeData: .monetary(MonetaryData(amount: 1200, paymentMethod: PaymentMethod.wechat.rawValue, returnedAmount: 0))
             ),
             makeRecord(
                 contact: c[9],
                 event: w,
                 direction: .received,
-                note: "",
-                date: w.date,
+                note: "大学同学群里先转账祝福",
+                date: date(daysFromToday: 0, hour: 10, minute: 8),
                 recordType: .monetary,
-                typeData: .monetary(MonetaryData(amount: 500, paymentMethod: PaymentMethod.wechat.rawValue, returnedAmount: 0))
+                relationshipWeight: .reciprocal,
+                typeData: .monetary(MonetaryData(amount: 1000, paymentMethod: PaymentMethod.wechat.rawValue, returnedAmount: 0))
             ),
             makeRecord(
                 contact: c[10],
                 event: w,
                 direction: .received,
-                note: "",
-                date: w.date,
+                note: "老同学到场，另送香槟两瓶",
+                date: date(daysFromToday: 0, hour: 10, minute: 42),
                 recordType: .monetary,
-                typeData: .monetary(MonetaryData(amount: 800, paymentMethod: PaymentMethod.cash.rawValue, returnedAmount: 0))
+                relationshipWeight: .support,
+                typeData: .monetary(MonetaryData(amount: 1500, paymentMethod: PaymentMethod.cash.rawValue, returnedAmount: 0))
             ),
             makeRecord(
                 contact: c[11],
                 event: w,
                 direction: .received,
-                note: "送了一套餐具",
-                date: w.date,
+                note: "邻居阿姨临时上门送来，另附餐具一套",
+                date: date(daysFromToday: 0, hour: 11, minute: 3),
                 recordType: .monetary,
-                typeData: .monetary(MonetaryData(amount: 200, paymentMethod: PaymentMethod.cash.rawValue, returnedAmount: 0))
+                relationshipWeight: .kindness,
+                typeData: .monetary(MonetaryData(amount: 800, paymentMethod: PaymentMethod.cash.rawValue, returnedAmount: 0))
+            ),
+            makeRecord(
+                contact: c[12],
+                event: w,
+                direction: .received,
+                note: "部门同事一起拼的红包",
+                date: date(daysFromToday: 0, hour: 11, minute: 18),
+                recordType: .monetary,
+                relationshipWeight: .reciprocal,
+                typeData: .monetary(MonetaryData(amount: 1000, paymentMethod: PaymentMethod.alipay.rawValue, returnedAmount: 0))
+            ),
+            makeRecord(
+                contact: c[13],
+                event: w,
+                direction: .received,
+                note: "表妹提前转来，婚礼当天到不了",
+                date: date(daysFromToday: 0, hour: 13, minute: 6),
+                recordType: .monetary,
+                relationshipWeight: .reciprocal,
+                typeData: .monetary(MonetaryData(amount: 1200, paymentMethod: PaymentMethod.wechat.rawValue, returnedAmount: 0))
+            ),
+            makeRecord(
+                contact: c[14],
+                event: w,
+                direction: .received,
+                note: "合作伙伴到场，备注写了开门红",
+                date: date(daysFromToday: 0, hour: 13, minute: 22),
+                recordType: .monetary,
+                relationshipWeight: .support,
+                typeData: .monetary(MonetaryData(amount: 2000, paymentMethod: PaymentMethod.alipay.rawValue, returnedAmount: 0))
+            ),
+            makeRecord(
+                contact: c[15],
+                event: w,
+                direction: .received,
+                note: "远房亲戚代舅妈送来",
+                date: date(daysFromToday: 0, hour: 14, minute: 2),
+                recordType: .monetary,
+                relationshipWeight: .kindness,
+                typeData: .monetary(MonetaryData(amount: 600, paymentMethod: PaymentMethod.wechat.rawValue, returnedAmount: 0))
+            ),
+            makeRecord(
+                contact: c[4],
+                event: birth,
+                direction: .received,
+                note: "舅舅一家到场，另带婴儿车配件",
+                date: date(around: birth.date, hour: 10, minute: 8),
+                recordType: .monetary,
+                relationshipWeight: .support,
+                typeData: .monetary(MonetaryData(amount: 1800, paymentMethod: PaymentMethod.cash.rawValue, returnedAmount: 0))
+            ),
+            makeRecord(
+                contact: c[5],
+                event: birth,
+                direction: .received,
+                note: "姑姑送来红包和金锁",
+                date: date(around: birth.date, hour: 10, minute: 20),
+                recordType: .monetary,
+                relationshipWeight: .support,
+                typeData: .monetary(MonetaryData(amount: 1600, paymentMethod: PaymentMethod.wechat.rawValue, returnedAmount: 0))
+            ),
+            makeRecord(
+                contact: c[6],
+                event: birth,
+                direction: .received,
+                note: "表兄弟一家三口到场",
+                date: date(around: birth.date, hour: 10, minute: 36),
+                recordType: .monetary,
+                relationshipWeight: .reciprocal,
+                typeData: .monetary(MonetaryData(amount: 1200, paymentMethod: PaymentMethod.alipay.rawValue, returnedAmount: 0))
+            ),
+            makeRecord(
+                contact: c[7],
+                event: birth,
+                direction: .received,
+                note: "堂妹从苏州赶来",
+                date: date(around: birth.date, hour: 10, minute: 48),
+                recordType: .monetary,
+                relationshipWeight: .reciprocal,
+                typeData: .monetary(MonetaryData(amount: 1000, paymentMethod: PaymentMethod.wechat.rawValue, returnedAmount: 0))
+            ),
+            makeRecord(
+                contact: c[10],
+                event: birth,
+                direction: .received,
+                note: "老同学送来奶粉红包",
+                date: date(around: birth.date, hour: 11, minute: 5),
+                recordType: .monetary,
+                relationshipWeight: .kindness,
+                typeData: .monetary(MonetaryData(amount: 800, paymentMethod: PaymentMethod.cash.rawValue, returnedAmount: 0))
+            ),
+            makeRecord(
+                contact: c[11],
+                event: birth,
+                direction: .received,
+                note: "邻居阿姨送来红包和婴儿衣服",
+                date: date(around: birth.date, hour: 11, minute: 16),
+                recordType: .monetary,
+                relationshipWeight: .kindness,
+                typeData: .monetary(MonetaryData(amount: 600, paymentMethod: PaymentMethod.cash.rawValue, returnedAmount: 0))
+            ),
+            makeRecord(
+                contact: c[12],
+                event: birth,
+                direction: .received,
+                note: "同事拼单红包",
+                date: date(around: birth.date, hour: 11, minute: 30),
+                recordType: .monetary,
+                relationshipWeight: .reciprocal,
+                typeData: .monetary(MonetaryData(amount: 1000, paymentMethod: PaymentMethod.alipay.rawValue, returnedAmount: 0))
             ),
             makeRecord(
                 contact: c[1],
                 event: long,
-                direction: .given,
-                note: "",
-                date: long.date,
+                direction: .received,
+                note: "寿宴主桌红包",
+                date: date(around: long.date, hour: 17, minute: 10),
                 recordType: .monetary,
-                typeData: .monetary(MonetaryData(amount: 5000, paymentMethod: PaymentMethod.cash.rawValue, returnedAmount: 0))
+                relationshipWeight: .profound,
+                typeData: .monetary(MonetaryData(amount: 3000, paymentMethod: PaymentMethod.cash.rawValue, returnedAmount: 0))
+            ),
+            makeRecord(
+                contact: c[4],
+                event: long,
+                direction: .received,
+                note: "舅舅一家到场",
+                date: date(around: long.date, hour: 17, minute: 25),
+                recordType: .monetary,
+                relationshipWeight: .support,
+                typeData: .monetary(MonetaryData(amount: 2000, paymentMethod: PaymentMethod.wechat.rawValue, returnedAmount: 0))
             ),
             makeRecord(
                 contact: c[5],
                 event: long,
-                direction: .given,
-                note: "",
-                date: long.date,
+                direction: .received,
+                note: "姑姑封礼，另带寿桃",
+                date: date(around: long.date, hour: 17, minute: 40),
                 recordType: .monetary,
-                typeData: .monetary(MonetaryData(amount: 1000, paymentMethod: PaymentMethod.wechat.rawValue, returnedAmount: 0))
+                relationshipWeight: .support,
+                typeData: .monetary(MonetaryData(amount: 1800, paymentMethod: PaymentMethod.cash.rawValue, returnedAmount: 0))
             ),
             makeRecord(
-                contact: c[2],
-                event: prop,
-                direction: .given,
-                note: "",
-                date: prop.date,
+                contact: c[8],
+                event: long,
+                direction: .received,
+                note: "同事代团队送来",
+                date: date(around: long.date, hour: 18, minute: 5),
                 recordType: .monetary,
-                typeData: .monetary(MonetaryData(amount: 2000, paymentMethod: PaymentMethod.alipay.rawValue, returnedAmount: 0))
+                relationshipWeight: .kindness,
+                typeData: .monetary(MonetaryData(amount: 1000, paymentMethod: PaymentMethod.alipay.rawValue, returnedAmount: 0))
+            ),
+            makeRecord(
+                contact: c[10],
+                event: long,
+                direction: .received,
+                note: "老同学到场祝寿",
+                date: date(around: long.date, hour: 18, minute: 22),
+                recordType: .monetary,
+                relationshipWeight: .reciprocal,
+                typeData: .monetary(MonetaryData(amount: 1200, paymentMethod: PaymentMethod.wechat.rawValue, returnedAmount: 0))
             ),
             makeRecord(
                 contact: c[12],
@@ -469,19 +707,40 @@ enum DemoDataSeeding {
                 typeData: .monetary(MonetaryData(amount: 888, paymentMethod: PaymentMethod.wechat.rawValue, returnedAmount: 0))
             ),
             makeRecord(
-                contact: c[3],
-                event: birth,
+                contact: c[1],
+                event: fun,
                 direction: .given,
-                note: "",
-                date: birth.date,
+                note: "陪母亲去吊唁时一起包了白包",
+                date: fun.date,
                 recordType: .monetary,
-                typeData: .monetary(MonetaryData(amount: 1600, paymentMethod: PaymentMethod.cash.rawValue, returnedAmount: 0))
+                relationshipWeight: .support,
+                typeData: .monetary(MonetaryData(amount: 2000, paymentMethod: PaymentMethod.cash.rawValue, returnedAmount: 0))
+            ),
+            makeRecord(
+                contact: c[4],
+                event: edu,
+                direction: .given,
+                note: "孩子升学封礼，后面对方回了一部分",
+                date: edu.date,
+                recordType: .monetary,
+                relationshipWeight: .reciprocal,
+                typeData: .monetary(MonetaryData(amount: 1200, paymentMethod: PaymentMethod.wechat.rawValue, returnedAmount: 400))
+            ),
+            makeRecord(
+                contact: c[8],
+                event: promotion,
+                direction: .given,
+                note: "晋升答谢时先包了红包，后来对方回礼结清",
+                date: promotion.date,
+                recordType: .monetary,
+                relationshipWeight: .reciprocal,
+                typeData: .monetary(MonetaryData(amount: 600, paymentMethod: PaymentMethod.alipay.rawValue, returnedAmount: 600))
             ),
             makeRecord(
                 contact: c[4],
                 event: fun,
                 direction: .given,
-                note: "",
+                note: "白事随礼",
                 date: fun.date,
                 recordType: .monetary,
                 typeData: .monetary(MonetaryData(amount: 1000, paymentMethod: PaymentMethod.cash.rawValue, returnedAmount: 0))
@@ -514,29 +773,22 @@ enum DemoDataSeeding {
                 typeData: .monetary(MonetaryData(amount: 600, paymentMethod: PaymentMethod.wechat.rawValue, returnedAmount: 0))
             ),
             makeRecord(
-                contact: c[8],
-                event: long,
-                direction: .given,
-                note: "",
-                date: long.date,
-                recordType: .monetary,
-                typeData: .monetary(MonetaryData(amount: 800, paymentMethod: PaymentMethod.cash.rawValue, returnedAmount: 300))
-            ),
-            makeRecord(
                 contact: c[10],
-                event: prop,
+                event: nil,
                 direction: .given,
-                note: "",
-                date: prop.date,
+                note: "项目收尾后给团队负责人回礼",
+                contextTag: "项目回礼",
+                date: business.date,
                 recordType: .monetary,
-                typeData: .monetary(MonetaryData(amount: 500, paymentMethod: PaymentMethod.wechat.rawValue, returnedAmount: 500))
+                relationshipWeight: .reciprocal,
+                typeData: .monetary(MonetaryData(amount: 800, paymentMethod: PaymentMethod.cash.rawValue, returnedAmount: 300))
             ),
             makeRecord(
                 contact: c[0],
                 event: w,
                 direction: .given,
-                note: "婚礼份子钱",
-                date: w.date,
+                note: "婚礼预算预留，给伴侣侧家里礼尚往来先记一笔",
+                date: date(daysFromToday: -2, hour: 16, minute: 20),
                 recordType: .monetary,
                 typeData: .monetary(MonetaryData(amount: 10000, paymentMethod: PaymentMethod.cash.rawValue, returnedAmount: 0))
             ),
@@ -560,11 +812,13 @@ enum DemoDataSeeding {
             ),
             makeRecord(
                 contact: c[5],
-                event: birth,
+                event: nil,
                 direction: .given,
-                note: "",
-                date: birth.date,
+                note: "端午前寄去红包和粽子礼盒",
+                contextTag: "节礼往来",
+                date: date(daysFromToday: -25, hour: 18, minute: 10),
                 recordType: .monetary,
+                relationshipWeight: .reciprocal,
                 typeData: .monetary(MonetaryData(amount: 800, paymentMethod: PaymentMethod.cash.rawValue, returnedAmount: 0))
             ),
             makeRecord(
@@ -601,6 +855,16 @@ enum DemoDataSeeding {
                 recordType: .gift,
                 relationshipWeight: .kindness,
                 typeData: .gift(GiftData(giftName: "茶叶礼盒", estimatedValue: 368))
+            ),
+            makeRecord(
+                contact: c[12],
+                event: birth,
+                direction: .received,
+                note: "满月当天同事送来婴儿礼盒",
+                date: date(around: birth.date, hour: 11, minute: 42),
+                recordType: .gift,
+                relationshipWeight: .kindness,
+                typeData: .gift(GiftData(giftName: "婴儿洗护礼盒", estimatedValue: 399))
             ),
             makeRecord(
                 contact: c[6],
@@ -649,15 +913,14 @@ enum DemoDataSeeding {
                 typeData: .favor(FavorData(description: "临时帮忙接孩子放学并送回家"))
             ),
             makeRecord(
-                contact: c[10],
-                event: nil,
+                contact: c[3],
+                event: long,
                 direction: .received,
-                note: "装修期间帮忙盯工",
-                contextTag: "帮忙盯工",
-                date: prop.date,
+                note: "寿宴前一天帮忙接待亲友",
+                date: date(around: long.date, daysOffset: -1, hour: 15, minute: 30),
                 recordType: .favor,
                 relationshipWeight: .profound,
-                typeData: .favor(FavorData(description: "连续两天帮忙协调师傅进场，还代收了快递和建材"))
+                typeData: .favor(FavorData(description: "提前半天到场盯台卡、分伴手礼并协助安排老人入席"))
             ),
             makeRecord(
                 contact: c[4],

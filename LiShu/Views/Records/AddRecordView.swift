@@ -12,14 +12,22 @@ struct AddRecordView: View {
     @State private var contactIDsBeforeAddSheet: Set<PersistentIdentifier> = []
     @State private var eventIDsBeforeCreation: Set<PersistentIdentifier> = []
     @State private var selectedPhotoItems: [PhotosPickerItem] = []
+    @State private var continuousSaveMessage: String?
 
     var direction: RecordDirection?
     var contactID: PersistentIdentifier?
+    var eventID: PersistentIdentifier?
     var recordID: PersistentIdentifier?
 
-    init(direction: RecordDirection? = nil, contactID: PersistentIdentifier? = nil, recordID: PersistentIdentifier? = nil) {
+    init(
+        direction: RecordDirection? = nil,
+        contactID: PersistentIdentifier? = nil,
+        eventID: PersistentIdentifier? = nil,
+        recordID: PersistentIdentifier? = nil
+    ) {
         self.direction = direction
         self.contactID = contactID
+        self.eventID = eventID
         self.recordID = recordID
     }
 
@@ -27,7 +35,7 @@ struct AddRecordView: View {
         addRecordScrollView
             .background(DesignSystem.Colors.bgPage)
             .navigationTitle(viewModel
-                .editingRecord != nil ? String(localized: "record.edit.title") : String(localized: "record.add.navTitle"))
+                .editingRecord != nil ? String(localized: "record.edit.title") : viewModel.navigationTitle)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { addRecordToolbarContent }
             .onAppear(perform: onAppear)
@@ -79,12 +87,22 @@ struct AddRecordView: View {
 
     private var addRecordFormStack: some View {
         VStack(spacing: DesignSystem.Spacing.section) {
+            if let message = continuousSaveMessage {
+                inlineSuccessBanner(message)
+            }
+            if viewModel.selectedEvent != nil, viewModel.contextSelection == .event {
+                currentEventSection
+            }
             contactIdentitySection
             recordTypeGrid
-            contextSelectionSection
+            if !locksContextToInitialEvent {
+                contextSelectionSection
+            }
             if viewModel.contextSelection == .event {
-                eventSection
-            } else {
+                if !locksContextToInitialEvent {
+                    eventSection
+                }
+            } else if viewModel.contextSelection == .daily {
                 dailyTagSection
             }
             interactionFormSection
@@ -110,7 +128,7 @@ struct AddRecordView: View {
 
         ToolbarItem(placement: .topBarTrailing) {
             Button(String(localized: "common.save")) {
-                saveRecord()
+                saveRecord(andContinue: false)
             }
             .foregroundStyle(viewModel.isValid ? DesignSystem.Colors.primary : DesignSystem.Colors.textTertiary)
             .disabled(!viewModel.isValid)
@@ -123,8 +141,74 @@ struct AddRecordView: View {
         if let recordID, let record = modelContext.model(for: recordID) as? Record {
             viewModel.configure(with: record)
         } else {
-            viewModel.configure(direction: direction, contactID: contactID, context: modelContext)
+            viewModel.configure(direction: direction, contactID: contactID, eventID: eventID, context: modelContext)
         }
+    }
+
+    private func inlineSuccessBanner(_ message: String) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: "checkmark.circle.fill")
+                .foregroundStyle(DesignSystem.Colors.primary)
+            Text(message)
+                .font(DesignSystem.Typography.caption)
+                .foregroundStyle(DesignSystem.Colors.textPrimary)
+            Spacer()
+        }
+        .padding(12)
+        .background(DesignSystem.Colors.bgSurface)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.input))
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignSystem.Radius.input)
+                .stroke(DesignSystem.Colors.border, lineWidth: 1)
+        )
+    }
+
+    private var currentEventSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(currentEventSectionTitle)
+                .font(DesignSystem.Typography.caption)
+                .foregroundStyle(DesignSystem.Colors.textSecondary)
+                .fontWeight(.semibold)
+
+            if let selectedEvent = viewModel.selectedEvent {
+                HStack(spacing: 12) {
+                    Image(systemName: selectedEvent.type.iconName)
+                        .font(DesignSystem.Typography.caption)
+                        .foregroundStyle(DesignSystem.Colors.primary)
+                        .frame(width: 40, height: 40)
+                        .background(DesignSystem.Colors.bgIconSubtle)
+                        .clipShape(Circle())
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(selectedEvent.name)
+                            .font(DesignSystem.Typography.body)
+                            .foregroundStyle(DesignSystem.Colors.textPrimary)
+                            .fontWeight(.semibold)
+
+                        Text(selectedEvent.type.displayName + " · " + formattedEventDate(selectedEvent.date))
+                            .font(DesignSystem.Typography.small)
+                            .foregroundStyle(DesignSystem.Colors.textSecondary)
+                    }
+
+                    Spacer()
+                }
+                .padding(14)
+                .background(DesignSystem.Colors.bgSurface)
+                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+                .overlay(
+                    RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
+                        .stroke(DesignSystem.Colors.border, lineWidth: 1)
+                )
+            }
+        }
+    }
+
+    private var currentEventSectionTitle: String {
+        String(localized: "record.add.currentEvent")
+    }
+
+    private var locksContextToInitialEvent: Bool {
+        recordID == nil && eventID != nil
     }
 
     // MARK: - Contact Identity Section
@@ -354,66 +438,15 @@ struct AddRecordView: View {
 
     private var interactionFormSection: some View {
         VStack(spacing: 16) {
-            directionToggle
+            if !viewModel.isDirectionLockedBySelectedEvent {
+                directionToggle
+            }
             typeSpecificSection
         }
     }
 
     private var relationshipWeightSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text(String(localized: "record.add.relationshipWeight"))
-                .font(DesignSystem.Typography.caption)
-                .foregroundStyle(DesignSystem.Colors.textSecondary)
-                .fontWeight(.semibold)
-
-            Text(String(localized: "record.add.relationshipWeight.description"))
-                .font(DesignSystem.Typography.small)
-                .foregroundStyle(DesignSystem.Colors.textTertiary)
-                .fixedSize(horizontal: false, vertical: true)
-
-            VStack(spacing: 12) {
-                GeometryReader { geometry in
-                    ZStack(alignment: .leading) {
-                        Capsule()
-                            .fill(DesignSystem.Colors.bgInput)
-                            .frame(height: 8)
-
-                        Capsule()
-                            .fill(DesignSystem.Colors.primary.opacity(0.18))
-                            .frame(width: relationshipWeightProgressWidth(totalWidth: geometry.size.width), height: 8)
-
-                        HStack(spacing: 0) {
-                            ForEach(RelationshipWeight.allCases, id: \.rawValue) { weight in
-                                relationshipWeightButton(weight)
-                            }
-                        }
-                    }
-                }
-                .frame(height: 32)
-
-                HStack(alignment: .top, spacing: 0) {
-                    ForEach(RelationshipWeight.allCases, id: \.rawValue) { weight in
-                        Text(weight.displayName)
-                            .font(DesignSystem.Typography.small)
-                            .foregroundStyle(
-                                viewModel.relationshipWeight == weight
-                                    ? DesignSystem.Colors.textPrimary
-                                    : DesignSystem.Colors.textTertiary
-                            )
-                            .fontWeight(viewModel.relationshipWeight == weight ? .semibold : .medium)
-                            .multilineTextAlignment(.center)
-                            .frame(maxWidth: .infinity)
-                    }
-                }
-            }
-            .padding(16)
-            .background(DesignSystem.Colors.bgSurface)
-            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
-            .overlay(
-                RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
-                    .stroke(DesignSystem.Colors.border.opacity(0.3), lineWidth: 1)
-            )
-        }
+        RelationshipWeightSelector(selectedWeight: $viewModel.relationshipWeight)
     }
 
     private var contextSelectionSection: some View {
@@ -494,49 +527,10 @@ struct AddRecordView: View {
         .buttonStyle(.plain)
     }
 
-    private func relationshipWeightButton(_ weight: RelationshipWeight) -> some View {
-        Button {
-            withAnimation(.easeInOut(duration: 0.2)) {
-                viewModel.relationshipWeight = weight
-            }
-        } label: {
-            let isSelected = viewModel.relationshipWeight == weight
-            ZStack {
-                if isSelected {
-                    Circle()
-                        .fill(DesignSystem.Colors.bgSurface)
-                        .frame(width: 32, height: 32)
-                        .shadow(color: DesignSystem.Colors.primary.opacity(0.12), radius: 6, y: 2)
-                }
-
-                Circle()
-                    .fill(isSelected ? DesignSystem.Colors.primary : DesignSystem.Colors.bgSurface)
-                    .frame(width: isSelected ? 22 : 14, height: isSelected ? 22 : 14)
-                    .overlay(
-                        Circle()
-                            .stroke(
-                                isSelected ? DesignSystem.Colors.bgSurface : DesignSystem.Colors.border,
-                                lineWidth: isSelected ? 4 : 1
-                            )
-                    )
-            }
-            .frame(maxWidth: .infinity)
-            .frame(height: 32)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-    }
-
-    private func relationshipWeightProgressWidth(totalWidth: CGFloat) -> CGFloat {
-        let steps = max(RelationshipWeight.allCases.count - 1, 1)
-        let currentIndex = RelationshipWeight.allCases.firstIndex(of: viewModel.relationshipWeight) ?? 0
-        return (totalWidth / CGFloat(steps)) * CGFloat(currentIndex)
-    }
-
     private func contextButton(_ selection: RecordContextSelection, title: String) -> some View {
         Button {
             withAnimation(.easeInOut(duration: 0.2)) {
-                viewModel.contextSelection = selection
+                viewModel.setContextSelection(selection)
             }
         } label: {
             Text(title)
@@ -581,100 +575,12 @@ struct AddRecordView: View {
 
     private var monetaryFormSection: some View {
         VStack(spacing: 16) {
-            amountInputCard
-            paymentMethodSection
+            MonetaryAmountInputCard(
+                amount: $viewModel.monetaryAmount,
+                fieldAccessibilityIdentifier: "record.add.amountField"
+            )
+            PaymentMethodSelector(selectedMethod: $viewModel.monetaryPaymentMethod)
         }
-    }
-
-    private var amountInputCard: some View {
-        VStack(spacing: 16) {
-            HStack {
-                Text(String(localized: "record.add.amount"))
-                    .font(DesignSystem.Typography.caption)
-                    .foregroundStyle(DesignSystem.Colors.textSecondary)
-                    .fontWeight(.medium)
-                Spacer()
-            }
-            .padding(.bottom, -4)
-
-            // Amount input row
-            HStack(alignment: .firstTextBaseline, spacing: 6) {
-                Text("¥")
-                    .font(.system(size: 24, weight: .semibold))
-                    .foregroundStyle(DesignSystem.Colors.primary)
-
-                TextField("0.00", text: $viewModel.monetaryAmount)
-                    .font(.system(size: 36, weight: .bold))
-                    .foregroundStyle(DesignSystem.Colors.textPrimary)
-                    .keyboardType(.decimalPad)
-                    .accessibilityIdentifier("record.add.amountField")
-            }
-
-            // Suggestion hint
-            HStack(spacing: 6) {
-                Image(systemName: "info.circle")
-                    .font(.system(size: 13))
-                    .foregroundStyle(DesignSystem.Colors.primary.opacity(0.6))
-
-                Text(String(localized: "record.add.amountHint"))
-                    .font(DesignSystem.Typography.small)
-                    .foregroundStyle(DesignSystem.Colors.textSecondary)
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(DesignSystem.Colors.bgInput)
-            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.tag))
-        }
-        .padding(20)
-        .background(DesignSystem.Colors.bgSurface)
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
-        .overlay(
-            RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
-                .stroke(DesignSystem.Colors.border.opacity(0.3), lineWidth: 1)
-        )
-        .shadow(color: Color.black.opacity(0.03), radius: 4, y: 2)
-    }
-
-    private var paymentMethodSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(String(localized: "record.add.paymentMethod"))
-                .font(DesignSystem.Typography.small)
-                .foregroundStyle(DesignSystem.Colors.textTertiary)
-                .tracking(1)
-                .textCase(.uppercase)
-                .padding(.horizontal, 4)
-
-            HStack(spacing: 8) {
-                ForEach(PaymentMethod.allCases, id: \.self) { method in
-                    paymentMethodCapsule(method)
-                }
-                Spacer()
-            }
-        }
-    }
-
-    private func paymentMethodCapsule(_ method: PaymentMethod) -> some View {
-        let isSelected = viewModel.monetaryPaymentMethod == method
-        return Button {
-            viewModel.monetaryPaymentMethod = method
-        } label: {
-            Text(paymentMethodName(method))
-                .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(isSelected ? DesignSystem.Colors.textPrimary : DesignSystem.Colors.textSecondary)
-                .padding(.horizontal, 18)
-                .padding(.vertical, 8)
-                .background(isSelected ? DesignSystem.Colors.primary.opacity(0.08) : DesignSystem.Colors.bgSurface)
-                .clipShape(Capsule())
-                .overlay(
-                    Capsule()
-                        .stroke(
-                            isSelected ? DesignSystem.Colors.primary : DesignSystem.Colors.border.opacity(0.5),
-                            lineWidth: 1
-                        )
-                )
-        }
-        .buttonStyle(.plain)
     }
 
     // MARK: - Gift Form
@@ -836,67 +742,14 @@ struct AddRecordView: View {
     private var eventSection: some View {
         VStack(spacing: DesignSystem.Spacing.block) {
             if let event = viewModel.selectedEvent {
-                selectedEventCard(event)
+                RecordEventSummaryCard(
+                    title: String(localized: "record.add.relatedEvent"),
+                    event: event
+                )
             }
 
             eventScrollSelector
         }
-    }
-
-    private func selectedEventCard(_ event: Event) -> some View {
-        HStack(spacing: 12) {
-            HStack(spacing: 12) {
-                EventCoverView(
-                    coverImage: event.coverImage,
-                    eventType: event.type,
-                    size: 52,
-                    placeholderBackground: DesignSystem.Colors.bgSurface
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: DesignSystem.Radius.input)
-                        .stroke(DesignSystem.Colors.border, lineWidth: 1)
-                )
-
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(event.name)
-                        .font(DesignSystem.Typography.title3)
-                        .foregroundStyle(DesignSystem.Colors.textPrimary)
-                        .lineLimit(2)
-
-                    HStack(spacing: 8) {
-                        Text(event.type.displayName)
-                            .font(DesignSystem.Typography.small)
-                            .foregroundStyle(DesignSystem.Colors.primary)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 2)
-                            .background(DesignSystem.Colors.primary.opacity(0.1))
-                            .clipShape(Capsule())
-                            .overlay(
-                                Capsule()
-                                    .stroke(DesignSystem.Colors.primary.opacity(0.2), lineWidth: 1)
-                            )
-
-                        Text(formattedEventDate(event.date))
-                            .font(DesignSystem.Typography.small)
-                            .foregroundStyle(DesignSystem.Colors.textSecondary)
-                            .lineLimit(1)
-                    }
-
-                    Text(String(localized: "record.add.relatedEvent"))
-                        .font(DesignSystem.Typography.small)
-                        .foregroundStyle(DesignSystem.Colors.textTertiary)
-                }
-
-                Spacer()
-            }
-        }
-        .padding(14)
-        .background(DesignSystem.Colors.bgSurface)
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
-        .overlay(
-            RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
-                .stroke(DesignSystem.Colors.border, lineWidth: 1)
-        )
     }
 
     private var eventScrollSelector: some View {
@@ -941,7 +794,7 @@ struct AddRecordView: View {
         let isSelected = viewModel.selectedEvent?.persistentModelID == event.persistentModelID
         return Button {
             withAnimation(.easeInOut(duration: 0.2)) {
-                viewModel.selectedEvent = event
+                viewModel.selectEvent(event)
             }
         } label: {
             VStack(spacing: 6) {
@@ -1242,7 +1095,7 @@ struct AddRecordView: View {
     private var confirmButton: some View {
         VStack(spacing: 8) {
             Button {
-                saveRecord()
+                saveRecord(andContinue: false)
             } label: {
                 Text(viewModel.confirmButtonTitle)
             }
@@ -1273,7 +1126,7 @@ struct AddRecordView: View {
             !eventIDsBeforeCreation.contains(event.persistentModelID)
         }
         if let newestEvent = newEvents.max(by: { $0.createdAt < $1.createdAt }) {
-            viewModel.selectedEvent = newestEvent
+            viewModel.selectEvent(newestEvent)
         }
 
         eventIDsBeforeCreation = []
@@ -1299,21 +1152,31 @@ struct AddRecordView: View {
         return formatter.string(from: date)
     }
 
-    private func saveRecord() {
+    private func saveRecord(andContinue: Bool) {
         if viewModel.editingRecord == nil, !SubscriptionManager.shared.canAddRecord(context: modelContext) {
             showProSheet = true
             return
         }
         if viewModel.save(context: modelContext) {
-            dismiss()
-        }
-    }
-
-    private func paymentMethodName(_ method: PaymentMethod) -> String {
-        switch method {
-        case .cash: String(localized: "payment.cash")
-        case .wechat: String(localized: "payment.wechat")
-        case .alipay: String(localized: "payment.alipay")
+            guard andContinue else {
+                dismiss()
+                return
+            }
+            let contactName = viewModel.selectedContact?.name ?? ""
+            let amount = viewModel.recordType == .monetary ? viewModel.monetaryAmount : ""
+            if !contactName.isEmpty {
+                continuousSaveMessage = String(
+                    format: String(localized: "record.add.continueSuccess"),
+                    contactName,
+                    amount.isEmpty ? "0" : amount
+                )
+            }
+            viewModel.resetForContinuousEntry()
+            selectedPhotoItems = []
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(2))
+                continuousSaveMessage = nil
+            }
         }
     }
 }

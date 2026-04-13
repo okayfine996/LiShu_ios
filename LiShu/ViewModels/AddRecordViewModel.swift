@@ -120,9 +120,12 @@ class AddRecordViewModel {
     }
 
     var navigationTitle: String {
-        direction == .given
-            ? String(localized: "record.add.titleGiven")
-            : String(localized: "record.add.titleReceived")
+        String(localized: "record.add.navTitle")
+    }
+
+    /// 只要当前记录挂在事件下面，方向就由事件身份唯一决定，不再允许用户自由切换。
+    var isDirectionLockedBySelectedEvent: Bool {
+        contextSelection == .event && selectedEvent != nil
     }
 
     func directionTitle(for direction: RecordDirection) -> String {
@@ -184,16 +187,21 @@ class AddRecordViewModel {
         isCreatingCustomTag = false
     }
 
-    func configure(direction: RecordDirection?, contactID: PersistentIdentifier?, context: ModelContext) {
+    func configure(direction: RecordDirection?, contactID: PersistentIdentifier?, eventID: PersistentIdentifier?, context: ModelContext) {
         if let dir = direction {
             self.direction = dir
         }
         if let cID = contactID {
             selectedContact = context.model(for: cID) as? Contact
         }
+        if let eventID {
+            selectEvent(context.model(for: eventID) as? Event)
+        }
+        applyDirectionConstraintForSelectedEvent()
         recordsViewModelLogger.info("Configured add record context", metadata: [
             "step": .string("configure"),
             "contact_id": .string(contactID.map { String(describing: $0) } ?? "none"),
+            "event_id": .string(eventID.map { String(describing: $0) } ?? "none"),
             "result": .string(direction?.rawValue ?? "unchanged"),
         ])
     }
@@ -206,8 +214,8 @@ class AddRecordViewModel {
         editingRecord = record
         direction = record.direction
         selectedContact = record.contact
-        selectedEvent = record.event
         contextSelection = record.event == nil ? .daily : .event
+        selectedEvent = record.event
         selectedDailyTag = record.contextTag
         date = record.date
         note = record.note
@@ -272,7 +280,37 @@ class AddRecordViewModel {
         return selectedEvent
     }
 
-    private func buildDraftPayload(contact: Contact, event: Event?, typeData: RecordTypeData, contextTag: String) -> RecordLogPayload {
+    /// 统一从这里切换事件，避免界面层直接赋值后漏掉方向约束同步。
+    func selectEvent(_ event: Event?) {
+        selectedEvent = event
+        if event != nil {
+            contextSelection = .event
+        }
+        applyDirectionConstraintForSelectedEvent()
+    }
+
+    /// 事件往来和日常往来切换时，要同步刷新方向，防止残留上一次事件带来的方向状态。
+    func setContextSelection(_ selection: RecordContextSelection) {
+        contextSelection = selection
+        applyDirectionConstraintForSelectedEvent()
+    }
+
+    /// 业务约束：
+    /// 1. 自己办的事件只能记“收到”
+    /// 2. 参加别人的事件只能记“送出”
+    /// 这样可以避免同一事件下出现与业务语义相反的记录方向。
+    func applyDirectionConstraintForSelectedEvent() {
+        guard contextSelection == .event, let event = selectedEvent else { return }
+        direction = event.hostMode == .host ? .received : .given
+    }
+
+    private func buildDraftPayload(
+        contact: Contact,
+        event: Event?,
+        direction: RecordDirection,
+        typeData: RecordTypeData,
+        contextTag: String
+    ) -> RecordLogPayload {
         RecordLogPayload(
             id: editingRecord.map { String(describing: $0.persistentModelID) } ?? "pending",
             direction: direction.rawValue,
@@ -310,11 +348,24 @@ class AddRecordViewModel {
         }
 
         let event = resolveEvent(context: context)
+        let directionToPersist: RecordDirection = if let existing = editingRecord {
+            persistedDirection(for: existing, event: event)
+        } else {
+            // 新建记录时，仍然按事件身份兜底纠正方向，避免界面状态遗漏造成脏数据。
+            resolvedDirection(for: event)
+        }
+        direction = directionToPersist
 
         let typeData = buildTypeData()
 
         let resolvedTag = contextSelection == .daily ? selectedDailyTag : ""
-        let submissionPayload = buildDraftPayload(contact: contact, event: event, typeData: typeData, contextTag: resolvedTag)
+        let submissionPayload = buildDraftPayload(
+            contact: contact,
+            event: event,
+            direction: directionToPersist,
+            typeData: typeData,
+            contextTag: resolvedTag
+        )
 
         if let existing = editingRecord {
             BusinessDataLogger.recordMutation(
@@ -324,7 +375,7 @@ class AddRecordViewModel {
             )
             existing.contact = contact
             existing.event = event
-            existing.direction = direction
+            existing.direction = directionToPersist
             existing.note = note
             existing.date = date
             existing.recordType = recordType
@@ -380,7 +431,7 @@ class AddRecordViewModel {
             let record = Record(
                 contact: contact,
                 event: event,
-                direction: direction,
+                direction: directionToPersist,
                 note: note,
                 date: date,
                 recordType: recordType,
@@ -430,5 +481,48 @@ class AddRecordViewModel {
                 return false
             }
         }
+    }
+
+    func resetForContinuousEntry() {
+        let preservedEvent = selectedEvent
+        let preservedDirection = resolvedDirection(for: preservedEvent)
+        let preservedPaymentMethod = monetaryPaymentMethod
+        let preservedDate = Calendar.current.startOfDay(for: date)
+
+        selectedContact = nil
+        selectedEvent = preservedEvent
+        contextSelection = preservedEvent == nil ? .daily : .event
+        note = ""
+        date = preservedDate
+        newPhotoItems = []
+        recordType = .monetary
+        relationshipWeight = .reciprocal
+        monetaryAmount = ""
+        monetaryPaymentMethod = preservedPaymentMethod
+        giftName = ""
+        giftEstimatedValue = ""
+        favorDesc = ""
+        banquetLocation = ""
+        banquetAttendeeList = ""
+        banquetExtraCostNotes = ""
+        direction = preservedDirection
+    }
+
+    /// 事件相关记录的方向由事件身份推导；只有脱离事件时才保留用户当前选择。
+    private func resolvedDirection(for event: Event?) -> RecordDirection {
+        guard contextSelection == .event, let event else { return direction }
+        return event.hostMode == .host ? .received : .given
+    }
+
+    private func persistedDirection(for record: Record, event: Event?) -> RecordDirection {
+        let originalEventID = record.event?.persistentModelID
+        let newEventID = event?.persistentModelID
+        guard newEventID != nil else {
+            return direction
+        }
+        guard originalEventID != newEventID else {
+            return record.direction
+        }
+        return resolvedDirection(for: event)
     }
 }

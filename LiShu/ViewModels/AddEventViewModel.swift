@@ -9,6 +9,7 @@ class AddEventViewModel {
     var editingEvent: Event?
     var name: String = ""
     var eventType: EventType = .wedding
+    var hostMode: EventHostMode = .guest
     var date: Date = .now
     var location: String = ""
     var note: String = ""
@@ -40,6 +41,7 @@ class AddEventViewModel {
         editingEvent = event
         name = event.name
         eventType = event.type
+        hostMode = event.hostMode
         date = event.date
         location = event.location
         note = event.note
@@ -120,6 +122,7 @@ class AddEventViewModel {
             let event = Event(
                 name: name.trimmingCharacters(in: .whitespacesAndNewlines),
                 type: eventType,
+                hostMode: hostMode,
                 date: date,
                 location: location.trimmingCharacters(in: .whitespacesAndNewlines),
                 note: note.trimmingCharacters(in: .whitespacesAndNewlines)

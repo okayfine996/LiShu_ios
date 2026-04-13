@@ -9,6 +9,7 @@ enum ExportService {
     private nonisolated static let csvDateFormat = "yyyy-MM-dd"
     private nonisolated static let csvLegacyDateFormat = "yyyy-MM-dd HH:mm"
     private nonisolated static let commonColumns = ["联系人", "事件", "事件类型", "场景标签", "方向", "日期", "备注", "情分分量"]
+    private nonisolated static let ledgerColumns = ["联系人", "日期", "备注", "情分分量", "金额", "支付方式"]
     private nonisolated static let typeSpecificColumns: [RecordType: [String]] = [
         .monetary: ["金额", "支付方式", "已退金额"],
         .gift: ["礼品名称", "礼品估值", "人情描述"],
@@ -16,7 +17,7 @@ enum ExportService {
         .banquet: ["宴请地点", "宴请宾客", "宴请额外费用", "人情描述"],
     ]
 
-    private nonisolated static let allowedColumns = Set(commonColumns + typeSpecificColumns.values.flatMap(\.self))
+    private nonisolated static let allowedColumns = Set(commonColumns + ledgerColumns + typeSpecificColumns.values.flatMap(\.self))
 
     // MARK: - CSV Export
 
@@ -115,12 +116,86 @@ enum ExportService {
         }.value
     }
 
+    nonisolated static func previewLedgerExportCSV(
+        context: ModelContext,
+        eventID: PersistentIdentifier
+    ) throws -> LedgerCSVExportPreviewResult {
+        let event = try hostLedgerEvent(id: eventID, context: context)
+        let records = (event.records ?? [])
+            .filter { $0.direction == .received && $0.recordType == .monetary }
+            .sorted { $0.date > $1.date }
+
+        var items: [LedgerCSVExportPreviewItem] = []
+        var skipped = 0
+
+        for (index, record) in records.enumerated() {
+            let item = buildLedgerExportPreviewItem(
+                for: record,
+                rowNumber: index + 2,
+                eventName: event.name
+            )
+            if case .skipped = item.status {
+                skipped += 1
+            }
+            items.append(item)
+        }
+
+        return LedgerCSVExportPreviewResult(
+            eventID: eventID,
+            eventName: event.name,
+            items: items,
+            skipped: skipped
+        )
+    }
+
+    nonisolated static func previewLedgerExportCSVAsync(
+        container: ModelContainer,
+        eventID: PersistentIdentifier
+    ) async throws -> LedgerCSVExportPreviewResult {
+        try await Task.detached(priority: .userInitiated) {
+            let context = ModelContext(container)
+            return try previewLedgerExportCSV(context: context, eventID: eventID)
+        }.value
+    }
+
+    nonisolated static func exportLedgerPreviewItems(_ items: [LedgerCSVExportPreviewItem]) throws -> String {
+        let rows = items
+            .filter { $0.isSelected && $0.isExportable }
+            .compactMap(\.payload?.csvRow)
+        return ([ledgerCSVHeader()] + rows).joined(separator: "\n")
+    }
+
+    nonisolated static func exportLedgerPreviewItemsToTemporaryFileAsync(
+        _ items: [LedgerCSVExportPreviewItem],
+        fileName: String
+    ) async throws -> URL {
+        try await Task.detached(priority: .userInitiated) {
+            let csv = try exportLedgerPreviewItems(items)
+            guard let data = csv.data(using: .utf8) else {
+                throw ImportError.invalidFormat
+            }
+
+            let tempDir = FileManager.default.temporaryDirectory
+            let fileURL = tempDir.appendingPathComponent(fileName)
+            try data.write(to: fileURL, options: .atomic)
+            return fileURL
+        }.value
+    }
+
     nonisolated static func templateCSV(for recordType: RecordType) -> String {
         [csvHeader(for: recordType), templateRow(for: recordType)].joined(separator: "\n")
     }
 
+    nonisolated static func ledgerTemplateCSV() -> String {
+        [ledgerCSVHeader(), ledgerTemplateRows()].joined(separator: "\n")
+    }
+
     private nonisolated static func csvHeader(for recordType: RecordType) -> String {
         (commonColumns + (typeSpecificColumns[recordType] ?? [])).joined(separator: ",")
+    }
+
+    private nonisolated static func ledgerCSVHeader() -> String {
+        ledgerColumns.joined(separator: ",")
     }
 
     private nonisolated static func exportRow(for record: Record, recordType: RecordType) -> String? {
@@ -164,6 +239,26 @@ enum ExportService {
         }
 
         return csvValues(for: recordType).map { escapeCSV(values[$0] ?? "") }.joined(separator: ",")
+    }
+
+    private nonisolated static func ledgerExportRow(for record: Record) -> String? {
+        guard record.recordType == .monetary,
+              record.direction == .received,
+              let contact = record.contact
+        else {
+            return nil
+        }
+
+        let values: [String: String] = [
+            "联系人": contact.name,
+            "日期": csvDateFormatter.string(from: record.date),
+            "备注": record.note,
+            "情分分量": record.relationshipWeight.csvValue,
+            "金额": String(format: "%.2f", record.monetaryAmount),
+            "支付方式": record.resolvedPaymentMethod.csvValue,
+        ]
+
+        return ledgerColumns.map { escapeCSV(values[$0] ?? "") }.joined(separator: ",")
     }
 
     private nonisolated static func buildExportPreviewItem(
@@ -357,6 +452,33 @@ enum ExportService {
             .joined(separator: "\n")
     }
 
+    private nonisolated static func ledgerTemplateRows() -> String {
+        let values = [
+            [
+                "联系人": "张三",
+                "日期": "2026-04-09",
+                "备注": "婚礼签到时登记",
+                "情分分量": "礼尚往来",
+                "金额": "1000.00",
+                "支付方式": "微信",
+            ],
+            [
+                "联系人": "李四",
+                "日期": "2026-04-09",
+                "备注": "亲友到场随礼",
+                "情分分量": "情深义重",
+                "金额": "2000.00",
+                "支付方式": "现金",
+            ],
+        ]
+
+        return values
+            .map { row in
+                ledgerColumns.map { escapeCSV(row[$0] ?? "") }.joined(separator: ",")
+            }
+            .joined(separator: "\n")
+    }
+
     private nonisolated static func csvValues(for recordType: RecordType) -> [String] {
         commonColumns + (typeSpecificColumns[recordType] ?? [])
     }
@@ -506,6 +628,158 @@ enum ExportService {
         return result
     }
 
+    nonisolated static func previewLedgerCSV(url: URL, eventName: String) throws -> LedgerCSVImportPreviewResult {
+        let didStartAccessing = url.startAccessingSecurityScopedResource()
+        defer {
+            if didStartAccessing {
+                url.stopAccessingSecurityScopedResource()
+            }
+        }
+
+        let content = try String(contentsOf: url, encoding: .utf8)
+        return try previewLedgerCSV(content: content, sourceFileName: url.lastPathComponent, eventName: eventName)
+    }
+
+    nonisolated static func previewLedgerCSVAsync(
+        url: URL,
+        eventName: String
+    ) async throws -> LedgerCSVImportPreviewResult {
+        let didStartAccessing = url.startAccessingSecurityScopedResource()
+        defer {
+            if didStartAccessing {
+                url.stopAccessingSecurityScopedResource()
+            }
+        }
+
+        return try await Task.detached(priority: .userInitiated) {
+            let content = try String(contentsOf: url, encoding: .utf8)
+            return try previewLedgerCSV(content: content, sourceFileName: url.lastPathComponent, eventName: eventName)
+        }.value
+    }
+
+    nonisolated static func previewLedgerCSV(
+        content: String,
+        sourceFileName: String,
+        eventName: String
+    ) throws -> LedgerCSVImportPreviewResult {
+        let rows = parseCSVRows(content)
+
+        guard rows.count > 1 else {
+            return LedgerCSVImportPreviewResult(sourceFileName: sourceFileName, eventName: eventName, items: [])
+        }
+
+        let headerRow = rows[0].map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+        try validateLedgerCSVHeader(headerRow)
+        let columnIndex = buildCSVColumnIndexMap(headerRow)
+
+        var items: [LedgerCSVImportPreviewItem] = []
+        var skipped = 0
+        var errors = 0
+
+        for (rowIndex, rawFields) in rows.dropFirst().enumerated() {
+            if rawFields.allSatisfy({ $0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }) {
+                continue
+            }
+
+            let item = buildLedgerPreviewItem(
+                rawFields: rawFields,
+                rowIndex: rowIndex,
+                headerColumnCount: headerRow.count,
+                columnIndex: columnIndex,
+                eventName: eventName
+            )
+            if case .skipped = item.status {
+                skipped += 1
+            }
+            if case .error = item.status {
+                errors += 1
+            }
+            items.append(item)
+        }
+
+        return LedgerCSVImportPreviewResult(
+            sourceFileName: sourceFileName,
+            eventName: eventName,
+            items: items,
+            skipped: skipped,
+            errors: errors
+        )
+    }
+
+    nonisolated static func importLedgerPreviewItemsAsync(
+        _ items: [LedgerCSVImportPreviewItem],
+        baseResult: ImportResult,
+        sourceFileName: String = "preview",
+        eventID: PersistentIdentifier,
+        container: ModelContainer
+    ) async throws -> ImportResult {
+        try await Task.detached(priority: .userInitiated) {
+            let context = ModelContext(container)
+            return try importLedgerPreviewItems(
+                items,
+                baseResult: baseResult,
+                sourceFileName: sourceFileName,
+                eventID: eventID,
+                context: context
+            )
+        }.value
+    }
+
+    nonisolated static func importLedgerPreviewItems(
+        _ items: [LedgerCSVImportPreviewItem],
+        baseResult: ImportResult,
+        sourceFileName: String = "preview",
+        eventID: PersistentIdentifier,
+        context: ModelContext
+    ) throws -> ImportResult {
+        let event = try hostLedgerEvent(id: eventID, context: context)
+        var result = baseResult
+        let importableItems = items.filter { $0.isSelected && $0.isImportable }
+        var contactCache: [String: Contact] = [:]
+
+        for item in importableItems {
+            guard let payload = item.payload else { continue }
+
+            let contactName = payload.contactName.trimmingCharacters(in: .whitespacesAndNewlines)
+            let contact: Contact
+            if let cached = contactCache[contactName] {
+                contact = cached
+            } else {
+                let resolvedContact = findOrCreateContact(name: contactName, context: context)
+                contactCache[contactName] = resolvedContact
+                contact = resolvedContact
+            }
+
+            let record = Record(
+                contact: contact,
+                event: event,
+                direction: .received,
+                note: payload.note,
+                date: payload.date,
+                recordType: .monetary,
+                relationshipWeight: payload.relationshipWeight
+            )
+            record.applyTypeData(.monetary(MonetaryData(
+                amount: payload.amount,
+                paymentMethod: payload.paymentMethod.rawValue,
+                returnedAmount: 0
+            )))
+
+            context.insert(record)
+            result.imported += 1
+        }
+
+        try context.save()
+        importLogger.notice("Finished ledger CSV import", metadata: [
+            "step": .string("import_ledger_csv"),
+            "source": .string(sourceFileName),
+            "event_id": .string(String(describing: eventID)),
+            "count": .stringConvertible(result.imported),
+            "result": .string("success"),
+        ])
+        return result
+    }
+
     private nonisolated static func validateCSVHeader(_ headerRow: [String]) throws {
         guard Set(commonColumns).isSubset(of: Set(headerRow)) else {
             throw ImportError.invalidFormat
@@ -521,6 +795,15 @@ enum ExportService {
         }
 
         guard matchedRecordType != nil else {
+            throw ImportError.invalidFormat
+        }
+    }
+
+    private nonisolated static func validateLedgerCSVHeader(_ headerRow: [String]) throws {
+        guard headerRow.count == ledgerColumns.count else {
+            throw ImportError.invalidFormat
+        }
+        guard headerRow == ledgerColumns else {
             throw ImportError.invalidFormat
         }
     }
@@ -802,6 +1085,16 @@ enum ExportService {
         let trimmed = normalizeImportedText(name)
         guard !trimmed.isEmpty else { return nil }
         return findOrCreateEvent(name: trimmed, type: type, context: context)
+    }
+
+    private nonisolated static func hostLedgerEvent(
+        id: PersistentIdentifier,
+        context: ModelContext
+    ) throws -> Event {
+        guard let event = context.model(for: id) as? Event, event.hostMode == .host else {
+            throw ImportError.invalidFormat
+        }
+        return event
     }
 
     private nonisolated static func resolveExportContext(
@@ -1112,6 +1405,139 @@ enum ExportService {
         )
     }
 
+    private nonisolated static func buildLedgerPreviewItem(
+        rawFields: [String],
+        rowIndex: Int,
+        headerColumnCount: Int,
+        columnIndex: [String: Int],
+        eventName: String
+    ) -> LedgerCSVImportPreviewItem {
+        let lineNumber = rowIndex + 2
+        let fields = alignFieldsToHeader(rawFields, headerColumnCount: headerColumnCount)
+        let contactName = normalizeImportedText(csvCell(fields, columnIndex: columnIndex, column: "联系人"))
+        let dateTextRaw = csvCell(fields, columnIndex: columnIndex, column: "日期")
+        let trimmedDateTextRaw = dateTextRaw.trimmingCharacters(in: .whitespacesAndNewlines)
+        let note = normalizeImportedText(csvCell(fields, columnIndex: columnIndex, column: "备注"))
+        let relationshipWeight = parseRelationshipWeight(csvCell(fields, columnIndex: columnIndex, column: "情分分量"))
+        let amount = UserEnteredDecimal.parse(csvCell(fields, columnIndex: columnIndex, column: "金额")) ?? 0
+        let paymentMethod = parsePaymentMethod(csvCell(fields, columnIndex: columnIndex, column: "支付方式"))
+        let parsedDate = if trimmedDateTextRaw.isEmpty {
+            Date()
+        } else {
+            parseDate(dateTextRaw)
+        }
+
+        if !trimmedDateTextRaw.isEmpty, parsedDate == nil {
+            return LedgerCSVImportPreviewItem(
+                rowNumber: lineNumber,
+                isSelected: false,
+                contactName: contactName.isEmpty ? String(localized: "common.unknown") : contactName,
+                contextText: eventName,
+                detailText: previewDetailText(dateText: trimmedDateTextRaw, direction: .received, recordType: .monetary),
+                trailingText: formatPreviewCurrency(amount),
+                status: .error(String(localized: "csv.import.preview.invalid.invalidDate")),
+                payload: nil
+            )
+        }
+
+        let resolvedDate = parsedDate ?? Date()
+        let dateText = csvDateFormatter.string(from: resolvedDate)
+
+        guard !contactName.isEmpty else {
+            return LedgerCSVImportPreviewItem(
+                rowNumber: lineNumber,
+                isSelected: false,
+                contactName: String(localized: "common.unknown"),
+                contextText: eventName,
+                detailText: previewDetailText(dateText: dateText, direction: .received, recordType: .monetary),
+                trailingText: formatPreviewCurrency(amount),
+                status: .error(String(localized: "csv.import.preview.invalid.missingContact")),
+                payload: nil
+            )
+        }
+
+        guard amount > 0 else {
+            return LedgerCSVImportPreviewItem(
+                rowNumber: lineNumber,
+                isSelected: false,
+                contactName: contactName,
+                contextText: eventName,
+                detailText: previewDetailText(dateText: dateText, direction: .received, recordType: .monetary),
+                trailingText: formatPreviewCurrency(amount),
+                status: .error(String(localized: "csv.import.preview.invalid.invalidAmount")),
+                payload: nil
+            )
+        }
+
+        return LedgerCSVImportPreviewItem(
+            rowNumber: lineNumber,
+            isSelected: true,
+            contactName: contactName,
+            contextText: eventName,
+            detailText: previewDetailText(dateText: dateText, direction: .received, recordType: .monetary),
+            trailingText: formatPreviewCurrency(amount),
+            status: .ready,
+            payload: LedgerCSVImportPayload(
+                contactName: contactName,
+                date: resolvedDate,
+                note: note,
+                relationshipWeight: relationshipWeight,
+                amount: amount,
+                paymentMethod: paymentMethod
+            )
+        )
+    }
+
+    private nonisolated static func buildLedgerExportPreviewItem(
+        for record: Record,
+        rowNumber: Int,
+        eventName: String
+    ) -> LedgerCSVExportPreviewItem {
+        let contactName = record.contact?.name.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let detailText = previewDetailText(
+            dateText: csvDateFormatter.string(from: record.date),
+            direction: .received,
+            recordType: .monetary
+        )
+
+        guard !contactName.isEmpty else {
+            return LedgerCSVExportPreviewItem(
+                rowNumber: rowNumber,
+                isSelected: false,
+                contactName: String(localized: "common.unknown"),
+                contextText: eventName,
+                detailText: detailText,
+                trailingText: formatPreviewCurrency(record.monetaryAmount),
+                status: .skipped(String(localized: "csv.export.preview.invalid.missingContact")),
+                payload: nil
+            )
+        }
+
+        guard let csvRow = ledgerExportRow(for: record) else {
+            return LedgerCSVExportPreviewItem(
+                rowNumber: rowNumber,
+                isSelected: false,
+                contactName: contactName,
+                contextText: eventName,
+                detailText: detailText,
+                trailingText: formatPreviewCurrency(record.monetaryAmount),
+                status: .skipped(String(localized: "csv.export.preview.invalid.missingContext")),
+                payload: nil
+            )
+        }
+
+        return LedgerCSVExportPreviewItem(
+            rowNumber: rowNumber,
+            isSelected: true,
+            contactName: contactName,
+            contextText: eventName,
+            detailText: detailText,
+            trailingText: formatPreviewCurrency(record.monetaryAmount),
+            status: .ready,
+            payload: LedgerCSVExportPayload(csvRow: csvRow)
+        )
+    }
+
     private nonisolated static func previewTrailingText(
         recordType: RecordType?,
         amount: Double,
@@ -1278,6 +1704,14 @@ struct CSVImportPreviewResult {
     var errors: Int = 0
 }
 
+struct LedgerCSVImportPreviewResult {
+    let sourceFileName: String
+    let eventName: String
+    var items: [LedgerCSVImportPreviewItem]
+    var skipped: Int = 0
+    var errors: Int = 0
+}
+
 struct CSVImportPreviewItem: Identifiable {
     let id = UUID()
     let rowNumber: Int
@@ -1316,9 +1750,46 @@ struct CSVImportPreviewItem: Identifiable {
     }
 }
 
+struct LedgerCSVImportPreviewItem: Identifiable {
+    let id = UUID()
+    let rowNumber: Int
+    var isSelected: Bool
+    let contactName: String
+    let contextText: String
+    let detailText: String
+    let trailingText: String
+    let status: CSVImportPreviewStatus
+    let payload: LedgerCSVImportPayload?
+
+    var isImportable: Bool {
+        switch status {
+        case .ready:
+            payload != nil
+        case .skipped, .error:
+            false
+        }
+    }
+
+    var statusMessage: String? {
+        switch status {
+        case .ready:
+            nil
+        case let .skipped(reason), let .error(reason):
+            reason
+        }
+    }
+}
+
 struct CSVExportPreviewResult {
     let recordType: RecordType
     var items: [CSVExportPreviewItem]
+    var skipped: Int = 0
+}
+
+struct LedgerCSVExportPreviewResult {
+    let eventID: PersistentIdentifier
+    let eventName: String
+    var items: [LedgerCSVExportPreviewItem]
     var skipped: Int = 0
 }
 
@@ -1352,12 +1823,46 @@ struct CSVExportPreviewItem: Identifiable {
     }
 }
 
+struct LedgerCSVExportPreviewItem: Identifiable {
+    let id = UUID()
+    let rowNumber: Int
+    var isSelected: Bool
+    let contactName: String
+    let contextText: String
+    let detailText: String
+    let trailingText: String
+    let status: CSVExportPreviewStatus
+    let payload: LedgerCSVExportPayload?
+
+    var isExportable: Bool {
+        switch status {
+        case .ready:
+            payload != nil
+        case .skipped:
+            false
+        }
+    }
+
+    var statusMessage: String? {
+        switch status {
+        case .ready:
+            nil
+        case let .skipped(reason):
+            reason
+        }
+    }
+}
+
 enum CSVExportPreviewStatus: Equatable {
     case ready
     case skipped(String)
 }
 
 struct CSVExportPayload {
+    let csvRow: String
+}
+
+struct LedgerCSVExportPayload {
     let csvRow: String
 }
 
@@ -1379,6 +1884,15 @@ struct CSVImportPayload {
     let relationshipWeight: RelationshipWeight
     let returnedAmount: Double
     let typeData: RecordTypeData
+}
+
+struct LedgerCSVImportPayload {
+    let contactName: String
+    let date: Date
+    let note: String
+    let relationshipWeight: RelationshipWeight
+    let amount: Double
+    let paymentMethod: PaymentMethod
 }
 
 enum ImportError: LocalizedError {

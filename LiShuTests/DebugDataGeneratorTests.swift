@@ -28,6 +28,13 @@
             let events = try db.context.fetch(FetchDescriptor<Event>())
             #expect(events.count >= 5)
             #expect(events.contains { $0.name.contains("婚礼") || $0.name.contains("生日") })
+
+            let hostEvents = events.filter { $0.hostMode == .host }
+            #expect(hostEvents.count >= 4)
+            #expect(hostEvents.contains { $0.name == "我的婚礼" })
+            #expect(hostEvents.contains { $0.name == "宝宝满月酒" })
+            #expect(hostEvents.contains { $0.name == "父亲寿宴" })
+            #expect(hostEvents.contains { $0.name == "乔迁家宴" })
         }
 
         @Test func generateSampleDataInsertsRecords() throws {
@@ -72,6 +79,27 @@
                 ($0.banquetData?.attendeeList.isEmpty ?? true) &&
                     ($0.banquetData?.extraCostNotes.isEmpty ?? true)
             })
+
+            let hostEvents = try db.context.fetch(FetchDescriptor<Event>())
+                .filter { $0.hostMode == .host }
+            let hostEventIDs = Set(hostEvents.map(\.persistentModelID))
+            let hostRecords = records.filter { record in
+                guard let eventID = record.event?.persistentModelID else { return false }
+                return hostEventIDs.contains(eventID)
+            }
+
+            #expect(hostEvents.contains { ($0.records ?? []).isEmpty })
+            #expect(hostRecords.contains { $0.direction == .received })
+            #expect(hostRecords.filter { $0.direction == .received }.count >= 20)
+
+            if let wedding = hostEvents.first(where: { $0.name == "我的婚礼" }) {
+                let weddingRecords = (wedding.records ?? []).filter { $0.direction == .received }
+                #expect(weddingRecords.count >= 12)
+                #expect(weddingRecords.contains { Calendar.current.isDateInToday($0.date) })
+                #expect(weddingRecords.map(\.resolvedDisplayAmount).max() ?? 0 >= 6000)
+            } else {
+                Issue.record("缺少主场事件：我的婚礼")
+            }
         }
 
         @Test func clearAllDataRemovesAll() throws {

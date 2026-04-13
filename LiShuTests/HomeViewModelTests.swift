@@ -9,23 +9,25 @@ import SwiftData
 import Testing
 
 @MainActor
-struct HomeViewModelTests {
-    @Test func loadEmptyDatabase() throws {
+struct HomeDashboardSnapshotTests {
+    @Test func buildEmptyDatabase() throws {
         let db = try TestDB()
-        let vm = HomeViewModel()
-        vm.load(context: db.context)
+        let snapshot = try HomeDashboardSnapshot.build(
+            records: db.context.fetch(FetchDescriptor<Record>()),
+            events: db.context.fetch(FetchDescriptor<Event>()),
+            contacts: db.context.fetch(FetchDescriptor<Contact>())
+        )
 
-        #expect(vm.yearlyIncome == 0)
-        #expect(vm.yearlyExpense == 0)
-        #expect(vm.contactCount == 0)
-        #expect(vm.recordCount == 0)
+        #expect(snapshot.yearlyIncome == 0)
+        #expect(snapshot.yearlyExpense == 0)
+        #expect(snapshot.contactCount == 0)
+        #expect(snapshot.recordCount == 0)
     }
 
-    @Test func loadWithRecords() throws {
+    @Test func buildWithRecords() throws {
         let db = try TestDB()
-        let vm = HomeViewModel()
         let calendar = Calendar.current
-        let year = vm.currentYear
+        let year = calendar.component(.year, from: .now)
         guard let startOfYear = calendar.date(from: DateComponents(year: year, month: 1, day: 1)) else {
             Issue.record("Could not create start of year")
             return
@@ -44,22 +46,47 @@ struct HomeViewModelTests {
         db.context.insert(received)
         try db.context.save()
 
-        vm.load(context: db.context)
+        let snapshot = try HomeDashboardSnapshot.build(
+            records: db.context.fetch(FetchDescriptor<Record>()),
+            events: db.context.fetch(FetchDescriptor<Event>()),
+            contacts: db.context.fetch(FetchDescriptor<Contact>())
+        )
 
-        #expect(vm.yearlyIncome == 800)
-        #expect(vm.yearlyExpense == 500)
+        #expect(snapshot.yearlyIncome == 800)
+        #expect(snapshot.yearlyExpense == 500)
     }
 
-    @Test func formattedIncomeUnder10000() {
-        let vm = HomeViewModel()
-        vm.yearlyIncome = 5000
-        #expect(vm.formattedIncome == "¥5000")
-    }
+    @Test func buildCountsActiveContactsFromCurrentYearRecords() throws {
+        let db = try TestDB()
+        let calendar = Calendar.current
+        let year = calendar.component(.year, from: .now)
+        let currentYearDate = try #require(calendar.date(from: DateComponents(year: year, month: 2, day: 1)))
+        let previousYearDate = try #require(calendar.date(from: DateComponents(year: year - 1, month: 2, day: 1)))
 
-    @Test func formattedIncomeOver10000() {
-        let vm = HomeViewModel()
-        vm.yearlyIncome = 15000
-        #expect(vm.formattedIncome == "¥1.5万")
+        let contactCurrent = SampleData.contact(name: "今年联系人")
+        let contactPrevious = SampleData.contact(name: "去年联系人")
+        let eventCurrent = SampleData.event(date: currentYearDate)
+        let eventPrevious = SampleData.event(date: previousYearDate)
+        db.context.insert(contactCurrent)
+        db.context.insert(contactPrevious)
+        db.context.insert(eventCurrent)
+        db.context.insert(eventPrevious)
+        db.context.insert(
+            SampleData.record(contact: contactCurrent, event: eventCurrent, amount: 500, direction: .given, date: currentYearDate)
+        )
+        db.context.insert(
+            SampleData.record(contact: contactPrevious, event: eventPrevious, amount: 300, direction: .given, date: previousYearDate)
+        )
+        try db.context.save()
+
+        let snapshot = try HomeDashboardSnapshot.build(
+            records: db.context.fetch(FetchDescriptor<Record>()),
+            events: db.context.fetch(FetchDescriptor<Event>()),
+            contacts: db.context.fetch(FetchDescriptor<Contact>())
+        )
+
+        #expect(snapshot.contactCount == 1)
+        #expect(snapshot.recordCount == 1)
     }
 
     @Test func testRecentRecords() throws {
@@ -76,10 +103,13 @@ struct HomeViewModelTests {
         }
         try db.context.save()
 
-        let vm = HomeViewModel()
-        vm.load(context: db.context)
+        let snapshot = try HomeDashboardSnapshot.build(
+            records: db.context.fetch(FetchDescriptor<Record>()),
+            events: db.context.fetch(FetchDescriptor<Event>()),
+            contacts: db.context.fetch(FetchDescriptor<Contact>())
+        )
 
-        #expect(vm.recentRecords.count == 5)
+        #expect(snapshot.recentRecords.count == 5)
     }
 
     @Test func testUpcomingEvents() throws {
@@ -93,10 +123,52 @@ struct HomeViewModelTests {
         db.context.insert(futureEvent)
         try db.context.save()
 
-        let vm = HomeViewModel()
-        vm.load(context: db.context)
+        let snapshot = try HomeDashboardSnapshot.build(
+            records: db.context.fetch(FetchDescriptor<Record>()),
+            events: db.context.fetch(FetchDescriptor<Event>()),
+            contacts: db.context.fetch(FetchDescriptor<Contact>())
+        )
 
-        #expect(vm.upcomingEvents.allSatisfy { $0.date >= Calendar.current.startOfDay(for: Date()) })
-        #expect(vm.upcomingEvents.contains { $0.name == "未来" })
+        #expect(snapshot.upcomingEvents.allSatisfy { $0.date >= Calendar.current.startOfDay(for: Date()) })
+        #expect(snapshot.upcomingEvents.contains { $0.name == "未来" })
+    }
+
+    @Test func testHostLedgerEvents() throws {
+        let db = try TestDB()
+        let hostEvent = SampleData.event(name: "我的婚礼", hostMode: .host)
+        let guestEvent = SampleData.event(name: "别人的婚礼", hostMode: .guest)
+        db.context.insert(hostEvent)
+        db.context.insert(guestEvent)
+        try db.context.save()
+
+        let snapshot = try HomeDashboardSnapshot.build(
+            records: db.context.fetch(FetchDescriptor<Record>()),
+            events: db.context.fetch(FetchDescriptor<Event>()),
+            contacts: db.context.fetch(FetchDescriptor<Contact>())
+        )
+
+        #expect(snapshot.hostLedgerEvents.count == 1)
+        #expect(snapshot.hostLedgerEvents.first?.name == "我的婚礼")
+    }
+
+    @Test func contactEditsAffectMostActiveContactName() throws {
+        let db = try TestDB()
+        let contact = SampleData.contact(name: "旧名字")
+        let event = SampleData.event()
+        db.context.insert(contact)
+        db.context.insert(event)
+        db.context.insert(SampleData.record(contact: contact, event: event, amount: 100, direction: .given))
+        try db.context.save()
+
+        contact.name = "新名字"
+        try db.context.save()
+
+        let snapshot = try HomeDashboardSnapshot.build(
+            records: db.context.fetch(FetchDescriptor<Record>()),
+            events: db.context.fetch(FetchDescriptor<Event>()),
+            contacts: db.context.fetch(FetchDescriptor<Contact>())
+        )
+
+        #expect(snapshot.mostActiveContactName == "新名字")
     }
 }
