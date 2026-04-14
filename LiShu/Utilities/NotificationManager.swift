@@ -168,6 +168,13 @@ final class NotificationManager {
         ])
     }
 
+    func cancelRemindersForEventDeletion(event: Event) {
+        cancelEventReminder(event: event)
+        for record in event.records ?? [] {
+            cancelReturnGiftReminder(record: record)
+        }
+    }
+
     private func eventNotificationID(_ event: Event) -> String {
         "event-\(stableIdentifier(for: event.persistentModelID))"
     }

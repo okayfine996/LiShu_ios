@@ -5,7 +5,8 @@ import SwiftData
 class EventDetailViewModel {
     var event: Event?
     var isShowingDeleteAlert: Bool = false
-    var isShowingDeleteBlockedAlert: Bool = false
+    var deleteError: String?
+    private let legacyLedgerPreviewLimit = 2
 
     func load(id: PersistentIdentifier, context: ModelContext) {
         event = context.model(for: id) as? Event
@@ -45,8 +46,9 @@ class EventDetailViewModel {
 
     var legacyNonLedgerRecords: [Record] {
         guard let event else { return [] }
+        let eventID = event.persistentModelID
         return (event.records ?? [])
-            .filter { !($0.direction == .received && $0.recordType == .monetary) }
+            .filter { Self.isLegacyLedgerAnomaly($0, for: eventID) }
             .sorted { $0.date > $1.date }
     }
 
@@ -56,6 +58,23 @@ class EventDetailViewModel {
 
     var legacyLedgerAnomalyCount: Int {
         legacyNonLedgerRecords.count
+    }
+
+    var legacyLedgerAnomalyPreviewText: String {
+        let labels = legacyNonLedgerRecords
+            .prefix(legacyLedgerPreviewLimit)
+            .map(legacyLedgerRecordLabel)
+
+        guard !labels.isEmpty else { return "" }
+
+        if legacyNonLedgerRecords.count > legacyLedgerPreviewLimit {
+            return labels.joined(separator: "、") + String(
+                format: String(localized: "event.ledger.legacyWarning.more %lld"),
+                Int64(legacyNonLedgerRecords.count - legacyLedgerPreviewLimit)
+            )
+        }
+
+        return labels.joined(separator: "、")
     }
 
     var largestReceivedAmount: Double {
@@ -98,13 +117,13 @@ class EventDetailViewModel {
     @MainActor
     func deleteEvent(context: ModelContext) -> Bool {
         guard let event else { return false }
-        guard (event.records ?? []).isEmpty else { return false }
-        NotificationManager.shared.cancelEventReminder(event: event)
         context.delete(event)
         do {
             try context.save()
+            NotificationManager.shared.cancelRemindersForEventDeletion(event: event)
             return true
         } catch {
+            deleteError = error.localizedDescription
             return false
         }
     }
@@ -122,5 +141,31 @@ class EventDetailViewModel {
         } catch {
             return false
         }
+    }
+
+    static func isLegacyLedgerAnomaly(_ record: Record, for eventID: PersistentIdentifier) -> Bool {
+        guard record.event?.persistentModelID == eventID else { return false }
+        return !(record.direction == .received && record.recordType == .monetary)
+    }
+
+    private func legacyLedgerRecordLabel(_ record: Record) -> String {
+        let contactName = record.contact?.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let typeLabel: String
+
+        switch record.recordType {
+        case .monetary:
+            typeLabel = record.direction == .given
+                ? String(localized: "record.detail.directionSent") + record.recordType.displayName
+                : String(localized: "record.detail.directionReceived") + record.recordType.displayName
+        default:
+            let description = record.resolvedDescription.trimmingCharacters(in: .whitespacesAndNewlines)
+            typeLabel = description.isEmpty ? record.recordType.displayName : description
+        }
+
+        if let contactName, !contactName.isEmpty {
+            return contactName + " · " + typeLabel
+        }
+
+        return typeLabel
     }
 }

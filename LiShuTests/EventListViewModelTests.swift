@@ -106,4 +106,26 @@ struct EventListViewModelTests {
         vm.deleteEvent(e, context: db.context)
         #expect(vm.state.value?.count == 0)
     }
+
+    @Test("deleteEvent removes event and attached records")
+    func deleteEventWithRecords() throws {
+        let db = try TestDB()
+        let contact = SampleData.contact(name: "张三")
+        let event = SampleData.event(name: "待删除事件", hostMode: .host)
+        db.context.insert(contact)
+        db.context.insert(event)
+        db.context.insert(SampleData.record(contact: contact, event: event, amount: 1200, direction: .received))
+        db.context.insert(SampleData.record(contact: contact, event: event, amount: 300, direction: .given))
+        try db.context.save()
+
+        let vm = EventListViewModel()
+        vm.load(context: db.context)
+        #expect(vm.state.value?.count == 1)
+
+        vm.deleteEvent(event, context: db.context)
+
+        #expect(vm.state.value?.count == 0)
+        #expect(try db.context.fetch(FetchDescriptor<Event>()).isEmpty)
+        #expect(try db.context.fetch(FetchDescriptor<Record>()).isEmpty)
+    }
 }

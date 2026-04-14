@@ -16,6 +16,7 @@ struct EventDetailView: View {
     @State private var ledgerShareURL: URL?
     @State private var ledgerCSVError: String?
     @State private var isPreparingLedgerCSV = false
+    @State private var showLegacyAnomalyList = false
 
     let eventID: PersistentIdentifier
 
@@ -66,12 +67,10 @@ struct EventDetailView: View {
                     } label: {
                         Label(String(localized: "common.edit"), systemImage: "pencil")
                     }
-                    if (viewModel.event?.records ?? []).isEmpty {
-                        Button(role: .destructive) {
-                            viewModel.isShowingDeleteAlert = true
-                        } label: {
-                            Label(String(localized: "common.delete"), systemImage: "trash")
-                        }
+                    Button(role: .destructive) {
+                        viewModel.isShowingDeleteAlert = true
+                    } label: {
+                        Label(String(localized: "common.delete"), systemImage: "trash")
                     }
                 } label: {
                     Image(systemName: "ellipsis.circle")
@@ -87,15 +86,22 @@ struct EventDetailView: View {
             Button(String(localized: "common.delete"), role: .destructive) {
                 if viewModel.deleteEvent(context: modelContext) {
                     dismiss()
-                } else {
-                    viewModel.isShowingDeleteBlockedAlert = true
                 }
             }
-        }
-        .alert(String(localized: "event.detail.deleteBlocked"), isPresented: $viewModel.isShowingDeleteBlockedAlert) {
-            Button(String(localized: "common.ok"), role: .cancel) {}
         } message: {
-            Text(String(localized: "event.detail.deleteBlockedMessage"))
+            Text(String(localized: "event.detail.deleteConfirmMessage"))
+        }
+        .alert(String(localized: "common.error"), isPresented: Binding(
+            get: { viewModel.deleteError != nil },
+            set: { if !$0 { viewModel.deleteError = nil } }
+        )) {
+            Button(String(localized: "common.ok")) {
+                viewModel.deleteError = nil
+            }
+        } message: {
+            if let message = viewModel.deleteError {
+                Text(message)
+            }
         }
         .alert(
             String(localized: "record.detail.deleteConfirm"),
@@ -137,6 +143,14 @@ struct EventDetailView: View {
                 LedgerCSVImportPreviewView(viewModel: ledgerImportPreviewViewModel) { result in
                     handleCompletedLedgerImport(result)
                 }
+            }
+        }
+        .navigationDestination(isPresented: $showLegacyAnomalyList) {
+            if let event = viewModel.event {
+                LegacyLedgerAnomalyListView(
+                    eventName: event.name,
+                    eventID: event.persistentModelID
+                )
             }
         }
         .navigationDestination(isPresented: $showLedgerExportPreview) {
@@ -203,7 +217,12 @@ struct EventDetailView: View {
 
             if viewModel.hasLegacyLedgerAnomalies {
                 cardListRow {
-                    legacyLedgerWarningBanner
+                    Button {
+                        showLegacyAnomalyList = true
+                    } label: {
+                        legacyLedgerWarningBanner
+                    }
+                    .buttonStyle(.plain)
                 }
             }
 
@@ -225,20 +244,38 @@ struct EventDetailView: View {
     }
 
     private var legacyLedgerWarningBanner: some View {
-        HStack(alignment: .top, spacing: 8) {
+        HStack(alignment: .top, spacing: 12) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(DesignSystem.Typography.caption)
                 .foregroundStyle(DesignSystem.Colors.accentGold)
+                .padding(.top, 2)
 
-            Text(
-                String(
-                    format: String(localized: "event.ledger.legacyWarning %lld"),
-                    Int64(viewModel.legacyLedgerAnomalyCount)
+            VStack(alignment: .leading, spacing: 12) {
+                Text(
+                    String(
+                        format: String(localized: "event.ledger.legacyWarning %lld"),
+                        Int64(viewModel.legacyLedgerAnomalyCount)
+                    )
                 )
-            )
-            .font(DesignSystem.Typography.caption)
-            .foregroundStyle(DesignSystem.Colors.textPrimary)
-            .fixedSize(horizontal: false, vertical: true)
+                .font(DesignSystem.Typography.caption)
+                .foregroundStyle(DesignSystem.Colors.textPrimary)
+                .fixedSize(horizontal: false, vertical: true)
+
+                if !viewModel.legacyLedgerAnomalyPreviewText.isEmpty {
+                    Text(viewModel.legacyLedgerAnomalyPreviewText)
+                        .font(DesignSystem.Typography.small)
+                        .foregroundStyle(DesignSystem.Colors.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                HStack {
+                    Spacer(minLength: 0)
+
+                    Text(String(localized: "common.viewAll"))
+                        .font(DesignSystem.Typography.small)
+                        .foregroundStyle(DesignSystem.Colors.primary)
+                }
+            }
 
             Spacer(minLength: 0)
         }
@@ -870,6 +907,7 @@ private struct EventDetailPreview: View {
     @Environment(\.modelContext) private var modelContext
     @State private var eventID: PersistentIdentifier?
     let hostMode: EventHostMode
+    var includeLegacyAnomalies: Bool = false
 
     var body: some View {
         NavigationStack {
@@ -926,8 +964,47 @@ private struct EventDetailPreview: View {
         )
         [r1, r2, r3].forEach { modelContext.insert($0) }
 
+        if includeLegacyAnomalies, hostMode == .host {
+            let legacyGift = makeGiftRecord(
+                contact: c1,
+                event: event,
+                giftName: "龙井礼盒",
+                direction: .received,
+                date: cal.liShuDateByAddingDays(-2)
+            )
+            let legacyGiven = Record.makeMonetaryRecord(
+                contact: c2,
+                event: event,
+                amount: 300,
+                direction: .given,
+                paymentMethod: .cash,
+                date: cal.liShuDateByAddingDays(-4)
+            )
+            modelContext.insert(legacyGift)
+            modelContext.insert(legacyGiven)
+        }
+
         try? modelContext.save()
         eventID = event.persistentModelID
+    }
+
+    private func makeGiftRecord(
+        contact: Contact,
+        event: Event,
+        giftName: String,
+        direction: RecordDirection,
+        date: Date
+    ) -> Record {
+        let record = Record(
+            contact: contact,
+            event: event,
+            direction: direction,
+            date: date,
+            recordType: .gift,
+            relationshipWeight: .reciprocal
+        )
+        record.applyTypeData(.gift(GiftData(giftName: giftName, estimatedValue: 288)))
+        return record
     }
 }
 
@@ -938,5 +1015,10 @@ private struct EventDetailPreview: View {
 
 #Preview("Host Ledger") {
     EventDetailPreview(hostMode: .host)
+        .modelContainer(for: [Contact.self, Record.self, Event.self], inMemory: true)
+}
+
+#Preview("Host Ledger Legacy Warning") {
+    EventDetailPreview(hostMode: .host, includeLegacyAnomalies: true)
         .modelContainer(for: [Contact.self, Record.self, Event.self], inMemory: true)
 }
