@@ -25,7 +25,7 @@ struct DiagnosticsConsoleContainerView: View {
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 20) {
-                if debugOverrides.proAccessOverrideEnabled {
+                if overrideBannerContent != nil {
                     overrideBanner
                 }
                 overviewSection
@@ -105,6 +105,25 @@ struct DiagnosticsConsoleContainerView: View {
         subscriptionManager.effectiveIsPro(overrides: debugOverrides)
     }
 
+    private var overrideBannerContent: (title: String, message: String)? {
+        guard !subscriptionManager.hasActiveEntitlement else { return nil }
+
+        switch debugOverrides.effectiveAccessSource(hasEntitlement: subscriptionManager.hasActiveEntitlement) {
+        case .testFlight:
+            return (
+                String(localized: "settings.diagnostics.pro.banner.testflight.title"),
+                String(localized: "settings.diagnostics.pro.banner.testflight.message")
+            )
+        case .sessionOverride:
+            return (
+                String(localized: "settings.diagnostics.pro.banner.session.title"),
+                String(localized: "settings.diagnostics.pro.banner.session.message")
+            )
+        case .storeKit, .none:
+            return nil
+        }
+    }
+
     private var appVersionLine: String {
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
         let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
@@ -117,12 +136,12 @@ struct DiagnosticsConsoleContainerView: View {
 
     private var overrideBanner: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("临时 Pro 权限已启用")
+            Text(overrideBannerContent?.title ?? "")
                 .font(DesignSystem.Typography.body)
                 .fontWeight(.semibold)
                 .foregroundStyle(DesignSystem.Colors.textPrimary)
 
-            Text("该状态会在本次 App 存活期间持续生效；关闭控制台不会失效，重启 App 后才会恢复真实权限校验。")
+            Text(overrideBannerContent?.message ?? "")
                 .font(DesignSystem.Typography.caption)
                 .foregroundStyle(DesignSystem.Colors.textSecondary)
         }
@@ -171,6 +190,9 @@ struct DiagnosticsConsoleContainerView: View {
                     title: "覆盖来源",
                     value: debugOverrides.overrideSourceDescription(hasEntitlement: subscriptionManager.hasActiveEntitlement)
                 )
+                if debugOverrides.testFlightAutoProEnabled {
+                    infoRow(title: "TestFlight 自动 Pro", value: "已开启")
+                }
             }
         }
     }

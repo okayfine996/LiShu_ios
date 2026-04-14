@@ -99,6 +99,36 @@
         }
       }
     },
+    "pro.override.source.none" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未启用"
+          }
+        }
+      }
+    },
+    "pro.override.source.session" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本次启动临时覆盖"
+          }
+        }
+      }
+    },
+    "pro.override.source.testflight" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TestFlight 自动开放"
+          }
+        }
+      }
+    },
     "BUTTONS" : {
 
     },
@@ -5035,6 +5065,26 @@
         }
       }
     },
+    "pro.status.session" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "开发会话 Pro"
+          }
+        }
+      }
+    },
+    "pro.status.testflight" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TestFlight 测试版 Pro"
+          }
+        }
+      }
+    },
     "pro.terms.auto" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -7841,6 +7891,46 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "设置"
+          }
+        }
+      }
+    },
+    "settings.diagnostics.pro.banner.session.message" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "该状态会在本次 App 存活期间持续生效；关闭控制台不会失效，重启 App 后才会恢复真实权限校验。"
+          }
+        }
+      }
+    },
+    "settings.diagnostics.pro.banner.session.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "临时 Pro 权限已启用"
+          }
+        }
+      }
+    },
+    "settings.diagnostics.pro.banner.testflight.message" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前为 TestFlight 测试包，系统已自动开放 Pro 权限用于验收；这不会写入购买状态，也不代表已完成真实订阅。"
+          }
+        }
+      }
+    },
+    "settings.diagnostics.pro.banner.testflight.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TestFlight 自动 Pro 已启用"
           }
         }
       }

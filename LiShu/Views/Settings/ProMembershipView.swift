@@ -14,6 +14,19 @@ struct ProMembershipView: View {
         subscriptionManager.effectiveIsPro(overrides: debugOverrides)
     }
 
+    private var proAccessStatusText: String? {
+        switch debugOverrides.effectiveAccessSource(hasEntitlement: subscriptionManager.hasActiveEntitlement) {
+        case .storeKit:
+            subscriptionManager.currentSubscriptionName
+        case .testFlight:
+            String(localized: "pro.status.testflight")
+        case .sessionOverride:
+            String(localized: "pro.status.session")
+        case .none:
+            nil
+        }
+    }
+
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 28) {
@@ -406,8 +419,8 @@ struct ProMembershipView: View {
                 .font(DesignSystem.Typography.title3)
                 .foregroundStyle(DesignSystem.Colors.textPrimary)
 
-            if let planName = subscriptionManager.currentSubscriptionName {
-                Text(planName)
+            if let statusText = proAccessStatusText {
+                Text(statusText)
                     .font(DesignSystem.Typography.caption)
                     .foregroundStyle(DesignSystem.Colors.textSecondary)
             }

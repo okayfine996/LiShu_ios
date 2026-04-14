@@ -124,6 +124,7 @@ struct LiShuApp: App {
             }
             .task {
                 appBootstrapLogger.notice("Starting application tasks", metadata: ["step": .string("startup_tasks")])
+                debugOverrideManager.configureBuildOverrides(isTestFlightBuild: AppBuildInfo.isTestFlightBuild)
                 await subscriptionManager.loadProducts()
                 await subscriptionManager.checkEntitlements()
                 if settings.notificationEnabled {

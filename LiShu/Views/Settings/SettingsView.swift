@@ -65,6 +65,19 @@ struct SettingsView: View {
         subscriptionManager.effectiveIsPro(overrides: debugOverrides)
     }
 
+    private var proStatusText: String {
+        switch debugOverrides.effectiveAccessSource(hasEntitlement: subscriptionManager.hasActiveEntitlement) {
+        case .storeKit:
+            subscriptionManager.currentSubscriptionName ?? String(localized: "pro.status.active")
+        case .testFlight:
+            String(localized: "pro.status.testflight")
+        case .sessionOverride:
+            String(localized: "pro.status.session")
+        case .none:
+            String(localized: "pro.status.active")
+        }
+    }
+
     private var proCard: some View {
         NavigationLink(value: AppRoute.proMembership) {
             ZStack(alignment: .bottomTrailing) {
@@ -87,13 +100,9 @@ struct SettingsView: View {
                             .fontWeight(.bold)
 
                         if effectiveProAccessEnabled {
-                            Text(
-                                subscriptionManager.hasActiveEntitlement
-                                    ? (subscriptionManager.currentSubscriptionName ?? String(localized: "pro.status.active"))
-                                    : "开发会话 PRO"
-                            )
-                            .font(DesignSystem.Typography.caption)
-                            .foregroundStyle(DesignSystem.Colors.accentGold)
+                            Text(proStatusText)
+                                .font(DesignSystem.Typography.caption)
+                                .foregroundStyle(DesignSystem.Colors.accentGold)
                         } else {
                             Text(String(localized: "settings.pro.subtitle"))
                                 .font(DesignSystem.Typography.caption)
