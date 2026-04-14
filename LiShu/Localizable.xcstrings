@@ -1829,6 +1829,9 @@
         }
       }
     },
+    "DEBUG: 清除购买状态" : {
+
+    },
     "debug.clearAllData" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -2399,12 +2402,62 @@
         }
       }
     },
+    "event.ledger.legacyList.description" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这些记录不符合当前礼簿规则。你可以逐条点进详情进行修改或删除。"
+          }
+        }
+      }
+    },
+    "event.ledger.legacyList.empty" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这些旧记录已经处理完成。"
+          }
+        }
+      }
+    },
+    "event.ledger.legacyList.subtitle %@" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "以下是“%1$@”里需要处理的旧记录。"
+          }
+        }
+      }
+    },
+    "event.ledger.legacyList.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "待处理旧记录"
+          }
+        }
+      }
+    },
     "event.ledger.legacyWarning %lld" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "检测到 %1$lld 条旧记录不符合礼簿规则，请手动删除或修改。"
+          }
+        }
+      }
+    },
+    "event.ledger.legacyWarning.more %lld" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "等 %1$lld 条"
           }
         }
       }

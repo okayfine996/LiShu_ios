@@ -191,14 +191,30 @@ struct EventDetailViewModelTests {
     @Test func hostLedgerFlagsLegacyAnomalies() throws {
         let db = try TestDB()
         let contact = SampleData.contact(name: "张三")
+        let anotherContact = SampleData.contact(name: "李四")
         let event = SampleData.event(name: "我的婚礼", hostMode: .host)
         db.context.insert(contact)
+        db.context.insert(anotherContact)
         db.context.insert(event)
 
         db.context.insert(SampleData.record(contact: contact, event: event, amount: 1200, direction: .received))
         db.context.insert(SampleData.record(contact: contact, event: event, amount: 800, direction: .received))
-        db.context.insert(SampleData.recordGift(contact: contact, event: event, direction: .received))
-        db.context.insert(SampleData.record(contact: contact, event: event, amount: 300, direction: .given))
+        let invalidGift = SampleData.recordGift(
+            contact: contact,
+            event: event,
+            giftName: "茶具",
+            direction: .received,
+            date: Calendar.current.date(byAdding: .day, value: -1, to: .now) ?? .now
+        )
+        let invalidGiven = SampleData.record(
+            contact: anotherContact,
+            event: event,
+            amount: 300,
+            direction: .given,
+            date: Calendar.current.date(byAdding: .day, value: -2, to: .now) ?? .now
+        )
+        db.context.insert(invalidGift)
+        db.context.insert(invalidGiven)
         try db.context.save()
 
         let vm = EventDetailViewModel()
@@ -207,6 +223,39 @@ struct EventDetailViewModelTests {
         #expect(vm.hasLegacyLedgerAnomalies == true)
         #expect(vm.legacyLedgerAnomalyCount == 2)
         #expect(vm.receivedRecordCount == 2)
+        #expect(vm.legacyLedgerAnomalyPreviewText.contains("张三 · 茶具"))
+        #expect(vm.legacyLedgerAnomalyPreviewText.contains("李四"))
+        #expect(vm.legacyLedgerAnomalyPreviewText.contains(String(localized: "record.detail.directionSent")))
+    }
+
+    @Test func anomalyCheckDropsRecordsAfterTheyBecomeValidOrMoveAway() throws {
+        let db = try TestDB()
+        let contact = SampleData.contact(name: "张三")
+        let anotherContact = SampleData.contact(name: "李四")
+        let event = SampleData.event(name: "我的婚礼", hostMode: .host)
+        let anotherEvent = SampleData.event(name: "朋友婚礼", hostMode: .host)
+        db.context.insert(contact)
+        db.context.insert(anotherContact)
+        db.context.insert(event)
+        db.context.insert(anotherEvent)
+
+        let invalidGift = SampleData.recordGift(contact: contact, event: event, giftName: "茶具", direction: .received)
+        let invalidGiven = SampleData.record(contact: anotherContact, event: event, amount: 300, direction: .given)
+        db.context.insert(invalidGift)
+        db.context.insert(invalidGiven)
+        try db.context.save()
+
+        #expect(EventDetailViewModel.isLegacyLedgerAnomaly(invalidGift, for: event.persistentModelID) == true)
+        #expect(EventDetailViewModel.isLegacyLedgerAnomaly(invalidGiven, for: event.persistentModelID) == true)
+
+        invalidGift.recordType = .monetary
+        invalidGift.direction = .received
+        invalidGift.applyTypeData(.monetary(MonetaryData(amount: 288, paymentMethod: PaymentMethod.cash.rawValue)))
+        invalidGiven.event = anotherEvent
+        try db.context.save()
+
+        #expect(EventDetailViewModel.isLegacyLedgerAnomaly(invalidGift, for: event.persistentModelID) == false)
+        #expect(EventDetailViewModel.isLegacyLedgerAnomaly(invalidGiven, for: event.persistentModelID) == false)
     }
 
     @Test func pureHostLedgerDoesNotFlagLegacyAnomalies() throws {
