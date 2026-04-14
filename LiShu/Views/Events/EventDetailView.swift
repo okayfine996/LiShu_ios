@@ -67,12 +67,10 @@ struct EventDetailView: View {
                     } label: {
                         Label(String(localized: "common.edit"), systemImage: "pencil")
                     }
-                    if (viewModel.event?.records ?? []).isEmpty {
-                        Button(role: .destructive) {
-                            viewModel.isShowingDeleteAlert = true
-                        } label: {
-                            Label(String(localized: "common.delete"), systemImage: "trash")
-                        }
+                    Button(role: .destructive) {
+                        viewModel.isShowingDeleteAlert = true
+                    } label: {
+                        Label(String(localized: "common.delete"), systemImage: "trash")
                     }
                 } label: {
                     Image(systemName: "ellipsis.circle")
@@ -88,15 +86,22 @@ struct EventDetailView: View {
             Button(String(localized: "common.delete"), role: .destructive) {
                 if viewModel.deleteEvent(context: modelContext) {
                     dismiss()
-                } else {
-                    viewModel.isShowingDeleteBlockedAlert = true
                 }
             }
-        }
-        .alert(String(localized: "event.detail.deleteBlocked"), isPresented: $viewModel.isShowingDeleteBlockedAlert) {
-            Button(String(localized: "common.ok"), role: .cancel) {}
         } message: {
-            Text(String(localized: "event.detail.deleteBlockedMessage"))
+            Text(String(localized: "event.detail.deleteConfirmMessage"))
+        }
+        .alert(String(localized: "common.error"), isPresented: Binding(
+            get: { viewModel.deleteError != nil },
+            set: { if !$0 { viewModel.deleteError = nil } }
+        )) {
+            Button(String(localized: "common.ok")) {
+                viewModel.deleteError = nil
+            }
+        } message: {
+            if let message = viewModel.deleteError {
+                Text(message)
+            }
         }
         .alert(
             String(localized: "record.detail.deleteConfirm"),

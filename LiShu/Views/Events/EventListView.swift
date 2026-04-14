@@ -5,6 +5,8 @@ struct EventListView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var viewModel = EventListViewModel()
     @State private var sheetRoute: SheetRoute?
+    @State private var pendingDeleteEvent: Event?
+    @State private var selectedEventRoute: SelectedEventRoute?
 
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
@@ -60,6 +62,9 @@ struct EventListView: View {
         .sheet(item: $sheetRoute) { route in
             sheetContent(for: route)
         }
+        .navigationDestination(item: $selectedEventRoute) { route in
+            EventDetailView(eventID: route.id)
+        }
         .onChange(of: sheetRoute) { _, newValue in
             if let newValue {
                 InteractionLogger.sheetPresentation(screen: "events.list", route: newValue.logName, isPresented: true)
@@ -80,34 +85,53 @@ struct EventListView: View {
                 Text(message)
             }
         }
+        .alert(
+            String(localized: "event.detail.deleteConfirm"),
+            isPresented: Binding(
+                get: { pendingDeleteEvent != nil },
+                set: { if !$0 { pendingDeleteEvent = nil } }
+            )
+        ) {
+            Button(String(localized: "common.cancel"), role: .cancel) {
+                pendingDeleteEvent = nil
+            }
+            Button(String(localized: "common.delete"), role: .destructive) {
+                guard let pendingDeleteEvent else { return }
+                viewModel.deleteEvent(pendingDeleteEvent, context: modelContext)
+                self.pendingDeleteEvent = nil
+            }
+        } message: {
+            Text(String(localized: "event.detail.deleteConfirmMessage"))
+        }
     }
 
     // MARK: - Event List Content
 
     private var eventListContent: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 20) {
+        List {
+            listRow {
                 eventTypeFilterPills
+            }
 
-                if viewModel.hasNoResults {
+            if viewModel.hasNoResults {
+                listRow {
                     EmptyStateView(
                         icon: "magnifyingglass",
                         message: String(localized: "event.list.noResults")
                     )
-                } else {
-                    if !viewModel.filteredUpcomingEvents.isEmpty {
-                        upcomingSection
-                    }
+                }
+            } else {
+                if !viewModel.filteredUpcomingEvents.isEmpty {
+                    upcomingSection
+                }
 
-                    if !viewModel.filteredPastEvents.isEmpty {
-                        pastSection
-                    }
+                if !viewModel.filteredPastEvents.isEmpty {
+                    pastSection
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
-            .padding(.bottom, 60)
         }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
     }
 
     // MARK: - Event Type Filter Pills
@@ -151,78 +175,81 @@ struct EventListView: View {
                 }
             }
         }
+        .padding(.top, 8)
     }
 
     // MARK: - Upcoming Section
 
     private var upcomingSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(String(localized: "event.list.upcoming"))
-                .font(DesignSystem.Typography.caption)
-                .foregroundStyle(DesignSystem.Colors.textSecondary)
-                .fontWeight(.semibold)
-
-            VStack(spacing: 10) {
-                ForEach(viewModel.filteredUpcomingEvents) { event in
-                    NavigationLink(value: AppRoute.eventDetail(event.persistentModelID)) {
-                        EventRowCard(
-                            name: event.name,
-                            coverImage: event.coverImage,
-                            eventType: event.type,
-                            date: event.date,
-                            location: event.location,
-                            recordCount: (event.records ?? []).count,
-                            badge: upcomingBadge(event.date)
-                        )
-                    }
-                    .simultaneousGesture(TapGesture().onEnded {
-                        InteractionLogger.navigation(
-                            screen: "events.list",
-                            target: "events.list.event.\(String(describing: event.persistentModelID))",
-                            route: AppRoute.eventDetail(event.persistentModelID).logName
-                        )
-                    })
-                    .buttonStyle(.plain)
-                }
+        Section {
+            ForEach(viewModel.filteredUpcomingEvents) { event in
+                eventRow(event, badge: upcomingBadge(event.date))
             }
+        } header: {
+            sectionHeader(String(localized: "event.list.upcoming"))
         }
     }
 
     // MARK: - Past Section
 
     private var pastSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(String(localized: "event.list.past"))
-                .font(DesignSystem.Typography.caption)
-                .foregroundStyle(DesignSystem.Colors.textSecondary)
-                .fontWeight(.semibold)
-
-            VStack(spacing: 10) {
-                ForEach(viewModel.filteredPastEvents) { event in
-                    NavigationLink(value: AppRoute.eventDetail(event.persistentModelID)) {
-                        EventRowCard(
-                            name: event.name,
-                            coverImage: event.coverImage,
-                            eventType: event.type,
-                            date: event.date,
-                            location: event.location,
-                            recordCount: (event.records ?? []).count
-                        )
-                    }
-                    .simultaneousGesture(TapGesture().onEnded {
-                        InteractionLogger.navigation(
-                            screen: "events.list",
-                            target: "events.list.event.\(String(describing: event.persistentModelID))",
-                            route: AppRoute.eventDetail(event.persistentModelID).logName
-                        )
-                    })
-                    .buttonStyle(.plain)
-                }
+        Section {
+            ForEach(viewModel.filteredPastEvents) { event in
+                eventRow(event, badge: nil)
             }
+        } header: {
+            sectionHeader(String(localized: "event.list.past"))
         }
     }
 
     // MARK: - Helpers
+
+    private func eventRow(_ event: Event, badge: String?) -> some View {
+        EventRowCard(
+            name: event.name,
+            coverImage: event.coverImage,
+            eventType: event.type,
+            date: event.date,
+            location: event.location,
+            recordCount: (event.records ?? []).count,
+            badge: badge
+        )
+        .contentShape(Rectangle())
+        .onTapGesture {
+            InteractionLogger.navigation(
+                screen: "events.list",
+                target: "events.list.event.\(String(describing: event.persistentModelID))",
+                route: AppRoute.eventDetail(event.persistentModelID).logName
+            )
+            selectedEventRoute = SelectedEventRoute(id: event.persistentModelID)
+        }
+        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+            Button(role: .destructive) {
+                pendingDeleteEvent = event
+            } label: {
+                Label(String(localized: "common.delete"), systemImage: "trash")
+            }
+        }
+        .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 10, trailing: 16))
+        .listRowSeparator(.hidden)
+        .listRowBackground(Color.clear)
+    }
+
+    private func sectionHeader(_ title: String) -> some View {
+        Text(title)
+            .font(DesignSystem.Typography.caption)
+            .foregroundStyle(DesignSystem.Colors.textSecondary)
+            .fontWeight(.semibold)
+            .textCase(nil)
+            .padding(.top, 10)
+    }
+
+    private func listRow(@ViewBuilder content: () -> some View) -> some View {
+        content()
+            .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 12, trailing: 16))
+            .listRowSeparator(.hidden)
+            .listRowBackground(Color.clear)
+    }
 
     private func upcomingBadge(_ date: Date) -> String {
         let days = viewModel.daysUntil(date)
@@ -243,6 +270,10 @@ struct EventListView: View {
             EmptyView()
         }
     }
+}
+
+private struct SelectedEventRoute: Identifiable, Hashable {
+    let id: PersistentIdentifier
 }
 
 @MainActor

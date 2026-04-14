@@ -65,10 +65,6 @@ struct EventRowCard: View {
                     .padding(.vertical, 4)
                     .background(DesignSystem.Colors.primary.opacity(0.12))
                     .clipShape(Capsule())
-            } else {
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 12))
-                    .foregroundStyle(DesignSystem.Colors.textTertiary)
             }
         }
         .padding(.vertical, 12)

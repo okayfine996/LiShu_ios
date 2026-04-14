@@ -118,6 +118,42 @@ struct EventDetailViewModelTests {
         #expect(events.isEmpty)
     }
 
+    @Test func deleteEventWithGuestRecordsAlsoRemovesRecords() throws {
+        let db = try TestDB()
+        let contact = SampleData.contact(name: "张三")
+        let event = SampleData.event(name: "婚礼", hostMode: .guest)
+        db.context.insert(contact)
+        db.context.insert(event)
+        db.context.insert(SampleData.record(contact: contact, event: event, amount: 500, direction: .given))
+        db.context.insert(SampleData.recordGift(contact: contact, event: event, giftName: "茶具", direction: .received))
+        try db.context.save()
+
+        let vm = EventDetailViewModel()
+        vm.load(id: event.persistentModelID, context: db.context)
+
+        #expect(vm.deleteEvent(context: db.context) == true)
+        #expect(try db.context.fetch(FetchDescriptor<Event>()).isEmpty)
+        #expect(try db.context.fetch(FetchDescriptor<Record>()).isEmpty)
+    }
+
+    @Test func deleteEventWithHostRecordsAlsoRemovesRecords() throws {
+        let db = try TestDB()
+        let contact = SampleData.contact(name: "李四")
+        let event = SampleData.event(name: "我的婚礼", hostMode: .host)
+        db.context.insert(contact)
+        db.context.insert(event)
+        db.context.insert(SampleData.record(contact: contact, event: event, amount: 1200, direction: .received))
+        db.context.insert(SampleData.record(contact: contact, event: event, amount: 300, direction: .given))
+        try db.context.save()
+
+        let vm = EventDetailViewModel()
+        vm.load(id: event.persistentModelID, context: db.context)
+
+        #expect(vm.deleteEvent(context: db.context) == true)
+        #expect(try db.context.fetch(FetchDescriptor<Event>()).isEmpty)
+        #expect(try db.context.fetch(FetchDescriptor<Record>()).isEmpty)
+    }
+
     @Test func testFormattedDate() throws {
         let db = try TestDB()
         var cal = Calendar.current

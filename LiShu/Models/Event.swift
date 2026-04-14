@@ -19,8 +19,8 @@ final class Event {
     /// 事件封面图片，外部存储以支持 iCloud 同步
     @Attribute(.externalStorage)
     var coverImage: Data?
-    /// 关联的往来记录，有记录时禁止删除事件（应用层检查）
-    @Relationship(deleteRule: .nullify, inverse: \Record.event)
+    /// 关联的往来记录，删除事件时级联删除其关联记录
+    @Relationship(deleteRule: .cascade, inverse: \Record.event)
     var records: [Record]?
     /// 创建时间
     var createdAt: Date = Date()

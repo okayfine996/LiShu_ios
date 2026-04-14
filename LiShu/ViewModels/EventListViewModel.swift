@@ -103,18 +103,10 @@ class EventListViewModel {
 
     func deleteEvent(_ event: Event, context: ModelContext) {
         let deletedPayload = event.logPayload()
-        guard (event.records ?? []).isEmpty else {
-            deleteError = String(localized: "event.detail.deleteBlocked")
-            eventListLogger.warning("Blocked event deletion", metadata: [
-                "step": .string("delete"),
-                "event_id": .string(String(describing: event.persistentModelID)),
-                "reason": .string("has_records"),
-            ])
-            return
-        }
         context.delete(event)
         do {
             try context.save()
+            NotificationManager.shared.cancelRemindersForEventDeletion(event: event)
             BusinessDataLogger.entityMutation(
                 domain: "event",
                 screen: "events.list",

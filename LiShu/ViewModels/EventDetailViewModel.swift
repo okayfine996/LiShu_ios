@@ -5,7 +5,7 @@ import SwiftData
 class EventDetailViewModel {
     var event: Event?
     var isShowingDeleteAlert: Bool = false
-    var isShowingDeleteBlockedAlert: Bool = false
+    var deleteError: String?
     private let legacyLedgerPreviewLimit = 2
 
     func load(id: PersistentIdentifier, context: ModelContext) {
@@ -117,13 +117,13 @@ class EventDetailViewModel {
     @MainActor
     func deleteEvent(context: ModelContext) -> Bool {
         guard let event else { return false }
-        guard (event.records ?? []).isEmpty else { return false }
-        NotificationManager.shared.cancelEventReminder(event: event)
         context.delete(event)
         do {
             try context.save()
+            NotificationManager.shared.cancelRemindersForEventDeletion(event: event)
             return true
         } catch {
+            deleteError = error.localizedDescription
             return false
         }
     }
