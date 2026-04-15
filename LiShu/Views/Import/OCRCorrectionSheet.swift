@@ -41,6 +41,10 @@ struct OCRCorrectionSheet: View {
         .padding(20)
         .background(DesignSystem.Colors.bgSurface)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
+                .stroke(DesignSystem.Colors.border, lineWidth: 1)
+        )
     }
 
     private var nameField: some View {
@@ -57,7 +61,7 @@ struct OCRCorrectionSheet: View {
             .foregroundStyle(DesignSystem.Colors.textPrimary)
             .padding(.horizontal, 14)
             .padding(.vertical, 12)
-            .background(DesignSystem.Colors.bgSurface)
+            .background(DesignSystem.Colors.bgInput)
             .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.input))
             .overlay(
                 RoundedRectangle(cornerRadius: DesignSystem.Radius.input)
@@ -87,7 +91,7 @@ struct OCRCorrectionSheet: View {
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 12)
-            .background(DesignSystem.Colors.bgSurface)
+            .background(DesignSystem.Colors.bgInput)
             .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.input))
             .overlay(
                 RoundedRectangle(cornerRadius: DesignSystem.Radius.input)

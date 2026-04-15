@@ -233,7 +233,7 @@ struct OCRResultView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
-        .background(DesignSystem.Colors.bgCard)
+        .background(DesignSystem.Colors.bgSurface)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.smallCard))
         .contentShape(Rectangle())
         .onTapGesture {
