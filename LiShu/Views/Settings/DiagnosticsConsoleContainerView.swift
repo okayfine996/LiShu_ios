@@ -21,6 +21,7 @@ struct DiagnosticsConsoleContainerView: View {
     @State private var statusMessage: String?
     @State private var showPulseConsole = false
     @State private var showClearDataConfirmation = false
+    @State private var showClearNotificationConfirmation = false
 
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -38,21 +39,21 @@ struct DiagnosticsConsoleContainerView: View {
             .padding(16)
         }
         .background(DesignSystem.Colors.bgPage)
-        .navigationTitle("开发控制台")
+        .navigationTitle(String(localized: "debug.console.title"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
-                Button("关闭") {
+                Button(String(localized: "common.cancel")) {
                     dismiss()
                 }
             }
 
             ToolbarItem(placement: .primaryAction) {
                 Menu {
-                    Button("导出详细文本日志") {
+                    Button(String(localized: "debug.console.exportTextLog")) {
                         exportDiagnosticsLog(as: .detailedText)
                     }
-                    Button("导出详细 JSON 日志") {
+                    Button(String(localized: "debug.console.exportJsonLog")) {
                         exportDiagnosticsLog(as: .jsonLines)
                     }
                 } label: {
@@ -78,7 +79,7 @@ struct DiagnosticsConsoleContainerView: View {
                 try? FileManager.default.removeItem(at: item.url)
             }
         }
-        .alert("导出失败", isPresented: Binding(
+        .alert(String(localized: "debug.console.exportErrorTitle"), isPresented: Binding(
             get: { diagnosticsExportErrorMessage != nil },
             set: { if !$0 { diagnosticsExportErrorMessage = nil } }
         )) {
@@ -90,14 +91,34 @@ struct DiagnosticsConsoleContainerView: View {
                 Text(diagnosticsExportErrorMessage)
             }
         }
-        .confirmationDialog("确认清空全部数据？", isPresented: $showClearDataConfirmation, titleVisibility: .visible) {
-            Button("清空全部数据", role: .destructive) {
+        .confirmationDialog(
+            String(localized: "debug.clearAllData.confirmTitle"),
+            isPresented: $showClearDataConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button(String(localized: "debug.clearAllData"), role: .destructive) {
                 DebugConsoleActions.clearAllData(context: modelContext)
-                statusMessage = "已清空全部数据"
+                statusMessage = String(localized: "debug.clearAllData.result")
             }
+            .accessibilityIdentifier("debug.clearAllData.confirm")
             Button(String(localized: "common.cancel"), role: .cancel) {}
         } message: {
-            Text("此操作会删除联系人、事件、记录和记录照片，仅建议在调试场景使用。")
+            Text(String(localized: "debug.clearAllData.confirmMessage"))
+        }
+        .confirmationDialog(
+            String(localized: "debug.notification.clearAll.confirmTitle"),
+            isPresented: $showClearNotificationConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button(String(localized: "debug.notification.clearAll"), role: .destructive) {
+                DebugConsoleActions.clearAllNotifications()
+                statusMessage = String(localized: "debug.notification.clearAll.result")
+                Task { await refreshPendingNotificationCount() }
+            }
+            .accessibilityIdentifier("debug.notification.clearAll.confirm")
+            Button(String(localized: "common.cancel"), role: .cancel) {}
+        } message: {
+            Text(String(localized: "debug.notification.clearAll.confirmMessage"))
         }
     }
 
@@ -187,6 +208,7 @@ struct DiagnosticsConsoleContainerView: View {
             actionButton(icon: "trash.fill", title: "清空全部数据", role: .destructive) {
                 showClearDataConfirmation = true
             }
+            .accessibilityIdentifier("debug.clearAllData.button")
 
             sectionDivider
 
@@ -236,10 +258,9 @@ struct DiagnosticsConsoleContainerView: View {
             sectionDivider
 
             actionButton(icon: "trash", title: String(localized: "debug.notification.clearAll"), role: .destructive) {
-                DebugConsoleActions.clearAllNotifications()
-                statusMessage = "已清空全部通知"
-                Task { await refreshPendingNotificationCount() }
+                showClearNotificationConfirmation = true
             }
+            .accessibilityIdentifier("debug.notification.clearAll.button")
         }
     }
 
@@ -345,6 +366,7 @@ struct DiagnosticsConsoleContainerView: View {
         icon: String,
         title: String,
         role: ButtonRole? = nil,
+        accessibilityIdentifier: String? = nil,
         action: @escaping () -> Void
     ) -> some View {
         Button(role: role, action: action) {
@@ -364,6 +386,7 @@ struct DiagnosticsConsoleContainerView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityIdentifier(accessibilityIdentifier ?? "")
     }
 
     private var sectionDivider: some View {

@@ -6,6 +6,8 @@ struct RecordListView: View {
     @State private var viewModel = RecordListViewModel()
     @State private var sheetRoute: SheetRoute?
     @State private var pendingSearchTask: Task<Void, Never>?
+    @State private var pendingDeleteRecord: Record?
+    @State private var selectedRecordRoute: SelectedRecordRoute?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -35,6 +37,7 @@ struct RecordListView: View {
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(DesignSystem.Colors.primary)
                 }
+                .accessibilityIdentifier("record.list.addButton")
             }
         }
         .onAppear {
@@ -53,6 +56,9 @@ struct RecordListView: View {
         }
         .sheet(item: $sheetRoute) { route in
             sheetContent(for: route)
+        }
+        .navigationDestination(item: $selectedRecordRoute) { route in
+            RecordDetailView(recordID: route.id)
         }
         .onChange(of: sheetRoute) { _, newValue in
             if let newValue {
@@ -76,6 +82,24 @@ struct RecordListView: View {
             if let message = viewModel.deleteError {
                 Text(message)
             }
+        }
+        .alert(
+            String(localized: "record.detail.deleteConfirm"),
+            isPresented: Binding(
+                get: { pendingDeleteRecord != nil },
+                set: { if !$0 { pendingDeleteRecord = nil } }
+            )
+        ) {
+            Button(String(localized: "common.cancel"), role: .cancel) {
+                pendingDeleteRecord = nil
+            }
+            Button(String(localized: "common.delete"), role: .destructive) {
+                guard let pendingDeleteRecord else { return }
+                viewModel.deleteRecord(pendingDeleteRecord, context: modelContext)
+                self.pendingDeleteRecord = nil
+            }
+        } message: {
+            Text(recordDeleteMessage)
         }
     }
 
@@ -120,10 +144,12 @@ struct RecordListView: View {
     }
 
     private var filteredEmptyContent: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(spacing: 16) {
+        List {
+            listRow {
                 filterChips
+            }
 
+            listRow(bottomInset: DesignSystem.Spacing.section) {
                 EmptyStateView(
                     icon: "line.3.horizontal.decrease.circle",
                     message: String(localized: "record.list.empty"),
@@ -138,23 +164,25 @@ struct RecordListView: View {
                 )
                 .frame(minHeight: 320)
             }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 80)
         }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .background(DesignSystem.Colors.bgPage)
     }
 
     private var recordsList: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(spacing: 16) {
+        List {
+            listRow {
                 filterChips
-
-                ForEach(viewModel.sortedMonthKeys, id: \.self) { monthKey in
-                    monthSection(monthKey)
-                }
             }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 80)
+
+            ForEach(viewModel.sortedMonthKeys, id: \.self) { monthKey in
+                monthSection(monthKey)
+            }
         }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .background(DesignSystem.Colors.bgPage)
     }
 
     // MARK: - Filter Chips
@@ -206,28 +234,30 @@ struct RecordListView: View {
     // MARK: - Month Section
 
     private func monthSection(_ monthKey: String) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text(monthKey)
-                .font(DesignSystem.Typography.caption)
-                .foregroundStyle(DesignSystem.Colors.textSecondary)
-                .fontWeight(.semibold)
-                .padding(.leading, 4)
-
+        Section {
             if let records = viewModel.state.value?[monthKey] {
                 ForEach(records) { record in
-                    NavigationLink(value: AppRoute.recordDetail(record.persistentModelID)) {
-                        RecordRow(record: record)
-                    }
-                    .simultaneousGesture(TapGesture().onEnded {
+                    Button {
                         InteractionLogger.navigation(
                             screen: "records.list",
                             target: "records.list.record.\(String(describing: record.persistentModelID))",
                             route: AppRoute.recordDetail(record.persistentModelID).logName
                         )
-                    })
+                        selectedRecordRoute = SelectedRecordRoute(id: record.persistentModelID)
+                    } label: {
+                        RecordRow(record: record)
+                            .background(DesignSystem.Colors.bgSurface)
+                            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+                    }
                     .buttonStyle(.plain)
-                    .background(DesignSystem.Colors.bgSurface)
-                    .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+                    .accessibilityIdentifier("record.list.row.\(String(describing: record.persistentModelID))")
+                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                        Button(role: .destructive) {
+                            pendingDeleteRecord = record
+                        } label: {
+                            Label(String(localized: "common.delete"), systemImage: "trash")
+                        }
+                    }
                     .contextMenu {
                         if record.recordType == .monetary, record.direction == .given {
                             Button {
@@ -242,21 +272,53 @@ struct RecordListView: View {
                                 Label(String(localized: "record.detail.returnGift"), systemImage: "gift")
                             }
                         }
-                        Button(role: .destructive) {
-                            InteractionLogger.contextMenuAction(
-                                screen: "records.list",
-                                target: "records.list.delete",
-                                action: .delete,
-                                metadata: ["record_id": String(describing: record.persistentModelID)]
-                            )
-                            viewModel.deleteRecord(record, context: modelContext)
-                        } label: {
-                            Label(String(localized: "common.delete"), systemImage: "trash")
-                        }
                     }
+                    .listRowInsets(EdgeInsets(
+                        top: 0,
+                        leading: DesignSystem.Spacing.pageHorizontal,
+                        bottom: DesignSystem.Spacing.block,
+                        trailing: DesignSystem.Spacing.pageHorizontal
+                    ))
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
                 }
             }
+        } header: {
+            sectionHeader(monthKey)
         }
+    }
+
+    private func sectionHeader(_ title: String) -> some View {
+        Text(title)
+            .font(DesignSystem.Typography.caption)
+            .foregroundStyle(DesignSystem.Colors.textSecondary)
+            .fontWeight(.semibold)
+            .textCase(nil)
+            .padding(.top, DesignSystem.Spacing.block)
+    }
+
+    private func listRow(
+        bottomInset: CGFloat = DesignSystem.Spacing.block,
+        @ViewBuilder content: () -> some View
+    ) -> some View {
+        content()
+            .listRowInsets(EdgeInsets(
+                top: 0,
+                leading: DesignSystem.Spacing.pageHorizontal,
+                bottom: bottomInset,
+                trailing: DesignSystem.Spacing.pageHorizontal
+            ))
+            .listRowSeparator(.hidden)
+            .listRowBackground(Color.clear)
+    }
+
+    private var recordDeleteMessage: String {
+        guard let pendingDeleteRecord else { return "" }
+        let photoCount = Int64(pendingDeleteRecord.photos?.count ?? 0)
+        return String(
+            format: String(localized: "record.list.deleteConfirmMessage"),
+            photoCount
+        )
     }
 
     // MARK: - Sheet
@@ -304,6 +366,10 @@ struct RecordListView: View {
             }
         }
     }
+}
+
+private struct SelectedRecordRoute: Identifiable, Hashable {
+    let id: PersistentIdentifier
 }
 
 @MainActor

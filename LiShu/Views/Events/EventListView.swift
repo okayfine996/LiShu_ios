@@ -101,7 +101,7 @@ struct EventListView: View {
                 self.pendingDeleteEvent = nil
             }
         } message: {
-            Text(String(localized: "event.detail.deleteConfirmMessage"))
+            Text(eventDeleteMessage)
         }
     }
 
@@ -205,24 +205,26 @@ struct EventListView: View {
     // MARK: - Helpers
 
     private func eventRow(_ event: Event, badge: String?) -> some View {
-        EventRowCard(
-            name: event.name,
-            coverImage: event.coverImage,
-            eventType: event.type,
-            date: event.date,
-            location: event.location,
-            recordCount: (event.records ?? []).count,
-            badge: badge
-        )
-        .contentShape(Rectangle())
-        .onTapGesture {
+        Button {
             InteractionLogger.navigation(
                 screen: "events.list",
                 target: "events.list.event.\(String(describing: event.persistentModelID))",
                 route: AppRoute.eventDetail(event.persistentModelID).logName
             )
             selectedEventRoute = SelectedEventRoute(id: event.persistentModelID)
+        } label: {
+            EventRowCard(
+                name: event.name,
+                coverImage: event.coverImage,
+                eventType: event.type,
+                date: event.date,
+                location: event.location,
+                recordCount: (event.records ?? []).count,
+                badge: badge
+            )
         }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("event.list.row.\(event.name)")
         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
             Button(role: .destructive) {
                 pendingDeleteEvent = event
@@ -257,6 +259,18 @@ struct EventListView: View {
             return String(localized: "home.today")
         }
         return String(format: String(localized: "event.list.daysAfterFormat"), days)
+    }
+
+    private var eventDeleteMessage: String {
+        guard let pendingDeleteEvent else { return "" }
+        let records = pendingDeleteEvent.records ?? []
+        let recordCount = Int64(records.count)
+        let photoCount = Int64(records.reduce(0) { $0 + ($1.photos?.count ?? 0) })
+        return String(
+            format: String(localized: "event.list.deleteConfirmMessage"),
+            recordCount,
+            photoCount
+        )
     }
 
     @ViewBuilder

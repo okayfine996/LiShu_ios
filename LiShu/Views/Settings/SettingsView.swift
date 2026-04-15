@@ -206,6 +206,22 @@ struct SettingsView: View {
 
                 sectionDivider
 
+                Button {
+                    InteractionLogger.tap(
+                        screen: "settings.root",
+                        target: "settings.deleteAll",
+                        route: "sheet.settings.deleteAllData",
+                        presentation: .sheet
+                    )
+                    showDeleteAllSheet = true
+                } label: {
+                    settingsRow(icon: "trash.fill", title: String(localized: "settings.deleteAll"), isDestructive: true)
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("settings.deleteAllButton")
+
+                sectionDivider
+
                 settingsToggleRow(
                     icon: "icloud.fill",
                     title: String(localized: "settings.icloudSync"),

@@ -20,4 +20,6 @@ enum TabLabels {
 enum UITestStrings {
     /// `contact.add.title`
     static let newContactMenuItem = "新建联系人"
+    /// `home.addRecord`
+    static let addRecordMenuItem = "记一笔"
 }

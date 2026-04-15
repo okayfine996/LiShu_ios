@@ -114,6 +114,11 @@ struct MainTabView: View {
                 )
             }
         }
+        .onAppear {
+            if CommandLine.arguments.contains("--uitest-open-ocr") {
+                sheetRoute = .ocrImport
+            }
+        }
     }
 
     // MARK: - Route Destination

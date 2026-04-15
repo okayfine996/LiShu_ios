@@ -5,6 +5,8 @@ struct OCRResultView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Bindable var viewModel: OCRImportViewModel
+    @State private var pendingDeleteCount = 0
+    @State private var showDeleteConfirm = false
 
     var body: some View {
         content
@@ -57,6 +59,20 @@ struct OCRResultView: View {
                 if let error = viewModel.importError {
                     Text(error)
                 }
+            }
+            .alert(String(localized: "ocr.delete.confirmTitle"), isPresented: $showDeleteConfirm) {
+                Button(String(localized: "common.cancel"), role: .cancel) {
+                    showDeleteConfirm = false
+                    pendingDeleteCount = 0
+                }
+                .accessibilityIdentifier("ocr.delete.cancelButton")
+
+                Button(String(localized: "common.delete"), role: .destructive) {
+                    confirmDeleteSelected()
+                }
+                .accessibilityIdentifier("ocr.delete.confirmButton")
+            } message: {
+                Text(String(format: String(localized: "ocr.delete.confirmMessage %lld"), Int64(pendingDeleteCount)))
             }
     }
 
@@ -132,6 +148,7 @@ struct OCRResultView: View {
                 .font(DesignSystem.Typography.body)
                 .foregroundStyle(DesignSystem.Colors.primary)
         }
+        .accessibilityIdentifier("ocr.result.selectAllButton")
     }
 
     private var selectAllButtonTitle: String {
@@ -374,14 +391,8 @@ struct OCRResultView: View {
             Spacer()
 
             Button {
-                InteractionLogger.submit(
-                    screen: "import.ocr.result",
-                    target: "import.ocr.result.deleteSelected",
-                    action: .delete,
-                    result: "submitted",
-                    metadata: ["count": String(viewModel.selectedCount)]
-                )
-                viewModel.deleteSelected()
+                pendingDeleteCount = viewModel.selectedCount
+                showDeleteConfirm = true
             } label: {
                 Text(String(localized: "ocr.delete"))
                     .font(DesignSystem.Typography.caption)
@@ -389,6 +400,7 @@ struct OCRResultView: View {
                     .padding(.horizontal, 20)
                     .padding(.vertical, 10)
             }
+            .accessibilityIdentifier("ocr.result.deleteButton")
             .buttonStyle(SecondaryButtonStyle())
             .disabled(viewModel.selectedCount == 0)
 
@@ -527,6 +539,20 @@ struct OCRResultView: View {
                 )
         }
         .buttonStyle(.plain)
+    }
+
+    private func confirmDeleteSelected() {
+        guard pendingDeleteCount > 0 else { return }
+        InteractionLogger.submit(
+            screen: "import.ocr.result",
+            target: "import.ocr.result.deleteSelected",
+            action: .delete,
+            result: "submitted",
+            metadata: ["count": String(pendingDeleteCount)]
+        )
+        viewModel.deleteSelected()
+        showDeleteConfirm = false
+        pendingDeleteCount = 0
     }
 }
 

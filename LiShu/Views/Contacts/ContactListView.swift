@@ -6,6 +6,8 @@ struct ContactListView: View {
     @State private var viewModel = ContactListViewModel()
     @State private var presentedSheet: SheetRoute?
     @State private var showBatchImport = false
+    @State private var pendingDeleteContact: Contact?
+    @State private var selectedContactRoute: SelectedContactRoute?
 
     var body: some View {
         ZStack {
@@ -91,6 +93,9 @@ struct ContactListView: View {
                 EmptyView()
             }
         }
+        .navigationDestination(item: $selectedContactRoute) { route in
+            ContactDetailView(contactID: route.id)
+        }
         .onChange(of: presentedSheet) { _, newValue in
             if let newValue {
                 InteractionLogger.sheetPresentation(screen: "contacts.list", route: newValue.logName, isPresented: true)
@@ -117,6 +122,24 @@ struct ContactListView: View {
                 Text(message)
             }
         }
+        .alert(
+            String(localized: "contact.detail.deleteConfirm"),
+            isPresented: Binding(
+                get: { pendingDeleteContact != nil },
+                set: { if !$0 { pendingDeleteContact = nil } }
+            )
+        ) {
+            Button(String(localized: "common.cancel"), role: .cancel) {
+                pendingDeleteContact = nil
+            }
+            Button(String(localized: "common.delete"), role: .destructive) {
+                guard let pendingDeleteContact else { return }
+                viewModel.deleteContact(pendingDeleteContact, context: modelContext)
+                self.pendingDeleteContact = nil
+            }
+        } message: {
+            Text(contactDeleteMessage)
+        }
     }
 
     // MARK: - Navigation Title
@@ -132,24 +155,27 @@ struct ContactListView: View {
     // MARK: - Contact List Content
 
     private var contactListContent: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(spacing: 16) {
+        List {
+            listRow(bottomInset: DesignSystem.Spacing.block) {
                 filterSection
+            }
 
-                if viewModel.filteredContacts.isEmpty {
+            if viewModel.filteredContacts.isEmpty {
+                listRow(bottomInset: DesignSystem.Spacing.section) {
                     EmptyStateView(
                         icon: "magnifyingglass",
                         message: String(localized: "contact.list.noResults")
                     )
-                } else {
-                    ForEach(viewModel.groupedContacts) { group in
-                        groupSection(group)
-                    }
+                }
+            } else {
+                ForEach(viewModel.groupedContacts) { group in
+                    groupSection(group)
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 80)
         }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .background(DesignSystem.Colors.bgPage)
     }
 
     // MARK: - Filter Section
@@ -165,35 +191,91 @@ struct ContactListView: View {
     // MARK: - Group Section
 
     private func groupSection(_ group: ContactGroup) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text(group.title)
-                .font(DesignSystem.Typography.caption)
-                .foregroundStyle(DesignSystem.Colors.textSecondary)
-                .fontWeight(.semibold)
-                .padding(.leading, 4)
-
+        Section {
             ForEach(group.contacts) { contact in
-                NavigationLink(value: AppRoute.contactDetail(contact.persistentModelID)) {
-                    ContactRow(
-                        avatar: contact.avatar,
-                        name: contact.name,
-                        relation: contact.relation,
-                        netValue: contact.netValue
-                    )
-                }
-                .simultaneousGesture(TapGesture().onEnded {
-                    InteractionLogger.navigation(
-                        screen: "contacts.list",
-                        target: "contacts.list.contact.\(String(describing: contact.persistentModelID))",
-                        route: AppRoute.contactDetail(contact.persistentModelID).logName
-                    )
-                })
-                .buttonStyle(.plain)
-                .background(DesignSystem.Colors.bgSurface)
-                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+                contactRow(contact)
             }
+        } header: {
+            sectionHeader(group.title)
         }
     }
+
+    private func contactRow(_ contact: Contact) -> some View {
+        Button {
+            InteractionLogger.navigation(
+                screen: "contacts.list",
+                target: "contacts.list.contact.\(String(describing: contact.persistentModelID))",
+                route: AppRoute.contactDetail(contact.persistentModelID).logName
+            )
+            selectedContactRoute = SelectedContactRoute(id: contact.persistentModelID)
+        } label: {
+            ContactRow(
+                avatar: contact.avatar,
+                name: contact.name,
+                relation: contact.relation,
+                netValue: contact.netValue
+            )
+            .background(DesignSystem.Colors.bgSurface)
+            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("contact.list.row.\(contact.name)")
+        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+            Button(role: .destructive) {
+                pendingDeleteContact = contact
+            } label: {
+                Label(String(localized: "common.delete"), systemImage: "trash")
+            }
+        }
+        .listRowInsets(EdgeInsets(
+            top: 0,
+            leading: DesignSystem.Spacing.pageHorizontal,
+            bottom: DesignSystem.Spacing.block,
+            trailing: DesignSystem.Spacing.pageHorizontal
+        ))
+        .listRowSeparator(.hidden)
+        .listRowBackground(Color.clear)
+    }
+
+    private func sectionHeader(_ title: String) -> some View {
+        Text(title)
+            .font(DesignSystem.Typography.caption)
+            .foregroundStyle(DesignSystem.Colors.textSecondary)
+            .fontWeight(.semibold)
+            .textCase(nil)
+            .padding(.top, DesignSystem.Spacing.block)
+    }
+
+    private func listRow(
+        bottomInset: CGFloat = DesignSystem.Spacing.block,
+        @ViewBuilder content: () -> some View
+    ) -> some View {
+        content()
+            .listRowInsets(EdgeInsets(
+                top: 0,
+                leading: DesignSystem.Spacing.pageHorizontal,
+                bottom: bottomInset,
+                trailing: DesignSystem.Spacing.pageHorizontal
+            ))
+            .listRowSeparator(.hidden)
+            .listRowBackground(Color.clear)
+    }
+
+    private var contactDeleteMessage: String {
+        guard let pendingDeleteContact else { return "" }
+        let records = pendingDeleteContact.records ?? []
+        let recordCount = Int64(records.count)
+        let photoCount = Int64(records.reduce(0) { $0 + ($1.photos?.count ?? 0) })
+        return String(
+            format: String(localized: "contact.list.deleteConfirmMessage"),
+            recordCount,
+            photoCount
+        )
+    }
+}
+
+private struct SelectedContactRoute: Identifiable, Hashable {
+    let id: PersistentIdentifier
 }
 
 // MARK: - Preview

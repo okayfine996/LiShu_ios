@@ -32,8 +32,8 @@ struct DataRelationshipTests {
         #expect(try db.context.fetchCount(FetchDescriptor<Event>()) == 2)
     }
 
-    /// 与 `Event` 的 nullify 删除规则一致：删事件后记录仍存在且 `event == nil`。
-    @Test func eventDeleteNullifiesRecordEventReference() throws {
+    /// `Event.records` 使用 `.cascade` 删除规则：删事件后会连带删除关联记录。
+    @Test func eventCascadeDeleteRemovesRecords() throws {
         let db = try TestDB()
         let contact = SampleData.contact()
         let event = SampleData.event(name: "不可删除事件")
@@ -48,9 +48,7 @@ struct DataRelationshipTests {
         try db.context.save()
 
         #expect(try db.context.fetchCount(FetchDescriptor<Event>()) == 0)
-        let records = try db.context.fetch(FetchDescriptor<Record>())
-        #expect(records.count == 1)
-        #expect(records.first?.event == nil)
+        #expect(try db.context.fetchCount(FetchDescriptor<Record>()) == 0)
     }
 
     @Test func eventDeleteWithoutRecords() throws {
