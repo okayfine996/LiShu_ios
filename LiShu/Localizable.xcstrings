@@ -351,7 +351,6 @@
       }
     },
     "common.preview.unavailable" : {
-      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -3829,6 +3828,7 @@
       }
     },
     "ocr.correction.date" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -3845,6 +3845,7 @@
       }
     },
     "ocr.correction.event" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -3998,6 +3999,7 @@
       }
     },
     "ocr.import.configTitle" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -4008,6 +4010,7 @@
       }
     },
     "ocr.import.confirm" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -4028,6 +4031,7 @@
       }
     },
     "ocr.import.direction" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -4111,6 +4115,7 @@
       }
     },
     "ocr.import.summary" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -4121,6 +4126,7 @@
       }
     },
     "ocr.import.summaryDetail %lld %@" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -6875,7 +6881,6 @@
       }
     },
     "record.ocr.import" : {
-      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {

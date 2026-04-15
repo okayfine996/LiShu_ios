@@ -78,54 +78,6 @@ struct OCRServiceTests {
         #expect(service.isReasonableAmount(2_000_000) == false)
     }
 
-    // MARK: - Event Name Matching
-
-    @Test func matchEventNameWithKeywords() {
-        #expect(service.matchEventType(from: "张三婚礼") == .wedding)
-        #expect(service.matchEventType(from: "李四结婚") == .wedding)
-        // 「订婚宴」含「婚宴」会先匹配婚礼关键词，故用不含「婚宴」的短语测订婚。
-        #expect(service.matchEventType(from: "王五订婚") == .engagement)
-        #expect(service.matchEventType(from: "赵六生日宴") == .birthday)
-        #expect(service.matchEventType(from: "乔迁新居") == .property)
-        #expect(service.matchEventType(from: "春节拜年") == .festival)
-        #expect(service.matchEventType(from: "丧事份子") == .funeral)
-        #expect(service.matchEventType(from: "满月酒") == .birth)
-        #expect(service.matchEventType(from: "寿宴") == .longevity)
-        #expect(service.matchEventType(from: "升学宴") == .education)
-        #expect(service.matchEventType(from: "开业大吉") == .business)
-        #expect(service.matchEventType(from: "升职庆祝") == .promotion)
-        #expect(service.matchEventType(from: "探望病人") == .visit)
-    }
-
-    @Test func matchEventNameDefaultsToOther() {
-        #expect(service.matchEventType(from: "张三 500") == .other)
-        #expect(service.matchEventType(from: "普通记录") == .other)
-        #expect(service.matchEventType(from: "") == .other)
-    }
-
-    @Test func parseRecordItemsWithEventKeyword() {
-        let lines: [(text: String, confidence: Float)] = [
-            (text: "张三婚礼 500", confidence: 0.9),
-            (text: "李四 300", confidence: 0.9),
-        ]
-
-        let items = service.parseRecordItems(from: lines)
-        #expect(items.count == 2)
-        #expect(items[0].eventName == EventType.wedding.displayName)
-        #expect(items[1].eventName == EventType.other.displayName)
-    }
-
-    @Test func buildItemWithEventName() {
-        let birthdayName = EventType.birthday.displayName
-        let itemWithEvent = service.buildItem(name: "张三", rawAmount: "500", visionConfidence: 0.9, eventName: birthdayName)
-        #expect(itemWithEvent != nil)
-        #expect(itemWithEvent?.eventName == birthdayName)
-
-        let itemDefault = service.buildItem(name: "李四", rawAmount: "300", visionConfidence: 0.9)
-        #expect(itemDefault != nil)
-        #expect(itemDefault?.eventName == EventType.other.displayName)
-    }
-
     // MARK: - Deduplication
 
     @Test func testDeduplicateItems() {

@@ -5,14 +5,15 @@ import SwiftUI
 
 struct OCRImportView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
     @State private var viewModel: OCRImportViewModel
     @State private var selectedPhotos: [PhotosPickerItem] = []
     @State private var showPhotosPicker = false
     @State private var showProSheet = false
     @State private var hasLoadedUITestFixture = false
 
-    init(viewModel: OCRImportViewModel = OCRImportViewModel()) {
-        _viewModel = State(initialValue: viewModel)
+    init(eventID: PersistentIdentifier, viewModel: OCRImportViewModel? = nil) {
+        _viewModel = State(initialValue: viewModel ?? OCRImportViewModel(eventID: eventID))
     }
 
     var body: some View {
@@ -95,6 +96,10 @@ struct OCRImportView: View {
         hasLoadedUITestFixture = true
 
         guard CommandLine.arguments.contains("--uitesting") else { return }
+        guard let event = modelContext.model(for: viewModel.eventID) as? Event, event.hostMode == .host else {
+            viewModel.processingState = .error(String(localized: "common.error"))
+            return
+        }
         guard let fixtureItems = parseUITestFixtureItems() else { return }
         guard !fixtureItems.isEmpty else { return }
 
@@ -112,17 +117,16 @@ struct OCRImportView: View {
 
     private func parseUITestFixtureItem(_ itemPayload: String) -> OCRRecordItem? {
         let parts = itemPayload.split(separator: "|", omittingEmptySubsequences: false)
-        guard parts.count >= 4 else { return nil }
+        guard parts.count >= 2 else { return nil }
 
         let name = parts[0].trimmingCharacters(in: .whitespacesAndNewlines)
         guard !name.isEmpty else { return nil }
 
         let amount = Double(parts[1]) ?? 0
-        let amountText = parts[2].isEmpty ? "\(amount)" : String(parts[2])
-        let eventName = String(parts[3]).trimmingCharacters(in: .whitespacesAndNewlines)
+        let amountText = parts.count > 2 && !parts[2].isEmpty ? String(parts[2]) : "\(amount)"
 
-        let confidence = OCRConfidence(rawValue: String(parts.dropFirst(4).first ?? "high")) ?? .high
-        let warningType = parts.dropFirst(5).first
+        let confidence = OCRConfidence(rawValue: String(parts.dropFirst(3).first ?? "high")) ?? .high
+        let warningType = parts.dropFirst(4).first
             .flatMap { WarningType(rawValue: String($0)) }
 
         return OCRRecordItem(
@@ -130,8 +134,7 @@ struct OCRImportView: View {
             amount: amount,
             amountText: amountText,
             confidence: confidence,
-            warningType: warningType,
-            eventName: eventName
+            warningType: warningType
         )
     }
 
@@ -337,28 +340,84 @@ struct OCRImportView: View {
 }
 
 #Preview {
-    OCRImportView()
-        .modelContainer(for: [Contact.self, Record.self, Event.self], inMemory: true)
+    Group {
+        if let container = makeOCRImportPreviewContainer() {
+            OCRImportView(eventID: previewLedgerEventID(from: container))
+                .modelContainer(container)
+        } else {
+            Text(String(localized: "common.preview.unavailable"))
+        }
+    }
 }
 
 #Preview("Processing") {
-    let vm = OCRImportViewModel()
-    vm.processingState = .loading
-    return OCRImportView(viewModel: vm)
-        .modelContainer(for: [Contact.self, Record.self, Event.self], inMemory: true)
+    OCRImportStatePreviewHost(processingState: .loading, isAIEnhanced: false)
 }
 
 #Preview("AI Processing") {
-    let vm = OCRImportViewModel()
-    vm.processingState = .loading
-    vm.isAIEnhanced = true
-    return OCRImportView(viewModel: vm)
-        .modelContainer(for: [Contact.self, Record.self, Event.self], inMemory: true)
+    OCRImportStatePreviewHost(processingState: .loading, isAIEnhanced: true)
 }
 
 #Preview("Error") {
-    let vm = OCRImportViewModel()
-    vm.processingState = .error(String(localized: "ocr.error.recognitionFailed"))
-    return OCRImportView(viewModel: vm)
-        .modelContainer(for: [Contact.self, Record.self, Event.self], inMemory: true)
+    OCRImportStatePreviewHost(
+        processingState: .error(String(localized: "ocr.error.recognitionFailed")),
+        isAIEnhanced: false
+    )
+}
+
+@MainActor
+private func makeOCRImportPreviewContainer() -> ModelContainer? {
+    guard let container = try? ModelContainer(
+        for: Contact.self, Record.self, Event.self,
+        configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+    ) else { return nil }
+
+    let event = Event(name: "我的婚礼礼簿", type: .wedding, hostMode: .host, date: .now)
+    container.mainContext.insert(event)
+    return container
+}
+
+@MainActor
+private func previewLedgerEventID(from container: ModelContainer) -> PersistentIdentifier {
+    let descriptor = FetchDescriptor<Event>()
+    if let event = try? container.mainContext.fetch(descriptor).first {
+        return event.persistentModelID
+    }
+
+    let fallbackEvent = Event(name: "我的婚礼礼簿", type: .wedding, hostMode: .host, date: .now)
+    container.mainContext.insert(fallbackEvent)
+    return fallbackEvent.persistentModelID
+}
+
+@MainActor
+private struct OCRImportStatePreviewHost: View {
+    private let container: ModelContainer?
+    private let eventID: PersistentIdentifier?
+    private let viewModel: OCRImportViewModel?
+
+    init(processingState: LoadingState<[OCRRecordItem]>, isAIEnhanced: Bool) {
+        if let container = makeOCRImportPreviewContainer() {
+            let eventID = previewLedgerEventID(from: container)
+            let viewModel = OCRImportViewModel(eventID: eventID)
+            viewModel.processingState = processingState
+            viewModel.isAIEnhanced = isAIEnhanced
+
+            self.container = container
+            self.eventID = eventID
+            self.viewModel = viewModel
+        } else {
+            container = nil
+            eventID = nil
+            viewModel = nil
+        }
+    }
+
+    var body: some View {
+        if let container, let eventID, let viewModel {
+            OCRImportView(eventID: eventID, viewModel: viewModel)
+                .modelContainer(container)
+        } else {
+            Text(String(localized: "common.preview.unavailable"))
+        }
+    }
 }

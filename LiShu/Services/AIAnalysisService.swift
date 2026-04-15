@@ -14,16 +14,6 @@ private let aiAnalysisLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.ai
 
         @Guide(description: "金额，单位元，正数")
         var amount: Double
-
-        @Guide(description: "事件类型", .anyOf([
-            "wedding", "engagement", "funeral", "birth", "birthday",
-            "longevity", "festival", "property", "education",
-            "business", "promotion", "visit", "other",
-        ]))
-        var eventType: String
-
-        @Guide(description: "事件名称，如'婚礼'、'满月酒'、'寿宴'，无法判断时使用'其他'")
-        var eventName: String
     }
 
     @available(iOS 26.0, *)
@@ -121,17 +111,13 @@ private let aiAnalysisLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.ai
             请提取每一条人情往来记录，包括：
             1. name: 人名（2-6个汉字）
             2. amount: 金额（数字，单位元）
-            3. eventType: 该条记录对应的事件类型，只能是以下之一：
-               wedding, engagement, funeral, birth, birthday, longevity, festival, property, education, business, promotion, visit, other
-            4. eventName: 该条记录对应的事件名称（如"婚礼"、"满月酒"、"寿宴"）
 
             注意：
             - 忽略非记录内容（标题、页码、合计等）
             - 金额可能包含逗号或中文大写数字，请转为阿拉伯数字
-            - 每条记录根据其文字内容或上下文独立判断事件类型和名称
-            - 如果某条记录本身包含事件关键词（如"张三婚礼 500"），则该条 eventType 为 wedding，eventName 为"婚礼"
-            - 如果从标题或上下文能判断整页属于同一事件，则所有记录使用该事件
-            - 如果无法判断事件类型，eventType 使用 other，eventName 使用"其他"
+            - 忽略标题、页码、合计、备注、席位号等非记录内容
+            - 只返回姓名和金额，不要推断事件类型、事件名称、日期、关系或方向
+            - 如果姓名或金额不完整、不可信，请不要输出该条记录
 
             OCR文字：
             \(textBlock)
@@ -153,7 +139,7 @@ private let aiAnalysisLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.ai
                 let confidence: OCRConfidence
                 var warningType: WarningType?
 
-                if avgConfidence >= 0.6 && OCRService.shared.isReasonableAmount(record.amount) {
+                if avgConfidence >= 0.6, OCRService.shared.isReasonableAmount(record.amount) {
                     confidence = .high
                 } else if avgConfidence >= 0.4 {
                     confidence = .medium
@@ -167,18 +153,12 @@ private let aiAnalysisLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.ai
                     warningType = .needsVerification
                 }
 
-                let eventType = EventType(rawValue: record.eventType) ?? .other
-                let trimmedEventName = record.eventName.trimmingCharacters(in: .whitespacesAndNewlines)
-                let eventName = trimmedEventName.isEmpty ? eventType.displayName : trimmedEventName
-
                 return OCRRecordItem(
                     name: name,
                     amount: record.amount,
                     amountText: formatAmount(record.amount),
                     confidence: confidence,
-                    warningType: warningType,
-                    eventType: eventType,
-                    eventName: eventName
+                    warningType: warningType
                 )
             }
             aiAnalysisLogger.info("Converted AI OCR result", metadata: [

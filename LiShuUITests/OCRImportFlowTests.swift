@@ -7,8 +7,8 @@ final class OCRImportFlowTests: BaseUITestCase {
 
     override var defaultLaunchEnvironment: [String: String] {
         let payload = [
-            "测试礼金|108|108|国庆晚宴",
-            "晚礼金测试|216|216|元旦聚会",
+            "测试礼金|108|108",
+            "晚礼金测试|216|216",
         ].joined(separator: ";")
         return ["UITEST_OCR_PREVIEW_ITEMS": payload]
     }

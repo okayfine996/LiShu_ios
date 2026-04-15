@@ -16,14 +16,8 @@ struct OCRResultView: View {
             .trackScreen("import.ocr.result")
             .navigationBarBackButtonHidden(true)
             .toolbar { toolbarContent }
-            .sheet(isPresented: $viewModel.isShowingImportConfig) {
-                importConfigSheet
-            }
             .sheet(item: $viewModel.editingItem) { _ in
                 OCRCorrectionSheet(viewModel: viewModel)
-            }
-            .onChange(of: viewModel.isShowingImportConfig) { _, newValue in
-                InteractionLogger.sheetPresentation(screen: "import.ocr.result", route: "sheet.import.ocrConfig", isPresented: newValue)
             }
             .onChange(of: viewModel.editingItem?.id) { _, newValue in
                 InteractionLogger.sheetPresentation(
@@ -239,7 +233,7 @@ struct OCRResultView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
-        .background(DesignSystem.Colors.bgCard)
+        .background(DesignSystem.Colors.bgSurface)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.smallCard))
         .contentShape(Rectangle())
         .onTapGesture {
@@ -282,13 +276,7 @@ struct OCRResultView: View {
                 .fontWeight(.semibold)
                 .foregroundStyle(DesignSystem.Colors.textPrimary)
 
-            HStack(spacing: 6) {
-                Text(item.eventName)
-                    .font(DesignSystem.Typography.small)
-                    .foregroundStyle(DesignSystem.Colors.textSecondary)
-
-                confidenceLabel(item)
-            }
+            confidenceLabel(item)
         }
     }
 
@@ -405,21 +393,38 @@ struct OCRResultView: View {
             .disabled(viewModel.selectedCount == 0)
 
             Button {
-                InteractionLogger.tap(
-                    screen: "import.ocr.result",
-                    target: "import.ocr.result.openImportConfig",
-                    route: "sheet.import.ocrConfig",
-                    presentation: .sheet
-                )
-                viewModel.isShowingImportConfig = true
+                InteractionLogger.tap(screen: "import.ocr.result", target: "import.ocr.result.confirmImport")
+                if viewModel.performImport(context: modelContext) {
+                    InteractionLogger.submit(
+                        screen: "import.ocr.result",
+                        target: "import.ocr.result.confirmImport",
+                        action: .save,
+                        result: "success",
+                        metadata: ["count": String(viewModel.selectedCount)]
+                    )
+                } else {
+                    InteractionLogger.submit(
+                        screen: "import.ocr.result",
+                        target: "import.ocr.result.confirmImport",
+                        action: .save,
+                        result: "failed",
+                        reason: "import_error"
+                    )
+                }
             } label: {
-                Text(String(localized: "ocr.import.confirm"))
-                    .font(DesignSystem.Typography.caption)
-                    .fontWeight(.medium)
-                    .padding(.vertical, 10)
+                if viewModel.isImporting {
+                    ProgressView()
+                        .tint(.white)
+                        .padding(.vertical, 10)
+                } else {
+                    Text(String(localized: "ocr.import.confirmImport"))
+                        .font(DesignSystem.Typography.caption)
+                        .fontWeight(.medium)
+                        .padding(.vertical, 10)
+                }
             }
             .buttonStyle(PrimaryButtonStyle())
-            .disabled(viewModel.selectedCount == 0)
+            .disabled(viewModel.selectedCount == 0 || viewModel.isImporting)
         }
         .padding(.horizontal, 16)
         .padding(.top, 12)
@@ -429,116 +434,6 @@ struct OCRResultView: View {
                 .shadow(color: .black.opacity(0.06), radius: 8, y: -2)
                 .ignoresSafeArea(.container, edges: .bottom)
         )
-    }
-
-    // MARK: - Import Config Sheet
-
-    private var importConfigSheet: some View {
-        NavigationStack {
-            VStack(spacing: 24) {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(String(localized: "ocr.import.direction"))
-                        .font(DesignSystem.Typography.caption)
-                        .foregroundStyle(DesignSystem.Colors.textSecondary)
-
-                    HStack(spacing: 12) {
-                        directionButton(.received, title: String(localized: "record.direction.received"))
-                        directionButton(.given, title: String(localized: "record.direction.given"))
-                    }
-                }
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(String(localized: "ocr.import.summary"))
-                        .font(DesignSystem.Typography.caption)
-                        .foregroundStyle(DesignSystem.Colors.textSecondary)
-
-                    let total = viewModel.selectedItems.reduce(0.0) { $0 + $1.amount }
-                    Text(
-                        String(
-                            format: String(localized: "ocr.import.summaryDetail %lld %@"),
-                            Int64(viewModel.selectedCount),
-                            formatAmount(total)
-                        )
-                    )
-                    .font(DesignSystem.Typography.body)
-                    .foregroundStyle(DesignSystem.Colors.textPrimary)
-                }
-
-                Spacer()
-
-                Button {
-                    InteractionLogger.tap(screen: "import.ocr.result", target: "import.ocr.config.confirm")
-                    if viewModel.performImport(context: modelContext) {
-                        InteractionLogger.submit(
-                            screen: "import.ocr.result",
-                            target: "import.ocr.config.confirm",
-                            action: .save,
-                            result: "success",
-                            metadata: ["count": String(viewModel.selectedCount)]
-                        )
-                        viewModel.isShowingImportConfig = false
-                    } else {
-                        InteractionLogger.submit(
-                            screen: "import.ocr.result",
-                            target: "import.ocr.config.confirm",
-                            action: .save,
-                            result: "failed",
-                            reason: "import_error"
-                        )
-                    }
-                } label: {
-                    if viewModel.isImporting {
-                        ProgressView()
-                            .tint(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 16)
-                    } else {
-                        Text(String(localized: "ocr.import.confirmImport"))
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 16)
-                    }
-                }
-                .buttonStyle(PrimaryButtonStyle())
-                .disabled(!viewModel.canImport || viewModel.isImporting)
-            }
-            .padding(20)
-            .background(DesignSystem.Colors.bgPage)
-            .navigationTitle(String(localized: "ocr.import.configTitle"))
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button(String(localized: "common.cancel")) {
-                        InteractionLogger.tap(screen: "import.ocr.result", target: "import.ocr.config.cancel")
-                        viewModel.isShowingImportConfig = false
-                    }
-                    .font(DesignSystem.Typography.body)
-                    .foregroundStyle(DesignSystem.Colors.textSecondary)
-                }
-            }
-        }
-        .presentationDetents([.medium])
-    }
-
-    private func directionButton(_ direction: RecordDirection, title: String) -> some View {
-        let isSelected = viewModel.direction == direction
-        return Button {
-            viewModel.direction = direction
-            InteractionLogger.tap(screen: "import.ocr.result", target: "import.ocr.config.direction.\(direction.rawValue)")
-        } label: {
-            Text(title)
-                .font(DesignSystem.Typography.caption)
-                .fontWeight(.medium)
-                .foregroundStyle(isSelected ? .white : DesignSystem.Colors.textSecondary)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
-                .background(isSelected ? DesignSystem.Colors.primary : DesignSystem.Colors.bgInput)
-                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.input))
-                .overlay(
-                    RoundedRectangle(cornerRadius: DesignSystem.Radius.input)
-                        .stroke(isSelected ? Color.clear : DesignSystem.Colors.border, lineWidth: 1)
-                )
-        }
-        .buttonStyle(.plain)
     }
 
     private func confirmDeleteSelected() {
@@ -557,41 +452,76 @@ struct OCRResultView: View {
 }
 
 #Preview {
-    OCRResultView(viewModel: {
-        let vm = OCRImportViewModel()
-        vm.items = [
-            OCRRecordItem(name: "张三", amount: 500, amountText: "500", confidence: .high, eventName: "婚礼"),
-            OCRRecordItem(
-                name: "李四",
-                amount: 200,
-                amountText: "200",
-                confidence: .medium,
-                warningType: .needsVerification,
-                eventName: "婚礼"
-            ),
-            OCRRecordItem(name: "王五", amount: 1000, amountText: "1,000", confidence: .high, eventName: "生日"),
-            OCRRecordItem(name: "赵六", amount: 300, amountText: "300", confidence: .high),
-            OCRRecordItem(name: "陈七", amount: 5020, amountText: "5,0?0", confidence: .medium, warningType: .suspiciousAmount),
-            OCRRecordItem(name: "周八", amount: 88, amountText: "88", confidence: .high, eventName: "乔迁"),
-            OCRRecordItem(name: "吴九", amount: 1200, amountText: "1,200", confidence: .high),
-        ]
-        vm.processingState = .loaded(vm.items)
-        return vm
-    }())
-        .modelContainer(for: [Contact.self, Record.self, Event.self], inMemory: true)
+    Group {
+        if let container = makeOCRResultPreviewContainer() {
+            let eventID = ocrResultPreviewEventID(from: container)
+            OCRResultView(viewModel: {
+                let vm = OCRImportViewModel(eventID: eventID)
+                vm.items = [
+                    OCRRecordItem(name: "张三", amount: 500, amountText: "500", confidence: .high),
+                    OCRRecordItem(
+                        name: "李四",
+                        amount: 200,
+                        amountText: "200",
+                        confidence: .medium,
+                        warningType: .needsVerification
+                    ),
+                    OCRRecordItem(name: "王五", amount: 1000, amountText: "1,000", confidence: .high),
+                    OCRRecordItem(name: "赵六", amount: 300, amountText: "300", confidence: .high),
+                    OCRRecordItem(name: "陈七", amount: 5020, amountText: "5,0?0", confidence: .medium, warningType: .suspiciousAmount),
+                    OCRRecordItem(name: "周八", amount: 88, amountText: "88", confidence: .high),
+                    OCRRecordItem(name: "吴九", amount: 1200, amountText: "1,200", confidence: .high),
+                ]
+                vm.processingState = .loaded(vm.items)
+                return vm
+            }())
+                .modelContainer(container)
+        } else {
+            Text(String(localized: "common.preview.unavailable"))
+        }
+    }
 }
 
 #Preview("AI Enhanced") {
-    OCRResultView(viewModel: {
-        let vm = OCRImportViewModel()
-        vm.items = [
-            OCRRecordItem(name: "张三", amount: 500, amountText: "500", confidence: .high, eventName: "张三婚礼"),
-            OCRRecordItem(name: "李四", amount: 200, amountText: "200", confidence: .high, eventName: "李四婚礼"),
-            OCRRecordItem(name: "王五", amount: 1000, amountText: "1,000", confidence: .high, eventName: "王五生日宴"),
-        ]
-        vm.isAIEnhanced = true
-        vm.processingState = .loaded(vm.items)
-        return vm
-    }())
-        .modelContainer(for: [Contact.self, Record.self, Event.self], inMemory: true)
+    Group {
+        if let container = makeOCRResultPreviewContainer() {
+            let eventID = ocrResultPreviewEventID(from: container)
+            OCRResultView(viewModel: {
+                let vm = OCRImportViewModel(eventID: eventID)
+                vm.items = [
+                    OCRRecordItem(name: "张三", amount: 500, amountText: "500", confidence: .high),
+                    OCRRecordItem(name: "李四", amount: 200, amountText: "200", confidence: .high),
+                    OCRRecordItem(name: "王五", amount: 1000, amountText: "1,000", confidence: .high),
+                ]
+                vm.isAIEnhanced = true
+                vm.processingState = .loaded(vm.items)
+                return vm
+            }())
+                .modelContainer(container)
+        } else {
+            Text(String(localized: "common.preview.unavailable"))
+        }
+    }
+}
+
+@MainActor
+private func makeOCRResultPreviewContainer() -> ModelContainer? {
+    guard let container = try? ModelContainer(
+        for: Contact.self, Record.self, Event.self,
+        configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+    ) else { return nil }
+    let event = Event(name: "我的婚礼礼簿", type: .wedding, hostMode: .host, date: .now)
+    container.mainContext.insert(event)
+    return container
+}
+
+@MainActor
+private func ocrResultPreviewEventID(from container: ModelContainer) -> PersistentIdentifier {
+    let descriptor = FetchDescriptor<Event>()
+    if let event = try? container.mainContext.fetch(descriptor).first {
+        return event.persistentModelID
+    }
+    let fallbackEvent = Event(name: "我的婚礼礼簿", type: .wedding, hostMode: .host, date: .now)
+    container.mainContext.insert(fallbackEvent)
+    return fallbackEvent.persistentModelID
 }

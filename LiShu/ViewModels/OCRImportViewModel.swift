@@ -7,6 +7,12 @@ private let ocrImportLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.ocr
 
 @Observable
 class OCRImportViewModel {
+    let eventID: PersistentIdentifier
+
+    init(eventID: PersistentIdentifier) {
+        self.eventID = eventID
+    }
+
     // MARK: - Image Management
 
     var capturedImages: [UIImage] = []
@@ -22,11 +28,6 @@ class OCRImportViewModel {
     // MARK: - AI Enhancement
 
     var isAIEnhanced = false
-
-    // MARK: - Import Config
-
-    var direction: RecordDirection = .given
-    var isShowingImportConfig = false
     var isImporting = false
     var importSuccess = false
     var importError: String?
@@ -36,8 +37,6 @@ class OCRImportViewModel {
     var editingItem: OCRRecordItem?
     var editName: String = ""
     var editAmountText: String = ""
-    var editDate: Date = .now
-    var editEventName: String = ""
 
     // MARK: - Computed
 
@@ -233,8 +232,6 @@ class OCRImportViewModel {
         editingItem = item
         editName = item.name
         editAmountText = String(item.amount == Double(Int(item.amount)) ? "\(Int(item.amount))" : String(format: "%.2f", item.amount))
-        editDate = item.date
-        editEventName = item.eventName
         BusinessDataLogger.ocrQuery(
             screen: "import.ocr.result",
             operation: "edit_open",
@@ -263,9 +260,6 @@ class OCRImportViewModel {
             items[index].amount = value
             items[index].amountText = editAmountText
         }
-        items[index].date = editDate
-        items[index].eventName = editEventName
-        items[index].eventType = eventType(for: editEventName) ?? items[index].eventType
 
         let updatedPayload = items[index].logPayload()
         self.editingItem = nil
@@ -294,24 +288,23 @@ class OCRImportViewModel {
 
     // MARK: - Import
 
-    private func eventType(for eventName: String) -> EventType? {
-        for type in EventType.allCases {
-            if type.displayName == eventName {
-                return type
-            }
-        }
-        return nil
-    }
-
     func performImport(context: ModelContext) -> Bool {
         let itemsToImport = selectedItems
         guard !itemsToImport.isEmpty else { return false }
+        guard let event = context.model(for: eventID) as? Event else {
+            importError = String(localized: "common.error")
+            return false
+        }
+        guard event.hostMode == .host else {
+            importError = String(localized: "common.error")
+            return false
+        }
 
         isImporting = true
         BusinessDataLogger.ocrQuery(
             screen: "import.ocr.result",
             operation: "import_attempt",
-            filters: ["direction": direction.rawValue],
+            filters: ["direction": RecordDirection.received.rawValue],
             payload: itemsToImport.map { $0.logPayload() },
             results: itemsToImport.map { $0.logPayload() }
         )
@@ -341,19 +334,11 @@ class OCRImportViewModel {
                     contactMap[normalizedName] = contact
                 }
 
-                let resolvedEventType = eventType(for: item.eventName) ?? item.eventType
-                let event = ExportService.findOrCreateEventIfNeeded(
-                    name: item.eventName,
-                    type: resolvedEventType,
-                    context: context
-                )
-                event?.date = item.date
-
                 let record = Record(
                     contact: contact,
                     event: event,
-                    direction: direction,
-                    date: item.date
+                    direction: .received,
+                    date: .now
                 )
                 record.applyTypeData(.monetary(MonetaryData(
                     amount: item.amount,
@@ -370,7 +355,7 @@ class OCRImportViewModel {
             BusinessDataLogger.ocrQuery(
                 screen: "import.ocr.result",
                 operation: "import",
-                filters: ["direction": direction.rawValue],
+                filters: ["direction": RecordDirection.received.rawValue],
                 payload: itemsToImport.map { $0.logPayload() },
                 results: importedRecords.map { $0.logPayload() }
             )
@@ -386,7 +371,7 @@ class OCRImportViewModel {
             BusinessDataLogger.ocrQuery(
                 screen: "import.ocr.result",
                 operation: "import_failed",
-                filters: ["direction": direction.rawValue],
+                filters: ["direction": RecordDirection.received.rawValue],
                 payload: itemsToImport.map { $0.logPayload() },
                 results: [RecordLogPayload](),
                 error: error.localizedDescription

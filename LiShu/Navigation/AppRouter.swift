@@ -72,7 +72,7 @@ enum SheetRoute: Identifiable, Equatable {
     case editEvent(PersistentIdentifier)
     case editRecord(PersistentIdentifier)
     case returnGift(recordID: PersistentIdentifier)
-    case ocrImport
+    case ocrImport(eventID: PersistentIdentifier)
     case proMembership
 
     var id: String {
@@ -85,7 +85,7 @@ enum SheetRoute: Identifiable, Equatable {
         case let .editEvent(id): "editEvent-\(id)"
         case let .editRecord(id): "editRecord-\(id)"
         case .returnGift: "returnGift"
-        case .ocrImport: "ocrImport"
+        case let .ocrImport(eventID): "ocrImport-\(eventID)"
         case .proMembership: "proMembership"
         }
     }
