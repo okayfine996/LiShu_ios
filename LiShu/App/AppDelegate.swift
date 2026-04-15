@@ -6,7 +6,7 @@ private let appLifecycleLogger = PulseDiagnostics.makeLogger(label: "app.lifecyc
 private let notificationsLogger = PulseDiagnostics.makeLogger(label: "notifications.apns")
 
 @MainActor
-class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
+class AppDelegate: NSObject, UIApplicationDelegate, @preconcurrency UNUserNotificationCenterDelegate {
     func application(
         _: UIApplication,
         didFinishLaunchingWithOptions _: [UIApplication.LaunchOptionsKey: Any]? = nil

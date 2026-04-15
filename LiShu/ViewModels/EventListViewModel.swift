@@ -101,6 +101,7 @@ class EventListViewModel {
         }
     }
 
+    @MainActor
     func deleteEvent(_ event: Event, context: ModelContext) {
         let deletedPayload = event.logPayload()
         context.delete(event)
