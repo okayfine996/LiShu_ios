@@ -4,7 +4,6 @@ struct SettingsView: View {
     @Environment(SubscriptionManager.self) private var subscriptionManager
     @Environment(DebugOverrideManager.self) private var debugOverrides
     @Environment(AppSettings.self) private var settings
-    @State private var showDeleteAllSheet = false
     @State private var showProSheet = false
     @State private var showRestartAlert = false
 
@@ -23,9 +22,6 @@ struct SettingsView: View {
         .navigationTitle(String(localized: "settings.title"))
         .navigationBarTitleDisplayMode(.large)
         .trackScreen("settings.root")
-        .sheet(isPresented: $showDeleteAllSheet) {
-            DeleteAllDataView()
-        }
         .sheet(isPresented: $showProSheet) {
             NavigationStack {
                 ProMembershipView()
@@ -50,9 +46,6 @@ struct SettingsView: View {
         }
         .onChange(of: showProSheet) { _, newValue in
             InteractionLogger.sheetPresentation(screen: "settings.root", route: "sheet.settings.proMembership", isPresented: newValue)
-        }
-        .onChange(of: showDeleteAllSheet) { _, newValue in
-            InteractionLogger.sheetPresentation(screen: "settings.root", route: "sheet.settings.deleteAllData", isPresented: newValue)
         }
         .onChange(of: showRestartAlert) { _, newValue in
             InteractionLogger.alertPresentation(screen: "settings.root", target: "settings.icloud.restart", isPresented: newValue)
@@ -203,22 +196,6 @@ struct SettingsView: View {
                     )
                 })
                 .buttonStyle(.plain)
-
-                sectionDivider
-
-                Button {
-                    InteractionLogger.tap(
-                        screen: "settings.root",
-                        target: "settings.deleteAll",
-                        route: "sheet.settings.deleteAllData",
-                        presentation: .sheet
-                    )
-                    showDeleteAllSheet = true
-                } label: {
-                    settingsRow(icon: "trash.fill", title: String(localized: "settings.deleteAll"), isDestructive: true)
-                }
-                .buttonStyle(.plain)
-                .accessibilityIdentifier("settings.deleteAllButton")
 
                 sectionDivider
 
