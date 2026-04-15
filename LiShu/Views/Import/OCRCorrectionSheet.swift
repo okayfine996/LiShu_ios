@@ -7,8 +7,9 @@ struct OCRCorrectionSheet: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 24) {
-                correctionCard
+            VStack(spacing: 20) {
+                nameField
+                amountField
                 Spacer()
                 confirmButton
             }
@@ -33,20 +34,6 @@ struct OCRCorrectionSheet: View {
 
     // MARK: - Name Field
 
-    private var correctionCard: some View {
-        VStack(spacing: 20) {
-            nameField
-            amountField
-        }
-        .padding(20)
-        .background(DesignSystem.Colors.bgSurface)
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
-        .overlay(
-            RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
-                .stroke(DesignSystem.Colors.border, lineWidth: 1)
-        )
-    }
-
     private var nameField: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(String(localized: "ocr.correction.name"))
@@ -61,7 +48,7 @@ struct OCRCorrectionSheet: View {
             .foregroundStyle(DesignSystem.Colors.textPrimary)
             .padding(.horizontal, 14)
             .padding(.vertical, 12)
-            .background(DesignSystem.Colors.bgInput)
+            .background(DesignSystem.Colors.bgSurface)
             .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.input))
             .overlay(
                 RoundedRectangle(cornerRadius: DesignSystem.Radius.input)
@@ -91,7 +78,7 @@ struct OCRCorrectionSheet: View {
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 12)
-            .background(DesignSystem.Colors.bgInput)
+            .background(DesignSystem.Colors.bgSurface)
             .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.input))
             .overlay(
                 RoundedRectangle(cornerRadius: DesignSystem.Radius.input)
