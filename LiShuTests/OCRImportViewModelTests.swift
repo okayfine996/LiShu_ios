@@ -5,6 +5,7 @@ import Testing
 import UIKit
 
 @MainActor
+@Suite(.serialized)
 struct OCRImportViewModelTests {
     private func makeItems() -> [OCRRecordItem] {
         [
@@ -181,11 +182,15 @@ struct OCRImportViewModelTests {
         vm.addImage(SampleImages.makeUIImage(width: 1800, height: 1400))
         vm.items = makeItems()
         vm.processingState = .loaded(vm.items)
+        vm.recognitionMode = .ledgerHeuristicFallback
+        vm.filteredNoiseCount = 4
 
         vm.clearImages()
 
         #expect(vm.capturedImages.isEmpty)
         #expect(vm.items.isEmpty)
+        #expect(vm.recognitionMode == .ocrOnlyLegacy)
+        #expect(vm.filteredNoiseCount == 0)
         if case .idle = vm.processingState {
             #expect(Bool(true))
         } else {
@@ -220,5 +225,43 @@ struct OCRImportViewModelTests {
 
         let birthdayEvent = events.first { $0.name == birthdayName }
         #expect(birthdayEvent?.type == .birthday)
+    }
+
+    @Test func needsReviewCountTracksWarningsAndNonHighConfidence() {
+        let vm = OCRImportViewModel()
+        vm.items = makeItems()
+
+        #expect(vm.needsReviewCount == 2)
+
+        vm.items[1].confidence = .high
+        vm.items[1].warningType = nil
+        vm.items[2].confidence = .high
+        vm.items[2].warningType = nil
+
+        #expect(vm.needsReviewCount == 0)
+    }
+
+    @Test func newRecognitionStateDoesNotChangeImportResults() throws {
+        let db = try TestDB()
+        let vm = OCRImportViewModel()
+        vm.recognitionMode = .ledgerHeuristicFallback
+        vm.filteredNoiseCount = 3
+        vm.items = [
+            OCRRecordItem(name: "张三", amount: 500, amountText: "500", confidence: .high, sourceMode: .ledgerHeuristicFallback),
+            OCRRecordItem(
+                name: "李四",
+                amount: 300,
+                amountText: "300",
+                confidence: .medium,
+                warningType: .needsVerification,
+                sourceMode: .appleAIEnhanced
+            ),
+        ]
+
+        #expect(vm.performImport(context: db.context) == true)
+
+        let records = try db.context.fetch(FetchDescriptor<Record>())
+        #expect(records.count == 2)
+        #expect(vm.importSuccess == true)
     }
 }

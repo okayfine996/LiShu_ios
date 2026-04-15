@@ -99,6 +99,17 @@ struct OCRImportView: View {
         guard !fixtureItems.isEmpty else { return }
 
         viewModel.items = fixtureItems
+        if let rawMode = ProcessInfo.processInfo.environment["UITEST_OCR_RECOGNITION_MODE"],
+           let mode = OCRRecognitionMode(rawValue: rawMode)
+        {
+            viewModel.recognitionMode = mode
+            viewModel.isAIEnhanced = mode == .appleAIEnhanced
+        }
+        if let rawFilteredNoiseCount = ProcessInfo.processInfo.environment["UITEST_OCR_FILTERED_NOISE_COUNT"],
+           let filteredNoiseCount = Int(rawFilteredNoiseCount)
+        {
+            viewModel.filteredNoiseCount = filteredNoiseCount
+        }
         viewModel.processingState = .loaded(fixtureItems)
     }
 
@@ -124,6 +135,8 @@ struct OCRImportView: View {
         let confidence = OCRConfidence(rawValue: String(parts.dropFirst(4).first ?? "high")) ?? .high
         let warningType = parts.dropFirst(5).first
             .flatMap { WarningType(rawValue: String($0)) }
+        let sourceMode = parts.dropFirst(6).first
+            .flatMap { OCRRecognitionMode(rawValue: String($0)) } ?? .ocrOnlyLegacy
 
         return OCRRecordItem(
             name: name,
@@ -131,7 +144,8 @@ struct OCRImportView: View {
             amountText: amountText,
             confidence: confidence,
             warningType: warningType,
-            eventName: eventName
+            eventName: eventName,
+            sourceMode: sourceMode
         )
     }
 
@@ -239,9 +253,7 @@ struct OCRImportView: View {
                     .tint(DesignSystem.Colors.primary)
             }
 
-            Text(viewModel.isAIEnhanced
-                ? String(localized: "ocr.ai.processing")
-                : String(localized: "ocr.import.processing"))
+            Text(processingTitle)
                 .font(DesignSystem.Typography.body)
                 .foregroundStyle(DesignSystem.Colors.textSecondary)
 
@@ -253,6 +265,17 @@ struct OCRImportView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .navigationTitle(String(localized: "ocr.import.title"))
+    }
+
+    private var processingTitle: String {
+        switch viewModel.recognitionMode {
+        case .appleAIEnhanced:
+            String(localized: "ocr.ledger.aiProcessing")
+        case .ledgerHeuristicFallback:
+            String(localized: "ocr.ledger.heuristicProcessing")
+        case .ocrOnlyLegacy:
+            String(localized: "ocr.ledger.processing")
+        }
     }
 
     // MARK: - Error

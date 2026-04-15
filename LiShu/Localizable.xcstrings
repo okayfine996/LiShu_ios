@@ -3796,6 +3796,76 @@
         }
       }
     },
+    "ocr.ledger.aiProcessing" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple AI 礼簿分析中..."
+          }
+        }
+      }
+    },
+    "ocr.ledger.filteredNoise %lld" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已过滤噪声 %lld 条"
+          }
+        }
+      }
+    },
+    "ocr.ledger.heuristicProcessing" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本地礼簿规则识别中..."
+          }
+        }
+      }
+    },
+    "ocr.ledger.mode.appleAI" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple AI 礼簿增强"
+          }
+        }
+      }
+    },
+    "ocr.ledger.mode.heuristicFallback" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本地礼簿规则兜底"
+          }
+        }
+      }
+    },
+    "ocr.ledger.processing" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "礼簿识别中..."
+          }
+        }
+      }
+    },
+    "ocr.ledger.reviewNeeded %lld" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "以下有 %lld 条记录需要人工确认"
+          }
+        }
+      }
+    },
     "ocr.correction.amount" : {
       "localizations" : {
         "en" : {

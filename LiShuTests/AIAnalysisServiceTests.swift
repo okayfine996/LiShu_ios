@@ -6,6 +6,22 @@ import Testing
     import FoundationModels
 
     struct AIAnalysisServiceTests {
+        private func makeCandidates(
+            _ values: [(text: String, confidence: Float)]
+        ) -> [LedgerEntryCandidate] {
+            values.enumerated().map { _, value in
+                LedgerEntryCandidate(
+                    nameText: "",
+                    amountText: "",
+                    normalizedAmount: nil,
+                    sourceLineIDs: [],
+                    layoutPattern: .unknown,
+                    averageConfidence: value.confidence,
+                    fullText: value.text
+                )
+            }
+        }
+
         // MARK: - Availability
 
         @Test func isAvailableReturnsWithoutCrash() {
@@ -18,12 +34,12 @@ import Testing
         @Test func splitIntoBatchesSingleBatch() {
             guard #available(iOS 26.0, *) else { return }
             let service = AIAnalysisService.shared
-            let lines: [(text: String, confidence: Float)] = [
+            let candidates = makeCandidates([
                 (text: "张三 500", confidence: 0.9),
                 (text: "李四 300", confidence: 0.8),
-            ]
+            ])
 
-            let batches = service.splitIntoBatches(lines, maxCharsPerBatch: 1500)
+            let batches = service.splitIntoBatches(candidates, maxCharsPerBatch: 1500)
             #expect(batches.count == 1)
             #expect(batches[0].count == 2)
         }
@@ -31,13 +47,13 @@ import Testing
         @Test func splitIntoBatchesMultipleBatches() {
             guard #available(iOS 26.0, *) else { return }
             let service = AIAnalysisService.shared
-            let lines: [(text: String, confidence: Float)] = [
+            let candidates = makeCandidates([
                 (text: String(repeating: "张", count: 800), confidence: 0.9),
                 (text: String(repeating: "李", count: 800), confidence: 0.8),
                 (text: String(repeating: "王", count: 800), confidence: 0.7),
-            ]
+            ])
 
-            let batches = service.splitIntoBatches(lines, maxCharsPerBatch: 1500)
+            let batches = service.splitIntoBatches(candidates, maxCharsPerBatch: 1500)
             #expect(batches.count == 3)
             #expect(batches[0].count == 1)
             #expect(batches[1].count == 1)
@@ -47,19 +63,19 @@ import Testing
         @Test func splitIntoBatchesEmptyInput() {
             guard #available(iOS 26.0, *) else { return }
             let service = AIAnalysisService.shared
-            let lines: [(text: String, confidence: Float)] = []
-            let batches = service.splitIntoBatches(lines, maxCharsPerBatch: 1500)
+            let candidates: [LedgerEntryCandidate] = []
+            let batches = service.splitIntoBatches(candidates, maxCharsPerBatch: 1500)
             #expect(batches.isEmpty)
         }
 
         @Test func splitIntoBatchesSingleLineLargerThanMax() {
             guard #available(iOS 26.0, *) else { return }
             let service = AIAnalysisService.shared
-            let lines: [(text: String, confidence: Float)] = [
+            let candidates = makeCandidates([
                 (text: String(repeating: "大", count: 2000), confidence: 0.9),
-            ]
+            ])
 
-            let batches = service.splitIntoBatches(lines, maxCharsPerBatch: 1500)
+            let batches = service.splitIntoBatches(candidates, maxCharsPerBatch: 1500)
             #expect(batches.count == 1)
             #expect(batches[0].count == 1)
         }
@@ -67,13 +83,13 @@ import Testing
         @Test func splitIntoBatchesExactBoundary() {
             guard #available(iOS 26.0, *) else { return }
             let service = AIAnalysisService.shared
-            let lines: [(text: String, confidence: Float)] = [
+            let candidates = makeCandidates([
                 (text: String(repeating: "字", count: 750), confidence: 0.9),
                 (text: String(repeating: "字", count: 750), confidence: 0.8),
                 (text: String(repeating: "字", count: 1), confidence: 0.7),
-            ]
+            ])
 
-            let batches = service.splitIntoBatches(lines, maxCharsPerBatch: 1500)
+            let batches = service.splitIntoBatches(candidates, maxCharsPerBatch: 1500)
             #expect(batches.count == 2)
             #expect(batches[0].count == 2)
             #expect(batches[1].count == 1)
@@ -84,12 +100,12 @@ import Testing
         @Test func buildPromptContainsOCRText() {
             guard #available(iOS 26.0, *) else { return }
             let service = AIAnalysisService.shared
-            let lines: [(text: String, confidence: Float)] = [
+            let candidates = makeCandidates([
                 (text: "张三 500", confidence: 0.9),
                 (text: "李四 300", confidence: 0.8),
-            ]
+            ])
 
-            let prompt = service.buildPrompt(from: lines)
+            let prompt = service.buildPrompt(from: candidates, pageContexts: [:])
             #expect(prompt.contains("张三 500"))
             #expect(prompt.contains("李四 300"))
             #expect(prompt.contains("eventType"))
@@ -99,11 +115,11 @@ import Testing
         @Test func buildPromptContainsAllEventTypes() {
             guard #available(iOS 26.0, *) else { return }
             let service = AIAnalysisService.shared
-            let lines: [(text: String, confidence: Float)] = [
+            let candidates = makeCandidates([
                 (text: "测试", confidence: 0.9),
-            ]
+            ])
 
-            let prompt = service.buildPrompt(from: lines)
+            let prompt = service.buildPrompt(from: candidates, pageContexts: [:])
             let expectedTypes = ["wedding", "engagement", "funeral", "birth", "birthday",
                                  "longevity", "festival", "property", "education",
                                  "business", "promotion", "visit", "other"]
@@ -115,12 +131,12 @@ import Testing
         @Test func buildPromptContainsPerRecordEventInstruction() {
             guard #available(iOS 26.0, *) else { return }
             let service = AIAnalysisService.shared
-            let lines: [(text: String, confidence: Float)] = [
+            let candidates = makeCandidates([
                 (text: "张三 500", confidence: 0.9),
-            ]
+            ])
 
-            let prompt = service.buildPrompt(from: lines)
-            #expect(prompt.contains("每条记录根据其文字内容或上下文独立判断事件类型和名称"))
+            let prompt = service.buildPrompt(from: candidates, pageContexts: [:])
+            #expect(prompt.contains("每条记录根据其文字内容或上下文独立判断事件类型和名称") || prompt.contains("每条记录根据其文字内容或上下文"))
         }
 
         // MARK: - convertToOCRRecordItems
@@ -129,15 +145,15 @@ import Testing
             guard #available(iOS 26.0, *) else { return }
             let service = AIAnalysisService.shared
             let result = AIExtractionResult(records: [
-                AIExtractedRecord(name: "张三", amount: 500, eventType: "wedding", eventName: "婚礼"),
-                AIExtractedRecord(name: "李四", amount: 300, eventType: "birthday", eventName: "生日"),
+                AIExtractedRecord(candidateIndex: 0, name: "张三", amount: 500, eventType: "wedding", eventName: "婚礼"),
+                AIExtractedRecord(candidateIndex: 1, name: "李四", amount: 300, eventType: "birthday", eventName: "生日"),
             ])
-            let sourceLines: [(text: String, confidence: Float)] = [
+            let sourceCandidates = makeCandidates([
                 (text: "张三 500", confidence: 0.9),
                 (text: "李四 300", confidence: 0.85),
-            ]
+            ])
 
-            let items = service.convertToOCRRecordItems(result, sourceLines: sourceLines)
+            let items = service.convertToOCRRecordItems(result, sourceCandidates: sourceCandidates)
             #expect(items.count == 2)
             #expect(items[0].name == "张三")
             #expect(items[0].amount == 500)
@@ -153,13 +169,13 @@ import Testing
             guard #available(iOS 26.0, *) else { return }
             let service = AIAnalysisService.shared
             let result = AIExtractionResult(records: [
-                AIExtractedRecord(name: "张三", amount: 500, eventType: "wedding", eventName: "婚礼"),
+                AIExtractedRecord(candidateIndex: 0, name: "张三", amount: 500, eventType: "wedding", eventName: "婚礼"),
             ])
-            let sourceLines: [(text: String, confidence: Float)] = [
+            let sourceCandidates = makeCandidates([
                 (text: "张三 500", confidence: 0.9),
-            ]
+            ])
 
-            let items = service.convertToOCRRecordItems(result, sourceLines: sourceLines)
+            let items = service.convertToOCRRecordItems(result, sourceCandidates: sourceCandidates)
             #expect(items.count == 1)
             #expect(items[0].confidence == .high)
             #expect(items[0].warningType == nil)
@@ -169,13 +185,13 @@ import Testing
             guard #available(iOS 26.0, *) else { return }
             let service = AIAnalysisService.shared
             let result = AIExtractionResult(records: [
-                AIExtractedRecord(name: "张三", amount: 500, eventType: "wedding", eventName: "婚礼"),
+                AIExtractedRecord(candidateIndex: 0, name: "张三", amount: 500, eventType: "wedding", eventName: "婚礼"),
             ])
-            let sourceLines: [(text: String, confidence: Float)] = [
+            let sourceCandidates = makeCandidates([
                 (text: "张三 500", confidence: 0.5),
-            ]
+            ])
 
-            let items = service.convertToOCRRecordItems(result, sourceLines: sourceLines)
+            let items = service.convertToOCRRecordItems(result, sourceCandidates: sourceCandidates)
             #expect(items.count == 1)
             #expect(items[0].confidence == .medium)
             #expect(items[0].warningType == .needsVerification)
@@ -185,13 +201,13 @@ import Testing
             guard #available(iOS 26.0, *) else { return }
             let service = AIAnalysisService.shared
             let result = AIExtractionResult(records: [
-                AIExtractedRecord(name: "张三", amount: 500, eventType: "wedding", eventName: "婚礼"),
+                AIExtractedRecord(candidateIndex: 0, name: "张三", amount: 500, eventType: "wedding", eventName: "婚礼"),
             ])
-            let sourceLines: [(text: String, confidence: Float)] = [
+            let sourceCandidates = makeCandidates([
                 (text: "张三 500", confidence: 0.2),
-            ]
+            ])
 
-            let items = service.convertToOCRRecordItems(result, sourceLines: sourceLines)
+            let items = service.convertToOCRRecordItems(result, sourceCandidates: sourceCandidates)
             #expect(items.count == 1)
             #expect(items[0].confidence == .low)
             #expect(items[0].warningType == .needsVerification)
@@ -201,13 +217,13 @@ import Testing
             guard #available(iOS 26.0, *) else { return }
             let service = AIAnalysisService.shared
             let result = AIExtractionResult(records: [
-                AIExtractedRecord(name: "张三", amount: 5_000_000, eventType: "wedding", eventName: "婚礼"),
+                AIExtractedRecord(candidateIndex: 0, name: "张三", amount: 5_000_000, eventType: "wedding", eventName: "婚礼"),
             ])
-            let sourceLines: [(text: String, confidence: Float)] = [
+            let sourceCandidates = makeCandidates([
                 (text: "张三 5000000", confidence: 0.5),
-            ]
+            ])
 
-            let items = service.convertToOCRRecordItems(result, sourceLines: sourceLines)
+            let items = service.convertToOCRRecordItems(result, sourceCandidates: sourceCandidates)
             #expect(items.count == 1)
             #expect(items[0].confidence == .medium)
             #expect(items[0].warningType == .suspiciousAmount)
@@ -217,17 +233,17 @@ import Testing
             guard #available(iOS 26.0, *) else { return }
             let service = AIAnalysisService.shared
             let result = AIExtractionResult(records: [
-                AIExtractedRecord(name: "", amount: 500, eventType: "other", eventName: "其他"),
-                AIExtractedRecord(name: "张三", amount: 0, eventType: "other", eventName: "其他"),
-                AIExtractedRecord(name: "张三", amount: -100, eventType: "other", eventName: "其他"),
-                AIExtractedRecord(name: "  ", amount: 500, eventType: "other", eventName: "其他"),
-                AIExtractedRecord(name: "李四", amount: 300, eventType: "birthday", eventName: "生日"),
+                AIExtractedRecord(candidateIndex: 0, name: "", amount: 500, eventType: "other", eventName: "其他"),
+                AIExtractedRecord(candidateIndex: 0, name: "张三", amount: 0, eventType: "other", eventName: "其他"),
+                AIExtractedRecord(candidateIndex: 0, name: "张三", amount: -100, eventType: "other", eventName: "其他"),
+                AIExtractedRecord(candidateIndex: 0, name: "  ", amount: 500, eventType: "other", eventName: "其他"),
+                AIExtractedRecord(candidateIndex: 0, name: "李四", amount: 300, eventType: "birthday", eventName: "生日"),
             ])
-            let sourceLines: [(text: String, confidence: Float)] = [
+            let sourceCandidates = makeCandidates([
                 (text: "测试", confidence: 0.9),
-            ]
+            ])
 
-            let items = service.convertToOCRRecordItems(result, sourceLines: sourceLines)
+            let items = service.convertToOCRRecordItems(result, sourceCandidates: sourceCandidates)
             #expect(items.count == 1)
             #expect(items[0].name == "李四")
         }
@@ -236,13 +252,13 @@ import Testing
             guard #available(iOS 26.0, *) else { return }
             let service = AIAnalysisService.shared
             let result = AIExtractionResult(records: [
-                AIExtractedRecord(name: "张三", amount: 500, eventType: "invalid_type", eventName: "聚会"),
+                AIExtractedRecord(candidateIndex: 0, name: "张三", amount: 500, eventType: "invalid_type", eventName: "聚会"),
             ])
-            let sourceLines: [(text: String, confidence: Float)] = [
+            let sourceCandidates = makeCandidates([
                 (text: "张三 500", confidence: 0.9),
-            ]
+            ])
 
-            let items = service.convertToOCRRecordItems(result, sourceLines: sourceLines)
+            let items = service.convertToOCRRecordItems(result, sourceCandidates: sourceCandidates)
             #expect(items.count == 1)
             #expect(items[0].eventType == .other)
             #expect(items[0].eventName == "聚会")
@@ -252,13 +268,13 @@ import Testing
             guard #available(iOS 26.0, *) else { return }
             let service = AIAnalysisService.shared
             let result = AIExtractionResult(records: [
-                AIExtractedRecord(name: "张三", amount: 500, eventType: "wedding", eventName: ""),
+                AIExtractedRecord(candidateIndex: 0, name: "张三", amount: 500, eventType: "wedding", eventName: ""),
             ])
-            let sourceLines: [(text: String, confidence: Float)] = [
+            let sourceCandidates = makeCandidates([
                 (text: "张三 500", confidence: 0.9),
-            ]
+            ])
 
-            let items = service.convertToOCRRecordItems(result, sourceLines: sourceLines)
+            let items = service.convertToOCRRecordItems(result, sourceCandidates: sourceCandidates)
             #expect(items.count == 1)
             #expect(items[0].eventType == .wedding)
             #expect(items[0].eventName == EventType.wedding.displayName)
@@ -270,15 +286,21 @@ import Testing
             let types = ["wedding", "engagement", "funeral", "birth", "birthday",
                          "longevity", "festival", "property", "education",
                          "business", "promotion", "visit", "other"]
-            let sourceLines: [(text: String, confidence: Float)] = [
+            let sourceCandidates = makeCandidates([
                 (text: "测试", confidence: 0.9),
-            ]
+            ])
 
             for (index, type) in types.enumerated() {
                 let result = AIExtractionResult(records: [
-                    AIExtractedRecord(name: "测试\(index)", amount: Double((index + 1) * 100), eventType: type, eventName: "事件\(index)"),
+                    AIExtractedRecord(
+                        candidateIndex: 0,
+                        name: "测试\(index)",
+                        amount: Double((index + 1) * 100),
+                        eventType: type,
+                        eventName: "事件\(index)"
+                    ),
                 ])
-                let items = service.convertToOCRRecordItems(result, sourceLines: sourceLines)
+                let items = service.convertToOCRRecordItems(result, sourceCandidates: sourceCandidates)
                 #expect(items.count == 1)
             }
         }
@@ -287,11 +309,11 @@ import Testing
             guard #available(iOS 26.0, *) else { return }
             let service = AIAnalysisService.shared
             let result = AIExtractionResult(records: [
-                AIExtractedRecord(name: "张三", amount: 500, eventType: "wedding", eventName: "婚礼"),
+                AIExtractedRecord(candidateIndex: 0, name: "张三", amount: 500, eventType: "wedding", eventName: "婚礼"),
             ])
-            let sourceLines: [(text: String, confidence: Float)] = []
+            let sourceCandidates: [LedgerEntryCandidate] = []
 
-            let items = service.convertToOCRRecordItems(result, sourceLines: sourceLines)
+            let items = service.convertToOCRRecordItems(result, sourceCandidates: sourceCandidates)
             #expect(items.count == 1)
             #expect(items[0].confidence == .high)
         }

@@ -139,4 +139,44 @@ struct OCRServiceTests {
         let result = service.deduplicateItems(items)
         #expect(result.count == 3)
     }
+
+    @Test func parseRecordItemsFiltersLedgerNoiseAndKeepsRecords() {
+        let lines: [(text: String, confidence: Float)] = [
+            (text: "礼单", confidence: 0.9),
+            (text: "合计 999", confidence: 0.9),
+            (text: "张三 500", confidence: 0.9),
+        ]
+
+        let items = service.parseRecordItems(from: lines)
+
+        #expect(items.count == 1)
+        #expect(items[0].name == "张三")
+        #expect(items[0].amount == 500)
+    }
+
+    @Test func parseRecordItemsSupportsStackedLedgerPattern() {
+        let lines: [(text: String, confidence: Float)] = [
+            (text: "张三", confidence: 0.85),
+            (text: "500", confidence: 0.88),
+        ]
+
+        let items = service.parseRecordItems(from: lines)
+
+        #expect(items.count == 1)
+        #expect(items[0].name == "张三")
+        #expect(items[0].amount == 500)
+        #expect(items[0].sourceMode == .ledgerHeuristicFallback)
+    }
+
+    @Test func parseRecordItemsMarksSuspiciousAmountsAfterAudit() {
+        let lines: [(text: String, confidence: Float)] = [
+            (text: "张三 5000000", confidence: 0.95),
+        ]
+
+        let items = service.parseRecordItems(from: lines)
+
+        #expect(items.count == 1)
+        #expect(items[0].warningType == .suspiciousAmount)
+        #expect(items[0].confidence != .high)
+    }
 }

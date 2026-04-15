@@ -5,6 +5,39 @@ import Vision
 
 private let ocrLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.ocr)
 
+struct LedgerOCRLine: Identifiable, Hashable {
+    let id: UUID
+    let text: String
+    let confidence: Float
+    let boundingBox: CGRect
+    let pageIndex: Int
+
+    init(
+        id: UUID = UUID(),
+        text: String,
+        confidence: Float,
+        boundingBox: CGRect,
+        pageIndex: Int
+    ) {
+        self.id = id
+        self.text = text
+        self.confidence = confidence
+        self.boundingBox = boundingBox
+        self.pageIndex = pageIndex
+    }
+}
+
+enum OCRRecognitionMode: String, Codable {
+    case appleAIEnhanced
+    case ledgerHeuristicFallback
+    case ocrOnlyLegacy
+}
+
+struct OCRRecognitionMetadata {
+    var mode: OCRRecognitionMode = .ocrOnlyLegacy
+    var filteredNoiseCount: Int = 0
+}
+
 enum OCRConfidence: String, Codable {
     case high
     case medium
@@ -27,6 +60,8 @@ struct OCRRecordItem: Identifiable {
     var date: Date
     var eventType: EventType
     var eventName: String
+    var sourceMode: OCRRecognitionMode
+    var sourceLineIDs: [UUID]
 
     init(
         name: String,
@@ -36,7 +71,9 @@ struct OCRRecordItem: Identifiable {
         warningType: WarningType? = nil,
         date: Date = .now,
         eventType: EventType = .other,
-        eventName: String = String(localized: "event.type.other")
+        eventName: String = String(localized: "event.type.other"),
+        sourceMode: OCRRecognitionMode = .ocrOnlyLegacy,
+        sourceLineIDs: [UUID] = []
     ) {
         id = UUID()
         self.name = name
@@ -48,12 +85,16 @@ struct OCRRecordItem: Identifiable {
         self.date = date
         self.eventType = eventType
         self.eventName = eventName
+        self.sourceMode = sourceMode
+        self.sourceLineIDs = sourceLineIDs
     }
 }
 
 final class OCRService {
     static let shared = OCRService()
     private init() {}
+    private let heuristicPipeline = LedgerHeuristicPipeline.shared
+    private(set) var lastRecognitionMetadata = OCRRecognitionMetadata()
 
     // MARK: - Public API
 
@@ -63,11 +104,17 @@ final class OCRService {
             "count": .stringConvertible(images.count),
         ])
         var allItems: [OCRRecordItem] = []
+        lastRecognitionMetadata = OCRRecognitionMetadata(mode: .ocrOnlyLegacy, filteredNoiseCount: 0)
 
         for image in images {
             let lines = try await recognizeText(in: image)
-            let items = parseRecordItems(from: lines)
+            let heuristics = heuristicPipeline.process(lines: lines, service: self)
+            let items = heuristicPipeline.auditItems(
+                heuristicPipeline.extractHeuristicItems(heuristics.candidates, service: self),
+                service: self
+            )
             allItems.append(contentsOf: items)
+            lastRecognitionMetadata.filteredNoiseCount += heuristics.filteredNoiseCount
         }
 
         let items = deduplicateItems(allItems)
@@ -86,21 +133,34 @@ final class OCRService {
         ])
         var allItems: [OCRRecordItem] = []
         var aiCount = 0
+        var filteredNoiseCount = 0
+        var usedHeuristicFallback = false
 
-        for image in images {
-            let lines = try await recognizeText(in: image)
+        for pageIndex in images.indices {
+            let lines = try await recognizeText(in: images[pageIndex], pageIndex: pageIndex)
+            let heuristics = heuristicPipeline.process(lines: lines, service: self)
+            filteredNoiseCount += heuristics.filteredNoiseCount
 
-            if let aiItems = await tryAIAnalysis(lines), !aiItems.isEmpty {
-                allItems.append(contentsOf: aiItems)
+            if let aiItems = await tryAIAnalysis(heuristics), !aiItems.isEmpty {
+                let audited = heuristicPipeline.auditItems(aiItems, service: self)
+                allItems.append(contentsOf: audited)
                 aiCount += 1
             } else {
-                let items = parseRecordItems(from: lines)
+                usedHeuristicFallback = true
+                let items = heuristicPipeline.auditItems(
+                    heuristicPipeline.extractHeuristicItems(heuristics.candidates, service: self),
+                    service: self
+                )
                 allItems.append(contentsOf: items)
             }
         }
 
         let items = deduplicateItems(allItems)
         let aiEnhanced = aiCount == images.count && aiCount > 0
+        lastRecognitionMetadata = OCRRecognitionMetadata(
+            mode: aiEnhanced ? .appleAIEnhanced : (usedHeuristicFallback ? .ledgerHeuristicFallback : .ocrOnlyLegacy),
+            filteredNoiseCount: filteredNoiseCount
+        )
         ocrLogger.notice("Finished enhanced OCR recognition", metadata: [
             "step": .string("recognize_records_enhanced"),
             "count": .stringConvertible(items.count),
@@ -109,7 +169,7 @@ final class OCRService {
         return (items: items, isAIEnhanced: aiEnhanced)
     }
 
-    private func tryAIAnalysis(_ lines: [(text: String, confidence: Float)]) async -> [OCRRecordItem]? {
+    private func tryAIAnalysis(_ heuristics: LedgerHeuristicProcessResult) async -> [OCRRecordItem]? {
         if #available(iOS 26.0, *) {
             let service = AIAnalysisService.shared
             guard service.isAvailable else {
@@ -120,7 +180,10 @@ final class OCRService {
                 return nil
             }
             do {
-                return try await service.analyzeOCRText(lines)
+                return try await service.analyzeLedgerCandidates(
+                    heuristics.candidates,
+                    pageContexts: heuristics.pageContexts
+                )
             } catch {
                 ocrLogger.warning("AI OCR enhancement failed", metadata: [
                     "step": .string("ai_fallback"),
@@ -134,7 +197,7 @@ final class OCRService {
 
     // MARK: - Vision Text Recognition
 
-    func recognizeText(in image: UIImage) async throws -> [(text: String, confidence: Float)] {
+    func recognizeText(in image: UIImage, pageIndex: Int = 0) async throws -> [LedgerOCRLine] {
         guard let cgImage = image.cgImage else {
             ocrLogger.error("OCR image conversion failed", metadata: [
                 "step": .string("vision_recognition"),
@@ -159,9 +222,14 @@ final class OCRService {
                     return
                 }
 
-                let lines = observations.compactMap { observation -> (text: String, confidence: Float)? in
+                let lines = observations.compactMap { observation -> LedgerOCRLine? in
                     guard let candidate = observation.topCandidates(1).first else { return nil }
-                    return (text: candidate.string, confidence: candidate.confidence)
+                    return LedgerOCRLine(
+                        text: candidate.string,
+                        confidence: candidate.confidence,
+                        boundingBox: observation.boundingBox,
+                        pageIndex: pageIndex
+                    )
                 }
                 ocrLogger.info("Vision OCR produced lines", metadata: [
                     "step": .string("vision_recognition"),
@@ -221,53 +289,19 @@ final class OCRService {
     let amountNamePattern = #"[¥￥]?\s*([\d,，]+(?:\.\d{1,2})?)\s+([\u4e00-\u9fff]{2,6})"#
 
     func parseRecordItems(from lines: [(text: String, confidence: Float)]) -> [OCRRecordItem] {
-        var items: [OCRRecordItem] = []
-        let nameAmountRegex = try? NSRegularExpression(pattern: nameAmountPattern)
-        let amountNameRegex = try? NSRegularExpression(pattern: amountNamePattern)
-
-        for line in lines {
-            let text = line.text.trimmingCharacters(in: .whitespacesAndNewlines)
-            if text.isEmpty { continue }
-
-            let nsText = text as NSString
-            let fullRange = NSRange(location: 0, length: nsText.length)
-            let eventType = matchEventType(from: text)
-            let eventName = eventType.displayName
-
-            if let match = nameAmountRegex?.firstMatch(in: text, range: fullRange),
-               match.numberOfRanges >= 3
-            {
-                let name = nsText.substring(with: match.range(at: 1))
-                let rawAmount = nsText.substring(with: match.range(at: 2))
-                if let item = buildItem(
-                    name: name,
-                    rawAmount: rawAmount,
-                    visionConfidence: line.confidence,
-                    eventType: eventType,
-                    eventName: eventName
-                ) {
-                    items.append(item)
-                    continue
-                }
-            }
-
-            if let match = amountNameRegex?.firstMatch(in: text, range: fullRange),
-               match.numberOfRanges >= 3
-            {
-                let rawAmount = nsText.substring(with: match.range(at: 1))
-                let name = nsText.substring(with: match.range(at: 2))
-                if let item = buildItem(
-                    name: name,
-                    rawAmount: rawAmount,
-                    visionConfidence: line.confidence,
-                    eventType: eventType,
-                    eventName: eventName
-                ) {
-                    items.append(item)
-                }
-            }
+        let ledgerLines = lines.enumerated().map { index, line in
+            LedgerOCRLine(
+                text: line.text,
+                confidence: line.confidence,
+                boundingBox: CGRect(x: 0, y: 1 - CGFloat(index) * 0.02, width: 1, height: 0.02),
+                pageIndex: 0
+            )
         }
-
+        let heuristics = heuristicPipeline.process(lines: ledgerLines, service: self)
+        let items = heuristicPipeline.auditItems(
+            heuristicPipeline.extractHeuristicItems(heuristics.candidates, service: self),
+            service: self
+        )
         ocrLogger.info("Parsed OCR record items", metadata: [
             "step": .string("parse_record_items"),
             "count": .stringConvertible(items.count),
@@ -312,7 +346,8 @@ final class OCRService {
             confidence: confidence,
             warningType: warningType,
             eventType: eventType,
-            eventName: eventName
+            eventName: eventName,
+            sourceMode: .ocrOnlyLegacy
         )
     }
 

@@ -22,6 +22,8 @@ class OCRImportViewModel {
     // MARK: - AI Enhancement
 
     var isAIEnhanced = false
+    var recognitionMode: OCRRecognitionMode = .ocrOnlyLegacy
+    var filteredNoiseCount = 0
 
     // MARK: - Import Config
 
@@ -53,6 +55,10 @@ class OCRImportViewModel {
         items.filter { $0.confidence == .low || $0.confidence == .medium }.count
     }
 
+    var needsReviewCount: Int {
+        items.filter { $0.warningType != nil || $0.confidence != .high }.count
+    }
+
     var isAllSelected: Bool {
         !items.isEmpty && items.allSatisfy(\.isSelected)
     }
@@ -81,6 +87,8 @@ class OCRImportViewModel {
         items.removeAll()
         processingState = .idle
         isAIEnhanced = false
+        recognitionMode = .ocrOnlyLegacy
+        filteredNoiseCount = 0
         ocrImportLogger.notice("Cleared OCR import state", metadata: [
             "step": .string("clear_images"),
         ])
@@ -100,6 +108,9 @@ class OCRImportViewModel {
             processingState = .loading
             if #available(iOS 26.0, *) {
                 isAIEnhanced = AIAnalysisService.shared.isAvailable
+                recognitionMode = AIAnalysisService.shared.isAvailable ? .appleAIEnhanced : .ledgerHeuristicFallback
+            } else {
+                recognitionMode = .ledgerHeuristicFallback
             }
         }
 
@@ -108,6 +119,8 @@ class OCRImportViewModel {
             await MainActor.run {
                 items = result.items
                 isAIEnhanced = result.isAIEnhanced
+                recognitionMode = OCRService.shared.lastRecognitionMetadata.mode
+                filteredNoiseCount = OCRService.shared.lastRecognitionMetadata.filteredNoiseCount
                 processingState = .loaded(result.items)
                 capturedImages.removeAll()
                 SubscriptionManager.shared.recordOCRUsage()
@@ -116,13 +129,13 @@ class OCRImportViewModel {
                     operation: "recognize",
                     filters: [
                         "imageCount": String(imageCount),
-                        "pipeline": result.isAIEnhanced ? "ai_enhanced" : "ocr_only",
+                        "pipeline": recognitionMode.rawValue,
                     ],
                     payload: QueryInputLogPayload(
                         searchText: "",
                         filters: [
                             "imageCount": String(imageCount),
-                            "pipeline": result.isAIEnhanced ? "ai_enhanced" : "ocr_only",
+                            "pipeline": recognitionMode.rawValue,
                         ],
                         sort: "",
                         screen: "import.ocr.result"
@@ -132,12 +145,14 @@ class OCRImportViewModel {
                 ocrImportLogger.notice("Processed OCR images", metadata: [
                     "step": .string("process_images"),
                     "count": .stringConvertible(result.items.count),
-                    "result": .string(result.isAIEnhanced ? "ai_enhanced" : "ocr_only"),
+                    "result": .string(recognitionMode.rawValue),
                 ])
             }
         } catch {
             await MainActor.run {
                 isAIEnhanced = false
+                recognitionMode = .ocrOnlyLegacy
+                filteredNoiseCount = 0
                 processingState = .error(error.localizedDescription)
                 capturedImages.removeAll()
                 ocrImportLogger.error("Failed to process OCR images", metadata: [

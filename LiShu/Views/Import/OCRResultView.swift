@@ -78,12 +78,14 @@ struct OCRResultView: View {
 
     private var content: some View {
         VStack(spacing: 0) {
-            if viewModel.lowConfidenceCount > 0 {
+            if viewModel.needsReviewCount > 0 {
                 warningBanner
             }
 
-            if viewModel.isAIEnhanced {
-                aiEnhancedBadge
+            recognitionModeBadge
+
+            if viewModel.filteredNoiseCount > 0 {
+                filteredNoiseBadge
             }
 
             if viewModel.items.isEmpty {
@@ -167,8 +169,8 @@ struct OCRResultView: View {
 
             Text(
                 String(
-                    format: String(localized: "ocr.result.warningBanner %lld"),
-                    Int64(viewModel.lowConfidenceCount)
+                    format: String(localized: "ocr.ledger.reviewNeeded %lld"),
+                    Int64(viewModel.needsReviewCount)
                 )
             )
             .font(DesignSystem.Typography.caption)
@@ -182,13 +184,13 @@ struct OCRResultView: View {
 
     // MARK: - AI Enhanced Badge
 
-    private var aiEnhancedBadge: some View {
+    private var recognitionModeBadge: some View {
         HStack(spacing: 6) {
-            Image(systemName: "apple.intelligence")
+            Image(systemName: viewModel.recognitionMode == .appleAIEnhanced ? "apple.intelligence" : "doc.text.viewfinder")
                 .font(.system(size: 13))
                 .foregroundStyle(DesignSystem.Colors.primary)
 
-            Text(String(localized: "ocr.ai.enhanced"))
+            Text(recognitionModeText)
                 .font(DesignSystem.Typography.small)
                 .foregroundStyle(DesignSystem.Colors.primary)
         }
@@ -196,6 +198,38 @@ struct OCRResultView: View {
         .padding(.vertical, 8)
         .padding(.horizontal, 16)
         .background(DesignSystem.Colors.primary.opacity(0.08))
+    }
+
+    private var recognitionModeText: String {
+        switch viewModel.recognitionMode {
+        case .appleAIEnhanced:
+            String(localized: "ocr.ledger.mode.appleAI")
+        case .ledgerHeuristicFallback:
+            String(localized: "ocr.ledger.mode.heuristicFallback")
+        case .ocrOnlyLegacy:
+            String(localized: "ocr.import.processing")
+        }
+    }
+
+    private var filteredNoiseBadge: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "line.3.horizontal.decrease.circle")
+                .font(.system(size: 13))
+                .foregroundStyle(DesignSystem.Colors.textSecondary)
+
+            Text(
+                String(
+                    format: String(localized: "ocr.ledger.filteredNoise %lld"),
+                    Int64(viewModel.filteredNoiseCount)
+                )
+            )
+            .font(DesignSystem.Typography.small)
+            .foregroundStyle(DesignSystem.Colors.textSecondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 8)
+        .padding(.horizontal, 16)
+        .background(DesignSystem.Colors.bgSurface)
     }
 
     // MARK: - Empty View

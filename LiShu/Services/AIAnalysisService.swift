@@ -9,6 +9,9 @@ private let aiAnalysisLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.ai
     @available(iOS 26.0, *)
     @Generable
     struct AIExtractedRecord {
+        @Guide(description: "候选条目索引")
+        var candidateIndex: Int
+
         @Guide(description: "人名，2-6个汉字")
         var name: String
 
@@ -47,28 +50,46 @@ private let aiAnalysisLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.ai
         // MARK: - Public API
 
         func analyzeOCRText(_ lines: [(text: String, confidence: Float)]) async throws -> [OCRRecordItem] {
+            let candidates = lines.enumerated().map { _, line in
+                LedgerEntryCandidate(
+                    nameText: "",
+                    amountText: "",
+                    normalizedAmount: nil,
+                    sourceLineIDs: [],
+                    layoutPattern: .unknown,
+                    averageConfidence: line.confidence,
+                    fullText: line.text
+                )
+            }
+            return try await analyzeLedgerCandidates(candidates, pageContexts: [:])
+        }
+
+        func analyzeLedgerCandidates(
+            _ candidates: [LedgerEntryCandidate],
+            pageContexts: [Int: LedgerPageContext]
+        ) async throws -> [OCRRecordItem] {
             aiAnalysisLogger.notice("Starting AI OCR analysis", metadata: [
-                "step": .string("analyze_ocr_text"),
-                "count": .stringConvertible(lines.count),
+                "step": .string("analyze_ledger_candidates"),
+                "count": .stringConvertible(candidates.count),
             ])
-            let batches = splitIntoBatches(lines, maxCharsPerBatch: 1500)
+            let batches = splitIntoBatches(candidates, maxCharsPerBatch: 1500)
             var allItems: [OCRRecordItem] = []
 
             for batch in batches {
-                let prompt = buildPrompt(from: batch)
+                let prompt = buildPrompt(from: batch, pageContexts: pageContexts)
                 let session = LanguageModelSession()
                 let response = try await session.respond(to: prompt, generating: AIExtractionResult.self)
-                let items = convertToOCRRecordItems(response.content, sourceLines: batch)
+                let items = convertToOCRRecordItems(response.content, sourceCandidates: batch)
                 allItems.append(contentsOf: items)
                 aiAnalysisLogger.info("Finished AI OCR batch", metadata: [
-                    "step": .string("analyze_ocr_text"),
+                    "step": .string("analyze_ledger_candidates"),
                     "count": .stringConvertible(items.count),
                     "prompt_chars": .stringConvertible(prompt.count),
                 ])
             }
 
             aiAnalysisLogger.notice("Finished AI OCR analysis", metadata: [
-                "step": .string("analyze_ocr_text"),
+                "step": .string("analyze_ledger_candidates"),
                 "count": .stringConvertible(allItems.count),
                 "result": .string("success"),
             ])
@@ -77,22 +98,19 @@ private let aiAnalysisLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.ai
 
         // MARK: - Batching
 
-        func splitIntoBatches(_ lines: [(text: String, confidence: Float)], maxCharsPerBatch: Int) -> [[(
-            text: String,
-            confidence: Float
-        )]] {
-            var batches: [[(text: String, confidence: Float)]] = []
-            var currentBatch: [(text: String, confidence: Float)] = []
+        func splitIntoBatches(_ candidates: [LedgerEntryCandidate], maxCharsPerBatch: Int) -> [[LedgerEntryCandidate]] {
+            var batches: [[LedgerEntryCandidate]] = []
+            var currentBatch: [LedgerEntryCandidate] = []
             var currentChars = 0
 
-            for line in lines {
-                let lineChars = line.text.count
+            for candidate in candidates {
+                let lineChars = candidate.fullText.count
                 if currentChars + lineChars > maxCharsPerBatch, !currentBatch.isEmpty {
                     batches.append(currentBatch)
                     currentBatch = []
                     currentChars = 0
                 }
-                currentBatch.append(line)
+                currentBatch.append(candidate)
                 currentChars += lineChars
             }
 
@@ -109,16 +127,26 @@ private let aiAnalysisLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.ai
 
         // MARK: - Prompt
 
-        func buildPrompt(from lines: [(text: String, confidence: Float)]) -> String {
-            let textBlock = lines.map(\.text).joined(separator: "\n")
+        func buildPrompt(from candidates: [LedgerEntryCandidate], pageContexts: [Int: LedgerPageContext]) -> String {
+            let textBlock = candidates.enumerated().map { index, candidate in
+                LedgerHeuristicPipeline.shared.summarizeCandidate(candidate, index: index)
+            }.joined(separator: "\n")
+            let contextBlock = pageContexts.keys.sorted().compactMap { pageIndex -> String? in
+                guard let context = pageContexts[pageIndex] else { return nil }
+                let title = context.titleLines.joined(separator: " / ")
+                let ignored = context.ignoredLines.prefix(3).joined(separator: " / ")
+                let hint = context.eventHint ?? String(localized: "event.type.other")
+                return "页\(pageIndex + 1): 标题=\(title.isEmpty ? "无" : title)；事件提示=\(hint)；已过滤噪声=\(ignored.isEmpty ? "无" : ignored)"
+            }.joined(separator: "\n")
             aiAnalysisLogger.debug("Built AI OCR prompt", metadata: [
                 "step": .string("build_prompt"),
-                "count": .stringConvertible(lines.count),
+                "count": .stringConvertible(candidates.count),
             ])
             return """
-            你是一个礼金簿OCR文字解析助手。以下是从礼金簿图片中OCR识别出的文字行。
+            你是一个礼簿条目解析助手。以下内容来自礼簿 OCR 和本地规则预处理。
 
-            请提取每一条人情往来记录，包括：
+            请仅提取真正的礼簿条目，每条输出包括：
+            0. candidateIndex: 对应候选条目索引
             1. name: 人名（2-6个汉字）
             2. amount: 金额（数字，单位元）
             3. eventType: 该条记录对应的事件类型，只能是以下之一：
@@ -126,14 +154,18 @@ private let aiAnalysisLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.ai
             4. eventName: 该条记录对应的事件名称（如"婚礼"、"满月酒"、"寿宴"）
 
             注意：
-            - 忽略非记录内容（标题、页码、合计等）
-            - 金额可能包含逗号或中文大写数字，请转为阿拉伯数字
+            - 忽略标题、页码、合计、电话、地址、说明性文本
+            - 如果候选内容不像礼簿条目，不要输出
+            - 金额必须是正数，输出阿拉伯数字
             - 每条记录根据其文字内容或上下文独立判断事件类型和名称
-            - 如果某条记录本身包含事件关键词（如"张三婚礼 500"），则该条 eventType 为 wedding，eventName 为"婚礼"
-            - 如果从标题或上下文能判断整页属于同一事件，则所有记录使用该事件
+            - 如果从页标题或上下文能判断整页属于同一事件，则优先使用该事件
             - 如果无法判断事件类型，eventType 使用 other，eventName 使用"其他"
+            - candidateIndex 必须引用下方候选索引
 
-            OCR文字：
+            页面上下文：
+            \(contextBlock)
+
+            候选条目：
             \(textBlock)
             """
         }
@@ -142,13 +174,13 @@ private let aiAnalysisLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.ai
 
         func convertToOCRRecordItems(
             _ result: AIExtractionResult,
-            sourceLines: [(text: String, confidence: Float)]
+            sourceCandidates: [LedgerEntryCandidate]
         ) -> [OCRRecordItem] {
-            let avgConfidence = sourceLines.isEmpty ? Float(0.7) : sourceLines.map(\.confidence).reduce(0, +) / Float(sourceLines.count)
-
             let items: [OCRRecordItem] = result.records.compactMap { record -> OCRRecordItem? in
                 let name = record.name.trimmingCharacters(in: .whitespacesAndNewlines)
                 guard !name.isEmpty, record.amount > 0 else { return nil }
+                let candidate = sourceCandidates.indices.contains(record.candidateIndex) ? sourceCandidates[record.candidateIndex] : nil
+                let avgConfidence = candidate?.averageConfidence ?? Float(0.7)
 
                 let confidence: OCRConfidence
                 var warningType: WarningType?
@@ -178,7 +210,9 @@ private let aiAnalysisLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.ai
                     confidence: confidence,
                     warningType: warningType,
                     eventType: eventType,
-                    eventName: eventName
+                    eventName: eventName,
+                    sourceMode: .appleAIEnhanced,
+                    sourceLineIDs: candidate?.sourceLineIDs ?? []
                 )
             }
             aiAnalysisLogger.info("Converted AI OCR result", metadata: [
@@ -207,6 +241,10 @@ private let aiAnalysisLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.ai
         }
 
         func analyzeOCRText(_: [(text: String, confidence: Float)]) async throws -> [OCRRecordItem] {
+            []
+        }
+
+        func analyzeLedgerCandidates(_: [LedgerEntryCandidate], pageContexts _: [Int: LedgerPageContext]) async throws -> [OCRRecordItem] {
             []
         }
     }

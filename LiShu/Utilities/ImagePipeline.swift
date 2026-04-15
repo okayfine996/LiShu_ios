@@ -92,17 +92,22 @@ enum ImagePipeline {
     }
 
     private static func resizedImageIfNeeded(_ image: UIImage, maxPixelSize: Int) -> UIImage {
-        let maxDimension = max(image.size.width, image.size.height)
+        let pixelWidth = image.cgImage.map { CGFloat($0.width) } ?? (image.size.width * image.scale)
+        let pixelHeight = image.cgImage.map { CGFloat($0.height) } ?? (image.size.height * image.scale)
+        let maxDimension = max(pixelWidth, pixelHeight)
         guard maxDimension > CGFloat(maxPixelSize), maxDimension > 0 else {
             return image
         }
 
         let ratio = CGFloat(maxPixelSize) / maxDimension
         let targetSize = CGSize(
-            width: max(image.size.width * ratio, 1),
-            height: max(image.size.height * ratio, 1)
+            width: max(pixelWidth * ratio, 1),
+            height: max(pixelHeight * ratio, 1)
         )
-        let renderer = UIGraphicsImageRenderer(size: targetSize)
+        let format = UIGraphicsImageRendererFormat.default()
+        format.scale = 1
+        format.opaque = false
+        let renderer = UIGraphicsImageRenderer(size: targetSize, format: format)
         return renderer.image { _ in
             image.draw(in: CGRect(origin: .zero, size: targetSize))
         }
