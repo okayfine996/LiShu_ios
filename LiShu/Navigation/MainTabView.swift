@@ -116,27 +116,6 @@ struct MainTabView: View {
                 )
             }
         }
-        .onAppear {
-            guard CommandLine.arguments.contains("--uitest-open-ocr") else { return }
-
-            let hostEvent: Event
-            if let firstHostEvent = events.first(where: { $0.hostMode == .host }) {
-                hostEvent = firstHostEvent
-            } else {
-                let seededEvent = Event(
-                    name: "UI Test OCR Event",
-                    type: .wedding,
-                    hostMode: .host,
-                    date: .now,
-                    location: ""
-                )
-                modelContext.insert(seededEvent)
-                try? modelContext.save()
-                hostEvent = seededEvent
-            }
-
-            sheetRoute = .ocrImport(eventID: hostEvent.persistentModelID)
-        }
     }
 
     // MARK: - Route Destination

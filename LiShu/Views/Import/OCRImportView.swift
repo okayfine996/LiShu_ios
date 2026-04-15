@@ -9,7 +9,6 @@ struct OCRImportView: View {
     @State private var selectedPhotos: [PhotosPickerItem] = []
     @State private var showPhotosPicker = false
     @State private var showProSheet = false
-    @State private var hasLoadedUITestFixture = false
 
     init(
         eventID: PersistentIdentifier,
@@ -92,68 +91,6 @@ struct OCRImportView: View {
         .onChange(of: showProSheet) { _, newValue in
             InteractionLogger.sheetPresentation(screen: "import.ocr.source", route: "sheet.settings.proMembership", isPresented: newValue)
         }
-        .onAppear {
-            applyUITestFixtureIfNeeded()
-        }
-    }
-
-    private func applyUITestFixtureIfNeeded() {
-        guard !hasLoadedUITestFixture else { return }
-        hasLoadedUITestFixture = true
-
-        guard CommandLine.arguments.contains("--uitesting") else { return }
-        guard let fixtureItems = parseUITestFixtureItems() else { return }
-        guard !fixtureItems.isEmpty else { return }
-
-        viewModel.items = fixtureItems
-        if let rawMode = ProcessInfo.processInfo.environment["UITEST_OCR_RECOGNITION_MODE"],
-           let mode = OCRRecognitionMode(rawValue: rawMode)
-        {
-            viewModel.recognitionMode = mode
-            viewModel.isAIEnhanced = mode == .appleAIEnhanced
-        }
-        if let rawFilteredNoiseCount = ProcessInfo.processInfo.environment["UITEST_OCR_FILTERED_NOISE_COUNT"],
-           let filteredNoiseCount = Int(rawFilteredNoiseCount)
-        {
-            viewModel.filteredNoiseCount = filteredNoiseCount
-        }
-        viewModel.processingState = .loaded(fixtureItems)
-    }
-
-    private func parseUITestFixtureItems() -> [OCRRecordItem]? {
-        guard let rawPayload = ProcessInfo.processInfo.environment["UITEST_OCR_PREVIEW_ITEMS"] else { return nil }
-        let records = rawPayload
-            .split(separator: ";")
-            .compactMap { parseUITestFixtureItem(String($0)) }
-        return records.isEmpty ? nil : records
-    }
-
-    private func parseUITestFixtureItem(_ itemPayload: String) -> OCRRecordItem? {
-        let parts = itemPayload.split(separator: "|", omittingEmptySubsequences: false)
-        guard parts.count >= 4 else { return nil }
-
-        let name = parts[0].trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !name.isEmpty else { return nil }
-
-        let amount = Double(parts[1]) ?? 0
-        let amountText = parts[2].isEmpty ? "\(amount)" : String(parts[2])
-        let eventName = String(parts[3]).trimmingCharacters(in: .whitespacesAndNewlines)
-
-        let confidence = OCRConfidence(rawValue: String(parts.dropFirst(4).first ?? "high")) ?? .high
-        let warningType = parts.dropFirst(5).first
-            .flatMap { WarningType(rawValue: String($0)) }
-        let sourceMode = parts.dropFirst(6).first
-            .flatMap { OCRRecognitionMode(rawValue: String($0)) } ?? .ocrOnlyLegacy
-
-        return OCRRecordItem(
-            name: name,
-            amount: amount,
-            amountText: amountText,
-            confidence: confidence,
-            warningType: warningType,
-            eventName: eventName,
-            sourceMode: sourceMode
-        )
     }
 
     // MARK: - Source Selection
