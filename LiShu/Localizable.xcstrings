@@ -1366,6 +1366,22 @@
         }
       }
     },
+    "contact.list.deleteConfirmMessage" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deleting this contact will also delete %1$lld records and %2$lld photos. This action cannot be undone."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除该联系人后，会同时删除 %1$lld 条往来和 %2$lld 张照片。此操作不可撤销。"
+          }
+        }
+      }
+    },
     "contact.list.empty" : {
       "localizations" : {
         "zh-Hans" : {
@@ -1833,12 +1849,105 @@
 
     },
     "debug.clearAllData" : {
-      "extractionState" : "stale",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clear all data"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "清空所有数据"
+          }
+        }
+      }
+    },
+    "debug.clearAllData.confirmMessage" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This will delete contacts, events, records, and all record photos. This is a high-risk debug action."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将删除联系人、事件、往来记录与所有记录照片。该操作为高风险调试动作，请确认。"
+          }
+        }
+      }
+    },
+    "debug.clearAllData.confirmTitle" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clear all data?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "确认清空全部数据？"
+          }
+        }
+      }
+    },
+    "debug.clearAllData.result" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All data cleared"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已清空全部数据"
+          }
+        }
+      }
+    },
+    "debug.console.exportErrorTitle" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导出失败"
+          }
+        }
+      }
+    },
+    "debug.console.exportJsonLog" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导出详细 JSON 日志"
+          }
+        }
+      }
+    },
+    "debug.console.exportTextLog" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导出详细文本日志"
+          }
+        }
+      }
+    },
+    "debug.console.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "开发控制台"
           }
         }
       }
@@ -1856,10 +1965,64 @@
     },
     "debug.notification.clearAll" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clear all pending notifications"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "清除全部待发通知"
+          }
+        }
+      }
+    },
+    "debug.notification.clearAll.confirmMessage" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This will remove all pending local notifications from Notification Center. Use this only for debugging."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将清空本地通知中心所有待发通知。该操作仅用于调试场景。"
+          }
+        }
+      }
+    },
+    "debug.notification.clearAll.confirmTitle" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clear pending notifications?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "确认清空待发通知？"
+          }
+        }
+      }
+    },
+    "debug.notification.clearAll.result" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pending notifications cleared"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已清空全部待发通知"
           }
         }
       }
@@ -2059,22 +2222,22 @@
         }
       }
     },
-    "event.detail.deleteConfirmMessage" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "删除事件后，该事件下的往来记录也会一起删除。此操作不可撤销。"
-          }
-        }
-      }
-    },
     "event.detail.deleteConfirm" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "确定要删除这个事件吗？"
+          }
+        }
+      }
+    },
+    "event.detail.deleteConfirmMessage" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除事件后，该事件下的往来记录也会一起删除。此操作不可撤销。"
           }
         }
       }
@@ -2528,6 +2691,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "还有%d天"
+          }
+        }
+      }
+    },
+    "event.list.deleteConfirmMessage" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deleting this event will also delete %1$lld records and %2$lld photos. This action cannot be undone."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除该事件后，会同时删除 %1$lld 条往来和 %2$lld 张照片。此操作不可撤销。"
           }
         }
       }
@@ -3752,6 +3931,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "删除"
+          }
+        }
+      }
+    },
+    "ocr.delete.confirmMessage %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Are you sure you want to delete these %lld recognized records? This action cannot be undone."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "确定要删除这 %lld 条识别记录吗？删除后将无法恢复。"
+          }
+        }
+      }
+    },
+    "ocr.delete.confirmTitle" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete selected OCR records"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除所选 OCR 记录"
           }
         }
       }
@@ -6617,6 +6828,22 @@
         }
       }
     },
+    "record.list.deleteConfirmMessage" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deleting this record will also delete %1$lld photos. This action cannot be undone."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除这笔往来后，会同时删除 %1$lld 张照片。此操作不可撤销。"
+          }
+        }
+      }
+    },
     "record.list.empty" : {
       "localizations" : {
         "zh-Hans" : {
@@ -7378,6 +7605,22 @@
         }
       }
     },
+    "settings.delete.confirmMessage %lld %lld %lld %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scope: %lld contacts, %lld events, %lld records, and %lld photos. Related data will be cascade deleted and cannot be recovered."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "清理范围：%lld 位联系人、%lld 个事件、%lld 条记录、%lld 张照片。该操作将级联删除相关依赖，无法恢复。"
+          }
+        }
+      }
+    },
     "settings.delete.irreversible" : {
       "localizations" : {
         "zh-Hans" : {
@@ -7420,10 +7663,32 @@
     },
     "settings.delete.requiredText" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DELETE"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "删除"
+          }
+        }
+      }
+    },
+    "settings.delete.secondConfirmTitle" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete all data?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "确认清空全部数据？"
           }
         }
       }
@@ -8968,34 +9233,10 @@
     "仅用于开发调试，不会写入本地持久化。关闭控制台后仍保留，重启 App 才会恢复。" : {
 
     },
-    "关闭" : {
-
-    },
-    "导出失败" : {
-
-    },
-    "导出详细 JSON 日志" : {
-
-    },
-    "导出详细文本日志" : {
-
-    },
-    "开发控制台" : {
-
-    },
     "打开日志控制台" : {
 
     },
     "收起日志控制台" : {
-
-    },
-    "此操作会删除联系人、事件、记录和记录照片，仅建议在调试场景使用。" : {
-
-    },
-    "清空全部数据" : {
-
-    },
-    "确认清空全部数据？" : {
 
     },
     "礼" : {

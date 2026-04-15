@@ -282,6 +282,8 @@ struct AddRecordView: View {
 
             contactAvatarScroll
         }
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("record.add.contactSelector")
     }
 
     private var contactAvatarScroll: some View {
@@ -374,6 +376,7 @@ struct AddRecordView: View {
             .opacity(viewModel.selectedContact == nil || isSelected ? 1.0 : 0.7)
         }
         .buttonStyle(.plain)
+        .accessibilityIdentifier("record.add.contact.\(contact.name)")
     }
 
     // MARK: - Record Type Grid
@@ -788,6 +791,8 @@ struct AddRecordView: View {
             .padding(.horizontal, 4)
             .padding(.bottom, 4)
         }
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("record.add.eventSelector")
     }
 
     private func eventCoverItem(_ event: Event) -> some View {
@@ -837,6 +842,7 @@ struct AddRecordView: View {
             .opacity(viewModel.selectedEvent == nil || isSelected ? 1.0 : 0.7)
         }
         .buttonStyle(.plain)
+        .accessibilityIdentifier("record.add.event.\(event.name)")
     }
 
     private var createEventButton: some View {

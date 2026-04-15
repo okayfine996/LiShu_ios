@@ -95,6 +95,39 @@ final class ContactFlowTests: BaseUITestCase {
     }
 
     @MainActor
+    func testContactListSwipeDeleteShowsCascadeMessage() {
+        let contactName = "左滑联系人"
+        let eventName = "左滑联系人事件"
+
+        createContact(name: contactName)
+        createEvent(name: eventName)
+        createMonetaryRecord(contactName: contactName, eventName: eventName, amount: "520")
+
+        let contactsTab = app.tabBars.buttons[TabLabels.contacts]
+        contactsTab.tap()
+        sleep(1)
+
+        let contactText = app.staticTexts[contactName].firstMatch
+        XCTAssertTrue(contactText.waitForExistence(timeout: 5), "Created contact should appear in list")
+        contactText.swipeLeft()
+
+        let deleteButton = app.buttons["删除"].firstMatch
+        XCTAssertTrue(deleteButton.waitForExistence(timeout: 3), "Swipe delete button should appear")
+        deleteButton.tap()
+
+        let message = app.staticTexts.containing(
+            NSPredicate(format: "label CONTAINS[c] '1 条往来' AND label CONTAINS[c] '0 张照片'")
+        ).firstMatch
+        XCTAssertTrue(message.waitForExistence(timeout: 3), "Cascade delete message should describe linked records and photos")
+
+        let confirmButton = app.alerts.buttons["删除"].firstMatch
+        XCTAssertTrue(confirmButton.waitForExistence(timeout: 3), "Delete confirmation should appear")
+        confirmButton.tap()
+
+        XCTAssertFalse(app.staticTexts[contactName].waitForExistence(timeout: 3), "Deleted contact should disappear from list")
+    }
+
+    @MainActor
     func testContactListNavigationBar() {
         let contactsTab = app.tabBars.buttons[TabLabels.contacts]
         XCTAssertTrue(contactsTab.waitForExistence(timeout: 5))

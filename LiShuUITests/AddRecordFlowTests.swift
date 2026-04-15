@@ -156,4 +156,37 @@ final class AddRecordFlowTests: BaseUITestCase {
             }
         }
     }
+
+    @MainActor
+    func testRecordListSwipeDeleteShowsPhotoCascadeMessage() {
+        let contactName = "左滑记录联系人"
+        let eventName = "左滑记录事件"
+
+        createContact(name: contactName)
+        createEvent(name: eventName)
+        createMonetaryRecord(contactName: contactName, eventName: eventName, amount: "666")
+
+        let recordsTab = app.tabBars.buttons[TabLabels.records]
+        recordsTab.tap()
+        sleep(1)
+
+        let recordText = app.staticTexts[contactName].firstMatch
+        XCTAssertTrue(recordText.waitForExistence(timeout: 5), "Created record should appear in list")
+        recordText.swipeLeft()
+
+        let deleteButton = app.buttons["删除"].firstMatch
+        XCTAssertTrue(deleteButton.waitForExistence(timeout: 3), "Swipe delete button should appear")
+        deleteButton.tap()
+
+        let message = app.staticTexts.containing(
+            NSPredicate(format: "label CONTAINS[c] '0 张照片'")
+        ).firstMatch
+        XCTAssertTrue(message.waitForExistence(timeout: 3), "Delete message should describe linked photos")
+
+        let confirmButton = app.alerts.buttons["删除"].firstMatch
+        XCTAssertTrue(confirmButton.waitForExistence(timeout: 3), "Delete confirmation should appear")
+        confirmButton.tap()
+
+        XCTAssertFalse(app.staticTexts[contactName].waitForExistence(timeout: 3), "Deleted record should disappear from list")
+    }
 }

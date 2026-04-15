@@ -8,6 +8,7 @@ struct DeleteAllDataView: View {
     @State private var isDeleting = false
     @State private var errorMessage: String?
     @State private var showErrorAlert = false
+    @State private var showDeleteConfirm = false
 
     private let requiredText = String(localized: "settings.delete.requiredText")
 
@@ -45,7 +46,32 @@ struct DeleteAllDataView: View {
                     Text(errorMessage)
                 }
             }
+            .alert(String(localized: "settings.delete.secondConfirmTitle"), isPresented: $showDeleteConfirm) {
+                Button(String(localized: "common.cancel"), role: .cancel) {}
+                    .accessibilityIdentifier("settings.deleteAllData.secondConfirmCancel")
+                Button(String(localized: "common.delete"), role: .destructive) {
+                    deleteAllData()
+                }
+                .accessibilityIdentifier("settings.deleteAllData.secondConfirmDelete")
+            } message: {
+                Text(settingsDeleteSummaryMessage)
+            }
         }
+    }
+
+    private var settingsDeleteSummaryMessage: String {
+        let contactCount = (try? modelContext.fetchCount(FetchDescriptor<Contact>())) ?? 0
+        let eventCount = (try? modelContext.fetchCount(FetchDescriptor<Event>())) ?? 0
+        let recordCount = (try? modelContext.fetchCount(FetchDescriptor<Record>())) ?? 0
+        let photoCount = (try? modelContext.fetchCount(FetchDescriptor<RecordPhoto>())) ?? 0
+
+        return String(
+            format: String(localized: "settings.delete.confirmMessage %lld %lld %lld %lld"),
+            Int64(contactCount),
+            Int64(eventCount),
+            Int64(recordCount),
+            Int64(photoCount)
+        )
     }
 
     // MARK: - Warning header
@@ -108,6 +134,7 @@ struct DeleteAllDataView: View {
 
             TextField(requiredText, text: $confirmText)
                 .textFieldStyle(StandardTextFieldStyle())
+                .accessibilityIdentifier("settings.deleteAllData.confirmTextField")
         }
     }
 
@@ -116,7 +143,7 @@ struct DeleteAllDataView: View {
     private var actionButtons: some View {
         VStack(spacing: 12) {
             Button {
-                deleteAllData()
+                showDeleteConfirm = true
             } label: {
                 HStack {
                     if isDeleting {
@@ -127,6 +154,7 @@ struct DeleteAllDataView: View {
                 }
             }
             .buttonStyle(PrimaryButtonStyle())
+            .accessibilityIdentifier("settings.deleteAllData.confirmButton")
             .disabled(!canDelete || isDeleting)
             .opacity(canDelete ? 1 : 0.5)
 
@@ -136,12 +164,15 @@ struct DeleteAllDataView: View {
                 Text(String(localized: "common.cancel"))
             }
             .buttonStyle(GhostButtonStyle())
+            .accessibilityIdentifier("settings.deleteAllData.closeButton")
         }
     }
 
     // MARK: - Delete action
 
     private func deleteAllData() {
+        guard canDelete else { return }
+
         isDeleting = true
         errorMessage = nil
         do {
@@ -149,6 +180,7 @@ struct DeleteAllDataView: View {
             try modelContext.delete(model: Event.self)
             try modelContext.delete(model: Contact.self)
             try modelContext.save()
+            showDeleteConfirm = false
             dismiss()
         } catch {
             isDeleting = false
