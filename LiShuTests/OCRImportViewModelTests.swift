@@ -92,7 +92,9 @@ struct OCRImportViewModelTests {
 
     @Test func canImportAndPerformImport() throws {
         let db = try TestDB()
-        let vm = OCRImportViewModel()
+        let event = Event(name: "当前礼簿", type: .wedding, hostMode: .host, date: .now)
+        db.context.insert(event)
+        let vm = OCRImportViewModel(fixedEventID: event.persistentModelID)
         vm.items = makeItems()
 
         #expect(vm.canImport == true)
@@ -103,6 +105,8 @@ struct OCRImportViewModelTests {
 
         let records = try db.context.fetch(FetchDescriptor<Record>())
         #expect(records.count == 3)
+        #expect(records.allSatisfy { $0.event?.persistentModelID == event.persistentModelID })
+        #expect(records.allSatisfy { $0.direction == .received })
 
         let contacts = try db.context.fetch(FetchDescriptor<Contact>())
         #expect(contacts.count == 3)
@@ -110,7 +114,9 @@ struct OCRImportViewModelTests {
 
     @Test func performImportDeduplicatesNewContactsByName() throws {
         let db = try TestDB()
-        let vm = OCRImportViewModel()
+        let event = Event(name: "当前礼簿", hostMode: .host)
+        db.context.insert(event)
+        let vm = OCRImportViewModel(fixedEventID: event.persistentModelID)
         vm.items = [
             OCRRecordItem(name: "同名联系人", amount: 100, amountText: "100", confidence: .high),
             OCRRecordItem(name: "同名联系人", amount: 200, amountText: "200", confidence: .high),
@@ -124,33 +130,6 @@ struct OCRImportViewModelTests {
         let contacts = try db.context.fetch(FetchDescriptor<Contact>())
         #expect(contacts.count == 1)
         #expect(contacts[0].name == "同名联系人")
-    }
-
-    // MARK: - Edit EventName
-
-    @Test func startEditingSetsEventName() {
-        let vm = OCRImportViewModel()
-        let weddingName = EventType.wedding.displayName
-        vm.items = [
-            OCRRecordItem(name: "张三", amount: 500, amountText: "500", confidence: .high, eventName: weddingName),
-        ]
-
-        vm.startEditing(item: vm.items[0])
-        #expect(vm.editEventName == weddingName)
-    }
-
-    @Test func saveEditingWritesBackEventName() {
-        let vm = OCRImportViewModel()
-        vm.items = [
-            OCRRecordItem(name: "张三", amount: 500, amountText: "500", confidence: .high),
-        ]
-
-        vm.startEditing(item: vm.items[0])
-        let birthdayName = EventType.birthday.displayName
-        vm.editEventName = birthdayName
-        vm.saveEditing()
-
-        #expect(vm.items[0].eventName == birthdayName)
     }
 
     // MARK: - canImport
@@ -184,6 +163,8 @@ struct OCRImportViewModelTests {
         vm.processingState = .loaded(vm.items)
         vm.recognitionMode = .ledgerHeuristicFallback
         vm.filteredNoiseCount = 4
+        vm.layoutKind = .verticalLedger
+        vm.orientationUsed = .rotatedClockwise
 
         vm.clearImages()
 
@@ -191,6 +172,8 @@ struct OCRImportViewModelTests {
         #expect(vm.items.isEmpty)
         #expect(vm.recognitionMode == .ocrOnlyLegacy)
         #expect(vm.filteredNoiseCount == 0)
+        #expect(vm.layoutKind == .unknownLedger)
+        #expect(vm.orientationUsed == .unknown)
         if case .idle = vm.processingState {
             #expect(Bool(true))
         } else {
@@ -198,33 +181,65 @@ struct OCRImportViewModelTests {
         }
     }
 
-    // MARK: - performImport creates events per record
-
-    @Test func performImportCreatesEventsPerRecord() throws {
-        let db = try TestDB()
+    @Test func saveEditingOnlyUpdatesNameAmountAndDate() {
         let vm = OCRImportViewModel()
-
-        let weddingName = EventType.wedding.displayName
-        let birthdayName = EventType.birthday.displayName
+        let originalDate = Date.now
+        let updatedDate = originalDate.addingTimeInterval(86400)
+        let originalEventName = EventType.wedding.displayName
         vm.items = [
-            OCRRecordItem(name: "张三", amount: 500, amountText: "500", confidence: .high, eventName: weddingName),
-            OCRRecordItem(name: "李四", amount: 300, amountText: "300", confidence: .high, eventName: birthdayName),
+            OCRRecordItem(
+                name: "张三",
+                amount: 500,
+                amountText: "500",
+                confidence: .high,
+                date: originalDate,
+                eventType: .wedding,
+                eventName: originalEventName
+            ),
+        ]
+
+        vm.startEditing(item: vm.items[0])
+        vm.editName = "李四"
+        vm.editAmountText = "800"
+        vm.editDate = updatedDate
+        vm.saveEditing()
+
+        #expect(vm.items[0].name == "李四")
+        #expect(vm.items[0].amount == 800)
+        #expect(vm.items[0].date == updatedDate)
+        #expect(vm.items[0].eventName == originalEventName)
+        #expect(vm.items[0].eventType == .wedding)
+    }
+
+    @Test func performImportKeepsBoundEventDateUnchanged() throws {
+        let db = try TestDB()
+        let eventDate = Date.now
+        let event = Event(name: "当前礼簿", type: .wedding, hostMode: .host, date: eventDate)
+        db.context.insert(event)
+        let vm = OCRImportViewModel(fixedEventID: event.persistentModelID)
+        let recordDate = eventDate.addingTimeInterval(172_800)
+        vm.items = [
+            OCRRecordItem(
+                name: "张三",
+                amount: 500,
+                amountText: "500",
+                confidence: .high,
+                date: recordDate,
+                eventType: .wedding,
+                eventName: event.name
+            ),
         ]
 
         #expect(vm.performImport(context: db.context) == true)
 
+        let records = try db.context.fetch(FetchDescriptor<Record>())
+        #expect(records.count == 1)
+        #expect(records[0].date == recordDate)
+
         let events = try db.context.fetch(FetchDescriptor<Event>())
-        #expect(events.count == 2)
-
-        let eventNames = Set(events.map(\.name))
-        #expect(eventNames.contains(weddingName))
-        #expect(eventNames.contains(birthdayName))
-
-        let weddingEvent = events.first { $0.name == weddingName }
-        #expect(weddingEvent?.type == .wedding)
-
-        let birthdayEvent = events.first { $0.name == birthdayName }
-        #expect(birthdayEvent?.type == .birthday)
+        #expect(events.count == 1)
+        #expect(events[0].date == eventDate)
+        #expect(events[0].persistentModelID == event.persistentModelID)
     }
 
     @Test func needsReviewCountTracksWarningsAndNonHighConfidence() {
@@ -243,7 +258,9 @@ struct OCRImportViewModelTests {
 
     @Test func newRecognitionStateDoesNotChangeImportResults() throws {
         let db = try TestDB()
-        let vm = OCRImportViewModel()
+        let event = Event(name: "当前礼簿", hostMode: .host)
+        db.context.insert(event)
+        let vm = OCRImportViewModel(fixedEventID: event.persistentModelID)
         vm.recognitionMode = .ledgerHeuristicFallback
         vm.filteredNoiseCount = 3
         vm.items = [

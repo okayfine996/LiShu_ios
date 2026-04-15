@@ -11,7 +11,14 @@ struct OCRImportView: View {
     @State private var showProSheet = false
     @State private var hasLoadedUITestFixture = false
 
-    init(viewModel: OCRImportViewModel = OCRImportViewModel()) {
+    init(
+        eventID: PersistentIdentifier,
+        viewModel: OCRImportViewModel? = nil
+    ) {
+        _viewModel = State(initialValue: viewModel ?? OCRImportViewModel(fixedEventID: eventID))
+    }
+
+    init(viewModel: OCRImportViewModel) {
         _viewModel = State(initialValue: viewModel)
     }
 
@@ -360,7 +367,8 @@ struct OCRImportView: View {
 }
 
 #Preview {
-    OCRImportView()
+    let event = Event(name: "示例礼簿", hostMode: .host)
+    return OCRImportView(viewModel: OCRImportViewModel(fixedEventID: event.persistentModelID))
         .modelContainer(for: [Contact.self, Record.self, Event.self], inMemory: true)
 }
 

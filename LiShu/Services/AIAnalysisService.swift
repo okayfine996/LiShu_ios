@@ -58,7 +58,8 @@ private let aiAnalysisLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.ai
                     sourceLineIDs: [],
                     layoutPattern: .unknown,
                     averageConfidence: line.confidence,
-                    fullText: line.text
+                    fullText: line.text,
+                    layoutKind: .unknownLedger
                 )
             }
             return try await analyzeLedgerCandidates(candidates, pageContexts: [:])
@@ -157,6 +158,7 @@ private let aiAnalysisLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.ai
             - 忽略标题、页码、合计、电话、地址、说明性文本
             - 如果候选内容不像礼簿条目，不要输出
             - 金额必须是正数，输出阿拉伯数字
+            - 候选条目已经附带版式提示，请优先遵循竖排/横排提示理解结构
             - 每条记录根据其文字内容或上下文独立判断事件类型和名称
             - 如果从页标题或上下文能判断整页属于同一事件，则优先使用该事件
             - 如果无法判断事件类型，eventType 使用 other，eventName 使用"其他"

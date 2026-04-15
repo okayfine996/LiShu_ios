@@ -9,7 +9,6 @@ struct OCRCorrectionSheet: View {
             VStack(spacing: 20) {
                 nameField
                 amountField
-                eventField
                 dateField
                 Spacer()
                 confirmButton
@@ -85,50 +84,6 @@ struct OCRCorrectionSheet: View {
                 RoundedRectangle(cornerRadius: DesignSystem.Radius.input)
                     .stroke(DesignSystem.Colors.border, lineWidth: 1)
             )
-        }
-    }
-
-    // MARK: - Event Field
-
-    private var eventField: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(String(localized: "ocr.correction.event"))
-                .font(DesignSystem.Typography.caption)
-                .foregroundStyle(DesignSystem.Colors.textSecondary)
-
-            Menu {
-                ForEach(EventType.allCases, id: \.self) { eventType in
-                    Button {
-                        viewModel.editEventName = eventType.displayName
-                    } label: {
-                        HStack {
-                            Image(systemName: eventType.iconName)
-                            Text(eventType.displayName)
-                            if viewModel.editEventName == eventType.displayName {
-                                Image(systemName: "checkmark")
-                            }
-                        }
-                    }
-                }
-            } label: {
-                HStack {
-                    Text(viewModel.editEventName)
-                        .font(DesignSystem.Typography.body)
-                        .foregroundStyle(DesignSystem.Colors.textPrimary)
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(DesignSystem.Colors.textTertiary)
-                }
-                .padding(.horizontal, 14)
-                .padding(.vertical, 12)
-                .background(DesignSystem.Colors.bgSurface)
-                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.input))
-                .overlay(
-                    RoundedRectangle(cornerRadius: DesignSystem.Radius.input)
-                        .stroke(DesignSystem.Colors.border, lineWidth: 1)
-                )
-            }
         }
     }
 

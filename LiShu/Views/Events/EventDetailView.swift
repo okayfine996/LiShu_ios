@@ -46,6 +46,11 @@ struct EventDetailView: View {
                             Label(String(localized: "event.ledger.primaryAction"), systemImage: "plus.circle")
                         }
                         Button {
+                            sheetRoute = .ocrImport(eventID: eventID)
+                        } label: {
+                            Label(String(localized: "ocr.source.title"), systemImage: "doc.viewfinder")
+                        }
+                        Button {
                             guard !isPreparingLedgerCSV else { return }
                             showLedgerCSVImporter = true
                         } label: {
@@ -790,6 +795,10 @@ struct EventDetailView: View {
         case let .editEvent(eID):
             NavigationStack {
                 AddEventView(eventID: eID)
+            }
+        case let .ocrImport(eventID):
+            NavigationStack {
+                OCRImportView(eventID: eventID)
             }
         default:
             EmptyView()

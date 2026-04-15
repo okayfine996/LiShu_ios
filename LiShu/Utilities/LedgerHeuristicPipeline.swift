@@ -1,11 +1,25 @@
 import CoreGraphics
 import Foundation
 
+enum LedgerLayoutKind: String, Codable {
+    case verticalLedger
+    case horizontalLedger
+    case unknownLedger
+}
+
+struct LedgerLayoutAnalysis: Codable, Hashable {
+    var kind: LedgerLayoutKind
+    var confidence: Double
+    var columnCountHint: Int
+    var rowCountHint: Int
+}
+
 enum LedgerCandidateLayoutPattern: String, Codable {
     case inlineNameAmount
     case inlineAmountName
     case alignedColumns
     case stackedPair
+    case verticalColumn
     case unknown
 }
 
@@ -29,6 +43,8 @@ struct LedgerEntryCandidate: Identifiable, Hashable {
     var eventNameHint: String?
     var averageConfidence: Float
     var fullText: String
+    var layoutKind: LedgerLayoutKind
+    var sourceBoundingRegion: CGRect
 
     init(
         id: UUID = UUID(),
@@ -40,7 +56,9 @@ struct LedgerEntryCandidate: Identifiable, Hashable {
         warningFlags: Set<LedgerHeuristicFlag> = [],
         eventNameHint: String? = nil,
         averageConfidence: Float = 0,
-        fullText: String
+        fullText: String,
+        layoutKind: LedgerLayoutKind = .unknownLedger,
+        sourceBoundingRegion: CGRect = .null
     ) {
         self.id = id
         self.nameText = nameText
@@ -52,6 +70,8 @@ struct LedgerEntryCandidate: Identifiable, Hashable {
         self.eventNameHint = eventNameHint
         self.averageConfidence = averageConfidence
         self.fullText = fullText
+        self.layoutKind = layoutKind
+        self.sourceBoundingRegion = sourceBoundingRegion
     }
 }
 
@@ -64,6 +84,7 @@ struct LedgerPageContext {
 struct LedgerHeuristicProcessResult {
     var candidates: [LedgerEntryCandidate]
     var pageContexts: [Int: LedgerPageContext]
+    var pageLayouts: [Int: LedgerLayoutAnalysis]
     var filteredNoiseCount: Int
 }
 
@@ -85,11 +106,85 @@ final class LedgerHeuristicPipeline {
     func process(lines: [LedgerOCRLine], service: OCRService) -> LedgerHeuristicProcessResult {
         let normalized = normalizeLines(lines)
         let filtered = filterNoiseLines(normalized, service: service)
-        let candidates = buildEntryCandidates(filtered.lines, service: service)
+        let groupedLines = Dictionary(grouping: filtered.lines, by: \.pageIndex)
+        var pageLayouts: [Int: LedgerLayoutAnalysis] = [:]
+        var allCandidates: [LedgerEntryCandidate] = []
+
+        for pageIndex in groupedLines.keys.sorted() {
+            let pageLines = groupedLines[pageIndex] ?? []
+            let layout = analyzeLayout(lines: pageLines)
+            pageLayouts[pageIndex] = layout
+
+            let candidates = buildEntryCandidates(pageLines, layoutKind: layout.kind, service: service).map { candidate in
+                var candidate = candidate
+                if let eventHint = filtered.pageContexts[pageIndex]?.eventHint,
+                   !eventHint.isEmpty,
+                   eventHint != String(localized: "event.type.other"),
+                   candidate.eventNameHint == nil || candidate.eventNameHint == String(localized: "event.type.other")
+                {
+                    candidate.eventNameHint = eventHint
+                }
+                return candidate
+            }
+            allCandidates.append(contentsOf: candidates)
+        }
+
         return LedgerHeuristicProcessResult(
-            candidates: candidates,
+            candidates: allCandidates,
             pageContexts: filtered.pageContexts,
+            pageLayouts: pageLayouts,
             filteredNoiseCount: filtered.filteredNoiseCount
+        )
+    }
+
+    func analyzeLayout(lines: [LedgerOCRLine]) -> LedgerLayoutAnalysis {
+        guard !lines.isEmpty else {
+            return LedgerLayoutAnalysis(kind: .unknownLedger, confidence: 0, columnCountHint: 0, rowCountHint: 0)
+        }
+
+        let rows = buildRows(from: lines)
+        let columns = buildColumns(from: lines)
+        let lineCount = Double(lines.count)
+        let tallRatio = Double(lines.filter { $0.boundingBox.height > $0.boundingBox.width * 1.2 }.count) / lineCount
+        let wideRatio = Double(lines.filter { $0.boundingBox.width > $0.boundingBox.height * 1.5 }.count) / lineCount
+        let singleCharacterRatio = Double(lines.filter { $0.text.count <= 1 }.count) / lineCount
+        let inlineLikeCount = Double(lines.filter { line in
+            line.text.range(of: nameAmountPattern, options: .regularExpression) != nil
+                || line.text.range(of: amountNamePattern, options: .regularExpression) != nil
+        }.count)
+        let bottomNumericCount = Double(lines.filter {
+            normalizeAmountValue(from: $0.text) != nil && $0.boundingBox.minY < 0.22
+        }.count)
+        let structuredColumnCount = Double(columns.filter { column in
+            guard let bounds = unionBounds(for: column) else { return false }
+            return column.count >= 3 && bounds.height > bounds.width * 2.2
+        }.count)
+        let structuredRowCount = Double(rows.filter { row in
+            row.count >= 2 || rowBounds(row).width > rowBounds(row).height * 2.5
+        }.count)
+
+        let verticalScore = tallRatio * 2.4 + singleCharacterRatio * 1.6 + structuredColumnCount + (bottomNumericCount > 0 ? 1.2 : 0)
+        let horizontalScore = wideRatio * 1.8 + structuredRowCount * 0.9 + inlineLikeCount * 0.7
+        let scoreGap = abs(verticalScore - horizontalScore)
+        let dominantScore = max(verticalScore, horizontalScore)
+
+        guard dominantScore >= 1.8 else {
+            return LedgerLayoutAnalysis(kind: .unknownLedger, confidence: 0.25, columnCountHint: columns.count, rowCountHint: rows.count)
+        }
+        if scoreGap < 0.8 {
+            return LedgerLayoutAnalysis(
+                kind: .unknownLedger,
+                confidence: min(0.6, dominantScore / 6),
+                columnCountHint: columns.count,
+                rowCountHint: rows.count
+            )
+        }
+
+        return LedgerLayoutAnalysis(
+            kind: verticalScore > horizontalScore ? .verticalLedger : .horizontalLedger,
+            confidence: min(0.95, max(0.4, dominantScore / 6)),
+            columnCountHint: columns.count,
+            rowCountHint: rows.count
         )
     }
 
@@ -153,7 +248,24 @@ final class LedgerHeuristicPipeline {
         return (filtered, pageContexts, filteredNoiseCount)
     }
 
-    func buildEntryCandidates(_ lines: [LedgerOCRLine], service: OCRService) -> [LedgerEntryCandidate] {
+    func buildEntryCandidates(
+        _ lines: [LedgerOCRLine],
+        layoutKind: LedgerLayoutKind = .unknownLedger,
+        service: OCRService
+    ) -> [LedgerEntryCandidate] {
+        switch layoutKind {
+        case .verticalLedger:
+            return buildVerticalEntryCandidates(lines, service: service)
+        case .horizontalLedger:
+            return buildHorizontalEntryCandidates(lines, service: service)
+        case .unknownLedger:
+            let horizontal = buildHorizontalEntryCandidates(lines, service: service)
+            let vertical = buildVerticalEntryCandidates(lines, service: service)
+            return deduplicateCandidates(markCandidatesAsUnknown(horizontal + vertical))
+        }
+    }
+
+    private func buildHorizontalEntryCandidates(_ lines: [LedgerOCRLine], service: OCRService) -> [LedgerEntryCandidate] {
         let rows = buildRows(from: lines)
         var candidates: [LedgerEntryCandidate] = []
         var usedLineIDs = Set<UUID>()
@@ -179,7 +291,8 @@ final class LedgerHeuristicPipeline {
                 let next = rows[index + 1]
                 guard samePage(current, next),
                       next.allSatisfy({ !usedLineIDs.contains($0.id) }),
-                      rowGap(current, next) <= 0.04
+                      rowGap(current, next) <= 0.04,
+                      isLikelySameColumn(current, next)
                 else { continue }
 
                 let nextAmountText = extractAmountText(from: joinedText(for: next))
@@ -199,7 +312,9 @@ final class LedgerHeuristicPipeline {
                             warningFlags: [.mergedAdjacentLines],
                             eventNameHint: service.matchEventName(from: joinedText(for: merged)),
                             averageConfidence: averageConfidence,
-                            fullText: joinedText(for: merged)
+                            fullText: joinedText(for: merged),
+                            layoutKind: .horizontalLedger,
+                            sourceBoundingRegion: unionBounds(for: merged) ?? .null
                         )
                     )
                     usedLineIDs.formUnion(merged.map(\.id))
@@ -214,7 +329,13 @@ final class LedgerHeuristicPipeline {
         candidates.compactMap { candidate in
             guard let amount = candidate.normalizedAmount else { return nil }
             let eventType = service.matchEventType(from: candidate.fullText)
-            let eventName = candidate.eventNameHint ?? service.matchEventName(from: candidate.fullText)
+            let eventName: String = if let hint = candidate.eventNameHint,
+                                       hint != String(localized: "event.type.other")
+            {
+                hint
+            } else {
+                service.matchEventName(from: candidate.fullText)
+            }
             let confidence: OCRConfidence
             var warningType: WarningType?
 
@@ -226,6 +347,21 @@ final class LedgerHeuristicPipeline {
             } else {
                 confidence = .low
                 warningType = .needsVerification
+            }
+
+            if candidate.layoutKind == .unknownLedger {
+                let adjustedConfidence: OCRConfidence = confidence == .high ? .medium : confidence
+                return OCRRecordItem(
+                    name: candidate.nameText,
+                    amount: amount,
+                    amountText: candidate.amountText,
+                    confidence: adjustedConfidence,
+                    warningType: warningType ?? .needsVerification,
+                    eventType: eventType,
+                    eventName: eventName,
+                    sourceMode: .ledgerHeuristicFallback,
+                    sourceLineIDs: candidate.sourceLineIDs
+                )
             }
 
             return OCRRecordItem(
@@ -274,7 +410,13 @@ final class LedgerHeuristicPipeline {
     func summarizeCandidate(_ candidate: LedgerEntryCandidate, index: Int) -> String {
         let amount = candidate.amountText.isEmpty ? "未识别" : candidate.amountText
         let hint = candidate.eventNameHint ?? String(localized: "event.type.other")
+        let layoutText = switch candidate.layoutKind {
+        case .verticalLedger: "竖排"
+        case .horizontalLedger: "横排"
+        case .unknownLedger: "未确定"
+        }
         return """
+        [\(index)] 版式: \(layoutText)
         [\(index)] 原文: \(candidate.fullText)
         [\(index)] 姓名候选: \(candidate.nameText.isEmpty ? "未识别" : candidate.nameText)
         [\(index)] 金额候选: \(amount)
@@ -297,7 +439,7 @@ final class LedgerHeuristicPipeline {
         if text.range(of: pagePattern, options: .regularExpression) != nil { return true }
         if text.range(of: phonePattern, options: .regularExpression) != nil { return true }
         if text.range(of: datePattern, options: .regularExpression) != nil, text.count <= 16 { return true }
-        if addressTokens.contains(where: { text.contains($0) }), text.count >= 8 { return true }
+        if addressTokens.contains(where: { text.contains($0) }), text.count >= 5 { return true }
         if text.allSatisfy({ $0.isNumber || $0 == " " || $0 == "-" }), text.count >= 8 { return true }
         return false
     }
@@ -370,7 +512,9 @@ final class LedgerHeuristicPipeline {
                     layoutPattern: .alignedColumns,
                     eventNameHint: service.matchEventName(from: combinedText),
                     averageConfidence: averageConfidence,
-                    fullText: combinedText
+                    fullText: combinedText,
+                    layoutKind: .horizontalLedger,
+                    sourceBoundingRegion: unionBounds(for: row) ?? .null
                 )
             }
         }
@@ -402,7 +546,8 @@ final class LedgerHeuristicPipeline {
                 warningFlags: flagsForAmount(amountText, amount),
                 eventNameHint: service.matchEventName(from: text),
                 averageConfidence: averageConfidence,
-                fullText: text
+                fullText: text,
+                layoutKind: .horizontalLedger
             )
         }
 
@@ -419,7 +564,8 @@ final class LedgerHeuristicPipeline {
                 warningFlags: flagsForAmount(amountText, amount),
                 eventNameHint: service.matchEventName(from: text),
                 averageConfidence: averageConfidence,
-                fullText: text
+                fullText: text,
+                layoutKind: .horizontalLedger
             )
         }
 
@@ -461,6 +607,7 @@ final class LedgerHeuristicPipeline {
             .replacingOccurrences(of: "S", with: "5")
             .replacingOccurrences(of: "s", with: "5")
             .replacingOccurrences(of: "¥", with: "")
+            .replacingOccurrences(of: "￥", with: "")
             .replacingOccurrences(of: ",", with: "")
             .trimmingCharacters(in: .whitespacesAndNewlines)
     }
@@ -486,6 +633,20 @@ final class LedgerHeuristicPipeline {
         return abs(lhsReference.boundingBox.midY - rhsReference.boundingBox.midY)
     }
 
+    private func isLikelySameColumn(_ lhs: [LedgerOCRLine], _ rhs: [LedgerOCRLine]) -> Bool {
+        let lhsBounds = rowBounds(lhs)
+        let rhsBounds = rowBounds(rhs)
+        let horizontalOverlap = min(lhsBounds.maxX, rhsBounds.maxX) - max(lhsBounds.minX, rhsBounds.minX)
+        let centersAligned = abs(lhsBounds.midX - rhsBounds.midX) <= 0.12
+        return horizontalOverlap >= -0.02 && centersAligned
+    }
+
+    private func rowBounds(_ row: [LedgerOCRLine]) -> CGRect {
+        row.reduce(into: CGRect.null) { partialResult, line in
+            partialResult = partialResult.union(line.boundingBox)
+        }
+    }
+
     private func deduplicateCandidates(_ candidates: [LedgerEntryCandidate]) -> [LedgerEntryCandidate] {
         var seen = Set<String>()
         return candidates.filter { candidate in
@@ -499,5 +660,175 @@ final class LedgerHeuristicPipeline {
 
     private func isLikelyChineseName(_ text: String) -> Bool {
         text.range(of: pureNamePattern, options: .regularExpression) != nil
+    }
+
+    private func buildVerticalEntryCandidates(_ lines: [LedgerOCRLine], service: OCRService) -> [LedgerEntryCandidate] {
+        buildColumns(from: lines).compactMap { column in
+            parseVerticalColumn(column, service: service)
+        }
+    }
+
+    private func buildColumns(from lines: [LedgerOCRLine]) -> [[LedgerOCRLine]] {
+        let sorted = lines.sorted {
+            if $0.pageIndex != $1.pageIndex { return $0.pageIndex < $1.pageIndex }
+            if abs($0.boundingBox.midX - $1.boundingBox.midX) > 0.03 { return $0.boundingBox.midX < $1.boundingBox.midX }
+            return $0.boundingBox.maxY > $1.boundingBox.maxY
+        }
+
+        var columns: [[LedgerOCRLine]] = []
+        for line in sorted {
+            if var last = columns.last, sameColumn(last, line) {
+                last.append(line)
+                last.sort { $0.boundingBox.maxY > $1.boundingBox.maxY }
+                columns[columns.count - 1] = last
+            } else {
+                columns.append([line])
+            }
+        }
+        return columns
+    }
+
+    private func sameColumn(_ column: [LedgerOCRLine], _ line: LedgerOCRLine) -> Bool {
+        guard let reference = column.first else { return false }
+        guard reference.pageIndex == line.pageIndex else { return false }
+        return abs(reference.boundingBox.midX - line.boundingBox.midX) <= 0.035
+    }
+
+    private func parseVerticalColumn(_ column: [LedgerOCRLine], service: OCRService) -> LedgerEntryCandidate? {
+        let ordered = column.sorted { $0.boundingBox.maxY > $1.boundingBox.maxY }
+        let filteredPairs = zip(ordered, ordered.map(\.text)).filter { _, text in
+            let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+            return !trimmed.isEmpty && trimmed != "礼"
+        }
+        guard filteredPairs.count >= 2 else { return nil }
+
+        let filteredLines = filteredPairs.map(\.0)
+        let filteredTexts = filteredPairs.map(\.1)
+        let fullText = filteredTexts.joined(separator: " ")
+        guard let bounds = unionBounds(for: filteredLines) else { return nil }
+
+        let nameZoneThreshold = bounds.maxY - bounds.height * 0.42
+        let amountZoneThreshold = bounds.minY + bounds.height * 0.38
+
+        let rawName = filteredPairs
+            .filter { pair in
+                pair.0.boundingBox.midY >= nameZoneThreshold
+                    && !containsChineseAmountToken(pair.1)
+                    && normalizeAmountValue(from: pair.1) == nil
+            }
+            .map(\.1)
+            .joined()
+        let name = sanitizeVerticalName(rawName)
+        let amountZonePairs = filteredPairs.filter { $0.0.boundingBox.midY <= amountZoneThreshold }
+        let digitLine = amountZonePairs.last { _, text in
+            normalizeAmountValue(from: text) != nil
+        }
+        let chineseAmountText = amountZonePairs
+            .map(\.1)
+            .filter(containsChineseAmountToken)
+            .joined()
+        let digitAmount = digitLine.flatMap { normalizeAmountValue(from: $0.1) }
+        let chineseAmount = normalizeChineseAmountValue(from: chineseAmountText)
+        let amountText = digitLine?.1 ?? chineseAmountText
+        let normalizedAmount = digitAmount ?? chineseAmount
+
+        guard let normalizedAmount, !name.isEmpty else { return nil }
+
+        var warningFlags = flagsForAmount(amountText, normalizedAmount)
+        if let digitAmount, let chineseAmount, abs(digitAmount - chineseAmount) > 0.01 {
+            warningFlags.insert(.suspiciousAmount)
+        }
+
+        return LedgerEntryCandidate(
+            nameText: name,
+            amountText: amountText,
+            normalizedAmount: normalizedAmount,
+            sourceLineIDs: filteredLines.map(\.id),
+            layoutPattern: .verticalColumn,
+            warningFlags: warningFlags,
+            eventNameHint: service.matchEventName(from: fullText),
+            averageConfidence: filteredLines.map(\.confidence).reduce(0, +) / Float(filteredLines.count),
+            fullText: fullText,
+            layoutKind: .verticalLedger,
+            sourceBoundingRegion: bounds
+        )
+    }
+
+    private func sanitizeVerticalName(_ raw: String) -> String {
+        let filtered = raw.filter { $0.unicodeScalars.allSatisfy(\.properties.isIdeographic) }
+        if filtered.count >= 2, filtered.count <= 6 {
+            return String(filtered)
+        }
+        return ""
+    }
+
+    private func containsChineseAmountToken(_ text: String) -> Bool {
+        let tokens = CharacterSet(charactersIn: "零一二三四五六七八九十百千万壹贰叁肆伍陆柒捌玖拾佰仟萬圆圓元整")
+        return text.unicodeScalars.contains(where: tokens.contains)
+    }
+
+    private func unionBounds(for lines: [LedgerOCRLine]) -> CGRect? {
+        let bounds = lines.reduce(into: CGRect.null) { partialResult, line in
+            partialResult = partialResult.union(line.boundingBox)
+        }
+        return bounds.isNull ? nil : bounds
+    }
+
+    private func markCandidatesAsUnknown(_ candidates: [LedgerEntryCandidate]) -> [LedgerEntryCandidate] {
+        candidates.map { candidate in
+            var candidate = candidate
+            candidate.layoutKind = .unknownLedger
+            return candidate
+        }
+    }
+
+    private func normalizeChineseAmountValue(from raw: String) -> Double? {
+        let cleaned = raw
+            .replacingOccurrences(of: "元整", with: "")
+            .replacingOccurrences(of: "元正", with: "")
+            .replacingOccurrences(of: "元", with: "")
+            .replacingOccurrences(of: "圆", with: "")
+            .replacingOccurrences(of: "圓", with: "")
+            .replacingOccurrences(of: "整", with: "")
+            .replacingOccurrences(of: "正", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !cleaned.isEmpty else { return nil }
+
+        let digitMap: [Character: Int] = [
+            "零": 0, "〇": 0,
+            "一": 1, "壹": 1,
+            "二": 2, "贰": 2, "貳": 2,
+            "三": 3, "叁": 3,
+            "四": 4, "肆": 4,
+            "五": 5, "伍": 5,
+            "六": 6, "陆": 6, "陸": 6,
+            "七": 7, "柒": 7,
+            "八": 8, "捌": 8,
+            "九": 9, "玖": 9,
+        ]
+        let smallUnits: [Character: Int] = ["十": 10, "拾": 10, "百": 100, "佰": 100, "千": 1000, "仟": 1000]
+        let bigUnits: [Character: Int] = ["万": 10000, "萬": 10000]
+
+        var total = 0
+        var section = 0
+        var number = 0
+
+        for character in cleaned {
+            if let digit = digitMap[character] {
+                number = digit
+            } else if let unit = smallUnits[character] {
+                let base = number == 0 ? 1 : number
+                section += base * unit
+                number = 0
+            } else if let unit = bigUnits[character] {
+                section += number
+                total += max(section, 1) * unit
+                section = 0
+                number = 0
+            }
+        }
+
+        let value = total + section + number
+        return value > 0 ? Double(value) : nil
     }
 }

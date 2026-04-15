@@ -7,6 +7,8 @@ private let ocrImportLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.ocr
 
 @Observable
 class OCRImportViewModel {
+    let fixedEventID: PersistentIdentifier?
+
     // MARK: - Image Management
 
     var capturedImages: [UIImage] = []
@@ -24,6 +26,8 @@ class OCRImportViewModel {
     var isAIEnhanced = false
     var recognitionMode: OCRRecognitionMode = .ocrOnlyLegacy
     var filteredNoiseCount = 0
+    var layoutKind: LedgerLayoutKind = .unknownLedger
+    var orientationUsed: OCROrientationUsed = .unknown
 
     // MARK: - Import Config
 
@@ -39,7 +43,6 @@ class OCRImportViewModel {
     var editName: String = ""
     var editAmountText: String = ""
     var editDate: Date = .now
-    var editEventName: String = ""
 
     // MARK: - Computed
 
@@ -67,6 +70,17 @@ class OCRImportViewModel {
         !selectedItems.isEmpty
     }
 
+    var isBoundToLedgerEvent: Bool {
+        fixedEventID != nil
+    }
+
+    init(fixedEventID: PersistentIdentifier? = nil) {
+        self.fixedEventID = fixedEventID
+        if fixedEventID != nil {
+            direction = .received
+        }
+    }
+
     // MARK: - Image Actions
 
     func addImage(_ image: UIImage) {
@@ -89,6 +103,8 @@ class OCRImportViewModel {
         isAIEnhanced = false
         recognitionMode = .ocrOnlyLegacy
         filteredNoiseCount = 0
+        layoutKind = .unknownLedger
+        orientationUsed = .unknown
         ocrImportLogger.notice("Cleared OCR import state", metadata: [
             "step": .string("clear_images"),
         ])
@@ -119,8 +135,10 @@ class OCRImportViewModel {
             await MainActor.run {
                 items = result.items
                 isAIEnhanced = result.isAIEnhanced
-                recognitionMode = OCRService.shared.lastRecognitionMetadata.mode
-                filteredNoiseCount = OCRService.shared.lastRecognitionMetadata.filteredNoiseCount
+                recognitionMode = result.metadata.mode
+                filteredNoiseCount = result.metadata.filteredNoiseCount
+                layoutKind = result.metadata.layoutKind
+                orientationUsed = result.metadata.orientationUsed
                 processingState = .loaded(result.items)
                 capturedImages.removeAll()
                 SubscriptionManager.shared.recordOCRUsage()
@@ -153,6 +171,8 @@ class OCRImportViewModel {
                 isAIEnhanced = false
                 recognitionMode = .ocrOnlyLegacy
                 filteredNoiseCount = 0
+                layoutKind = .unknownLedger
+                orientationUsed = .unknown
                 processingState = .error(error.localizedDescription)
                 capturedImages.removeAll()
                 ocrImportLogger.error("Failed to process OCR images", metadata: [
@@ -249,7 +269,6 @@ class OCRImportViewModel {
         editName = item.name
         editAmountText = String(item.amount == Double(Int(item.amount)) ? "\(Int(item.amount))" : String(format: "%.2f", item.amount))
         editDate = item.date
-        editEventName = item.eventName
         BusinessDataLogger.ocrQuery(
             screen: "import.ocr.result",
             operation: "edit_open",
@@ -279,8 +298,6 @@ class OCRImportViewModel {
             items[index].amountText = editAmountText
         }
         items[index].date = editDate
-        items[index].eventName = editEventName
-        items[index].eventType = eventType(for: editEventName) ?? items[index].eventType
 
         let updatedPayload = items[index].logPayload()
         self.editingItem = nil
@@ -307,20 +324,9 @@ class OCRImportViewModel {
         ChineseAmountFormatter.chineseUppercase(editAmountParsed)
     }
 
-    // MARK: - Import
-
-    private func eventType(for eventName: String) -> EventType? {
-        for type in EventType.allCases {
-            if type.displayName == eventName {
-                return type
-            }
-        }
-        return nil
-    }
-
     func performImport(context: ModelContext) -> Bool {
         let itemsToImport = selectedItems
-        guard !itemsToImport.isEmpty else { return false }
+        guard !itemsToImport.isEmpty, let fixedEventID else { return false }
 
         isImporting = true
         BusinessDataLogger.ocrQuery(
@@ -336,6 +342,11 @@ class OCRImportViewModel {
         ])
 
         do {
+            guard let boundEvent = context.model(for: fixedEventID) as? Event else {
+                isImporting = false
+                importError = String(localized: "common.error")
+                return false
+            }
             let contactDescriptor = FetchDescriptor<Contact>()
             let existingContacts = try context.fetch(contactDescriptor)
             var contactMap = Dictionary(
@@ -356,18 +367,10 @@ class OCRImportViewModel {
                     contactMap[normalizedName] = contact
                 }
 
-                let resolvedEventType = eventType(for: item.eventName) ?? item.eventType
-                let event = ExportService.findOrCreateEventIfNeeded(
-                    name: item.eventName,
-                    type: resolvedEventType,
-                    context: context
-                )
-                event?.date = item.date
-
                 let record = Record(
                     contact: contact,
-                    event: event,
-                    direction: direction,
+                    event: boundEvent,
+                    direction: .received,
                     date: item.date
                 )
                 record.applyTypeData(.monetary(MonetaryData(

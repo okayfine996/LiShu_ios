@@ -709,7 +709,7 @@ struct HomeView: View {
                 ReturnGiftSheet(recordID: recordID)
             }
         case .ocrImport:
-            OCRImportView()
+            EmptyView()
         case .proMembership:
             NavigationStack {
                 ProMembershipView()

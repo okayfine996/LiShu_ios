@@ -27,6 +27,14 @@ struct LedgerOCRLine: Identifiable, Hashable {
     }
 }
 
+enum OCROrientationUsed: String, Codable {
+    case original
+    case rotatedClockwise
+    case rotatedCounterclockwise
+    case mixed
+    case unknown
+}
+
 enum OCRRecognitionMode: String, Codable {
     case appleAIEnhanced
     case ledgerHeuristicFallback
@@ -36,6 +44,14 @@ enum OCRRecognitionMode: String, Codable {
 struct OCRRecognitionMetadata {
     var mode: OCRRecognitionMode = .ocrOnlyLegacy
     var filteredNoiseCount: Int = 0
+    var layoutKind: LedgerLayoutKind = .unknownLedger
+    var orientationUsed: OCROrientationUsed = .unknown
+}
+
+struct OCRRecognitionResult {
+    var items: [OCRRecordItem]
+    var isAIEnhanced: Bool
+    var metadata: OCRRecognitionMetadata
 }
 
 enum OCRConfidence: String, Codable {
@@ -94,7 +110,8 @@ final class OCRService {
     static let shared = OCRService()
     private init() {}
     private let heuristicPipeline = LedgerHeuristicPipeline.shared
-    private(set) var lastRecognitionMetadata = OCRRecognitionMetadata()
+    private let amountLikePattern = #"[¥￥]?\s*[0-9OoIlBSs８０１５，,\.]{2,}"#
+    private let nameLikePattern = #"[\u4e00-\u9fff]{2,6}"#
 
     // MARK: - Public API
 
@@ -104,7 +121,7 @@ final class OCRService {
             "count": .stringConvertible(images.count),
         ])
         var allItems: [OCRRecordItem] = []
-        lastRecognitionMetadata = OCRRecognitionMetadata(mode: .ocrOnlyLegacy, filteredNoiseCount: 0)
+        var filteredNoiseCount = 0
 
         for image in images {
             let lines = try await recognizeText(in: image)
@@ -114,7 +131,7 @@ final class OCRService {
                 service: self
             )
             allItems.append(contentsOf: items)
-            lastRecognitionMetadata.filteredNoiseCount += heuristics.filteredNoiseCount
+            filteredNoiseCount += heuristics.filteredNoiseCount
         }
 
         let items = deduplicateItems(allItems)
@@ -122,11 +139,13 @@ final class OCRService {
             "step": .string("recognize_records"),
             "count": .stringConvertible(items.count),
             "result": .string("success"),
+            "pipeline": .string(OCRRecognitionMode.ledgerHeuristicFallback.rawValue),
+            "filteredNoiseCount": .stringConvertible(filteredNoiseCount),
         ])
         return items
     }
 
-    func recognizeRecordsEnhanced(from images: [UIImage]) async throws -> (items: [OCRRecordItem], isAIEnhanced: Bool) {
+    func recognizeRecordsEnhanced(from images: [UIImage]) async throws -> OCRRecognitionResult {
         ocrLogger.notice("Starting enhanced OCR recognition", metadata: [
             "step": .string("recognize_records_enhanced"),
             "count": .stringConvertible(images.count),
@@ -135,11 +154,18 @@ final class OCRService {
         var aiCount = 0
         var filteredNoiseCount = 0
         var usedHeuristicFallback = false
+        var aggregatedLayout: LedgerLayoutKind = .unknownLedger
+        var aggregatedOrientation: OCROrientationUsed = .unknown
 
         for pageIndex in images.indices {
-            let lines = try await recognizeText(in: images[pageIndex], pageIndex: pageIndex)
+            let pageOCR = try await recognizeTextResult(in: images[pageIndex], pageIndex: pageIndex)
+            let lines = pageOCR.lines
             let heuristics = heuristicPipeline.process(lines: lines, service: self)
             filteredNoiseCount += heuristics.filteredNoiseCount
+            if let layout = heuristics.pageLayouts[pageIndex]?.kind {
+                aggregatedLayout = mergeLayoutKinds(aggregatedLayout, layout)
+            }
+            aggregatedOrientation = mergeOrientations(aggregatedOrientation, pageOCR.orientation)
 
             if let aiItems = await tryAIAnalysis(heuristics), !aiItems.isEmpty {
                 let audited = heuristicPipeline.auditItems(aiItems, service: self)
@@ -157,16 +183,18 @@ final class OCRService {
 
         let items = deduplicateItems(allItems)
         let aiEnhanced = aiCount == images.count && aiCount > 0
-        lastRecognitionMetadata = OCRRecognitionMetadata(
+        let metadata = OCRRecognitionMetadata(
             mode: aiEnhanced ? .appleAIEnhanced : (usedHeuristicFallback ? .ledgerHeuristicFallback : .ocrOnlyLegacy),
-            filteredNoiseCount: filteredNoiseCount
+            filteredNoiseCount: filteredNoiseCount,
+            layoutKind: aggregatedLayout,
+            orientationUsed: aggregatedOrientation
         )
         ocrLogger.notice("Finished enhanced OCR recognition", metadata: [
             "step": .string("recognize_records_enhanced"),
             "count": .stringConvertible(items.count),
             "result": .string(aiEnhanced ? "ai_enhanced" : "ocr_only"),
         ])
-        return (items: items, isAIEnhanced: aiEnhanced)
+        return OCRRecognitionResult(items: items, isAIEnhanced: aiEnhanced, metadata: metadata)
     }
 
     private func tryAIAnalysis(_ heuristics: LedgerHeuristicProcessResult) async -> [OCRRecordItem]? {
@@ -198,11 +226,44 @@ final class OCRService {
     // MARK: - Vision Text Recognition
 
     func recognizeText(in image: UIImage, pageIndex: Int = 0) async throws -> [LedgerOCRLine] {
-        guard let cgImage = image.cgImage else {
+        try await recognizeTextResult(in: image, pageIndex: pageIndex).lines
+    }
+
+    private func recognizeTextResult(in image: UIImage, pageIndex: Int = 0) async throws -> OCRTextRecognitionResult {
+        let variants = makeOCRVariants(from: image)
+        guard !variants.isEmpty else {
             ocrLogger.error("OCR image conversion failed", metadata: [
                 "step": .string("vision_recognition"),
                 "reason": .string("invalid_image"),
             ])
+            throw OCRError.invalidImage
+        }
+
+        var bestLines: [LedgerOCRLine] = []
+        var bestScore = Int.min
+        var bestOrientation: OCROrientationUsed = .original
+
+        for variant in variants {
+            let lines = try await recognizeTextVariant(in: variant.image, pageIndex: pageIndex)
+            let score = score(lines: lines)
+            if score > bestScore {
+                bestScore = score
+                bestLines = lines
+                bestOrientation = variant.orientation
+            }
+        }
+
+        ocrLogger.info("Vision OCR selected best orientation", metadata: [
+            "step": .string("vision_variant_selection"),
+            "variant": .string(bestOrientation.rawValue),
+            "count": .stringConvertible(bestLines.count),
+            "score": .stringConvertible(bestScore),
+        ])
+        return OCRTextRecognitionResult(lines: bestLines, orientation: bestOrientation)
+    }
+
+    private func recognizeTextVariant(in image: UIImage, pageIndex: Int) async throws -> [LedgerOCRLine] {
+        guard let cgImage = image.cgImage else {
             throw OCRError.invalidImage
         }
 
@@ -239,7 +300,7 @@ final class OCRService {
             }
 
             request.recognitionLevel = .accurate
-            request.recognitionLanguages = ["zh-Hans", "en"]
+            request.recognitionLanguages = ["zh-Hans", "zh-Hant", "en"]
             request.usesLanguageCorrection = true
 
             let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
@@ -249,6 +310,69 @@ final class OCRService {
                 continuation.resume(throwing: error)
             }
         }
+    }
+
+    private func makeOCRVariants(from image: UIImage) -> [(orientation: OCROrientationUsed, image: UIImage)] {
+        var variants: [(orientation: OCROrientationUsed, image: UIImage)] = [(.original, image)]
+
+        if let clockwise = rotateImage(image, radians: -.pi / 2) {
+            variants.append((.rotatedClockwise, clockwise))
+        }
+        if let counterClockwise = rotateImage(image, radians: .pi / 2) {
+            variants.append((.rotatedCounterclockwise, counterClockwise))
+        }
+
+        return variants
+    }
+
+    private func rotateImage(_ image: UIImage, radians: CGFloat) -> UIImage? {
+        let originalSize = image.size
+        guard originalSize.width > 0, originalSize.height > 0 else { return nil }
+
+        let rotatedRect = CGRect(origin: .zero, size: originalSize)
+            .applying(CGAffineTransform(rotationAngle: radians))
+        let targetSize = CGSize(width: abs(rotatedRect.width), height: abs(rotatedRect.height))
+        let format = UIGraphicsImageRendererFormat.default()
+        format.scale = image.scale
+        format.opaque = false
+        let renderer = UIGraphicsImageRenderer(size: targetSize, format: format)
+
+        return renderer.image { context in
+            let cgContext = context.cgContext
+            cgContext.translateBy(x: targetSize.width / 2, y: targetSize.height / 2)
+            cgContext.rotate(by: radians)
+            image.draw(
+                in: CGRect(
+                    x: -originalSize.width / 2,
+                    y: -originalSize.height / 2,
+                    width: originalSize.width,
+                    height: originalSize.height
+                )
+            )
+        }
+    }
+
+    private func score(lines: [LedgerOCRLine]) -> Int {
+        guard !lines.isEmpty else { return Int.min / 2 }
+        return lines.reduce(0) { partialResult, line in
+            let text = line.text
+            let base = text.count
+            let amountBonus = text.range(of: amountLikePattern, options: .regularExpression) != nil ? 12 : 0
+            let nameBonus = text.range(of: nameLikePattern, options: .regularExpression) != nil ? 8 : 0
+            return partialResult + base + amountBonus + nameBonus
+        }
+    }
+
+    private func mergeLayoutKinds(_ lhs: LedgerLayoutKind, _ rhs: LedgerLayoutKind) -> LedgerLayoutKind {
+        if lhs == .unknownLedger { return rhs }
+        if rhs == .unknownLedger { return lhs }
+        return lhs == rhs ? lhs : .unknownLedger
+    }
+
+    private func mergeOrientations(_ lhs: OCROrientationUsed, _ rhs: OCROrientationUsed) -> OCROrientationUsed {
+        if lhs == .unknown { return rhs }
+        if rhs == .unknown { return lhs }
+        return lhs == rhs ? lhs : .mixed
     }
 
     // MARK: - Event Keyword Matching
@@ -375,6 +499,11 @@ final class OCRService {
         }
         return result
     }
+}
+
+private struct OCRTextRecognitionResult {
+    let lines: [LedgerOCRLine]
+    let orientation: OCROrientationUsed
 }
 
 enum OCRError: LocalizedError {

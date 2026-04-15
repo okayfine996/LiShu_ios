@@ -200,6 +200,48 @@ struct OCRResultView: View {
         .background(DesignSystem.Colors.primary.opacity(0.08))
     }
 
+    private var layoutBadge: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "square.grid.3x3.topleft.filled")
+                .font(.system(size: 13))
+                .foregroundStyle(DesignSystem.Colors.textSecondary)
+
+            Text(layoutBadgeText)
+                .font(DesignSystem.Typography.small)
+                .foregroundStyle(DesignSystem.Colors.textSecondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 8)
+        .padding(.horizontal, 16)
+        .background(DesignSystem.Colors.bgSurface)
+    }
+
+    private var layoutBadgeText: String {
+        let layoutText = switch viewModel.layoutKind {
+        case .verticalLedger:
+            String(localized: "ocr.ledger.layout.vertical")
+        case .horizontalLedger:
+            String(localized: "ocr.ledger.layout.horizontal")
+        case .unknownLedger:
+            String(localized: "ocr.ledger.layout.unknown")
+        }
+
+        let orientationText = switch viewModel.orientationUsed {
+        case .original:
+            String(localized: "ocr.ledger.orientation.original")
+        case .rotatedClockwise:
+            String(localized: "ocr.ledger.orientation.clockwise")
+        case .rotatedCounterclockwise:
+            String(localized: "ocr.ledger.orientation.counterclockwise")
+        case .mixed:
+            String(localized: "ocr.ledger.orientation.mixed")
+        case .unknown:
+            String(localized: "ocr.ledger.orientation.original")
+        }
+
+        return "\(layoutText) · \(orientationText)"
+    }
+
     private var recognitionModeText: String {
         switch viewModel.recognitionMode {
         case .appleAIEnhanced:
@@ -230,6 +272,22 @@ struct OCRResultView: View {
         .padding(.vertical, 8)
         .padding(.horizontal, 16)
         .background(DesignSystem.Colors.bgSurface)
+    }
+
+    private var layoutHintBanner: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "info.circle.fill")
+                .font(.system(size: 14))
+                .foregroundStyle(DesignSystem.Colors.accentGold)
+
+            Text(String(localized: "ocr.ledger.layoutHint.unknown"))
+                .font(DesignSystem.Typography.caption)
+                .foregroundStyle(DesignSystem.Colors.textPrimary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.vertical, 10)
+        .padding(.horizontal, 16)
+        .background(DesignSystem.Colors.bgCard)
     }
 
     // MARK: - Empty View
@@ -273,7 +331,7 @@ struct OCRResultView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
-        .background(DesignSystem.Colors.bgCard)
+        .background(DesignSystem.Colors.bgSurface)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.smallCard))
         .contentShape(Rectangle())
         .onTapGesture {
@@ -316,13 +374,7 @@ struct OCRResultView: View {
                 .fontWeight(.semibold)
                 .foregroundStyle(DesignSystem.Colors.textPrimary)
 
-            HStack(spacing: 6) {
-                Text(item.eventName)
-                    .font(DesignSystem.Typography.small)
-                    .foregroundStyle(DesignSystem.Colors.textSecondary)
-
-                confidenceLabel(item)
-            }
+            confidenceLabel(item)
         }
     }
 
@@ -470,14 +522,16 @@ struct OCRResultView: View {
     private var importConfigSheet: some View {
         NavigationStack {
             VStack(spacing: 24) {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(String(localized: "ocr.import.direction"))
-                        .font(DesignSystem.Typography.caption)
-                        .foregroundStyle(DesignSystem.Colors.textSecondary)
+                if !viewModel.isBoundToLedgerEvent {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(String(localized: "ocr.import.direction"))
+                            .font(DesignSystem.Typography.caption)
+                            .foregroundStyle(DesignSystem.Colors.textSecondary)
 
-                    HStack(spacing: 12) {
-                        directionButton(.received, title: String(localized: "record.direction.received"))
-                        directionButton(.given, title: String(localized: "record.direction.given"))
+                        HStack(spacing: 12) {
+                            directionButton(.received, title: String(localized: "record.direction.received"))
+                            directionButton(.given, title: String(localized: "record.direction.given"))
+                        }
                     }
                 }
 

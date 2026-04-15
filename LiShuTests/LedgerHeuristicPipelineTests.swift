@@ -144,4 +144,79 @@ struct LedgerHeuristicPipelineTests {
         #expect(items.contains(where: { $0.name == "张三" && $0.amount == 500 }))
         #expect(items.contains(where: { $0.name == "李四" && $0.amount == 800 }))
     }
+
+    @Test func analyzeLayoutRecognizesVerticalLedger() {
+        let lines = [
+            makeLine("王", x: 0.1, y: 0.82, width: 0.04, height: 0.08),
+            makeLine("昭", x: 0.1, y: 0.72, width: 0.04, height: 0.08),
+            makeLine("君", x: 0.1, y: 0.62, width: 0.04, height: 0.08),
+            makeLine("礼", x: 0.1, y: 0.48, width: 0.04, height: 0.06),
+            makeLine("陆", x: 0.1, y: 0.28, width: 0.04, height: 0.08),
+            makeLine("佰", x: 0.1, y: 0.18, width: 0.04, height: 0.08),
+            makeLine("600", x: 0.1, y: 0.05, width: 0.08, height: 0.03),
+            makeLine("李", x: 0.2, y: 0.82, width: 0.04, height: 0.08),
+            makeLine("白", x: 0.2, y: 0.72, width: 0.04, height: 0.08),
+            makeLine("礼", x: 0.2, y: 0.48, width: 0.04, height: 0.06),
+            makeLine("贰", x: 0.2, y: 0.28, width: 0.04, height: 0.08),
+            makeLine("仟", x: 0.2, y: 0.18, width: 0.04, height: 0.08),
+            makeLine("2000", x: 0.2, y: 0.05, width: 0.1, height: 0.03),
+        ]
+
+        let analysis = pipeline.analyzeLayout(lines: lines)
+
+        #expect(analysis.kind == .verticalLedger)
+    }
+
+    @Test func analyzeLayoutRecognizesHorizontalLedger() {
+        let lines = [
+            makeLine("张三", x: 0.1, y: 0.84, width: 0.12, height: 0.04),
+            makeLine("500", x: 0.62, y: 0.84, width: 0.1, height: 0.04),
+            makeLine("李四", x: 0.1, y: 0.74, width: 0.12, height: 0.04),
+            makeLine("800", x: 0.62, y: 0.74, width: 0.1, height: 0.04),
+        ]
+
+        let analysis = pipeline.analyzeLayout(lines: lines)
+
+        #expect(analysis.kind == .horizontalLedger)
+    }
+
+    @Test func buildEntryCandidatesParsesVerticalLedgerColumns() {
+        let lines = [
+            makeLine("王", x: 0.1, y: 0.82, width: 0.04, height: 0.08),
+            makeLine("昭", x: 0.1, y: 0.72, width: 0.04, height: 0.08),
+            makeLine("君", x: 0.1, y: 0.62, width: 0.04, height: 0.08),
+            makeLine("礼", x: 0.1, y: 0.48, width: 0.04, height: 0.06),
+            makeLine("陆", x: 0.1, y: 0.28, width: 0.04, height: 0.08),
+            makeLine("佰", x: 0.1, y: 0.18, width: 0.04, height: 0.08),
+            makeLine("600", x: 0.1, y: 0.05, width: 0.08, height: 0.03),
+        ]
+
+        let candidates = pipeline.buildEntryCandidates(lines, layoutKind: .verticalLedger, service: service)
+
+        #expect(candidates.count == 1)
+        #expect(candidates[0].nameText == "王昭君")
+        #expect(candidates[0].normalizedAmount == 600)
+        #expect(candidates[0].layoutKind == .verticalLedger)
+    }
+
+    @Test func extractHeuristicItemsDowngradesUnknownLayoutCandidates() {
+        let candidates = [
+            LedgerEntryCandidate(
+                nameText: "张三",
+                amountText: "500",
+                normalizedAmount: 500,
+                sourceLineIDs: [],
+                layoutPattern: .inlineNameAmount,
+                averageConfidence: 0.95,
+                fullText: "张三 500",
+                layoutKind: .unknownLedger
+            ),
+        ]
+
+        let items = pipeline.extractHeuristicItems(candidates, service: service)
+
+        #expect(items.count == 1)
+        #expect(items[0].confidence != .high)
+        #expect(items[0].warningType == .needsVerification)
+    }
 }

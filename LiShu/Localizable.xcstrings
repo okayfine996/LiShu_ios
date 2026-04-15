@@ -3760,6 +3760,7 @@
       }
     },
     "ocr.ai.enhanced" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -3787,81 +3788,12 @@
       }
     },
     "ocr.ai.processing" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Apple Intelligence 分析中..."
-          }
-        }
-      }
-    },
-    "ocr.ledger.aiProcessing" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Apple AI 礼簿分析中..."
-          }
-        }
-      }
-    },
-    "ocr.ledger.filteredNoise %lld" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "已过滤噪声 %lld 条"
-          }
-        }
-      }
-    },
-    "ocr.ledger.heuristicProcessing" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "本地礼簿规则识别中..."
-          }
-        }
-      }
-    },
-    "ocr.ledger.mode.appleAI" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Apple AI 礼簿增强"
-          }
-        }
-      }
-    },
-    "ocr.ledger.mode.heuristicFallback" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "本地礼簿规则兜底"
-          }
-        }
-      }
-    },
-    "ocr.ledger.processing" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "礼簿识别中..."
-          }
-        }
-      }
-    },
-    "ocr.ledger.reviewNeeded %lld" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "以下有 %lld 条记录需要人工确认"
           }
         }
       }
@@ -3915,6 +3847,7 @@
       }
     },
     "ocr.correction.event" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -4210,6 +4143,212 @@
         }
       }
     },
+    "ocr.ledger.aiProcessing" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple AI 礼簿分析中..."
+          }
+        }
+      }
+    },
+    "ocr.ledger.filteredNoise %lld" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已过滤噪声 %lld 条"
+          }
+        }
+      }
+    },
+    "ocr.ledger.heuristicProcessing" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本地礼簿规则识别中..."
+          }
+        }
+      }
+    },
+    "ocr.ledger.layout.horizontal" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "横排礼簿"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "横排礼簿"
+          }
+        }
+      }
+    },
+    "ocr.ledger.layout.unknown" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未确定版式"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未确定版式"
+          }
+        }
+      }
+    },
+    "ocr.ledger.layout.vertical" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "竖排礼簿"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "竖排礼簿"
+          }
+        }
+      }
+    },
+    "ocr.ledger.layoutHint.unknown" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前页版式未稳定识别，建议裁切单页、调整方向或逐项确认。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前页版式未稳定识别，建议裁切单页、调整方向或逐项确认。"
+          }
+        }
+      }
+    },
+    "ocr.ledger.mode.appleAI" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple AI 礼簿增强"
+          }
+        }
+      }
+    },
+    "ocr.ledger.mode.heuristicFallback" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本地礼簿规则兜底"
+          }
+        }
+      }
+    },
+    "ocr.ledger.orientation.clockwise" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "顺时针90°"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "顺时针90°"
+          }
+        }
+      }
+    },
+    "ocr.ledger.orientation.counterclockwise" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "逆时针90°"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "逆时针90°"
+          }
+        }
+      }
+    },
+    "ocr.ledger.orientation.mixed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "混合方向"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "混合方向"
+          }
+        }
+      }
+    },
+    "ocr.ledger.orientation.original" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "原始方向"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "原始方向"
+          }
+        }
+      }
+    },
+    "ocr.ledger.processing" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "礼簿识别中..."
+          }
+        }
+      }
+    },
+    "ocr.ledger.reviewNeeded %lld" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "以下有 %lld 条记录需要人工确认"
+          }
+        }
+      }
+    },
     "ocr.result.confidenceHigh" : {
       "localizations" : {
         "zh-Hans" : {
@@ -4301,6 +4440,7 @@
       }
     },
     "ocr.result.warningBanner %lld" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {

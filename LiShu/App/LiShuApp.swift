@@ -48,15 +48,20 @@ struct LiShuApp: App {
 
         let icloudEnabled = AppSettings.shared.icloudSyncEnabled
         let snapshotScreenshot = DemoDataSeeding.isFastlaneSnapshotMode
+        let isUITesting = CommandLine.arguments.contains("--uitesting")
         appBootstrapLogger.notice("Initializing application", metadata: [
             "step": .string("bootstrap"),
-            "result": .string(snapshotScreenshot ? "in_memory_demo" : (icloudEnabled ? "icloud" : "local")),
+            "result": .string(
+                snapshotScreenshot ? "in_memory_demo" : (
+                    isUITesting ? "in_memory_ui_test" : (icloudEnabled ? "icloud" : "local")
+                )
+            ),
         ])
 
         ensureApplicationSupportDirectoryExists()
 
         do {
-            let config = if snapshotScreenshot {
+            let config = if snapshotScreenshot || isUITesting {
                 ModelConfiguration(
                     schema: schema,
                     isStoredInMemoryOnly: true,

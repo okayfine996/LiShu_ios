@@ -20,6 +20,8 @@ enum AppTab: String, CaseIterable {
 }
 
 struct MainTabView: View {
+    @Environment(\.modelContext) private var modelContext
+    @Query private var events: [Event]
     @State private var selectedTab: AppTab = .home
     @State private var sheetRoute: SheetRoute?
 
@@ -115,9 +117,25 @@ struct MainTabView: View {
             }
         }
         .onAppear {
-            if CommandLine.arguments.contains("--uitest-open-ocr") {
-                sheetRoute = .ocrImport
+            guard CommandLine.arguments.contains("--uitest-open-ocr") else { return }
+
+            let hostEvent: Event
+            if let firstHostEvent = events.first(where: { $0.hostMode == .host }) {
+                hostEvent = firstHostEvent
+            } else {
+                let seededEvent = Event(
+                    name: "UI Test OCR Event",
+                    type: .wedding,
+                    hostMode: .host,
+                    date: .now,
+                    location: ""
+                )
+                modelContext.insert(seededEvent)
+                try? modelContext.save()
+                hostEvent = seededEvent
             }
+
+            sheetRoute = .ocrImport(eventID: hostEvent.persistentModelID)
         }
     }
 
@@ -216,8 +234,8 @@ struct MainTabView: View {
             NavigationStack {
                 ReturnGiftSheet(recordID: recordID)
             }
-        case .ocrImport:
-            OCRImportView()
+        case let .ocrImport(eventID):
+            OCRImportView(eventID: eventID)
         case .proMembership:
             NavigationStack {
                 ProMembershipView()
