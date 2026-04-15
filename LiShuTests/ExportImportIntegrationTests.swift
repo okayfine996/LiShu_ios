@@ -540,25 +540,23 @@ struct ExportImportIntegrationTests {
         #expect(importedRecords[0].relationshipWeight == .support)
     }
 
-    @Test func oCRImportPreservesEventTypeAndReusesEvent() throws {
+    @Test func oCRImportUsesCurrentLedgerEventAndReceivedDirection() throws {
         let db = try TestDB()
-        let viewModel = OCRImportViewModel()
+        let hostEvent = SampleData.event(name: "王家婚礼", hostMode: .host)
+        db.context.insert(hostEvent)
+        let viewModel = OCRImportViewModel(eventID: hostEvent.persistentModelID)
         viewModel.items = [
             OCRRecordItem(
                 name: "张三",
                 amount: 500,
                 amountText: "500",
-                confidence: .high,
-                eventType: .wedding,
-                eventName: "王家婚礼"
+                confidence: .high
             ),
             OCRRecordItem(
                 name: "李四",
                 amount: 300,
                 amountText: "300",
-                confidence: .high,
-                eventType: .wedding,
-                eventName: "王家婚礼"
+                confidence: .high
             ),
         ]
 
@@ -569,11 +567,10 @@ struct ExportImportIntegrationTests {
         let records = try db.context.fetch(FetchDescriptor<Record>())
 
         #expect(events.count == 1)
-        #expect(events[0].name == "王家婚礼")
-        #expect(events[0].type == .wedding)
+        #expect(events[0].persistentModelID == hostEvent.persistentModelID)
         #expect(records.count == 2)
-        #expect(records.allSatisfy { $0.event?.name == "王家婚礼" })
-        #expect(records.allSatisfy { $0.event?.type == .wedding })
+        #expect(records.allSatisfy { $0.event?.persistentModelID == hostEvent.persistentModelID })
+        #expect(records.allSatisfy { $0.direction == .received })
     }
 
     private func writeCSV(_ content: String, named name: String) throws -> URL {

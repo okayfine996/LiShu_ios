@@ -1,3 +1,4 @@
+import SwiftData
 import SwiftUI
 
 struct OCRCorrectionSheet: View {
@@ -6,11 +7,8 @@ struct OCRCorrectionSheet: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 20) {
-                nameField
-                amountField
-                eventField
-                dateField
+            VStack(spacing: 24) {
+                correctionCard
                 Spacer()
                 confirmButton
             }
@@ -34,6 +32,16 @@ struct OCRCorrectionSheet: View {
     }
 
     // MARK: - Name Field
+
+    private var correctionCard: some View {
+        VStack(spacing: 20) {
+            nameField
+            amountField
+        }
+        .padding(20)
+        .background(DesignSystem.Colors.bgSurface)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+    }
 
     private var nameField: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -88,84 +96,6 @@ struct OCRCorrectionSheet: View {
         }
     }
 
-    // MARK: - Event Field
-
-    private var eventField: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(String(localized: "ocr.correction.event"))
-                .font(DesignSystem.Typography.caption)
-                .foregroundStyle(DesignSystem.Colors.textSecondary)
-
-            Menu {
-                ForEach(EventType.allCases, id: \.self) { eventType in
-                    Button {
-                        viewModel.editEventName = eventType.displayName
-                    } label: {
-                        HStack {
-                            Image(systemName: eventType.iconName)
-                            Text(eventType.displayName)
-                            if viewModel.editEventName == eventType.displayName {
-                                Image(systemName: "checkmark")
-                            }
-                        }
-                    }
-                }
-            } label: {
-                HStack {
-                    Text(viewModel.editEventName)
-                        .font(DesignSystem.Typography.body)
-                        .foregroundStyle(DesignSystem.Colors.textPrimary)
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(DesignSystem.Colors.textTertiary)
-                }
-                .padding(.horizontal, 14)
-                .padding(.vertical, 12)
-                .background(DesignSystem.Colors.bgSurface)
-                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.input))
-                .overlay(
-                    RoundedRectangle(cornerRadius: DesignSystem.Radius.input)
-                        .stroke(DesignSystem.Colors.border, lineWidth: 1)
-                )
-            }
-        }
-    }
-
-    // MARK: - Date Field
-
-    private var dateField: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(String(localized: "ocr.correction.date"))
-                .font(DesignSystem.Typography.caption)
-                .foregroundStyle(DesignSystem.Colors.textSecondary)
-
-            HStack {
-                DatePicker(
-                    "",
-                    selection: $viewModel.editDate,
-                    displayedComponents: .date
-                )
-                .labelsHidden()
-                .tint(DesignSystem.Colors.primary)
-
-                Spacer()
-
-                Image(systemName: "calendar")
-                    .font(.system(size: 16))
-                    .foregroundStyle(DesignSystem.Colors.textTertiary)
-            }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 8)
-            .background(DesignSystem.Colors.bgSurface)
-            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.input))
-            .overlay(
-                RoundedRectangle(cornerRadius: DesignSystem.Radius.input)
-                    .stroke(DesignSystem.Colors.border, lineWidth: 1)
-            )
-        }
-    }
-
     // MARK: - Confirm Button
 
     private var confirmButton: some View {
@@ -183,11 +113,41 @@ struct OCRCorrectionSheet: View {
 }
 
 #Preview {
-    OCRCorrectionSheet(viewModel: {
-        let vm = OCRImportViewModel()
-        let item = OCRRecordItem(name: "张三", amount: 200, amountText: "200", confidence: .high)
-        vm.startEditing(item: item)
-        vm.items = [item]
-        return vm
-    }())
+    Group {
+        if let container = makeOCRCorrectionPreviewContainer() {
+            let eventID = ocrCorrectionPreviewEventID(from: container)
+            OCRCorrectionSheet(viewModel: {
+                let vm = OCRImportViewModel(eventID: eventID)
+                let item = OCRRecordItem(name: "张三", amount: 200, amountText: "200", confidence: .high)
+                vm.startEditing(item: item)
+                vm.items = [item]
+                return vm
+            }())
+                .modelContainer(container)
+        } else {
+            Text(String(localized: "common.preview.unavailable"))
+        }
+    }
+}
+
+@MainActor
+private func makeOCRCorrectionPreviewContainer() -> ModelContainer? {
+    guard let container = try? ModelContainer(
+        for: Contact.self, Record.self, Event.self,
+        configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+    ) else { return nil }
+    let event = Event(name: "我的婚礼礼簿", type: .wedding, hostMode: .host, date: .now)
+    container.mainContext.insert(event)
+    return container
+}
+
+@MainActor
+private func ocrCorrectionPreviewEventID(from container: ModelContainer) -> PersistentIdentifier {
+    let descriptor = FetchDescriptor<Event>()
+    if let event = try? container.mainContext.fetch(descriptor).first {
+        return event.persistentModelID
+    }
+    let fallbackEvent = Event(name: "我的婚礼礼簿", type: .wedding, hostMode: .host, date: .now)
+    container.mainContext.insert(fallbackEvent)
+    return fallbackEvent.persistentModelID
 }

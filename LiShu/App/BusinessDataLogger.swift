@@ -111,9 +111,6 @@ struct OCRRecordItemLogPayload: Encodable {
     let confidence: String
     let warningType: String?
     let isSelected: Bool
-    let date: Date
-    let eventType: String
-    let eventName: String
 }
 
 private struct AnyEncodable: Encodable {
@@ -445,10 +442,7 @@ extension OCRRecordItem {
             amountText: amountText,
             confidence: confidence.rawValue,
             warningType: warningType?.rawValue,
-            isSelected: isSelected,
-            date: date,
-            eventType: eventType.rawValue,
-            eventName: eventName
+            isSelected: isSelected
         )
     }
 }

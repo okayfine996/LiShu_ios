@@ -24,19 +24,13 @@ struct OCRRecordItem: Identifiable {
     var confidence: OCRConfidence
     var warningType: WarningType?
     var isSelected: Bool
-    var date: Date
-    var eventType: EventType
-    var eventName: String
 
     init(
         name: String,
         amount: Double,
         amountText: String,
         confidence: OCRConfidence,
-        warningType: WarningType? = nil,
-        date: Date = .now,
-        eventType: EventType = .other,
-        eventName: String = String(localized: "event.type.other")
+        warningType: WarningType? = nil
     ) {
         id = UUID()
         self.name = name
@@ -45,9 +39,6 @@ struct OCRRecordItem: Identifiable {
         self.confidence = confidence
         self.warningType = warningType
         isSelected = true
-        self.date = date
-        self.eventType = eventType
-        self.eventName = eventName
     }
 }
 
@@ -183,38 +174,6 @@ final class OCRService {
         }
     }
 
-    // MARK: - Event Keyword Matching
-
-    private static let eventKeywords: [(keywords: [String], eventType: EventType)] = [
-        (["婚礼", "婚宴", "结婚"], .wedding),
-        (["订婚"], .engagement),
-        (["丧事", "白事", "丧葬", "葬礼"], .funeral),
-        (["满月", "百日", "新生"], .birth),
-        (["生日", "生辰"], .birthday),
-        (["寿宴", "大寿", "寿辰"], .longevity),
-        (["节庆", "春节", "中秋", "端午"], .festival),
-        (["乔迁", "搬家", "新居"], .property),
-        (["升学", "毕业", "金榜"], .education),
-        (["开业", "开张"], .business),
-        (["升职", "晋升"], .promotion),
-        (["探望", "慰问", "看望"], .visit),
-    ]
-
-    func matchEventType(from text: String) -> EventType {
-        for entry in Self.eventKeywords {
-            for keyword in entry.keywords {
-                if text.contains(keyword) {
-                    return entry.eventType
-                }
-            }
-        }
-        return .other
-    }
-
-    func matchEventName(from text: String) -> String {
-        matchEventType(from: text).displayName
-    }
-
     // MARK: - Text Parsing
 
     let nameAmountPattern = #"([\u4e00-\u9fff]{2,6})\s*[¥￥]?\s*([\d,，]+(?:\.\d{1,2})?)"#
@@ -231,9 +190,6 @@ final class OCRService {
 
             let nsText = text as NSString
             let fullRange = NSRange(location: 0, length: nsText.length)
-            let eventType = matchEventType(from: text)
-            let eventName = eventType.displayName
-
             if let match = nameAmountRegex?.firstMatch(in: text, range: fullRange),
                match.numberOfRanges >= 3
             {
@@ -242,9 +198,7 @@ final class OCRService {
                 if let item = buildItem(
                     name: name,
                     rawAmount: rawAmount,
-                    visionConfidence: line.confidence,
-                    eventType: eventType,
-                    eventName: eventName
+                    visionConfidence: line.confidence
                 ) {
                     items.append(item)
                     continue
@@ -259,9 +213,7 @@ final class OCRService {
                 if let item = buildItem(
                     name: name,
                     rawAmount: rawAmount,
-                    visionConfidence: line.confidence,
-                    eventType: eventType,
-                    eventName: eventName
+                    visionConfidence: line.confidence
                 ) {
                     items.append(item)
                 }
@@ -278,9 +230,7 @@ final class OCRService {
     func buildItem(
         name: String,
         rawAmount: String,
-        visionConfidence: Float,
-        eventType: EventType = .other,
-        eventName: String = String(localized: "event.type.other")
+        visionConfidence: Float
     ) -> OCRRecordItem? {
         let cleaned = rawAmount
             .replacingOccurrences(of: ",", with: "")
@@ -310,9 +260,7 @@ final class OCRService {
             amount: amount,
             amountText: rawAmount,
             confidence: confidence,
-            warningType: warningType,
-            eventType: eventType,
-            eventName: eventName
+            warningType: warningType
         )
     }
 

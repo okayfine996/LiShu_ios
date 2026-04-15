@@ -708,8 +708,8 @@ struct HomeView: View {
             NavigationStack {
                 ReturnGiftSheet(recordID: recordID)
             }
-        case .ocrImport:
-            OCRImportView()
+        case let .ocrImport(eventID):
+            OCRImportView(eventID: eventID)
         case .proMembership:
             NavigationStack {
                 ProMembershipView()
