@@ -2,7 +2,7 @@ import Foundation
 import Logging
 import SwiftData
 
-struct QueryLogPayload<Result: Encodable>: Encodable {
+nonisolated struct QueryLogPayload<Result: Encodable>: Encodable {
     let searchText: String
     let filters: [String: String]
     let sort: String
@@ -11,14 +11,14 @@ struct QueryLogPayload<Result: Encodable>: Encodable {
     let results: [Result]
 }
 
-struct QueryInputLogPayload: Encodable {
+nonisolated struct QueryInputLogPayload: Encodable {
     let searchText: String
     let filters: [String: String]
     let sort: String
     let screen: String
 }
 
-struct QuerySummaryLogPayload: Encodable {
+nonisolated struct QuerySummaryLogPayload: Encodable {
     let searchText: String
     let filters: [String: String]
     let sort: String
@@ -27,12 +27,12 @@ struct QuerySummaryLogPayload: Encodable {
     let sampleIDs: [String]
 }
 
-struct AmountLogPayload: Encodable {
+nonisolated struct AmountLogPayload: Encodable {
     let value: Double
     let display: String
 }
 
-struct ContactLogPayload: Encodable {
+nonisolated struct ContactLogPayload: Encodable {
     let id: String
     let name: String
     let phone: String
@@ -47,7 +47,7 @@ struct ContactLogPayload: Encodable {
     let createdAt: Date
 }
 
-struct EventLogPayload: Encodable {
+nonisolated struct EventLogPayload: Encodable {
     let id: String
     let name: String
     let type: String
@@ -59,28 +59,28 @@ struct EventLogPayload: Encodable {
     let createdAt: Date
 }
 
-struct MonetaryTypeDataLogPayload: Encodable {
+nonisolated struct MonetaryTypeDataLogPayload: Encodable {
     let amount: AmountLogPayload
     let paymentMethod: String
     let returnedAmount: AmountLogPayload
 }
 
-struct GiftTypeDataLogPayload: Encodable {
+nonisolated struct GiftTypeDataLogPayload: Encodable {
     let giftName: String
     let estimatedValue: AmountLogPayload?
 }
 
-struct FavorTypeDataLogPayload: Encodable {
+nonisolated struct FavorTypeDataLogPayload: Encodable {
     let description: String
 }
 
-struct BanquetTypeDataLogPayload: Encodable {
+nonisolated struct BanquetTypeDataLogPayload: Encodable {
     let location: String
     let attendeeList: String
     let extraCostNotes: String
 }
 
-struct RecordTypeDataLogPayload: Encodable {
+nonisolated struct RecordTypeDataLogPayload: Encodable {
     let kind: String
     let monetary: MonetaryTypeDataLogPayload?
     let gift: GiftTypeDataLogPayload?
@@ -88,7 +88,7 @@ struct RecordTypeDataLogPayload: Encodable {
     let banquet: BanquetTypeDataLogPayload?
 }
 
-struct RecordLogPayload: Encodable {
+nonisolated struct RecordLogPayload: Encodable {
     let id: String?
     let direction: String
     let recordType: String
@@ -103,7 +103,7 @@ struct RecordLogPayload: Encodable {
     let relationshipWeight: String
 }
 
-struct OCRRecordItemLogPayload: Encodable {
+nonisolated struct OCRRecordItemLogPayload: Encodable {
     let id: String
     let name: String
     let amount: AmountLogPayload
@@ -113,7 +113,7 @@ struct OCRRecordItemLogPayload: Encodable {
     let isSelected: Bool
 }
 
-private struct AnyEncodable: Encodable {
+private nonisolated struct AnyEncodable: Encodable {
     private let encodeImpl: (Encoder) throws -> Void
 
     nonisolated init(_ wrapped: some Encodable) {
@@ -125,11 +125,11 @@ private struct AnyEncodable: Encodable {
     }
 }
 
-enum BusinessDataLogger {
-    private static let recordLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.dataRecord)
-    private static let mutationLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.dataMutation)
-    private static let queryLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.dataQuery)
-    private static let ocrLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.dataOCR)
+nonisolated enum BusinessDataLogger {
+    private nonisolated static let recordLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.dataRecord)
+    private nonisolated static let mutationLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.dataMutation)
+    private nonisolated static let queryLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.dataQuery)
+    private nonisolated static let ocrLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.dataOCR)
 
     static func recordMutation(
         screen: String,
@@ -152,6 +152,7 @@ enum BusinessDataLogger {
         )
     }
 
+    @MainActor
     static func recordQuery(
         screen: String,
         operation: String = "load",
@@ -380,6 +381,7 @@ extension PulseDiagnostics {
 }
 
 extension Contact {
+    @MainActor
     func logPayload() -> ContactLogPayload {
         ContactLogPayload(
             id: logIdentifier,
@@ -399,6 +401,7 @@ extension Contact {
 }
 
 extension Event {
+    @MainActor
     func logPayload() -> EventLogPayload {
         EventLogPayload(
             id: logIdentifier,
@@ -415,6 +418,7 @@ extension Event {
 }
 
 extension Record {
+    @MainActor
     func logPayload() -> RecordLogPayload {
         RecordLogPayload(
             id: logIdentifier,
@@ -434,7 +438,7 @@ extension Record {
 }
 
 extension OCRRecordItem {
-    func logPayload() -> OCRRecordItemLogPayload {
+    nonisolated func logPayload() -> OCRRecordItemLogPayload {
         OCRRecordItemLogPayload(
             id: id.uuidString,
             name: name,
@@ -448,7 +452,7 @@ extension OCRRecordItem {
 }
 
 extension RecordTypeData {
-    func logPayload() -> RecordTypeDataLogPayload {
+    nonisolated func logPayload() -> RecordTypeDataLogPayload {
         switch self {
         case let .monetary(data):
             RecordTypeDataLogPayload(
@@ -516,7 +520,7 @@ private extension Record {
 }
 
 private extension Double {
-    func logDisplayString() -> String {
+    nonisolated func logDisplayString() -> String {
         if self == Double(Int(self)) {
             return String(Int(self))
         }

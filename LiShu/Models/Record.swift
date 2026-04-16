@@ -2,7 +2,7 @@ import Foundation
 import Logging
 import SwiftData
 
-private let recordKVDataLogger = PulseDiagnostics.makeLogger(label: "storage.record-kv")
+private nonisolated let recordKVDataLogger = PulseDiagnostics.makeLogger(label: "storage.record-kv")
 
 /// 往来记录（一笔送礼或收礼）
 @Model
@@ -192,7 +192,7 @@ enum RelationshipWeight: String, Codable, CaseIterable {
     /// 重如泰山
     case profound
 
-    var displayName: String {
+    nonisolated var displayName: String {
         switch self {
         case .trivial: String(localized: "record.relationshipWeight.trivial")
         case .kindness: String(localized: "record.relationshipWeight.kindness")
@@ -214,7 +214,7 @@ enum RecordType: String, Codable, CaseIterable {
     /// 宴请
     case banquet
 
-    var displayName: String {
+    nonisolated var displayName: String {
         switch self {
         case .monetary: String(localized: "record.type.monetary")
         case .gift: String(localized: "record.type.gift")

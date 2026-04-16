@@ -55,7 +55,7 @@ private struct HomeLedgerSection: View {
     @Binding var sheetRoute: SheetRoute?
 
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: DesignSystem.Spacing.block) {
             HStack {
                 Text(String(localized: "event.ledger.sectionTitle"))
                     .font(DesignSystem.Typography.title3)
@@ -63,11 +63,23 @@ private struct HomeLedgerSection: View {
 
                 Spacer()
 
-                Button(String(localized: "common.new")) {
+                Button {
                     sheetRoute = .addEvent
+                } label: {
+                    HStack(spacing: DesignSystem.Spacing.dense) {
+                        Text(String(localized: "common.new"))
+                            .font(DesignSystem.Typography.caption)
+
+                        Image(systemName: "arrow.right")
+                            .font(.system(size: 10, weight: .semibold))
+                    }
+                    .foregroundStyle(DesignSystem.Colors.primary)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(DesignSystem.Colors.bgSurface.opacity(0.7))
+                    .clipShape(Capsule())
                 }
-                .font(DesignSystem.Typography.caption)
-                .foregroundStyle(DesignSystem.Colors.primary)
+                .buttonStyle(.plain)
             }
 
             if snapshot.hostLedgerEvents.isEmpty {
@@ -90,6 +102,7 @@ private struct HomeLedgerSection: View {
                     }
                     .padding(.horizontal, 2)
                 }
+                .scrollClipDisabled()
             }
         }
     }
@@ -99,7 +112,7 @@ private struct HomeUpcomingSection: View {
     let snapshot: HomeDashboardSnapshot
 
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: DesignSystem.Spacing.block) {
             HomeSectionHeader(
                 title: String(localized: "home.upcoming"),
                 route: .eventList
@@ -126,7 +139,7 @@ private struct HomeUpcomingSection: View {
                         }
                     }
                 }
-                .frame(height: 196)
+                .frame(height: 204)
             }
         }
     }

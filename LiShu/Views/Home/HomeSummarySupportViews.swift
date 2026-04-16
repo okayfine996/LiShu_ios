@@ -33,7 +33,7 @@ struct HomeFinancialSummaryCard: View {
                 HStack(alignment: .center, spacing: 10) {
                     Text(HomeDashboardFormatters.monetaryNet(snapshot))
                         .font(DesignSystem.Typography.display)
-                        .foregroundStyle(DesignSystem.Colors.textPrimary)
+                        .foregroundStyle(DesignSystem.Colors.primary)
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
 
@@ -75,7 +75,7 @@ struct HomeFinancialSummaryCard: View {
 
                 Text(HomeDashboardFormatters.totalExchangeAmount(snapshot))
                     .font(DesignSystem.Typography.title3)
-                    .foregroundStyle(DesignSystem.Colors.textPrimary)
+                    .foregroundStyle(DesignSystem.Colors.primary)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
@@ -170,7 +170,7 @@ private struct HomeFinancialDetailMetric: View {
 
             Text(amount)
                 .font(DesignSystem.Typography.title1)
-                .foregroundStyle(DesignSystem.Colors.textPrimary)
+                .foregroundStyle(title == String(localized: "home.income") ? DesignSystem.Colors.accentGold : DesignSystem.Colors.primary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.85)
 
@@ -193,7 +193,7 @@ private struct HomeRelationshipDetailMetric: View {
 
             Text(value)
                 .font(DesignSystem.Typography.title1)
-                .foregroundStyle(DesignSystem.Colors.textPrimary)
+                .foregroundStyle(DesignSystem.Colors.primary)
 
             Text(detail)
                 .font(DesignSystem.Typography.caption)
@@ -239,7 +239,7 @@ private struct HomeSummaryHeroMetric: View {
             HStack(alignment: .firstTextBaseline, spacing: 2) {
                 Text(value)
                     .font(DesignSystem.Typography.display)
-                    .foregroundStyle(valueColor)
+                    .foregroundStyle(DesignSystem.Colors.primary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
 

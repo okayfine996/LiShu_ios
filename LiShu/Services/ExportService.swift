@@ -2,10 +2,9 @@ import Foundation
 import Logging
 import SwiftData
 
-private let exportLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.export)
-private let importLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.importFlow)
-
 enum ExportService {
+    private nonisolated static let exportLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.export)
+    private nonisolated static let importLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.importFlow)
     private nonisolated static let csvDateFormat = "yyyy-MM-dd"
     private nonisolated static let csvLegacyDateFormat = "yyyy-MM-dd HH:mm"
     private nonisolated static let commonColumns = ["联系人", "事件", "事件类型", "场景标签", "方向", "日期", "备注", "情分分量"]
@@ -35,7 +34,7 @@ enum ExportService {
         let rows = records.compactMap { exportRow(for: $0, recordType: recordType) }
         let content = ([csvHeader(for: recordType)] + rows).joined(separator: "\n")
 
-        exportLogger.notice("Finished CSV export", metadata: [
+        Self.exportLogger.notice("Finished CSV export", metadata: [
             "step": .string("export_csv"),
             "record_type": .string(recordType.rawValue),
             "count": .stringConvertible(rows.count),
@@ -67,7 +66,7 @@ enum ExportService {
             items.append(item)
         }
 
-        exportLogger.notice("Finished CSV export preview", metadata: [
+        Self.exportLogger.notice("Finished CSV export preview", metadata: [
             "step": .string("preview_export_csv"),
             "record_type": .string(recordType.rawValue),
             "count": .stringConvertible(items.count),
@@ -618,7 +617,7 @@ enum ExportService {
         }
 
         try context.save()
-        importLogger.notice("Finished CSV import", metadata: [
+        Self.importLogger.notice("Finished CSV import", metadata: [
             "step": .string("import_csv"),
             "source": .string(sourceFileName),
             "count": .stringConvertible(result.imported),
@@ -770,7 +769,7 @@ enum ExportService {
         }
 
         try context.save()
-        importLogger.notice("Finished ledger CSV import", metadata: [
+        Self.importLogger.notice("Finished ledger CSV import", metadata: [
             "step": .string("import_ledger_csv"),
             "source": .string(sourceFileName),
             "event_id": .string(String(describing: eventID)),
@@ -1039,7 +1038,7 @@ enum ExportService {
         descriptor.fetchLimit = 1
 
         if let existing = try? context.fetch(descriptor).first {
-            importLogger.info("Reused contact during import", metadata: [
+            Self.importLogger.info("Reused contact during import", metadata: [
                 "step": .string("find_or_create_contact"),
                 "result": .string("existing"),
                 "contact_id": .string(String(describing: existing.persistentModelID)),
@@ -1048,7 +1047,7 @@ enum ExportService {
         }
         let contact = Contact(name: trimmed)
         context.insert(contact)
-        importLogger.info("Created contact during import", metadata: [
+        Self.importLogger.info("Created contact during import", metadata: [
             "step": .string("find_or_create_contact"),
             "result": .string("created"),
             "target": .string(trimmed),
@@ -1064,7 +1063,7 @@ enum ExportService {
         descriptor.fetchLimit = 1
 
         if let existing = try? context.fetch(descriptor).first {
-            importLogger.info("Reused event during import", metadata: [
+            Self.importLogger.info("Reused event during import", metadata: [
                 "step": .string("find_or_create_event"),
                 "result": .string("existing"),
                 "event_id": .string(String(describing: existing.persistentModelID)),
@@ -1073,7 +1072,7 @@ enum ExportService {
         }
         let event = Event(name: trimmed, type: type)
         context.insert(event)
-        importLogger.info("Created event during import", metadata: [
+        Self.importLogger.info("Created event during import", metadata: [
             "step": .string("find_or_create_event"),
             "result": .string("created"),
             "target": .string(trimmed),
@@ -1101,7 +1100,7 @@ enum ExportService {
         for record: Record
     ) -> (eventName: String, eventTypeName: String, sceneTag: String)? {
         if let event = record.event {
-            return (event.name, event.type.displayName, "")
+            return (event.name, event.type.importExportName, "")
         }
 
         let trimmedSceneTag = record.contextTag.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -1115,7 +1114,7 @@ enum ExportService {
         let rows = parseCSVRows(content)
 
         guard rows.count > 1 else {
-            importLogger.warning("CSV preview finished without data rows", metadata: [
+            Self.importLogger.warning("CSV preview finished without data rows", metadata: [
                 "step": .string("preview_csv"),
                 "source": .string(sourceFileName),
                 "reason": .string("empty_rows"),
@@ -1151,7 +1150,7 @@ enum ExportService {
             items.append(item)
         }
 
-        importLogger.notice("Finished CSV preview parse", metadata: [
+        Self.importLogger.notice("Finished CSV preview parse", metadata: [
             "step": .string("preview_csv"),
             "source": .string(sourceFileName),
             "count": .stringConvertible(items.count),
@@ -1712,7 +1711,7 @@ struct LedgerCSVImportPreviewResult {
     var errors: Int = 0
 }
 
-struct CSVImportPreviewItem: Identifiable {
+nonisolated struct CSVImportPreviewItem: Identifiable {
     let id = UUID()
     let rowNumber: Int
     var isSelected: Bool
@@ -1731,7 +1730,7 @@ struct CSVImportPreviewItem: Identifiable {
     let status: CSVImportPreviewStatus
     let payload: CSVImportPayload?
 
-    var isImportable: Bool {
+    nonisolated var isImportable: Bool {
         switch status {
         case .ready:
             payload != nil
@@ -1740,7 +1739,7 @@ struct CSVImportPreviewItem: Identifiable {
         }
     }
 
-    var statusMessage: String? {
+    nonisolated var statusMessage: String? {
         switch status {
         case .ready:
             nil
@@ -1750,7 +1749,7 @@ struct CSVImportPreviewItem: Identifiable {
     }
 }
 
-struct LedgerCSVImportPreviewItem: Identifiable {
+nonisolated struct LedgerCSVImportPreviewItem: Identifiable {
     let id = UUID()
     let rowNumber: Int
     var isSelected: Bool
@@ -1761,7 +1760,7 @@ struct LedgerCSVImportPreviewItem: Identifiable {
     let status: CSVImportPreviewStatus
     let payload: LedgerCSVImportPayload?
 
-    var isImportable: Bool {
+    nonisolated var isImportable: Bool {
         switch status {
         case .ready:
             payload != nil
@@ -1770,7 +1769,7 @@ struct LedgerCSVImportPreviewItem: Identifiable {
         }
     }
 
-    var statusMessage: String? {
+    nonisolated var statusMessage: String? {
         switch status {
         case .ready:
             nil
@@ -1780,20 +1779,20 @@ struct LedgerCSVImportPreviewItem: Identifiable {
     }
 }
 
-struct CSVExportPreviewResult {
+nonisolated struct CSVExportPreviewResult {
     let recordType: RecordType
     var items: [CSVExportPreviewItem]
     var skipped: Int = 0
 }
 
-struct LedgerCSVExportPreviewResult {
+nonisolated struct LedgerCSVExportPreviewResult {
     let eventID: PersistentIdentifier
     let eventName: String
     var items: [LedgerCSVExportPreviewItem]
     var skipped: Int = 0
 }
 
-struct CSVExportPreviewItem: Identifiable {
+nonisolated struct CSVExportPreviewItem: Identifiable {
     let id = UUID()
     let rowNumber: Int
     var isSelected: Bool
@@ -1804,7 +1803,7 @@ struct CSVExportPreviewItem: Identifiable {
     let status: CSVExportPreviewStatus
     let payload: CSVExportPayload?
 
-    var isExportable: Bool {
+    nonisolated var isExportable: Bool {
         switch status {
         case .ready:
             payload != nil
@@ -1813,7 +1812,7 @@ struct CSVExportPreviewItem: Identifiable {
         }
     }
 
-    var statusMessage: String? {
+    nonisolated var statusMessage: String? {
         switch status {
         case .ready:
             nil
@@ -1823,7 +1822,7 @@ struct CSVExportPreviewItem: Identifiable {
     }
 }
 
-struct LedgerCSVExportPreviewItem: Identifiable {
+nonisolated struct LedgerCSVExportPreviewItem: Identifiable {
     let id = UUID()
     let rowNumber: Int
     var isSelected: Bool
@@ -1834,7 +1833,7 @@ struct LedgerCSVExportPreviewItem: Identifiable {
     let status: CSVExportPreviewStatus
     let payload: LedgerCSVExportPayload?
 
-    var isExportable: Bool {
+    nonisolated var isExportable: Bool {
         switch status {
         case .ready:
             payload != nil
@@ -1843,7 +1842,7 @@ struct LedgerCSVExportPreviewItem: Identifiable {
         }
     }
 
-    var statusMessage: String? {
+    nonisolated var statusMessage: String? {
         switch status {
         case .ready:
             nil
@@ -1853,7 +1852,7 @@ struct LedgerCSVExportPreviewItem: Identifiable {
     }
 }
 
-enum CSVExportPreviewStatus: Equatable {
+nonisolated enum CSVExportPreviewStatus: Equatable {
     case ready
     case skipped(String)
 }
@@ -1866,13 +1865,13 @@ struct LedgerCSVExportPayload {
     let csvRow: String
 }
 
-enum CSVImportPreviewStatus: Equatable {
+nonisolated enum CSVImportPreviewStatus: Equatable {
     case ready
     case skipped(String)
     case error(String)
 }
 
-struct CSVImportPayload {
+nonisolated struct CSVImportPayload {
     let contactName: String
     let eventName: String
     let eventType: EventType
@@ -1886,7 +1885,7 @@ struct CSVImportPayload {
     let typeData: RecordTypeData
 }
 
-struct LedgerCSVImportPayload {
+nonisolated struct LedgerCSVImportPayload {
     let contactName: String
     let date: Date
     let note: String
@@ -1910,7 +1909,7 @@ enum ImportError: LocalizedError {
 // MARK: - Export Value Extensions
 
 private extension RecordDirection {
-    var csvValue: String {
+    nonisolated var csvValue: String {
         switch self {
         case .given: String(localized: "record.direction.given")
         case .received: String(localized: "record.direction.received")
@@ -1919,7 +1918,7 @@ private extension RecordDirection {
 }
 
 private extension PaymentMethod {
-    var csvValue: String {
+    nonisolated var csvValue: String {
         switch self {
         case .cash: String(localized: "payment.cash")
         case .wechat: String(localized: "payment.wechat")
@@ -1929,7 +1928,7 @@ private extension PaymentMethod {
 }
 
 private extension RelationshipWeight {
-    var csvValue: String {
+    nonisolated var csvValue: String {
         displayName
     }
 }

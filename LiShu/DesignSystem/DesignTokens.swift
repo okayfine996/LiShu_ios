@@ -93,6 +93,10 @@ public enum DesignSystem {
         public static let rankBadgeSize: CGFloat = 28
         /// 列表行左侧头像、事件封面等缩略图
         public static let avatarM: CGFloat = 56
+        /// 首页区块右上角紧凑操作按钮高度
+        public static let homeInlineActionHeight: CGFloat = 40
+        /// 首页区块右上角紧凑操作按钮图标底块尺寸
+        public static let homeInlineActionIconSize: CGFloat = 24
         public static var homeLedgerCardWidth: CGFloat {
             UIScreen.main.bounds.width - (DesignSystem.Spacing.pageHorizontal * 2) - DesignSystem.Spacing.stackTight
         }
