@@ -12,7 +12,6 @@
 		32C8B5712F822036002E6746 /* Logging in Frameworks */ = {isa = PBXBuildFile; productRef = 32C8B5812F822036002E6746 /* Logging */; };
 		32C8B5722F822036002E6746 /* PulseLogHandler in Frameworks */ = {isa = PBXBuildFile; productRef = 32C8B5822F822036002E6746 /* PulseLogHandler */; };
 		32C8B5732F822036002E6746 /* Logging in Frameworks */ = {isa = PBXBuildFile; productRef = 32C8B5832F822036002E6746 /* Logging */; };
-		32C8B5742F822036002E6746 /* Pulse in Frameworks */ = {isa = PBXBuildFile; productRef = 32C8B5842F822036002E6746 /* Pulse */; };
 		B7A1000121C34D5600AA1101 /* ZipArchive in Frameworks */ = {isa = PBXBuildFile; productRef = B7A1000321C34D5600AA1101 /* ZipArchive */; };
 		B7A1000221C34D5600AA1101 /* ZipArchive in Frameworks */ = {isa = PBXBuildFile; productRef = B7A1000421C34D5600AA1101 /* ZipArchive */; };
 /* End PBXBuildFile section */
@@ -88,7 +87,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				32C8B5742F822036002E6746 /* Pulse in Frameworks */,
 				32C8B5732F822036002E6746 /* Logging in Frameworks */,
 				B7A1000221C34D5600AA1101 /* ZipArchive in Frameworks */,
 			);
@@ -176,7 +174,6 @@
 			name = LiShuTests;
 			packageProductDependencies = (
 				32C8B5832F822036002E6746 /* Logging */,
-				32C8B5842F822036002E6746 /* Pulse */,
 				B7A1000421C34D5600AA1101 /* ZipArchive */,
 			);
 			productName = LiShuTests;
@@ -762,11 +759,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 32C8B57F2F822036002E6746 /* XCRemoteSwiftPackageReference "swift-log" */;
 			productName = Logging;
-		};
-		32C8B5842F822036002E6746 /* Pulse */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 9A934ECA2F54194E0063349A /* XCRemoteSwiftPackageReference "Pulse" */;
-			productName = Pulse;
 		};
 		9A934ECB2F54194E0063349A /* Pulse */ = {
 			isa = XCSwiftPackageProductDependency;

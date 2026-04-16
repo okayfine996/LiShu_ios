@@ -109,3 +109,18 @@ struct EventDetailPreview: View {
         return record
     }
 }
+
+#Preview("Standard Event") {
+    EventDetailPreview(hostMode: .guest)
+        .modelContainer(for: [Contact.self, Record.self, Event.self], inMemory: true)
+}
+
+#Preview("Host Ledger") {
+    EventDetailPreview(hostMode: .host)
+        .modelContainer(for: [Contact.self, Record.self, Event.self], inMemory: true)
+}
+
+#Preview("Host Ledger Legacy Warning") {
+    EventDetailPreview(hostMode: .host, includeLegacyAnomalies: true)
+        .modelContainer(for: [Contact.self, Record.self, Event.self], inMemory: true)
+}
