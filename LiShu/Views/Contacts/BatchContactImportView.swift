@@ -41,8 +41,7 @@ final class BatchContactImportViewModel {
         guard !searchText.isEmpty else { return allItems }
         let query = searchText.lowercased()
         return allItems.filter {
-            $0.displayName.lowercased().contains(query) ||
-                $0.phone.contains(query)
+            $0.displayName.lowercased().contains(query) || $0.phone.contains(query)
         }
     }
 
@@ -99,24 +98,16 @@ final class BatchContactImportViewModel {
                     let key = PhoneContactItem.key(name: name, phone: "")
                     guard !seenKeys.contains(key) else { return }
                     seenKeys.insert(key)
-                    items.append(PhoneContactItem(
-                        id: key,
-                        displayName: name,
-                        phone: "",
-                        isExisting: false
-                    ))
+                    items.append(PhoneContactItem(id: key, displayName: name, phone: "", isExisting: false))
                 } else {
                     for phoneNumber in contact.phoneNumbers {
                         let phone = phoneNumber.value.stringValue
                         let key = PhoneContactItem.key(name: name, phone: phone)
                         guard !seenKeys.contains(key) else { continue }
                         seenKeys.insert(key)
-                        items.append(PhoneContactItem(
-                            id: key,
-                            displayName: name,
-                            phone: phone,
-                            isExisting: false
-                        ))
+                        items.append(
+                            PhoneContactItem(id: key, displayName: name, phone: phone, isExisting: false)
+                        )
                     }
                 }
             }
@@ -131,8 +122,8 @@ final class BatchContactImportViewModel {
         } catch {
             return
         }
-        let existingKeys = Set(existingContacts.map { c in
-            PhoneContactItem.key(name: c.name, phone: c.phone)
+        let existingKeys = Set(existingContacts.map { contact in
+            PhoneContactItem.key(name: contact.name, phone: contact.phone)
         })
         allItems = allItems.map { item in
             PhoneContactItem(
@@ -200,6 +191,7 @@ final class BatchContactImportViewModel {
 struct BatchContactImportView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+
     @State private var viewModel = BatchContactImportViewModel()
 
     var body: some View {
@@ -207,47 +199,24 @@ struct BatchContactImportView: View {
             DesignSystem.Colors.bgPage
                 .ignoresSafeArea()
 
-            Group {
-                switch viewModel.accessState {
-                case .idle, .loading:
-                    ProgressView()
-                case .denied:
-                    EmptyStateView(
-                        icon: "person.crop.circle.badge.exclamationmark",
-                        message: String(localized: "contact.import.noAccess")
-                    )
-                case .empty:
-                    EmptyStateView(
-                        icon: "person.2.slash",
-                        message: String(localized: "contact.import.empty")
-                    )
-                case .granted:
-                    mainContent
-                }
-            }
+            BatchContactImportStateView(
+                accessState: viewModel.accessState,
+                viewModel: viewModel,
+                onImport: importContacts
+            )
         }
         .navigationTitle(String(localized: "contact.import.title"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
-                Button(String(localized: "common.cancel")) {
-                    dismiss()
-                }
-                .foregroundStyle(DesignSystem.Colors.textSecondary)
+                Button(String(localized: "common.cancel"), action: dismiss.callAsFunction)
+                    .foregroundStyle(DesignSystem.Colors.textSecondary)
             }
+
             ToolbarItem(placement: .primaryAction) {
                 if viewModel.accessState == .granted, !viewModel.selectableItems.isEmpty {
-                    Button(viewModel.isAllSelectableSelected
-                        ? String(localized: "contact.import.deselectAll")
-                        : String(localized: "contact.import.selectAll"))
-                    {
-                        if viewModel.isAllSelectableSelected {
-                            viewModel.deselectAll()
-                        } else {
-                            viewModel.selectAll()
-                        }
-                    }
-                    .foregroundStyle(DesignSystem.Colors.primary)
+                    Button(selectAllButtonTitle, action: toggleSelectAll)
+                        .foregroundStyle(DesignSystem.Colors.primary)
                 }
             }
         }
@@ -261,14 +230,8 @@ struct BatchContactImportView: View {
                     .environment(SubscriptionManager.shared)
             }
         }
-        .alert(String(localized: "contact.import.title"), isPresented: Binding(
-            get: { viewModel.importSuccessCount != nil },
-            set: { if !$0 { viewModel.importSuccessCount = nil; dismiss() } }
-        )) {
-            Button(String(localized: "common.ok")) {
-                viewModel.importSuccessCount = nil
-                dismiss()
-            }
+        .alert(String(localized: "contact.import.title"), isPresented: importSuccessBinding) {
+            Button(String(localized: "common.ok"), action: dismissAfterSuccess)
         } message: {
             if let count = viewModel.importSuccessCount {
                 Text(String(format: String(localized: "contact.import.success"), Int64(count)))
@@ -276,129 +239,43 @@ struct BatchContactImportView: View {
         }
     }
 
-    private var mainContent: some View {
-        VStack(spacing: 0) {
-            searchBar
-            contactList
-            importButton
-        }
+    private var selectAllButtonTitle: String {
+        viewModel.isAllSelectableSelected
+            ? String(localized: "contact.import.deselectAll")
+            : String(localized: "contact.import.selectAll")
     }
 
-    private var searchBar: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "magnifyingglass")
-                .foregroundStyle(DesignSystem.Colors.textTertiary)
-            TextField(
-                String(localized: "contact.import.search"),
-                text: $viewModel.searchText
-            )
-            .font(DesignSystem.Typography.caption)
-            .foregroundStyle(DesignSystem.Colors.textPrimary)
-
-            if !viewModel.searchText.isEmpty {
-                Button {
-                    viewModel.searchText = ""
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(DesignSystem.Colors.textTertiary)
+    private var importSuccessBinding: Binding<Bool> {
+        Binding(
+            get: { viewModel.importSuccessCount != nil },
+            set: {
+                if !$0 {
+                    viewModel.importSuccessCount = nil
+                    dismiss()
                 }
             }
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
-        .background(DesignSystem.Colors.bgSurface)
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.input))
-        .overlay(
-            RoundedRectangle(cornerRadius: DesignSystem.Radius.input)
-                .stroke(DesignSystem.Colors.border, lineWidth: 1)
         )
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
     }
 
-    private var contactList: some View {
-        List {
-            ForEach(viewModel.filteredItems) { item in
-                contactRow(item)
-            }
+    private func toggleSelectAll() {
+        if viewModel.isAllSelectableSelected {
+            viewModel.deselectAll()
+        } else {
+            viewModel.selectAll()
         }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
     }
 
-    private func contactRow(_ item: PhoneContactItem) -> some View {
-        let isSelectable = !item.isExisting
-        return HStack(spacing: 12) {
-            Button {
-                if isSelectable {
-                    viewModel.toggleSelection(item.id)
-                }
-            } label: {
-                Image(systemName: viewModel.selectedIDs.contains(item.id) ? "checkmark.circle.fill" : "circle")
-                    .font(.system(size: 22))
-                    .foregroundStyle(
-                        isSelectable
-                            ? (viewModel.selectedIDs.contains(item.id) ? DesignSystem.Colors.primary : DesignSystem.Colors.textTertiary)
-                            : DesignSystem.Colors.textTertiary.opacity(0.5)
-                    )
-            }
-            .disabled(!isSelectable)
-
-            VStack(alignment: .leading, spacing: 4) {
-                HStack {
-                    Text(item.displayName)
-                        .font(DesignSystem.Typography.body)
-                        .foregroundStyle(DesignSystem.Colors.textPrimary)
-                    if item.isExisting {
-                        Text(String(localized: "contact.import.exists"))
-                            .font(DesignSystem.Typography.small)
-                            .foregroundStyle(DesignSystem.Colors.textSecondary)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(DesignSystem.Colors.bgTag)
-                            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.tag))
-                    }
-                }
-                if !item.phone.isEmpty {
-                    Text(item.phone)
-                        .font(DesignSystem.Typography.caption)
-                        .foregroundStyle(DesignSystem.Colors.textSecondary)
-                }
-            }
-            Spacer()
+    private func importContacts() {
+        Task {
+            _ = await viewModel.performImport(context: modelContext)
         }
-        .padding(.vertical, 8)
-        .padding(.horizontal, 16)
-        .listRowInsets(EdgeInsets())
-        .listRowBackground(DesignSystem.Colors.bgSurface)
     }
 
-    private var importButton: some View {
-        VStack(spacing: 0) {
-            Rectangle()
-                .fill(DesignSystem.Colors.separator)
-                .frame(height: 1)
-            Button {
-                Task {
-                    _ = await viewModel.performImport(context: modelContext)
-                }
-            } label: {
-                if viewModel.isLoadingImport {
-                    ProgressView()
-                        .tint(.white)
-                } else {
-                    Text(String(format: String(localized: "contact.import.button"), Int64(viewModel.selectedCount)))
-                }
-            }
-            .buttonStyle(PrimaryButtonStyle())
-            .disabled(viewModel.selectedCount == 0 || viewModel.isLoadingImport)
-            .padding(16)
-        }
-        .background(DesignSystem.Colors.bgPage)
+    private func dismissAfterSuccess() {
+        viewModel.importSuccessCount = nil
+        dismiss()
     }
 }
-
-// MARK: - Preview
 
 #Preview {
     NavigationStack {

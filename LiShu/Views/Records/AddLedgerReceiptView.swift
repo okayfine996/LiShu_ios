@@ -18,79 +18,29 @@ struct AddLedgerReceiptView: View {
     }
 
     var body: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(spacing: DesignSystem.Spacing.section) {
-                if let message = continuousSaveMessage {
-                    inlineSuccessBanner(message)
-                }
-                if let event = viewModel.selectedEvent {
-                    // 礼簿收礼固定挂在当前事件下，这里只负责确认上下文，不再让用户切换事件。
-                    RecordEventSummaryCard(
-                        title: String(localized: "record.add.currentLedger"),
-                        event: event
-                    )
-                }
-                contactIdentitySection
-                MonetaryAmountInputCard(
-                    amount: monetaryAmountBinding,
-                    fieldAccessibilityIdentifier: "record.add.amountField"
-                )
-                PaymentMethodSelector(selectedMethod: paymentMethodBinding)
-                RelationshipWeightSelector(selectedWeight: relationshipWeightBinding)
-                dateSection
-                photosSection
-                notesSection
-                continueButton
-            }
-            .padding(.horizontal, 20)
-            .padding(.top, DesignSystem.Spacing.block)
-            .padding(.bottom, 32)
-        }
+        AddLedgerReceiptFormView(
+            viewModel: viewModel,
+            selectedPhotoItems: $selectedPhotoItems,
+            continuousSaveMessage: continuousSaveMessage,
+            onCreateContact: openAddContact,
+            onSaveAndContinue: { saveRecord(andContinue: true) }
+        )
         .background(DesignSystem.Colors.bgPage)
         .navigationTitle(String(localized: "event.ledger.primaryAction"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { toolbarContent }
-        .onAppear {
-            viewModel.load(context: modelContext)
-        }
+        .onAppear(perform: loadData)
         .onChange(of: selectedPhotoItems) { _, newItems in
-            Task {
-                var loaded: [NewRecordPhotoItem] = []
-                for item in newItems {
-                    if let data = try? await item.loadTransferable(type: Data.self), !data.isEmpty,
-                       let optimized = ImagePipeline.optimizedJPEGData(
-                           from: data,
-                           maxPixelSize: ImagePipeline.Preset.recordPhotoMaxPixelSize,
-                           compressionQuality: 0.84
-                       )
-                    {
-                        loaded.append(NewRecordPhotoItem(id: UUID(), data: optimized))
-                    }
-                }
-                await MainActor.run {
-                    viewModel.newPhotoItems = loaded
-                }
-            }
+            handleSelectedPhotoItems(newItems)
         }
-        .sheet(isPresented: $showAddContactSheet, onDismiss: refreshContactsAfterAddSheet) {
-            NavigationStack {
-                AddContactView()
-            }
-        }
-        .sheet(isPresented: $showProSheet) {
-            NavigationStack {
-                ProMembershipView()
-                    .environment(SubscriptionManager.shared)
-            }
-        }
+        .sheet(isPresented: $showAddContactSheet, onDismiss: refreshContactsAfterAddSheet, content: makeAddContactSheet)
+        .sheet(isPresented: $showProSheet, content: makeProSheet)
     }
 
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
         ToolbarItem(placement: .topBarLeading) {
-            Button {
-                dismiss()
-            } label: {
+            Button(action: dismiss.callAsFunction) {
                 Image(systemName: "xmark")
                     .foregroundStyle(DesignSystem.Colors.textPrimary)
             }
@@ -105,339 +55,51 @@ struct AddLedgerReceiptView: View {
         }
     }
 
-    private var contactIdentitySection: some View {
-        VStack(spacing: DesignSystem.Spacing.block) {
-            if let contact = viewModel.selectedContact {
-                selectedContactCard(contact)
-            }
-
-            // 礼簿录入强调连续登记，因此直接给出横向常用联系人入口来降低操作成本。
-            contactScrollSelector
+    private func makeAddContactSheet() -> some View {
+        NavigationStack {
+            AddContactView()
         }
     }
 
-    private func selectedContactCard(_ contact: Contact) -> some View {
-        HStack(spacing: 12) {
-            AvatarView(imageData: contact.avatar, name: contact.name, size: 52)
-                .overlay(
-                    Circle()
-                        .stroke(DesignSystem.Colors.border, lineWidth: 1)
-                )
+    private func makeProSheet() -> some View {
+        NavigationStack {
+            ProMembershipView()
+                .environment(SubscriptionManager.shared)
+        }
+    }
 
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 8) {
-                    Text(contact.name)
-                        .font(DesignSystem.Typography.title3)
-                        .foregroundStyle(DesignSystem.Colors.textPrimary)
+    private func loadData() {
+        viewModel.load(context: modelContext)
+    }
 
-                    if !contact.relation.isEmpty {
-                        Text(contact.relation)
-                            .font(DesignSystem.Typography.small)
-                            .foregroundStyle(DesignSystem.Colors.primary)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 2)
-                            .background(DesignSystem.Colors.primary.opacity(0.1))
-                            .clipShape(Capsule())
-                            .overlay(
-                                Capsule()
-                                    .stroke(DesignSystem.Colors.primary.opacity(0.2), lineWidth: 1)
-                            )
-                    }
+    private func handleSelectedPhotoItems(_ items: [PhotosPickerItem]) {
+        Task {
+            var loaded: [NewRecordPhotoItem] = []
+            for item in items {
+                if let data = try? await item.loadTransferable(type: Data.self), !data.isEmpty,
+                   let optimized = ImagePipeline.optimizedJPEGData(
+                       from: data,
+                       maxPixelSize: ImagePipeline.Preset.recordPhotoMaxPixelSize,
+                       compressionQuality: 0.84
+                   )
+                {
+                    loaded.append(NewRecordPhotoItem(id: UUID(), data: optimized))
                 }
-
-                Text(String(localized: "record.add.contactLabel"))
-                    .font(DesignSystem.Typography.small)
-                    .foregroundStyle(DesignSystem.Colors.textTertiary)
             }
-
-            Spacer()
-        }
-        .padding(14)
-        .background(DesignSystem.Colors.bgSurface)
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
-        .overlay(
-            RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
-                .stroke(DesignSystem.Colors.border, lineWidth: 1)
-        )
-    }
-
-    private var contactScrollSelector: some View {
-        VStack(alignment: .leading, spacing: DesignSystem.Spacing.block) {
-            Text(String(localized: "record.add.selectContact"))
-                .font(DesignSystem.Typography.small)
-                .foregroundStyle(DesignSystem.Colors.textTertiary)
-                .tracking(1.5)
-                .textCase(.uppercase)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 4)
-
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 16) {
-                    ForEach(viewModel.allContacts) { contact in
-                        contactAvatarItem(contact)
-                    }
-
-                    newContactTriggerItem
-                }
-                .padding(.horizontal, 4)
-                .padding(.bottom, 4)
+            await MainActor.run {
+                viewModel.newPhotoItems = loaded
             }
         }
     }
 
-    private func contactAvatarItem(_ contact: Contact) -> some View {
-        let isSelected = viewModel.selectedContact?.persistentModelID == contact.persistentModelID
-        return Button {
-            withAnimation(.easeInOut(duration: 0.2)) {
-                viewModel.selectedContact = contact
-            }
-        } label: {
-            VStack(spacing: 6) {
-                Circle()
-                    .fill(isSelected ? DesignSystem.Colors.primary.opacity(DesignSystem.Effects.selectedFillOpacity) : .clear)
-                    .frame(width: 60, height: 60)
-                    .overlay {
-                        AvatarView(
-                            imageData: contact.avatar,
-                            name: contact.name,
-                            size: 56,
-                            placeholderBackground: DesignSystem.Colors.bgSurface
-                        )
-                        .overlay(
-                            Circle()
-                                .stroke(
-                                    isSelected ? DesignSystem.Colors.primary : DesignSystem.Colors.border,
-                                    lineWidth: isSelected ? 2 : 1
-                                )
-                        )
-                        .frame(width: 60, height: 60)
-                    }
-                    .shadow(
-                        color: isSelected ? DesignSystem.Colors.primary.opacity(DesignSystem.Effects.selectedShadowOpacity) : .clear,
-                        radius: DesignSystem.Effects.selectedShadowRadius,
-                        y: DesignSystem.Effects.selectedShadowYOffset
-                    )
-
-                Text(contact.name)
-                    .font(DesignSystem.Typography.small)
-                    .foregroundStyle(isSelected ? DesignSystem.Colors.textPrimary : DesignSystem.Colors.textSecondary)
-                    .fontWeight(isSelected ? .medium : .regular)
-                    .lineLimit(1)
-            }
-            .frame(minWidth: 72)
-            .opacity(viewModel.selectedContact == nil || isSelected ? 1.0 : 0.7)
-        }
-        .buttonStyle(.plain)
-    }
-
-    private var newContactTriggerItem: some View {
-        Button {
-            contactIDsBeforeAddSheet = Set(viewModel.allContacts.map(\.persistentModelID))
-            showAddContactSheet = true
-        } label: {
-            VStack(spacing: 6) {
-                ZStack {
-                    Circle()
-                        .fill(DesignSystem.Colors.bgSurface)
-                        .frame(width: 56, height: 56)
-                    Circle()
-                        .stroke(DesignSystem.Colors.border, lineWidth: 1)
-                        .frame(width: 56, height: 56)
-                    Image(systemName: "person.badge.plus")
-                        .font(DesignSystem.Typography.caption)
-                        .foregroundStyle(DesignSystem.Colors.primary)
-                }
-                .frame(width: 60, height: 60)
-
-                Text(String(localized: "record.add.newContact"))
-                    .font(DesignSystem.Typography.small)
-                    .foregroundStyle(DesignSystem.Colors.textSecondary)
-                    .lineLimit(1)
-            }
-            .frame(minWidth: 72)
-        }
-        .buttonStyle(.plain)
-    }
-
-    private var dateSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(String(localized: "record.add.date"))
-                .font(DesignSystem.Typography.caption)
-                .foregroundStyle(DesignSystem.Colors.textSecondary)
-                .fontWeight(.semibold)
-
-            HStack {
-                DatePicker("", selection: dateBinding, displayedComponents: .date)
-                    .datePickerStyle(.compact)
-                    .labelsHidden()
-                    .tint(DesignSystem.Colors.primary)
-
-                Spacer()
-            }
-            .padding(12)
-            .background(DesignSystem.Colors.bgSurface)
-            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.input))
-            .overlay(
-                RoundedRectangle(cornerRadius: DesignSystem.Radius.input)
-                    .stroke(DesignSystem.Colors.border, lineWidth: 1)
-            )
-        }
-    }
-
-    private var photosSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(String(localized: "record.add.photos"))
-                .font(DesignSystem.Typography.caption)
-                .foregroundStyle(DesignSystem.Colors.textSecondary)
-                .fontWeight(.semibold)
-
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
-                    ForEach(viewModel.newPhotoItems) { item in
-                        photoThumbnail(imageData: item.data)
-                    }
-                    addPhotoButton
-                }
-                .padding(12)
-            }
-            .background(DesignSystem.Colors.bgSurface)
-            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
-        }
-    }
-
-    private func photoThumbnail(imageData: Data) -> some View {
-        Group {
-            if !imageData.isEmpty {
-                DecodedImageView(data: imageData, maxPixelSize: ImagePipeline.Preset.thumbnailMaxPixelSize)
-                    .scaledToFill()
-            }
-        }
-        .frame(width: 80, height: 80)
-        .clipped()
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.smallCard))
-    }
-
-    private var addPhotoButton: some View {
-        PhotosPicker(selection: $selectedPhotoItems, maxSelectionCount: 20, matching: .images) {
-            VStack(spacing: 6) {
-                Image(systemName: "plus")
-                    .font(DesignSystem.Typography.title3)
-                Text(String(localized: "record.add.addPhoto"))
-                    .font(DesignSystem.Typography.small)
-            }
-            .foregroundStyle(DesignSystem.Colors.textSecondary)
-            .frame(width: 80, height: 80)
-            .background(DesignSystem.Colors.bgTag)
-            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.smallCard))
-        }
-    }
-
-    private var notesSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(String(localized: "record.add.notes"))
-                .font(DesignSystem.Typography.caption)
-                .foregroundStyle(DesignSystem.Colors.textSecondary)
-                .fontWeight(.semibold)
-
-            TextEditor(text: noteBinding)
-                .font(DesignSystem.Typography.body)
-                .foregroundStyle(DesignSystem.Colors.textPrimary)
-                .frame(minHeight: 80)
-                .padding(8)
-                .scrollContentBackground(.hidden)
-                .background(DesignSystem.Colors.bgSurface)
-                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.input))
-                .overlay(
-                    RoundedRectangle(cornerRadius: DesignSystem.Radius.input)
-                        .stroke(DesignSystem.Colors.border, lineWidth: 1)
-                )
-        }
-    }
-
-    private var continueButton: some View {
-        VStack(spacing: 8) {
-            // 连续录入是礼簿场景的核心动作，所以保留为页面底部的次主按钮。
-            Button {
-                saveRecord(andContinue: true)
-            } label: {
-                Text(String(localized: "record.add.saveAndContinue"))
-            }
-            .buttonStyle(SecondaryButtonStyle())
-            .disabled(!viewModel.isValid)
-            .opacity(viewModel.isValid ? 1.0 : DesignSystem.Effects.disabledOpacity)
-
-            if !viewModel.isValid {
-                Text(String(localized: "record.add.saveDisabledHint"))
-                    .font(DesignSystem.Typography.small)
-                    .foregroundStyle(DesignSystem.Colors.textTertiary)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(DesignSystem.Colors.bgInput)
-                    .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.tag))
-                    .frame(maxWidth: .infinity)
-            }
-        }
-    }
-
-    private func inlineSuccessBanner(_ message: String) -> some View {
-        HStack(spacing: 10) {
-            Image(systemName: "checkmark.circle.fill")
-                .foregroundStyle(DesignSystem.Colors.primary)
-            Text(message)
-                .font(DesignSystem.Typography.caption)
-                .foregroundStyle(DesignSystem.Colors.textPrimary)
-            Spacer()
-        }
-        .padding(12)
-        .background(DesignSystem.Colors.bgSurface)
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.input))
-        .overlay(
-            RoundedRectangle(cornerRadius: DesignSystem.Radius.input)
-                .stroke(DesignSystem.Colors.border, lineWidth: 1)
-        )
-    }
-
-    private var monetaryAmountBinding: Binding<String> {
-        Binding(
-            get: { viewModel.monetaryAmount },
-            set: { viewModel.monetaryAmount = $0 }
-        )
-    }
-
-    private var paymentMethodBinding: Binding<PaymentMethod> {
-        Binding(
-            get: { viewModel.monetaryPaymentMethod },
-            set: { viewModel.monetaryPaymentMethod = $0 }
-        )
-    }
-
-    private var dateBinding: Binding<Date> {
-        Binding(
-            get: { viewModel.date },
-            set: { viewModel.date = $0 }
-        )
-    }
-
-    private var noteBinding: Binding<String> {
-        Binding(
-            get: { viewModel.note },
-            set: { viewModel.note = $0 }
-        )
-    }
-
-    private var relationshipWeightBinding: Binding<RelationshipWeight> {
-        Binding(
-            get: { viewModel.relationshipWeight },
-            set: { viewModel.relationshipWeight = $0 }
-        )
+    private func openAddContact() {
+        contactIDsBeforeAddSheet = Set(viewModel.allContacts.map(\.persistentModelID))
+        showAddContactSheet = true
     }
 
     private func refreshContactsAfterAddSheet() {
         viewModel.reloadContacts(context: modelContext)
-
-        let newContacts = viewModel.allContacts.filter { contact in
-            !contactIDsBeforeAddSheet.contains(contact.persistentModelID)
-        }
+        let newContacts = viewModel.allContacts.filter { !contactIDsBeforeAddSheet.contains($0.persistentModelID) }
         if let newestContact = newContacts.max(by: { $0.createdAt < $1.createdAt }) {
             viewModel.selectedContact = newestContact
         }
@@ -465,7 +127,6 @@ struct AddLedgerReceiptView: View {
                     amount.isEmpty ? "0" : amount
                 )
             }
-            // 连续录入时保留礼簿上下文，只清掉每一笔都会变化的输入项。
             viewModel.resetForContinuousEntry()
             selectedPhotoItems = []
             Task { @MainActor in
