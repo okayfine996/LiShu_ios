@@ -108,7 +108,7 @@ struct ProMembershipFeaturesSection: View {
 
 struct ProMembershipActiveSubscriptionCard: View {
     let planName: String?
-    let onDebugClearPurchases: () -> Void
+    let onDebugClearPurchases: (() -> Void)?
 
     var body: some View {
         VStack(spacing: 16) {
@@ -127,10 +127,12 @@ struct ProMembershipActiveSubscriptionCard: View {
             }
 
             #if DEBUG
-                Button(String(localized: "DEBUG: 清除购买状态"), action: onDebugClearPurchases)
-                    .font(DesignSystem.Typography.small)
-                    .foregroundStyle(.red)
-                    .padding(.top, 8)
+                if let onDebugClearPurchases {
+                    Button(String(localized: "DEBUG: 清除购买状态"), action: onDebugClearPurchases)
+                        .font(DesignSystem.Typography.small)
+                        .foregroundStyle(.red)
+                        .padding(.top, 8)
+                }
             #endif
         }
         .frame(maxWidth: .infinity)

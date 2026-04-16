@@ -23,7 +23,7 @@ struct ProMembershipView: View {
                 if effectiveProAccessEnabled {
                     ProMembershipActiveSubscriptionCard(
                         planName: subscriptionManager.currentSubscriptionName,
-                        onDebugClearPurchases: clearPurchases
+                        onDebugClearPurchases: debugClearPurchasesAction
                     )
                 } else {
                     ProMembershipPricingSection(
@@ -98,8 +98,14 @@ struct ProMembershipView: View {
         }
     }
 
-    private func clearPurchases() {
-        subscriptionManager.debugClearPurchases()
+    private var debugClearPurchasesAction: (() -> Void)? {
+        #if DEBUG
+            return {
+                subscriptionManager.debugClearPurchases()
+            }
+        #else
+            return nil
+        #endif
     }
 }
 
