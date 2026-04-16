@@ -146,7 +146,7 @@ private struct ContactListItemRow: View {
 
 private struct ContactListRow<Content: View>: View {
     let bottomInset: CGFloat
-    @ViewBuilder @ViewBuilder let content: Content
+    @ViewBuilder let content: Content
 
     var body: some View {
         content
