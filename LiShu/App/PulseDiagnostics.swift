@@ -59,7 +59,11 @@ enum PulseDiagnostics {
     nonisolated static func monitoringEnabled(arguments: [String], environment: [String: String]) -> Bool {
         if arguments.contains(Constants.uiTestingArgument) { return false }
         if environment[Constants.disabledEnvironmentKey] == "1" { return false }
-        if environment[Constants.xctestConfigurationEnvironmentKey] != nil { return false }
+        if let xctestConfiguration = environment[Constants.xctestConfigurationEnvironmentKey],
+           !xctestConfiguration.isEmpty
+        {
+            return false
+        }
         return true
     }
 
@@ -142,6 +146,36 @@ nonisolated enum AppLogLabel {
     static let recordsViewModel = "records.viewmodel"
     static let statsViewModel = "stats.viewmodel"
 }
+
+#if DEBUG
+    struct PulseDiagnosticsMessageSnapshot {
+        let text: String
+        let label: String
+        let metadata: [String: String]
+    }
+
+    extension PulseDiagnostics {
+        nonisolated static func loggerStoreSizeLimit(isDebugBuild: Bool = false) -> Int64 {
+            makeLoggerStoreConfiguration(isDebugBuild: isDebugBuild).sizeLimit
+        }
+
+        nonisolated static func clearStoredMessages() {
+            LoggerStore.shared.removeAll()
+        }
+
+        nonisolated static func messageSnapshots(label: String) throws -> [PulseDiagnosticsMessageSnapshot] {
+            try LoggerStore.shared.allMessages()
+                .filter { $0.label == label }
+                .map {
+                    PulseDiagnosticsMessageSnapshot(
+                        text: $0.text,
+                        label: $0.label,
+                        metadata: $0.metadata
+                    )
+                }
+        }
+    }
+#endif
 
 nonisolated enum UILogEventType: String {
     case screenView = "screen_view"

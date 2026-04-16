@@ -163,7 +163,9 @@ struct SampleData {
 
 enum SampleImages {
     static func makePNGData(width: CGFloat = 2400, height: CGFloat = 1800, color: UIColor = .systemTeal) -> Data {
-        let renderer = UIGraphicsImageRenderer(size: CGSize(width: width, height: height))
+        let format = UIGraphicsImageRendererFormat.default()
+        format.scale = 1
+        let renderer = UIGraphicsImageRenderer(size: CGSize(width: width, height: height), format: format)
         let image = renderer.image { context in
             color.setFill()
             context.fill(CGRect(origin: .zero, size: CGSize(width: width, height: height)))
@@ -172,7 +174,9 @@ enum SampleImages {
     }
 
     static func makeUIImage(width: CGFloat = 2400, height: CGFloat = 1800, color: UIColor = .systemPink) -> UIImage {
-        let renderer = UIGraphicsImageRenderer(size: CGSize(width: width, height: height))
+        let format = UIGraphicsImageRendererFormat.default()
+        format.scale = 1
+        let renderer = UIGraphicsImageRenderer(size: CGSize(width: width, height: height), format: format)
         return renderer.image { context in
             color.setFill()
             context.fill(CGRect(origin: .zero, size: CGSize(width: width, height: height)))

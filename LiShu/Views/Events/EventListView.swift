@@ -10,55 +10,40 @@ struct EventListView: View {
 
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
-            Group {
-                switch viewModel.state {
-                case .idle, .loading:
-                    ProgressView()
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                case let .loaded(events) where events.isEmpty:
-                    EmptyStateView(
-                        icon: "calendar",
-                        message: String(localized: "event.list.empty"),
-                        actionTitle: String(localized: "event.add.title"),
-                        action: {
-                            sheetRoute = .addEvent
-                        }
-                    )
-                case .loaded:
-                    eventListContent
-                case let .error(message):
-                    ErrorStateView(message: message) {
-                        viewModel.load(context: modelContext)
-                    }
-                }
-            }
+            DesignSystem.Colors.bgPage
+                .ignoresSafeArea()
+
+            EventListStateContainer(
+                state: viewModel.state,
+                filteredUpcomingEvents: viewModel.filteredUpcomingEvents,
+                filteredPastEvents: viewModel.filteredPastEvents,
+                hasNoResults: viewModel.hasNoResults,
+                selectedTypeFilter: viewModel.selectedTypeFilter,
+                upcomingBadge: upcomingBadge,
+                onRetry: loadData,
+                onAddEvent: presentAddEventSheet,
+                onSelectAllFilter: selectAllFilter,
+                onSelectTypeFilter: selectTypeFilter(_:),
+                onSelectEvent: showEventDetail(_:),
+                onDeleteEvent: confirmDelete(_:)
+            )
         }
-        .background(DesignSystem.Colors.bgPage)
         .navigationTitle(String(localized: "event.list.title"))
         .navigationBarTitleDisplayMode(.large)
         .trackScreen("events.list")
         .searchable(text: $viewModel.searchText, prompt: String(localized: "common.search"))
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    InteractionLogger.tap(
-                        screen: "events.list",
-                        target: "events.list.add",
-                        route: SheetRoute.addEvent.logName,
-                        presentation: .sheet
-                    )
-                    sheetRoute = .addEvent
-                } label: {
+                Button(action: presentAddEventSheet) {
                     Image(systemName: "plus")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(DesignSystem.Typography.body)
+                        .fontWeight(.semibold)
                         .foregroundStyle(DesignSystem.Colors.primary)
                 }
                 .accessibilityIdentifier("event.list.addButton")
             }
         }
-        .onAppear {
-            viewModel.load(context: modelContext)
-        }
+        .onAppear(perform: loadData)
         .sheet(item: $sheetRoute) { route in
             sheetContent(for: route)
         }
@@ -66,12 +51,7 @@ struct EventListView: View {
             EventDetailView(eventID: route.id)
         }
         .onChange(of: sheetRoute) { _, newValue in
-            if let newValue {
-                InteractionLogger.sheetPresentation(screen: "events.list", route: newValue.logName, isPresented: true)
-            }
-            if newValue == nil {
-                viewModel.load(context: modelContext)
-            }
+            handleSheetRouteChange(newValue)
         }
         .alert(String(localized: "common.error"), isPresented: Binding(
             get: { viewModel.deleteError != nil },
@@ -105,152 +85,57 @@ struct EventListView: View {
         }
     }
 
-    // MARK: - Event List Content
-
-    private var eventListContent: some View {
-        List {
-            listRow {
-                eventTypeFilterPills
-            }
-
-            if viewModel.hasNoResults {
-                listRow {
-                    EmptyStateView(
-                        icon: "magnifyingglass",
-                        message: String(localized: "event.list.noResults")
-                    )
-                }
-            } else {
-                if !viewModel.filteredUpcomingEvents.isEmpty {
-                    upcomingSection
-                }
-
-                if !viewModel.filteredPastEvents.isEmpty {
-                    pastSection
-                }
-            }
-        }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
+    private func loadData() {
+        viewModel.load(context: modelContext)
     }
 
-    // MARK: - Event Type Filter Pills
-
-    private var eventTypeFilterPills: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                // "All" pill
-                Button {
-                    withAnimation { viewModel.selectedTypeFilter = nil }
-                    InteractionLogger.tap(screen: "events.list", target: "events.list.filter.all")
-                } label: {
-                    Text(String(localized: "record.filter.all"))
-                        .font(DesignSystem.Typography.caption)
-                        .foregroundStyle(viewModel.selectedTypeFilter == nil ? .white : DesignSystem.Colors.textPrimary)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
-                        .background(viewModel.selectedTypeFilter == nil ? DesignSystem.Colors.primary : DesignSystem.Colors.bgCard)
-                        .clipShape(Capsule())
-                }
-                .buttonStyle(.plain)
-
-                ForEach(EventType.allCases, id: \.self) { type in
-                    Button {
-                        withAnimation { viewModel.selectedTypeFilter = type }
-                        InteractionLogger.tap(screen: "events.list", target: "events.list.filter.\(type.rawValue)")
-                    } label: {
-                        HStack(spacing: 4) {
-                            Image(systemName: type.iconName)
-                                .font(.system(size: 12))
-                            Text(type.displayName)
-                                .font(DesignSystem.Typography.caption)
-                        }
-                        .foregroundStyle(viewModel.selectedTypeFilter == type ? .white : DesignSystem.Colors.textPrimary)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 8)
-                        .background(viewModel.selectedTypeFilter == type ? DesignSystem.Colors.primary : DesignSystem.Colors.bgCard)
-                        .clipShape(Capsule())
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-        }
-        .padding(.top, 8)
+    private func presentAddEventSheet() {
+        InteractionLogger.tap(
+            screen: "events.list",
+            target: "events.list.add",
+            route: SheetRoute.addEvent.logName,
+            presentation: .sheet
+        )
+        sheetRoute = .addEvent
     }
 
-    // MARK: - Upcoming Section
-
-    private var upcomingSection: some View {
-        Section {
-            ForEach(viewModel.filteredUpcomingEvents) { event in
-                eventRow(event, badge: upcomingBadge(event.date))
-            }
-        } header: {
-            sectionHeader(String(localized: "event.list.upcoming"))
-        }
-    }
-
-    // MARK: - Past Section
-
-    private var pastSection: some View {
-        Section {
-            ForEach(viewModel.filteredPastEvents) { event in
-                eventRow(event, badge: nil)
-            }
-        } header: {
-            sectionHeader(String(localized: "event.list.past"))
-        }
-    }
-
-    // MARK: - Helpers
-
-    private func eventRow(_ event: Event, badge: String?) -> some View {
-        Button {
-            InteractionLogger.navigation(
+    private func handleSheetRouteChange(_ newValue: SheetRoute?) {
+        if let newValue {
+            InteractionLogger.sheetPresentation(
                 screen: "events.list",
-                target: "events.list.event.\(String(describing: event.persistentModelID))",
-                route: AppRoute.eventDetail(event.persistentModelID).logName
+                route: newValue.logName,
+                isPresented: true
             )
-            selectedEventRoute = SelectedEventRoute(id: event.persistentModelID)
-        } label: {
-            EventRowCard(
-                name: event.name,
-                coverImage: event.coverImage,
-                eventType: event.type,
-                date: event.date,
-                location: event.location,
-                recordCount: (event.records ?? []).count,
-                badge: badge
-            )
+        } else {
+            loadData()
         }
-        .buttonStyle(.plain)
-        .accessibilityIdentifier("event.list.row.\(event.name)")
-        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-            Button(role: .destructive) {
-                pendingDeleteEvent = event
-            } label: {
-                Label(String(localized: "common.delete"), systemImage: "trash")
-            }
-        }
-        .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 10, trailing: 16))
-        .listRowSeparator(.hidden)
-        .listRowBackground(Color.clear)
     }
 
-    private func sectionHeader(_ title: String) -> some View {
-        Text(title)
-            .font(DesignSystem.Typography.caption)
-            .foregroundStyle(DesignSystem.Colors.textSecondary)
-            .fontWeight(.semibold)
-            .textCase(nil)
-            .padding(.top, 10)
+    private func selectAllFilter() {
+        withAnimation {
+            viewModel.selectedTypeFilter = nil
+        }
+        InteractionLogger.tap(screen: "events.list", target: "events.list.filter.all")
     }
 
-    private func listRow(@ViewBuilder content: () -> some View) -> some View {
-        content()
-            .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 12, trailing: 16))
-            .listRowSeparator(.hidden)
-            .listRowBackground(Color.clear)
+    private func selectTypeFilter(_ type: EventType) {
+        withAnimation {
+            viewModel.selectedTypeFilter = type
+        }
+        InteractionLogger.tap(screen: "events.list", target: "events.list.filter.\(type.rawValue)")
+    }
+
+    private func showEventDetail(_ event: Event) {
+        InteractionLogger.navigation(
+            screen: "events.list",
+            target: "events.list.event.\(String(describing: event.persistentModelID))",
+            route: AppRoute.eventDetail(event.persistentModelID).logName
+        )
+        selectedEventRoute = SelectedEventRoute(id: event.persistentModelID)
+    }
+
+    private func confirmDelete(_ event: Event) {
+        pendingDeleteEvent = event
     }
 
     private func upcomingBadge(_ date: Date) -> String {
@@ -288,63 +173,4 @@ struct EventListView: View {
 
 private struct SelectedEventRoute: Identifiable, Hashable {
     let id: PersistentIdentifier
-}
-
-@MainActor
-private func makeEventListPreviewContainer() -> ModelContainer? {
-    guard let container = try? ModelContainer(
-        for: Contact.self, Record.self, Event.self,
-        configurations: ModelConfiguration(isStoredInMemoryOnly: true)
-    ) else { return nil }
-    let ctx = container.mainContext
-
-    let c1 = Contact(name: "张三", relation: "同事")
-    let c2 = Contact(name: "李四", relation: "朋友")
-    [c1, c2].forEach { ctx.insert($0) }
-
-    let cal = Calendar.current
-    let e1 = Event(name: "张三的婚礼", type: .wedding, date: cal.liShuDateByAddingDays(3), location: "北京国贸大酒店")
-    let e2 = Event(name: "李四生日宴", type: .birthday, date: cal.liShuDateByAddingDays(10), location: "上海外滩")
-    let e3 = Event(name: "小明毕业典礼", type: .education, date: cal.liShuDateByAddingDays(21), location: "广州大学")
-    let e4 = Event(name: "春节聚会", type: .festival, date: cal.liShuDateByAddingMonths(-2), location: "老家")
-    let e5 = Event(name: "王五乔迁", type: .property, date: cal.liShuDateByAddingMonths(-3), location: "深圳南山")
-    [e1, e2, e3, e4, e5].forEach { ctx.insert($0) }
-
-    let r1 = Record.makeMonetaryRecord(
-        contact: c1,
-        event: e4,
-        amount: 500,
-        direction: .given,
-        date: cal.liShuDateByAddingMonths(-2)
-    )
-    let r2 = Record.makeMonetaryRecord(
-        contact: c2,
-        event: e4,
-        amount: 300,
-        direction: .received,
-        date: cal.liShuDateByAddingMonths(-2)
-    )
-    let r3 = Record.makeMonetaryRecord(
-        contact: c1,
-        event: e5,
-        amount: 1000,
-        direction: .given,
-        date: cal.liShuDateByAddingMonths(-3)
-    )
-    [r1, r2, r3].forEach { ctx.insert($0) }
-
-    return container
-}
-
-#Preview {
-    Group {
-        if let container = makeEventListPreviewContainer() {
-            NavigationStack {
-                EventListView()
-            }
-            .modelContainer(container)
-        } else {
-            Text(String(localized: "common.preview.unavailable"))
-        }
-    }
 }
