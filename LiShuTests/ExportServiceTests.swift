@@ -272,4 +272,260 @@ struct ExportServiceTests {
         #expect(!lines[1].contains("李四"))
         #expect(!lines[1].contains("茶具"))
     }
+
+    // MARK: - Contact CSV Export
+
+    @Test func exportContactCSVHeader() throws {
+        let db = try TestDB()
+        let csv = try ExportService.exportContactCSV(context: db.context)
+        let lines = csv.components(separatedBy: "\n")
+        #expect(lines[0] == "姓名,手机号,关系标签,关系分类,亲密圈层,生日,所在地,备注")
+    }
+
+    @Test func exportContactCSVWithData() throws {
+        let db = try TestDB()
+        let contact = Contact(
+            name: "张三",
+            phone: "13800138000",
+            relation: "朋友",
+            category: "社交",
+            circle: 3,
+            birthday: {
+                var comps = DateComponents()
+                comps.year = 1990
+                comps.month = 6
+                comps.day = 15
+                return Calendar.current.date(from: comps)! // swiftlint:disable:this force_unwrapping
+            }(),
+            location: "北京",
+            note: "老同学"
+        )
+        db.context.insert(contact)
+        try db.context.save()
+
+        let csv = try ExportService.exportContactCSV(context: db.context)
+        let lines = csv.components(separatedBy: "\n")
+        #expect(lines.count == 2)
+        #expect(lines[1].contains("张三"))
+        #expect(lines[1].contains("13800138000"))
+        #expect(lines[1].contains("朋友"))
+        #expect(lines[1].contains("社交"))
+        #expect(lines[1].contains("3"))
+        #expect(lines[1].contains("1990-06-15"))
+        #expect(lines[1].contains("北京"))
+        #expect(lines[1].contains("老同学"))
+    }
+
+    @Test func exportContactCSVNoBirthday() throws {
+        let db = try TestDB()
+        let contact = Contact(name: "李四", phone: "13900139000")
+        db.context.insert(contact)
+        try db.context.save()
+
+        let csv = try ExportService.exportContactCSV(context: db.context)
+        let lines = csv.components(separatedBy: "\n")
+        #expect(lines.count == 2)
+        #expect(lines[1].contains("李四"))
+        #expect(lines[1].contains("13900139000"))
+    }
+
+    @Test func exportContactCSVEscapesSpecialChars() throws {
+        let db = try TestDB()
+        let contact = Contact(name: "王五", note: "备注里有,逗号")
+        db.context.insert(contact)
+        try db.context.save()
+
+        let csv = try ExportService.exportContactCSV(context: db.context)
+        let lines = csv.components(separatedBy: "\n")
+        #expect(lines[1].contains("\"备注里有,逗号\""))
+    }
+
+    // MARK: - Contact CSV Template
+
+    @Test func contactCSVTemplateHasNoRelationColumns() {
+        let csv = ExportService.contactCSVTemplate()
+        let lines = csv.components(separatedBy: "\n")
+        #expect(lines.count == 3)
+        #expect(lines[0] == "姓名,手机号,生日,所在地,备注")
+        #expect(!lines[0].contains("关系标签"))
+        #expect(!lines[0].contains("关系分类"))
+        #expect(!lines[0].contains("亲密圈层"))
+    }
+
+    @Test func contactCSVTemplateExampleRows() {
+        let csv = ExportService.contactCSVTemplate()
+        let lines = csv.components(separatedBy: "\n")
+        #expect(lines[1].contains("张三"))
+        #expect(lines[2].contains("李四"))
+    }
+
+    // MARK: - Contact CSV Preview
+
+    @Test func previewContactCSVParsesItems() {
+        let csv = "姓名,手机号,所在地\n张三,13800138000,北京\n李四,13900139000,上海"
+        let preview = ExportService.previewContactCSV(content: csv, sourceFileName: "test.csv")
+
+        #expect(preview.items.count == 2)
+        #expect(preview.items[0].name == "张三")
+        #expect(preview.items[0].isImportable)
+        #expect(preview.items[0].isSelected)
+        #expect(preview.items[0].detailText.contains("13800138000"))
+        #expect(preview.items[0].detailText.contains("北京"))
+        #expect(preview.items[1].name == "李四")
+    }
+
+    @Test func previewContactCSVEmptyNameMarkedError() {
+        let csv = "姓名,手机号\n,13800138000\n张三,13900139000"
+        let preview = ExportService.previewContactCSV(content: csv)
+
+        #expect(preview.items.count == 2)
+        #expect(!preview.items[0].isImportable)
+        #expect(preview.items[0].statusMessage != nil)
+        #expect(preview.items[1].isImportable)
+    }
+
+    @Test func previewContactCSVMissingNameHeader() {
+        let csv = "手机号,所在地\n13800138000,北京"
+        let preview = ExportService.previewContactCSV(content: csv)
+
+        #expect(preview.items.isEmpty)
+        #expect(preview.errors == 1)
+    }
+
+    @Test func previewContactCSVEmptyContent() {
+        let csv = "姓名,手机号"
+        let preview = ExportService.previewContactCSV(content: csv)
+
+        #expect(preview.items.isEmpty)
+    }
+
+    // MARK: - Contact CSV Import (via preview)
+
+    @Test func importContactCSVFromTemplate() throws {
+        let db = try TestDB()
+        let csv = "姓名,手机号,生日,所在地,备注\n张三,13800138000,1990-01-15,北京,好友\n李四,13900139000,,上海,"
+        let preview = ExportService.previewContactCSV(content: csv)
+        let result = try ExportService.importContactPreviewItems(preview.items, context: db.context)
+
+        #expect(result.created == 2)
+        #expect(result.updated == 0)
+
+        let contacts = try db.context.fetch(FetchDescriptor<Contact>())
+        #expect(contacts.count == 2)
+
+        let zhangsan = contacts.first { $0.name == "张三" }
+        #expect(zhangsan?.phone == "13800138000")
+        #expect(zhangsan?.location == "北京")
+        #expect(zhangsan?.note == "好友")
+        #expect(zhangsan?.circle == 4)
+        #expect(zhangsan?.relation == "")
+        #expect(zhangsan?.category == "")
+    }
+
+    @Test func importContactCSVWithAllColumns() throws {
+        let db = try TestDB()
+        let csv = "姓名,手机号,关系标签,关系分类,亲密圈层,生日,所在地,备注\n张三,13800138000,朋友,社交,3,1990-01-15,北京,老同学"
+        let preview = ExportService.previewContactCSV(content: csv)
+        let result = try ExportService.importContactPreviewItems(preview.items, context: db.context)
+
+        #expect(result.created == 1)
+
+        let contacts = try db.context.fetch(FetchDescriptor<Contact>())
+        let contact = contacts[0]
+        #expect(contact.relation == "朋友")
+        #expect(contact.category == "社交")
+        #expect(contact.circle == 3)
+        #expect(contact.location == "北京")
+    }
+
+    @Test func importContactCSVColumnsInDifferentOrder() throws {
+        let db = try TestDB()
+        let csv = "备注,姓名,所在地,手机号\n好友,张三,北京,13800138000"
+        let preview = ExportService.previewContactCSV(content: csv)
+        let result = try ExportService.importContactPreviewItems(preview.items, context: db.context)
+
+        #expect(result.created == 1)
+
+        let contacts = try db.context.fetch(FetchDescriptor<Contact>())
+        let contact = contacts[0]
+        #expect(contact.name == "张三")
+        #expect(contact.phone == "13800138000")
+        #expect(contact.location == "北京")
+        #expect(contact.note == "好友")
+    }
+
+    @Test func importContactCSVUpdatesExisting() throws {
+        let db = try TestDB()
+        let existing = Contact(name: "张三", phone: "11111111111", location: "广州")
+        db.context.insert(existing)
+        try db.context.save()
+
+        let csv = "姓名,手机号,所在地\n张三,13800138000,北京"
+        let preview = ExportService.previewContactCSV(content: csv)
+        let result = try ExportService.importContactPreviewItems(preview.items, context: db.context)
+
+        #expect(result.created == 0)
+        #expect(result.updated == 1)
+
+        let contacts = try db.context.fetch(FetchDescriptor<Contact>())
+        #expect(contacts.count == 1)
+        #expect(contacts[0].phone == "13800138000")
+        #expect(contacts[0].location == "北京")
+    }
+
+    @Test func importContactCSVSkipsUnselected() throws {
+        let db = try TestDB()
+        let csv = "姓名,手机号\n张三,13800138000\n李四,13900139000"
+        var preview = ExportService.previewContactCSV(content: csv)
+        preview.items[1].isSelected = false
+
+        let result = try ExportService.importContactPreviewItems(preview.items, context: db.context)
+
+        #expect(result.created == 1)
+        let contacts = try db.context.fetch(FetchDescriptor<Contact>())
+        #expect(contacts.count == 1)
+        #expect(contacts[0].name == "张三")
+    }
+
+    @Test func importContactCSVInvalidCircleUsesDefault() throws {
+        let db = try TestDB()
+        let csv = "姓名,亲密圈层\n张三,9"
+        let preview = ExportService.previewContactCSV(content: csv)
+        let result = try ExportService.importContactPreviewItems(preview.items, context: db.context)
+
+        #expect(result.created == 1)
+        let contacts = try db.context.fetch(FetchDescriptor<Contact>())
+        #expect(contacts[0].circle == 4)
+    }
+
+    @Test func importContactCSVRoundTrip() throws {
+        let db = try TestDB()
+        let contact = Contact(
+            name: "赵六",
+            phone: "13700137000",
+            relation: "同事",
+            category: "社交",
+            circle: 2,
+            location: "深圳",
+            note: "项目搭档"
+        )
+        db.context.insert(contact)
+        try db.context.save()
+
+        let exported = try ExportService.exportContactCSV(context: db.context)
+
+        let db2 = try TestDB()
+        let preview = ExportService.previewContactCSV(content: exported)
+        let result = try ExportService.importContactPreviewItems(preview.items, context: db2.context)
+
+        #expect(result.created == 1)
+        let imported = try db2.context.fetch(FetchDescriptor<Contact>())
+        #expect(imported[0].name == "赵六")
+        #expect(imported[0].phone == "13700137000")
+        #expect(imported[0].relation == "同事")
+        #expect(imported[0].category == "社交")
+        #expect(imported[0].circle == 2)
+        #expect(imported[0].location == "深圳")
+        #expect(imported[0].note == "项目搭档")
+    }
 }

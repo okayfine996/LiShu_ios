@@ -678,6 +678,116 @@
         }
       }
     },
+    "contact.csv.export" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导出联系人"
+          }
+        }
+      }
+    },
+    "contact.csv.import" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导入联系人"
+          }
+        }
+      }
+    },
+    "contact.csv.importResult" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导入完成"
+          }
+        }
+      }
+    },
+    "contact.csv.importResultMessage" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新增 %lld 人，更新 %lld 人，失败 %lld 人"
+          }
+        }
+      }
+    },
+    "contact.csv.preview.confirm %lld" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "确认导入（%lld）"
+          }
+        }
+      }
+    },
+    "contact.csv.preview.empty" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前文件没有可导入的联系人。"
+          }
+        }
+      }
+    },
+    "contact.csv.preview.invalid.missingName" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "缺少姓名"
+          }
+        }
+      }
+    },
+    "contact.csv.preview.loading" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在准备导入..."
+          }
+        }
+      }
+    },
+    "contact.csv.preview.summary %lld %lld" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已选 %1$lld 人，异常 %2$lld 人"
+          }
+        }
+      }
+    },
+    "contact.csv.preview.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导入预览"
+          }
+        }
+      }
+    },
+    "contact.csv.template" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "联系人模板"
+          }
+        }
+      }
+    },
     "contact.detail.activityRate" : {
       "localizations" : {
         "zh-Hans" : {
@@ -1832,6 +1942,9 @@
           }
         }
       }
+    },
+    "DEBUG: 清除购买状态" : {
+
     },
     "debug.clearAllData" : {
       "localizations" : {
