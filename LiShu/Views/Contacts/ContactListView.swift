@@ -221,7 +221,9 @@ struct ContactListView: View {
     private func exportContactCSV() {
         do {
             let csv = try ExportService.exportContactCSV(context: modelContext)
-            let url = FileManager.default.temporaryDirectory.appendingPathComponent("contacts.csv")
+            let dateStr = DateFormatter.localizedString(from: Date(), dateStyle: .short, timeStyle: .none)
+                .replacingOccurrences(of: "/", with: "-")
+            let url = FileManager.default.temporaryDirectory.appendingPathComponent("contacts_\(dateStr).csv")
             try csv.write(to: url, atomically: true, encoding: .utf8)
             contactShareURL = url
         } catch {
