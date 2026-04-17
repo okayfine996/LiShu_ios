@@ -46,7 +46,7 @@ enum ExportService {
         for record: Record
     ) -> (eventName: String, eventTypeName: String, sceneTag: String)? {
         if let event = record.event {
-            return (event.name, event.type.importExportName, "")
+            return (event.name, event.type.displayName, "")
         }
 
         let trimmedSceneTag = record.contextTag.trimmingCharacters(in: .whitespacesAndNewlines)

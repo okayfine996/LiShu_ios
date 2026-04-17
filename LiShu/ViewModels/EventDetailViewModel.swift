@@ -24,12 +24,18 @@ class EventDetailViewModel {
             .reduce(0.0) { $0 + $1.resolvedDisplayAmount }
     }
 
-    /// 普通事件默认是“我去参加别人的场合”，因此详情里只突出最新的一条主记录摘要。
+    /// 普通事件默认是”我去参加别人的场合”，因此详情里只突出最新的一条主记录摘要。
     var primaryRecord: Record? {
         guard let event else { return nil }
         return (event.records ?? [])
             .sorted { $0.date > $1.date }
             .first
+    }
+
+    /// 普通事件详情的所有送礼记录，按时间倒序。
+    var allRecords: [Record] {
+        guard let event else { return [] }
+        return (event.records ?? []).sorted { $0.date > $1.date }
     }
 
     /// 礼簿详情只展示收礼记录，避免和普通送礼记录混在同一列表里。

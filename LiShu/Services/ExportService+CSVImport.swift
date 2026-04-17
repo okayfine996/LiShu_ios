@@ -398,13 +398,21 @@ extension ExportService {
         var descriptor = FetchDescriptor<Contact>(predicate: predicate)
         descriptor.fetchLimit = 1
 
-        if let existing = try? context.fetch(descriptor).first {
-            Self.importLogger.info("Reused contact during import", metadata: [
+        do {
+            if let existing = try context.fetch(descriptor).first {
+                Self.importLogger.info("Reused contact during import", metadata: [
+                    "step": .string("find_or_create_contact"),
+                    "result": .string("existing"),
+                    "contact_id": .string(String(describing: existing.persistentModelID)),
+                ])
+                return existing
+            }
+        } catch {
+            Self.importLogger.warning("Failed to fetch contact, creating new one", metadata: [
                 "step": .string("find_or_create_contact"),
-                "result": .string("existing"),
-                "contact_id": .string(String(describing: existing.persistentModelID)),
+                "target": .string(trimmed),
+                "error": .string(error.localizedDescription),
             ])
-            return existing
         }
         let contact = Contact(name: trimmed)
         context.insert(contact)
@@ -451,12 +459,17 @@ extension ExportService {
         let s = normalizeImportedText(str)
         switch s {
         case "婚礼": return .wedding
+        case "订婚": return .engagement
         case "丧葬": return .funeral
         case "满月": return .birth
         case "生日": return .birthday
+        case "寿宴": return .longevity
         case "节庆": return .festival
         case "乔迁": return .property
         case "升学": return .education
+        case "开业": return .business
+        case "升职": return .promotion
+        case "探望": return .visit
         case "其他": return .other
         default: return .other
         }

@@ -217,6 +217,7 @@ extension ExportService {
             values["金额"] = String(format: "%.2f", record.monetaryAmount)
             values["支付方式"] = record.resolvedPaymentMethod.csvValue
             values["已退金额"] = String(format: "%.2f", record.resolvedReturnedAmount)
+        // 注：货币类型无"人情描述"列，不需要填充
         case .gift:
             values["礼品名称"] = record.giftData?.giftName ?? ""
             values["礼品估值"] = if let estimatedValue = record.giftData?.estimatedValue {
@@ -373,6 +374,7 @@ extension ExportService {
     }
 
     private nonisolated static func templateRow(for recordType: RecordType) -> String {
+        let today = csvDateFormatter.string(from: Date())
         let values: [[String: String]] = switch recordType {
         case .monetary:
             [
@@ -382,7 +384,7 @@ extension ExportService {
                     "事件类型": "婚礼",
                     "场景标签": "",
                     "方向": "送出",
-                    "日期": "2026-04-09",
+                    "日期": today,
                     "备注": "示例备注",
                     "情分分量": "礼尚往来",
                     "金额": "800.00",
@@ -395,7 +397,7 @@ extension ExportService {
                     "事件类型": "",
                     "场景标签": "节日看望",
                     "方向": "送出",
-                    "日期": "2026-04-09",
+                    "日期": today,
                     "备注": "日常礼金示例",
                     "情分分量": "礼尚往来",
                     "金额": "300.00",
@@ -411,7 +413,7 @@ extension ExportService {
                     "事件类型": "乔迁",
                     "场景标签": "",
                     "方向": "送出",
-                    "日期": "2026-04-09",
+                    "日期": today,
                     "备注": "示例备注",
                     "情分分量": "礼尚往来",
                     "礼品名称": "景德镇茶具",
@@ -424,7 +426,7 @@ extension ExportService {
                     "事件类型": "",
                     "场景标签": "出差带特产",
                     "方向": "送出",
-                    "日期": "2026-04-09",
+                    "日期": today,
                     "备注": "日常礼品示例",
                     "情分分量": "礼尚往来",
                     "礼品名称": "地方特产礼盒",
@@ -440,7 +442,7 @@ extension ExportService {
                     "事件类型": "探望",
                     "场景标签": "",
                     "方向": "送出",
-                    "日期": "2026-04-09",
+                    "日期": today,
                     "备注": "示例备注",
                     "情分分量": "礼尚往来",
                     "帮忙说明": "帮忙挂号预约",
@@ -452,7 +454,7 @@ extension ExportService {
                     "事件类型": "",
                     "场景标签": "帮忙挂号",
                     "方向": "送出",
-                    "日期": "2026-04-09",
+                    "日期": today,
                     "备注": "日常帮忙示例",
                     "情分分量": "礼尚往来",
                     "帮忙说明": "帮忙代取检查报告",
@@ -467,7 +469,7 @@ extension ExportService {
                     "事件类型": "其他",
                     "场景标签": "",
                     "方向": "送出",
-                    "日期": "2026-04-09",
+                    "日期": today,
                     "备注": "示例备注",
                     "情分分量": "礼尚往来",
                     "宴请地点": "兰亭包厢",
@@ -481,7 +483,7 @@ extension ExportService {
                     "事件类型": "",
                     "场景标签": "接风洗尘",
                     "方向": "送出",
-                    "日期": "2026-04-09",
+                    "日期": today,
                     "备注": "日常宴请示例",
                     "情分分量": "礼尚往来",
                     "宴请地点": "家常馆包间",
@@ -500,10 +502,11 @@ extension ExportService {
     }
 
     private nonisolated static func ledgerTemplateRows() -> String {
+        let today = csvDateFormatter.string(from: Date())
         let values = [
             [
                 "联系人": "张三",
-                "日期": "2026-04-09",
+                "日期": today,
                 "备注": "婚礼签到时登记",
                 "情分分量": "礼尚往来",
                 "金额": "1000.00",
@@ -511,7 +514,7 @@ extension ExportService {
             ],
             [
                 "联系人": "李四",
-                "日期": "2026-04-09",
+                "日期": today,
                 "备注": "亲友到场随礼",
                 "情分分量": "情深义重",
                 "金额": "2000.00",

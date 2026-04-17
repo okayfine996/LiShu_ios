@@ -1943,6 +1943,9 @@
         }
       }
     },
+    "DEBUG: 清除购买状态" : {
+
+    },
     "debug.clearAllData" : {
       "localizations" : {
         "en" : {
@@ -2337,6 +2340,16 @@
         }
       }
     },
+    "event.detail.giftRecords" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "送礼记录"
+          }
+        }
+      }
+    },
     "event.detail.monetaryRecordTitle" : {
       "localizations" : {
         "zh-Hans" : {
@@ -2379,6 +2392,7 @@
       }
     },
     "event.detail.primaryRecord" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {

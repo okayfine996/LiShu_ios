@@ -95,22 +95,4 @@ enum EventType: String, Codable, CaseIterable {
     case visit
     /// 其他
     case other
-
-    nonisolated var importExportName: String {
-        switch self {
-        case .wedding: String(localized: "event.type.wedding")
-        case .engagement: String(localized: "event.type.engagement")
-        case .funeral: String(localized: "event.type.funeral")
-        case .birth: String(localized: "event.type.birth")
-        case .birthday: String(localized: "event.type.birthday")
-        case .longevity: String(localized: "event.type.longevity")
-        case .festival: String(localized: "event.type.festival")
-        case .property: String(localized: "event.type.property")
-        case .education: String(localized: "event.type.education")
-        case .business: String(localized: "event.type.business")
-        case .promotion: String(localized: "event.type.promotion")
-        case .visit: String(localized: "event.type.visit")
-        case .other: String(localized: "event.type.other")
-        }
-    }
 }
