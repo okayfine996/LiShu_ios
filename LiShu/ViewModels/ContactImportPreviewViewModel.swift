@@ -108,7 +108,7 @@ class ContactImportPreviewViewModel {
         }
 
         return try await ExportService.importContactPreviewItemsAsync(
-            items,
+            selectedItems,
             container: container
         )
     }
