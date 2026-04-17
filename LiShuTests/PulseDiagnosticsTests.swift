@@ -124,6 +124,10 @@ struct PulseDiagnosticsTests {
     @Test("business record query logger writes summarized record payloads into Pulse store")
     func businessRecordQueryLoggerWritesSummarizedRecordPayloads() throws {
         try withLoggerStoreIsolation {
+            let runID = UUID().uuidString
+            let screen = "records.list.\(runID)"
+            let operation = "load_\(runID)"
+            let searchText = "张\(runID)"
             let db = try TestDB()
             let contact = SampleData.contact(name: "张三", relation: "朋友")
             let event = SampleData.event(name: "婚礼", type: .wedding)
@@ -138,9 +142,9 @@ struct PulseDiagnosticsTests {
             PulseDiagnostics.clearStoredMessages()
 
             BusinessDataLogger.recordQuery(
-                screen: "records.list",
-                operation: "load",
-                searchText: "张",
+                screen: screen,
+                operation: operation,
+                searchText: searchText,
                 filters: ["recordType": "all"],
                 sort: "date_desc",
                 records: [record]
@@ -149,16 +153,17 @@ struct PulseDiagnosticsTests {
             let expectedRecordID = try #require(record.logPayload().id)
             let message = try waitForMessage(label: AppLogLabel.dataQuery) { message in
                 message.metadata["event_type"] == "record_query" &&
-                    message.metadata["screen"] == "records.list" &&
-                    message.metadata["query_input"]?.contains("\"searchText\":\"张\"") == true
+                    message.metadata["screen"] == screen &&
+                    message.metadata["operation"] == operation &&
+                    message.metadata["query_input"]?.contains("\"searchText\":\"\(searchText)\"") == true
             }
 
             #expect(message.metadata["event_type"] == "record_query")
             #expect(message.metadata["domain"] == "record")
-            #expect(message.metadata["screen"] == "records.list")
+            #expect(message.metadata["screen"] == screen)
             #expect(message.metadata["result_count"] == "1")
-            #expect(message.metadata["query_input"]?.contains("\"searchText\":\"张\"") == true)
-            #expect(message.metadata["raw_payload"]?.contains("\"searchText\":\"张\"") == true)
+            #expect(message.metadata["query_input"]?.contains("\"searchText\":\"\(searchText)\"") == true)
+            #expect(message.metadata["raw_payload"]?.contains("\"searchText\":\"\(searchText)\"") == true)
             #expect(message.metadata["raw_payload"]?.contains("\"resultCount\":1") == true)
             #expect(containsNormalized(message.metadata["raw_payload"], expectedRecordID))
             #expect(message.metadata["raw_results"] == "[]")
@@ -168,14 +173,18 @@ struct PulseDiagnosticsTests {
     @Test("business query logger records empty result sets")
     func businessQueryLoggerRecordsEmptyResultSets() throws {
         try withLoggerStoreIsolation {
+            let runID = UUID().uuidString
+            let screen = "contacts.list.\(runID)"
+            let operation = "search_change_\(runID)"
+            let searchText = "不存在\(runID)"
             PulseDiagnostics.configureIfNeeded(arguments: [], environment: [:])
             PulseDiagnostics.clearStoredMessages()
 
             BusinessDataLogger.entityQuery(
                 domain: "contact",
-                screen: "contacts.list",
-                operation: "search_change",
-                searchText: "不存在",
+                screen: screen,
+                operation: operation,
+                searchText: searchText,
                 filters: ["circleFilter": "all"],
                 sort: "name_asc",
                 results: [ContactLogPayload]()
@@ -183,8 +192,9 @@ struct PulseDiagnosticsTests {
 
             let message = try waitForMessage(label: AppLogLabel.dataQuery) { message in
                 message.metadata["event_type"] == "entity_query" &&
-                    message.metadata["screen"] == "contacts.list" &&
-                    message.metadata["query_input"]?.contains("\"searchText\":\"不存在\"") == true
+                    message.metadata["screen"] == screen &&
+                    message.metadata["operation"] == operation &&
+                    message.metadata["query_input"]?.contains("\"searchText\":\"\(searchText)\"") == true
             }
 
             #expect(message.metadata["event_type"] == "entity_query")

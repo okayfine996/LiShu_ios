@@ -21,10 +21,11 @@ struct EventDetailContentView: View {
             } else {
                 EventDetailStandardView(
                     event: event,
-                    primaryRecord: viewModel.primaryRecord,
+                    records: viewModel.allRecords,
                     formattedDate: viewModel.formattedDate,
                     isUpcoming: viewModel.isUpcoming,
                     daysUntilEvent: viewModel.daysUntilEvent,
+                    pendingDeleteRecord: $pendingDeleteRecord,
                     onAddRecord: onAddRecord
                 )
             }

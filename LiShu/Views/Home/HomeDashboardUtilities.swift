@@ -88,6 +88,14 @@ enum HomeDashboardFormatters {
         eventDateFormatter.string(from: date)
     }
 
+    static func upcomingEventSupportingText(_ event: Event) -> String? {
+        let trimmedLocation = event.location.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedLocation.isEmpty else {
+            return nil
+        }
+        return trimmedLocation
+    }
+
     static func recordAmount(_ record: Record) -> String {
         "¥" + String(format: "%.0f", record.monetaryAmount)
     }

@@ -3,69 +3,135 @@ import SwiftUI
 
 struct EventDetailStandardView: View {
     let event: Event
-    let primaryRecord: Record?
+    let records: [Record]
     let formattedDate: String
     let isUpcoming: Bool
     let daysUntilEvent: Int?
+    @Binding var pendingDeleteRecord: Record?
     let onAddRecord: () -> Void
 
+    private let rowInsets = EdgeInsets(
+        top: 0,
+        leading: DesignSystem.Spacing.pageHorizontal,
+        bottom: DesignSystem.Spacing.block,
+        trailing: DesignSystem.Spacing.pageHorizontal
+    )
+
     var body: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(spacing: 16) {
-                if let coverData = event.coverImage {
+        List {
+            if let coverData = event.coverImage {
+                EventDetailCardListRow {
                     EventDetailCoverImageView(data: coverData)
                 }
+            }
 
+            EventDetailCardListRow {
                 EventDetailHeroCard(
                     event: event,
                     formattedDate: formattedDate,
                     isUpcoming: isUpcoming,
                     daysUntilEvent: daysUntilEvent
                 )
+            }
 
-                EventDetailPrimaryRecordSection(
-                    eventID: event.persistentModelID,
-                    primaryRecord: primaryRecord,
-                    onAddRecord: onAddRecord
-                )
-
-                if !event.note.isEmpty {
+            if !event.note.isEmpty {
+                EventDetailCardListRow {
                     EventDetailNotesSection(note: event.note)
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 16)
+
+            EventDetailGiftRecordsSection(
+                records: records,
+                pendingDeleteRecord: $pendingDeleteRecord,
+                onAddRecord: onAddRecord
+            )
         }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .background(DesignSystem.Colors.bgPage)
     }
 }
 
-private struct EventDetailPrimaryRecordSection: View {
-    let eventID: PersistentIdentifier
-    let primaryRecord: Record?
-    let onAddRecord: () -> Void
+private struct EventDetailCardListRow<Content: View>: View {
+    @ViewBuilder let content: () -> Content
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(String(localized: "event.detail.primaryRecord"))
-                .font(DesignSystem.Typography.title3)
-                .foregroundStyle(DesignSystem.Colors.textPrimary)
+        content()
+            .listRowInsets(EdgeInsets(
+                top: 0,
+                leading: DesignSystem.Spacing.pageHorizontal,
+                bottom: DesignSystem.Spacing.block,
+                trailing: DesignSystem.Spacing.pageHorizontal
+            ))
+            .listRowSeparator(.hidden)
+            .listRowBackground(Color.clear)
+    }
+}
 
-            if let primaryRecord {
-                NavigationLink {
-                    RecordDetailView(recordID: primaryRecord.persistentModelID)
-                } label: {
-                    EventDetailPrimaryRecordCard(record: primaryRecord)
-                }
-                .buttonStyle(.plain)
-            } else {
+private struct EventDetailGiftRecordsSection: View {
+    let records: [Record]
+    @Binding var pendingDeleteRecord: Record?
+    let onAddRecord: () -> Void
+
+    private let rowInsets = EdgeInsets(
+        top: 0,
+        leading: DesignSystem.Spacing.pageHorizontal,
+        bottom: DesignSystem.Spacing.block,
+        trailing: DesignSystem.Spacing.pageHorizontal
+    )
+
+    var body: some View {
+        Section {
+            if records.isEmpty {
                 EmptyStateView(
                     icon: "doc.text",
                     message: String(localized: "event.detail.noPrimaryRecord"),
                     actionTitle: String(localized: "event.detail.addRecord"),
                     action: onAddRecord
                 )
-                .frame(height: 180)
+                .frame(height: 200)
+                .listRowInsets(rowInsets)
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
+            } else {
+                ForEach(records) { record in
+                    RecordRow(record: record)
+                        .background(DesignSystem.Colors.bgSurface)
+                        .overlay {
+                            NavigationLink(destination: RecordDetailView(recordID: record.persistentModelID)) {
+                                EmptyView()
+                            }
+                            .opacity(0)
+                        }
+                        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.smallCard))
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            Button(role: .destructive) {
+                                pendingDeleteRecord = record
+                            } label: {
+                                Label(String(localized: "common.delete"), systemImage: "trash")
+                            }
+                        }
+                        .listRowInsets(rowInsets)
+                        .listRowSeparator(.hidden)
+                        .listRowBackground(Color.clear)
+                }
             }
+        } header: {
+            HStack {
+                Text(String(localized: "event.detail.giftRecords"))
+                    .font(DesignSystem.Typography.title3)
+                    .foregroundStyle(DesignSystem.Colors.textPrimary)
+
+                Spacer()
+
+                Text(String(format: String(localized: "event.list.recordCount"), records.count))
+                    .font(DesignSystem.Typography.small)
+                    .foregroundStyle(DesignSystem.Colors.textTertiary)
+            }
+            .padding(.horizontal, DesignSystem.Spacing.pageHorizontal)
+            .padding(.bottom, DesignSystem.Spacing.block)
+            .listRowInsets(EdgeInsets())
+            .background(DesignSystem.Colors.bgPage)
         }
     }
 }
@@ -98,11 +164,6 @@ private struct EventDetailPrimaryRecordCard: View {
                 }
 
                 Spacer()
-
-                Image(systemName: "chevron.right")
-                    .font(DesignSystem.Typography.small)
-                    .fontWeight(.medium)
-                    .foregroundStyle(DesignSystem.Colors.textTertiary)
             }
 
             VStack(spacing: 10) {

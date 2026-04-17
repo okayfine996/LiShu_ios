@@ -59,7 +59,7 @@ enum EventHostMode: String, Codable, CaseIterable {
     case guest
     case host
 
-    var displayName: String {
+    nonisolated var displayName: String {
         switch self {
         case .guest: String(localized: "event.hostMode.guest")
         case .host: String(localized: "event.hostMode.host")

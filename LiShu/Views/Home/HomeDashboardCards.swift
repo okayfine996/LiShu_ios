@@ -14,10 +14,20 @@ struct HomeSectionHeader: View {
 
             if let route {
                 NavigationLink(value: route) {
-                    Text(String(localized: "common.viewAll"))
-                        .font(DesignSystem.Typography.caption)
-                        .foregroundStyle(DesignSystem.Colors.primary)
+                    HStack(spacing: DesignSystem.Spacing.dense) {
+                        Text(String(localized: "common.viewAll"))
+                            .font(DesignSystem.Typography.caption)
+
+                        Image(systemName: "arrow.right")
+                            .font(.system(size: 10, weight: .semibold))
+                    }
+                    .foregroundStyle(DesignSystem.Colors.primary)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(DesignSystem.Colors.bgSurface.opacity(0.7))
+                    .clipShape(Capsule())
                 }
+                .buttonStyle(.plain)
             }
         }
     }
@@ -58,41 +68,79 @@ struct HomeUpcomingEventCard: View {
                 .overlay {
                     LinearGradient(
                         colors: [
-                            Color.black.opacity(0),
-                            Color.black.opacity(0.08),
-                            Color.black.opacity(0.26),
+                            Color.black.opacity(0.02),
+                            Color.black.opacity(0.12),
+                            Color.black.opacity(0.38),
                         ],
                         startPoint: .top,
                         endPoint: .bottom
                     )
                 }
+                .overlay(alignment: .topTrailing) {
+                    Circle()
+                        .fill(.white.opacity(0.16))
+                        .frame(width: 110, height: 110)
+                        .blur(radius: 14)
+                        .offset(x: 20, y: -12)
+                        .accessibilityHidden(true)
+                }
 
-            VStack(alignment: .leading, spacing: 8) {
-                Text(event.type.displayName)
-                    .font(DesignSystem.Typography.small)
-                    .foregroundStyle(DesignSystem.Colors.primary)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 4)
-                    .background(DesignSystem.Colors.bgSurface.opacity(0.9))
-                    .clipShape(Capsule())
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(event.name)
-                        .font(DesignSystem.Typography.caption)
-                        .foregroundStyle(.white)
-                        .fontWeight(.semibold)
-                        .lineLimit(1)
-
-                    Text(HomeDashboardFormatters.eventDate(event.date))
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.inlineTight) {
+                HStack(alignment: .top) {
+                    Text(event.type.displayName)
                         .font(DesignSystem.Typography.small)
-                        .foregroundStyle(.white.opacity(0.82))
+                        .foregroundStyle(DesignSystem.Colors.textOnPrimary)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(.white.opacity(0.18))
+                        .clipShape(Capsule())
+
+                    Spacer()
+
+                    HStack(spacing: 4) {
+                        Image(systemName: "calendar")
+                            .font(.system(size: 10, weight: .semibold))
+
+                        Text(HomeDashboardFormatters.eventDate(event.date))
+                            .font(DesignSystem.Typography.small)
+                    }
+                    .foregroundStyle(.white.opacity(0.9))
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(.black.opacity(0.16))
+                    .clipShape(Capsule())
+                }
+
+                VStack(alignment: .leading, spacing: DesignSystem.Spacing.stackTight) {
+                    Text(event.name)
+                        .font(DesignSystem.Typography.title2)
+                        .foregroundStyle(.white)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.9)
+
+                    if let supportingText = HomeDashboardFormatters.upcomingEventSupportingText(event) {
+                        Text(supportingText)
+                            .font(DesignSystem.Typography.caption)
+                            .foregroundStyle(.white.opacity(0.84))
+                            .lineLimit(1)
+                    }
                 }
             }
-            .padding(12)
+            .padding(DesignSystem.Spacing.cardPaddingSmall)
         }
         .frame(maxWidth: .infinity)
         .frame(height: 196)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.smallCard))
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignSystem.Radius.smallCard)
+                .stroke(.white.opacity(0.12), lineWidth: 1)
+        )
+        .shadow(
+            color: DesignSystem.Colors.primary.opacity(0.10),
+            radius: 12,
+            x: 0,
+            y: 8
+        )
         .frame(maxWidth: .infinity, alignment: .leading)
         .contentShape(Rectangle())
         .padding(.horizontal, 2)
@@ -125,10 +173,10 @@ struct HomeRecentRecordCard: View {
     let record: Record
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: DesignSystem.Spacing.block) {
             AvatarView(imageData: record.contact?.avatar, name: record.contact?.name ?? "")
 
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.stackTight) {
                 Text(record.contact?.name ?? "")
                     .font(DesignSystem.Typography.body)
                     .fontWeight(.semibold)
@@ -142,14 +190,14 @@ struct HomeRecentRecordCard: View {
 
             Spacer()
 
-            VStack(alignment: .trailing, spacing: 4) {
+            VStack(alignment: .trailing, spacing: DesignSystem.Spacing.stackTight) {
                 if record.isMonetary {
                     Text(HomeDashboardFormatters.recordAmount(record))
-                        .font(DesignSystem.Typography.body)
+                        .font(DesignSystem.Typography.title3)
                         .fontWeight(.semibold)
                         .foregroundStyle(DesignSystem.Colors.primary)
                 } else {
-                    HStack(spacing: 4) {
+                    HStack(spacing: DesignSystem.Spacing.dense) {
                         Text(record.recordType.iconEmoji)
                             .font(DesignSystem.Typography.caption)
                         Text(record.resolvedDescription)
@@ -164,10 +212,14 @@ struct HomeRecentRecordCard: View {
                     .foregroundStyle(DesignSystem.Colors.textTertiary)
             }
         }
-        .padding(.vertical, 12)
-        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .padding(.horizontal, DesignSystem.Spacing.cardPaddingSmall)
         .contentShape(Rectangle())
-        .background(DesignSystem.Colors.bgSurface)
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+        .background(DesignSystem.Colors.bgSurface.opacity(0.94))
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.smallCard))
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignSystem.Radius.smallCard)
+                .stroke(DesignSystem.Colors.primary.opacity(0.05), lineWidth: 1)
+        )
     }
 }

@@ -4,19 +4,21 @@
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>zh-Hans</string>
+	<key>CFBundleDisplayName</key>
+	<string>LiShu</string>
 	<key>CFBundleLocalizations</key>
 	<array>
 		<string>zh-Hans</string>
 	</array>
-	<key>NSContactsUsageDescription</key>
-	<string>用于从通讯录选择联系人并填充姓名和手机号</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>NSCameraUsageDescription</key>
 	<string>用于拍摄礼簿照片进行 OCR 识别导入</string>
+	<key>NSContactsUsageDescription</key>
+	<string>用于从通讯录选择联系人并填充姓名和手机号</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>
 	</array>
-	<key>ITSAppUsesNonExemptEncryption</key>
-	<false/>
 </dict>
 </plist>

@@ -217,24 +217,25 @@ private struct EventDetailLedgerRecordsSection: View {
                 .listRowBackground(Color.clear)
             } else {
                 ForEach(records) { record in
-                    NavigationLink {
-                        RecordDetailView(recordID: record.persistentModelID)
-                    } label: {
-                        RecordRow(record: record)
-                    }
-                    .buttonStyle(.plain)
-                    .background(DesignSystem.Colors.bgSurface)
-                    .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.smallCard))
-                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                        Button(role: .destructive) {
-                            pendingDeleteRecord = record
-                        } label: {
-                            Label(String(localized: "common.delete"), systemImage: "trash")
+                    RecordRow(record: record)
+                        .background(DesignSystem.Colors.bgSurface)
+                        .overlay {
+                            NavigationLink(destination: RecordDetailView(recordID: record.persistentModelID)) {
+                                EmptyView()
+                            }
+                            .opacity(0)
                         }
-                    }
-                    .listRowInsets(rowInsets)
-                    .listRowSeparator(.hidden)
-                    .listRowBackground(Color.clear)
+                        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.smallCard))
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            Button(role: .destructive) {
+                                pendingDeleteRecord = record
+                            } label: {
+                                Label(String(localized: "common.delete"), systemImage: "trash")
+                            }
+                        }
+                        .listRowInsets(rowInsets)
+                        .listRowSeparator(.hidden)
+                        .listRowBackground(Color.clear)
                 }
             }
         } header: {

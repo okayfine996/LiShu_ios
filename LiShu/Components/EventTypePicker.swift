@@ -42,7 +42,7 @@ struct EventTypePicker: View {
 // MARK: - EventType Display
 
 extension EventType {
-    var iconName: String {
+    nonisolated var iconName: String {
         switch self {
         case .wedding: "heart.fill"
         case .engagement: "heart.circle.fill"
@@ -60,7 +60,7 @@ extension EventType {
         }
     }
 
-    var displayName: String {
+    nonisolated var displayName: String {
         switch self {
         case .wedding: String(localized: "event.type.wedding")
         case .engagement: String(localized: "event.type.engagement")
