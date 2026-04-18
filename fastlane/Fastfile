@@ -5,23 +5,38 @@ platform :ios do
   desc "Archive Release 并导出 IPA（默认 app-store，可上传 TestFlight）。可选 bump:true 在打包前先递增 build"
   lane :ipa do |options|
     perform_bump_build_number if options[:bump]
+
+    is_ci = ENV["CI"] == "true"
+    ci_setup_signing if is_ci
+
     export_method = options[:export_method] || ENV["EXPORT_METHOD"] || "app-store"
-    build_app(
+    build_options = {
       scheme: "LiShu",
       project: "./LiShu.xcodeproj",
       configuration: "Release",
       clean: true,
       export_method: export_method,
       output_directory: "./fastlane/build",
-      output_name: "LiShu.ipa",
-      # 允许 xcodebuild 在 Automatic 签名下更新描述文件（CLI/CI 常用）
-      xcargs: "-allowProvisioningUpdates"
-    )
+      output_name: "LiShu.ipa"
+    }
+
+    if is_ci
+      build_options[:export_options] = {
+        method: "app-store",
+        signingStyle: "manual",
+        provisioningProfiles: { "com.finefine.LiShu" => "LiShu AppStore" }
+      }
+    else
+      # 允许 xcodebuild 在 Automatic 签名下更新描述文件（本地常用）
+      build_options[:xcargs] = "-allowProvisioningUpdates"
+    end
+
+    build_app(**build_options)
   end
 
-  desc "将已有 IPA + fastlane/screenshots 上传到 App Store Connect（优先使用 frameit 的 *_framed.png；无套壳时回退 raw；元数据请在网页维护）"
-  lane :upload_app_store do
-    perform_upload_app_store
+  desc "将已有 IPA + fastlane/screenshots 上传到 App Store Connect（优先使用 frameit 的 *_framed.png；无套壳时回退 raw；元数据请在网页维护）。可选 submit:true 同时提交审核"
+  lane :upload_app_store do |options|
+    perform_upload_app_store(submit: options[:submit] || false)
   end
 
   desc "仅递增 Xcode 工程中的 Build 号（CFBundleVersion / agvtool）；配置了 API Key 时会与当前 Marketing Version 下 TestFlight 最新 build 对齐，避免上传冲突"
@@ -29,11 +44,11 @@ platform :ios do
     perform_bump_build_number
   end
 
-  desc "打包 IPA 并上传 IPA + 截图到 App Store Connect（一键；默认先 bump build，可用 skip_bump 关闭）"
+  desc "打包 IPA 并上传 IPA + 截图到 App Store Connect（一键；默认先 bump build，可用 skip_bump 关闭）。可选 submit:true 同时提交审核"
   lane :release_store do |options|
     perform_bump_build_number unless options[:skip_bump]
     ipa unless options[:skip_ipa]
-    perform_upload_app_store
+    perform_upload_app_store(submit: options[:submit] || false)
   end
 
   # 等价于 fastlane 文档中的 capture_screenshots / snapshot
@@ -81,6 +96,38 @@ platform :ios do
     frame_screenshots(path: "./fastlane/screenshots")
     generate_lishu_framed_screenshot_report
   end
+end
+
+# CI 环境：从 GitHub Secrets 环境变量导入 Distribution 证书和 Provisioning Profile 到临时 Keychain
+def ci_setup_signing
+  require "base64"
+  require "fileutils"
+
+  keychain_name = "ci_signing.keychain-db"
+  keychain_password = "ci_temp_pass"
+
+  create_keychain(
+    name: keychain_name,
+    password: keychain_password,
+    default_keychain: true,
+    unlock: true,
+    timeout: 3600,
+    add_to_search_list: true
+  )
+
+  cert_path = "/tmp/dist_cert.p12"
+  File.binwrite(cert_path, Base64.decode64(ENV.fetch("DIST_CERT_BASE64")))
+  import_certificate(
+    certificate_path: cert_path,
+    certificate_password: ENV.fetch("DIST_CERT_PASSWORD"),
+    keychain_name: keychain_name,
+    keychain_password: keychain_password
+  )
+
+  profile_dir = File.expand_path("~/Library/MobileDevice/Provisioning Profiles")
+  FileUtils.mkdir_p(profile_dir)
+  profile_path = File.join(profile_dir, "LiShu_AppStore.mobileprovision")
+  File.binwrite(profile_path, Base64.decode64(ENV.fetch("PROVISIONING_PROFILE_BASE64")))
 end
 
 def lishu_xcodeproj_path
@@ -204,7 +251,7 @@ def prepare_deliver_screenshots_path
   dst_root
 end
 
-def perform_upload_app_store
+def perform_upload_app_store(submit: false)
   ipa_path = File.expand_path("build/LiShu.ipa", __dir__)
   UI.user_error!("找不到 IPA：#{ipa_path}，请先执行 fastlane ios ipa") unless File.exist?(ipa_path)
 
@@ -215,8 +262,17 @@ def perform_upload_app_store
     ipa: ipa_path,
     skip_metadata: true,
     force: true,
-    submit_for_review: false
+    submit_for_review: submit,
+    automatic_release: false
   }
+
+  if submit
+    upload_params[:submission_information] = {
+      export_compliance_uses_encryption: false,
+      add_id_info_uses_idfa: false
+    }
+  end
+
   upload_params[:api_key] = key unless key.nil?
 
   if screenshots_path
