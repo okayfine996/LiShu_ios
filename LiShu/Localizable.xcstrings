@@ -3148,6 +3148,7 @@
       }
     },
     "event.smartGift.reason.noHistory" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -3344,6 +3345,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "往来历史"
+          }
+        }
+      }
+    },
+    "event.smartGift.timeline.more" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "还有 %d 条更早的往来记录"
+          }
+        }
+      }
+    },
+    "event.smartGift.disclaimer" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "以上建议仅供参考，不构成任何财务或社交建议，请结合实际情况自行判断。"
           }
         }
       }

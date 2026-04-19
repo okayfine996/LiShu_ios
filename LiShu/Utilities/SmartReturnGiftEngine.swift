@@ -11,7 +11,9 @@ import Foundation
 /// 4. 关系权重（必有，始终是最后一张）
 ///
 /// `params` 携带结构化参数，由 View 层结合本地化格式串渲染为最终文案。
-struct SmartReturnGiftReasoningCard {
+struct SmartReturnGiftReasoningCard: Identifiable {
+    let id = UUID()
+
     enum CardType {
         /// 有历史往来记录（净余为正），以净余×通胀×对等系数为基准
         case historicalPositive
@@ -93,11 +95,11 @@ struct SmartReturnGiftResult {
     /// 基准金额：净余 > 0 时 = max(⌊netBalance × inflation × symmetry / 50⌋ × 50, floor)
     ///          净余 ≤ 0 时 = 活动类型最低基准
     let baselineAmount: Double
-    /// 保守档 = max(⌊baseline × 0.70 / 50⌋ × 50, 最低基准)
+    /// 保守档 = max(⌊baseline × 0.70 / 50⌋ × 50, 50)，保证 < standardAmount（除非 baseline = 50）
     let conservativeAmount: Double
     /// 标准档 = baseline
     let standardAmount: Double
-    /// 慷慨档 = max(⌊baseline × 1.25 / 50⌋ × 50, 最低基准)
+    /// 慷慨档 = ⌈baseline × 1.25 / 50⌉ × 50，向上取整保证 > standardAmount
     let generousAmount: Double
 
     /// ── 建议依据 ───────────────────────────────────────────────────────────
@@ -147,12 +149,14 @@ struct SmartReturnGiftResult {
 ///    standard     = baseline
 ///    generous     = max(⌊baseline × 1.25 / 50⌋ × 50, 最低基准)
 ///
-/// 6. 活动类型最低基准（eventTypeFloor）
-///    婚礼/订婚       600
-///    出生/寿宴       500
-///    乔迁/开业/晋升  400
-///    生日/升学/丧礼  300
-///    节日/拜访/其他  200
+/// 6. 活动类型最低基准（eventTypeFloor × adjustCircle，二维表）
+///    先用 adjustCircle 修正有效圈层（圈层 3 中职场关系降为 4），再查表
+///    活动类型         家人(1)  亲属(2)  朋友/同学(3)  同事/其他(4)
+///    婚礼/订婚         2000    1000      600          300
+///    出生/寿宴         1000     600      300          200
+///    生日/升学/丧礼     500     300      200          100
+///    乔迁/开业/晋升     500     300      200          100
+///    节日/拜访/其他     200     100      100           50
 /// ```
 ///
 /// ## 输出
@@ -182,7 +186,8 @@ enum SmartReturnGiftEngine {
             : nil
         let symmetryFactor = symInfo?.factor ?? 1.0
 
-        let floor = Double(eventTypeFloor(event.type))
+        let effectiveCircle = adjustCircle(contact.circle, relation: contact.relation)
+        let floor = Double(eventTypeFloor(event.type, circle: effectiveCircle))
 
         // 两步推导，保证 CPI 卡片和对等性卡片各自展示正确的阶段性基准
         let cpiBaseline: Double
@@ -195,9 +200,9 @@ enum SmartReturnGiftEngine {
             baseline = max(roundTo50(cpiBaseline * symmetryFactor), floor)
         }
 
-        let conservative = max(roundTo50(baseline * 0.7), floor)
+        let conservative = max(roundTo50(baseline * 0.7), 50)
         let standard = baseline
-        let generous = max(roundTo50(baseline * 1.25), floor)
+        let generous = roundTo50Up(baseline * 1.25)
 
         let reasoningCards = buildReasoningCards(
             contact: contact,
@@ -379,13 +384,51 @@ enum SmartReturnGiftEngine {
         Double(Int((value / 50).rounded(.down)) * 50)
     }
 
-    private static func eventTypeFloor(_ type: EventType) -> Int {
-        switch type {
-        case .wedding, .engagement: 600
-        case .birth, .longevity: 500
-        case .birthday, .education, .funeral: 300
-        case .property, .business, .promotion: 400
-        case .festival, .visit, .other: 200
+    /// 向上取整到最近的 50（用于慷慨档，保证 ≥ 输入值）
+    private static func roundTo50Up(_ value: Double) -> Double {
+        Double(Int(ceil(value / 50)) * 50)
+    }
+
+    /// 根据具体关系文本修正有效圈层，用于 floor 计算
+    /// 圈层 3（社交）中的职场关系降为圈层 4，使用更保守的基准
+    private static func adjustCircle(_ circle: Int, relation: String) -> Int {
+        guard circle == 3 else { return circle }
+        let workKeywords = ["同事", "上级", "下属", "领导", "老板", "客户", "甲方", "生意伙伴", "合作伙伴", "同僚"]
+        return workKeywords.contains(where: { relation.contains($0) }) ? 4 : 3
+    }
+
+    /// 活动类型最低基准（二维表：活动类型 × 有效圈层）
+    ///
+    /// | 活动类型         | 家人(1) | 亲属(2) | 朋友/同学(3) | 同事/其他(4) |
+    /// |----------------|--------|--------|------------|------------|
+    /// | 婚礼/订婚        | 2000   | 1000   | 600        | 300        |
+    /// | 出生/寿宴        | 1000   | 600    | 300        | 200        |
+    /// | 生日/升学/丧礼   | 500    | 300    | 200        | 100        |
+    /// | 乔迁/开业/晋升   | 500    | 300    | 200        | 100        |
+    /// | 节日/拜访/其他   | 200    | 100    | 100        | 50         |
+    ///
+    /// 有效圈层由 `adjustCircle` 修正，圈层 3 中职场关系降为圈层 4。
+    private static func eventTypeFloor(_ type: EventType, circle: Int) -> Int {
+        switch (type, circle) {
+        case (.wedding, 1), (.engagement, 1): 2000
+        case (.wedding, 2), (.engagement, 2): 1000
+        case (.wedding, 3), (.engagement, 3): 600
+        case (.wedding, _), (.engagement, _): 300
+        case (.birth, 1), (.longevity, 1): 1000
+        case (.birth, 2), (.longevity, 2): 600
+        case (.birth, 3), (.longevity, 3): 300
+        case (.birth, _), (.longevity, _): 200
+        case (.birthday, 1), (.education, 1), (.funeral, 1): 500
+        case (.birthday, 2), (.education, 2), (.funeral, 2): 300
+        case (.birthday, 3), (.education, 3), (.funeral, 3): 200
+        case (.birthday, _), (.education, _), (.funeral, _): 100
+        case (.property, 1), (.business, 1), (.promotion, 1): 500
+        case (.property, 2), (.business, 2), (.promotion, 2): 300
+        case (.property, 3), (.business, 3), (.promotion, 3): 200
+        case (.property, _), (.business, _), (.promotion, _): 100
+        case (.festival, 1), (.visit, 1), (.other, 1): 200
+        case (.festival, 2), (.visit, 2), (.other, 2): 100
+        default: 50
         }
     }
 }

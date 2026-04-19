@@ -150,15 +150,20 @@ extension EventDetailView {
         )
     }
 
-    /// Returns the smart return gift callback only when the event is upcoming, has a primaryContact, and no gift has been given yet.
+    /// Returns the smart return gift callback only when the event is upcoming, guest-mode, has a primaryContact, and no gift has been given
+    /// yet.
     func smartReturnGiftCallback(for event: Event) -> (() -> Void)? {
-        guard viewModel.isUpcoming, event.primaryContact != nil, !event.hasGivenRecord else { return nil }
+        guard viewModel.isUpcoming,
+              event.hostMode == .guest,
+              event.primaryContact != nil,
+              !event.hasGivenRecord else { return nil }
         return { openSmartReturnGift(for: event) }
     }
 
     func computeSmartReturnGiftResult(for event: Event) {
         guard
             viewModel.isUpcoming,
+            event.hostMode == .guest,
             !event.hasGivenRecord,
             let contact = event.primaryContact
         else {

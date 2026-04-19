@@ -10,6 +10,7 @@ struct SmartReturnGiftView: View {
 
     @State private var result: SmartReturnGiftResult?
     @State private var selectedTier: GiftTier = .standard
+    @State private var selectedPaymentMethod: PaymentMethod = .cash
     @State private var amountText: String = ""
     @State private var isShowingErrorAlert = false
     @State private var errorMessage: String?
@@ -117,7 +118,17 @@ struct SmartReturnGiftView: View {
             sectionHeader(String(localized: "event.smartGift.timeline.title"))
 
             VStack(alignment: .leading, spacing: 0) {
-                let displayed = Array(result.historicalRecords.suffix(5))
+                let all = result.historicalRecords
+                let displayed = Array(all.suffix(5))
+                let hiddenCount = all.count - displayed.count
+
+                if hiddenCount > 0 {
+                    Text(String(format: String(localized: "event.smartGift.timeline.more"), hiddenCount))
+                        .font(DesignSystem.Typography.small)
+                        .foregroundStyle(DesignSystem.Colors.textTertiary)
+                        .padding(.bottom, 8)
+                }
+
                 ForEach(Array(displayed.enumerated()), id: \.offset) { index, record in
                     timelineRow(record: record, isLast: index == displayed.count - 1)
                 }
@@ -214,7 +225,7 @@ struct SmartReturnGiftView: View {
         VStack(alignment: .leading, spacing: 8) {
             sectionHeader(String(localized: "event.smartGift.reasoning.title"))
 
-            ForEach(result.reasoningCards, id: \.type) { card in
+            ForEach(result.reasoningCards) { card in
                 reasoningCard(
                     iconName: iconName(for: card.type),
                     title: title(for: card.type),
@@ -310,10 +321,10 @@ struct SmartReturnGiftView: View {
     }
 
     private func inflationYearsLabel(_ factor: Double) -> String {
-        switch factor {
-        case 1.05: String(localized: "event.smartGift.reason.cpi.years.1to2")
-        case 1.10: String(localized: "event.smartGift.reason.cpi.years.3to4")
-        case 1.15: String(localized: "event.smartGift.reason.cpi.years.5to7")
+        switch Int(round(factor * 100)) {
+        case 105: String(localized: "event.smartGift.reason.cpi.years.1to2")
+        case 110: String(localized: "event.smartGift.reason.cpi.years.3to4")
+        case 115: String(localized: "event.smartGift.reason.cpi.years.5to7")
         default: String(localized: "event.smartGift.reason.cpi.years.8plus")
         }
     }
@@ -489,6 +500,8 @@ struct SmartReturnGiftView: View {
                     .stroke(DesignSystem.Colors.border, lineWidth: 1)
             )
 
+            PaymentMethodSelector(selectedMethod: $selectedPaymentMethod)
+
             Button {
                 confirmGift(result)
             } label: {
@@ -497,6 +510,12 @@ struct SmartReturnGiftView: View {
             .buttonStyle(PrimaryButtonStyle())
             .disabled(!isConfirmEnabled)
             .opacity(isConfirmEnabled ? 1.0 : 0.6)
+
+            Text(String(localized: "event.smartGift.disclaimer"))
+                .font(DesignSystem.Typography.small)
+                .foregroundStyle(DesignSystem.Colors.textTertiary)
+                .multilineTextAlignment(.center)
+                .padding(.top, 4)
         }
     }
 
@@ -538,7 +557,7 @@ struct SmartReturnGiftView: View {
             event: result.event,
             amount: amount,
             direction: .given,
-            paymentMethod: .cash,
+            paymentMethod: selectedPaymentMethod,
             date: .now
         )
         modelContext.insert(record)
@@ -554,6 +573,20 @@ struct SmartReturnGiftView: View {
 
     // MARK: - Formatting Helpers
 
+    private static let decimalFormatter: NumberFormatter = {
+        let f = NumberFormatter()
+        f.numberStyle = .decimal
+        f.maximumFractionDigits = 0
+        return f
+    }()
+
+    private static let monthFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "zh_Hans")
+        f.dateFormat = "yyyy年M月"
+        return f
+    }()
+
     /// 带 ¥ 前缀，用于直接展示（时间轴、余额行、档位标签等）
     private func formatAmount(_ value: Double) -> String {
         "¥\(formatNumber(value))"
@@ -561,10 +594,7 @@ struct SmartReturnGiftView: View {
 
     /// 不含 ¥ 前缀，用于传入已含 ¥ 的本地化格式串（避免 ¥¥ 重复）
     private func formatNumber(_ value: Double) -> String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .decimal
-        formatter.maximumFractionDigits = 0
-        return formatter.string(from: NSNumber(value: value)) ?? String(format: "%.0f", value)
+        Self.decimalFormatter.string(from: NSNumber(value: value)) ?? String(format: "%.0f", value)
     }
 
     private func formatRawAmount(_ value: Double) -> String {
@@ -572,10 +602,7 @@ struct SmartReturnGiftView: View {
     }
 
     private func shortDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "zh_Hans")
-        formatter.dateFormat = "yyyy年M月"
-        return formatter.string(from: date)
+        Self.monthFormatter.string(from: date)
     }
 
     private func daysUntil(_ date: Date) -> Int? {
