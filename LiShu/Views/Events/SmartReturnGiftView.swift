@@ -23,7 +23,9 @@ struct SmartReturnGiftView: View {
             VStack(spacing: 16) {
                 if let result {
                     contactHeaderCard(result)
-                    timelineSection(result)
+                    if !result.historicalRecords.isEmpty {
+                        timelineSection(result)
+                    }
                     reasoningSection(result)
                     tierSelector(result)
                     confirmSection(result)
@@ -115,25 +117,16 @@ struct SmartReturnGiftView: View {
             sectionHeader(String(localized: "event.smartGift.timeline.title"))
 
             VStack(alignment: .leading, spacing: 0) {
-                if result.historicalRecords.isEmpty {
-                    Text(String(format: String(localized: "event.smartGift.reason.noHistory"), result.event.type.displayName))
-                        .font(DesignSystem.Typography.caption)
-                        .foregroundStyle(DesignSystem.Colors.textSecondary)
-                        .padding(.vertical, 8)
-                } else {
-                    VStack(spacing: 0) {
-                        let displayed = Array(result.historicalRecords.suffix(5))
-                        ForEach(Array(displayed.enumerated()), id: \.offset) { index, record in
-                            timelineRow(record: record, isLast: index == displayed.count - 1)
-                        }
-                    }
-
-                    Divider()
-                        .foregroundStyle(DesignSystem.Colors.separator)
-                        .padding(.top, 4)
-
-                    balanceSummaryRow(result)
+                let displayed = Array(result.historicalRecords.suffix(5))
+                ForEach(Array(displayed.enumerated()), id: \.offset) { index, record in
+                    timelineRow(record: record, isLast: index == displayed.count - 1)
                 }
+
+                Divider()
+                    .foregroundStyle(DesignSystem.Colors.separator)
+                    .padding(.top, 4)
+
+                balanceSummaryRow(result)
             }
             .padding(16)
             .background(DesignSystem.Colors.bgSurface)
