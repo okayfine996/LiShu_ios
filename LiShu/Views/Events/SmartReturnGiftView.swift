@@ -99,38 +99,46 @@ struct SmartReturnGiftView: View {
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
     }
 
+    // MARK: - Section Header
+
+    private func sectionHeader(_ text: String) -> some View {
+        Text(text)
+            .font(DesignSystem.Typography.caption)
+            .fontWeight(.semibold)
+            .foregroundStyle(DesignSystem.Colors.textSecondary)
+    }
+
     // MARK: - Timeline
 
     private func timelineSection(_ result: SmartReturnGiftResult) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(String(localized: "event.smartGift.timeline.title"))
-                .font(DesignSystem.Typography.caption)
-                .foregroundStyle(DesignSystem.Colors.textSecondary)
-                .fontWeight(.semibold)
+        VStack(alignment: .leading, spacing: 8) {
+            sectionHeader(String(localized: "event.smartGift.timeline.title"))
 
-            if result.historicalRecords.isEmpty {
-                Text(String(format: String(localized: "event.smartGift.reason.noHistory"), result.event.type.displayName))
-                    .font(DesignSystem.Typography.caption)
-                    .foregroundStyle(DesignSystem.Colors.textSecondary)
-                    .padding(.vertical, 8)
-            } else {
-                VStack(spacing: 0) {
-                    let displayed = Array(result.historicalRecords.suffix(5))
-                    ForEach(Array(displayed.enumerated()), id: \.offset) { index, record in
-                        timelineRow(record: record, isLast: index == displayed.count - 1)
+            VStack(alignment: .leading, spacing: 0) {
+                if result.historicalRecords.isEmpty {
+                    Text(String(format: String(localized: "event.smartGift.reason.noHistory"), result.event.type.displayName))
+                        .font(DesignSystem.Typography.caption)
+                        .foregroundStyle(DesignSystem.Colors.textSecondary)
+                        .padding(.vertical, 8)
+                } else {
+                    VStack(spacing: 0) {
+                        let displayed = Array(result.historicalRecords.suffix(5))
+                        ForEach(Array(displayed.enumerated()), id: \.offset) { index, record in
+                            timelineRow(record: record, isLast: index == displayed.count - 1)
+                        }
                     }
+
+                    Divider()
+                        .foregroundStyle(DesignSystem.Colors.separator)
+                        .padding(.top, 4)
+
+                    balanceSummaryRow(result)
                 }
-
-                Divider()
-                    .foregroundStyle(DesignSystem.Colors.separator)
-                    .padding(.top, 4)
-
-                balanceSummaryRow(result)
             }
+            .padding(16)
+            .background(DesignSystem.Colors.bgSurface)
+            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
         }
-        .padding(16)
-        .background(DesignSystem.Colors.bgSurface)
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
     }
 
     private func timelineRow(record: Record, isLast: Bool) -> some View {
@@ -210,11 +218,8 @@ struct SmartReturnGiftView: View {
     // MARK: - Reasoning
 
     private func reasoningSection(_ result: SmartReturnGiftResult) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(String(localized: "event.smartGift.reasoning.title"))
-                .font(DesignSystem.Typography.caption)
-                .foregroundStyle(DesignSystem.Colors.textSecondary)
-                .fontWeight(.semibold)
+        VStack(alignment: .leading, spacing: 8) {
+            sectionHeader(String(localized: "event.smartGift.reasoning.title"))
 
             ForEach(result.reasoningCards, id: \.type) { card in
                 reasoningCard(
@@ -268,10 +273,10 @@ struct SmartReturnGiftView: View {
                 format: String(localized: "event.smartGift.reason.noHistory.body"),
                 eventTypeName, formatAmount(baseline)
             )
-        case let .cpi(inflationFactor, pct, baseline):
+        case let .cpi(inflationFactor, pct, cpiBaseline):
             return String(
                 format: String(localized: "event.smartGift.reason.cpi.body"),
-                inflationYearsLabel(inflationFactor), pct, formatAmount(baseline)
+                inflationYearsLabel(inflationFactor), pct, formatAmount(cpiBaseline)
             )
         case let .eventSymmetry(currentTier, refTier, pct, baseline, isUpgrade):
             let key = isUpgrade
@@ -370,14 +375,10 @@ struct SmartReturnGiftView: View {
     // MARK: - Tier Selector
 
     private func tierSelector(_ result: SmartReturnGiftResult) -> some View {
-        VStack(alignment: .leading, spacing: 20) {
+        VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text(String(localized: "event.smartGift.tier.title"))
-                    .font(DesignSystem.Typography.title3)
-                    .foregroundStyle(DesignSystem.Colors.textPrimary)
-
+                sectionHeader(String(localized: "event.smartGift.tier.title"))
                 Spacer()
-
                 Text(tierName(selectedTier))
                     .font(DesignSystem.Typography.small)
                     .foregroundStyle(DesignSystem.Colors.primary)
@@ -410,10 +411,10 @@ struct SmartReturnGiftView: View {
                     tierLabel(.generous, amount: result.generousAmount, alignment: .trailing, plusSuffix: true)
                 }
             }
+            .padding(16)
+            .background(DesignSystem.Colors.bgSurface)
+            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
         }
-        .padding(16)
-        .background(DesignSystem.Colors.bgSurface)
-        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
     }
 
     private func tierNode(_ tier: GiftTier, amount: Double) -> some View {

@@ -1,6 +1,16 @@
 import Foundation
 
+// MARK: - Output Types
+
 /// 建议依据卡片
+///
+/// Engine 每次计算后产出若干张卡片，按固定顺序排列：
+/// 1. 历史往来（必有，根据净余正负选 `historicalPositive` 或 `historicalNonPositive`；无记录时为 `noHistory`）
+/// 2. 通胀调整（可选，仅当净余 > 0 且距最近收礼超过 1 年）
+/// 3. 活动对等性（可选，仅当净余 > 0 且本次活动等级与历史加权均值不同）
+/// 4. 关系权重（必有，始终是最后一张）
+///
+/// `params` 携带结构化参数，由 View 层结合本地化格式串渲染为最终文案。
 struct SmartReturnGiftReasoningCard {
     enum CardType {
         /// 有历史往来记录（净余为正），以净余×通胀×对等系数为基准
@@ -19,14 +29,36 @@ struct SmartReturnGiftReasoningCard {
 
     /// 结构化参数，由 View 层结合本地化格式串渲染为最终文案
     enum ReasoningParams {
+        /// - received: 对方历史累计随礼总额
+        /// - given: 我方历史累计随礼总额
+        /// - net: 净余（received − given）
         case historicalPositive(received: Double, given: Double, net: Double)
+
+        /// - received: 对方历史累计随礼总额
+        /// - given: 我方历史累计随礼总额
+        /// - eventTypeName: 本次活动类型显示名，用于说明按哪种类型取最低基准
+        /// - baseline: 最终使用的基准金额（等于该活动类型最低基准）
         case historicalNonPositive(received: Double, given: Double, eventTypeName: String, baseline: Double)
+
+        /// - eventTypeName: 本次活动类型显示名
+        /// - baseline: 最终使用的基准金额（等于该活动类型最低基准）
         case noHistory(eventTypeName: String, baseline: Double)
-        /// inflationFactor 传原始系数，View 负责映射为年限文案
-        case cpi(inflationFactor: Double, pct: Int, baseline: Double)
-        /// tier 传整数，View 负责映射为等级名称
+
+        /// - inflationFactor: 原始通胀系数（1.05 / 1.10 / 1.15 / 1.20），View 负责映射为年限文案
+        /// - pct: 通胀百分比整数，如 10 表示上调 10%
+        /// - cpiBaseline: 仅含通胀调整的阶段性基准（不含对等系数），用于展示推导链
+        case cpi(inflationFactor: Double, pct: Int, cpiBaseline: Double)
+
+        /// - currentTier: 本次活动等级（1/2/3），View 负责映射为等级名称
+        /// - refTier: 历史加权平均活动等级（已取整），View 负责映射为等级名称
+        /// - pct: 调整百分比整数（上调或下调），如 10 表示 ±10%
+        /// - baseline: 含通胀与对等性双重调整后的最终基准金额
+        /// - isUpgrade: true = 本次规格高于历史均值（上调），false = 低于（下调）
         case eventSymmetry(currentTier: Int, refTier: Int, pct: Int, baseline: Double, isUpgrade: Bool)
-        /// circle 传整数，View 负责映射为关系圈层名称
+
+        /// - conservative: 保守档金额（baseline × 0.7，向下取整 50）
+        /// - generous: 慷慨档金额（baseline × 1.25，向下取整 50）
+        /// - circle: 联系人亲密圈层整数（1=家人 2=亲属 3=社交 4=其他），View 负责映射为名称
         case relationship(conservative: Double, generous: Double, circle: Int)
     }
 
@@ -34,27 +66,98 @@ struct SmartReturnGiftReasoningCard {
     let params: ReasoningParams
 }
 
+// MARK: - Result
+
 /// 智能回礼计算结果
+///
+/// 由 `SmartReturnGiftEngine.calculate(contact:event:allContactRecords:)` 返回，
+/// 包含所有中间量和最终建议金额，供 View 直接展示。
 struct SmartReturnGiftResult {
+    // ── 输入回传 ──────────────────────────────────────────────────────────
     let contact: Contact
     let event: Event
-    /// 该联系人所有历史记录，按时间正序
+    /// 该联系人所有历史记录，按时间正序（含双向、含全部类型，用于时间轴展示）
     let historicalRecords: [Record]
-    /// 对方累计给我 − 我累计给对方
+
+    /// ── 中间量（可用于 debug 或扩展展示）────────────────────────────────
+    /// 对方累计给我的金额（仅 `.monetary` 方向 `.received` 之和）
     let receivedTotal: Double
+    /// 我累计给对方的金额（仅 `.monetary` 方向 `.given` 之和）
     let givenTotal: Double
+    /// 净余 = receivedTotal − givenTotal（正值表示对方给得多，是本次回礼的参考基础）
     let netReceivedBalance: Double
+    /// 通胀系数，基于最近一笔收礼距今年数（1.0 / 1.05 / 1.10 / 1.15 / 1.20）
     let inflationFactor: Double
+
+    /// ── 最终建议金额（均已向下取整 50，且不低于活动类型最低基准）──────────
+    /// 基准金额：净余 > 0 时 = max(⌊netBalance × inflation × symmetry / 50⌋ × 50, floor)
+    ///          净余 ≤ 0 时 = 活动类型最低基准
     let baselineAmount: Double
+    /// 保守档 = max(⌊baseline × 0.70 / 50⌋ × 50, 最低基准)
     let conservativeAmount: Double
+    /// 标准档 = baseline
     let standardAmount: Double
+    /// 慷慨档 = max(⌊baseline × 1.25 / 50⌋ × 50, 最低基准)
     let generousAmount: Double
-    /// 建议依据卡片，按展示顺序排列
+
+    /// ── 建议依据 ───────────────────────────────────────────────────────────
+    /// 建议依据卡片，按展示顺序排列（1~4 张，详见 SmartReturnGiftReasoningCard）
     let reasoningCards: [SmartReturnGiftReasoningCard]
 }
 
+// MARK: - Engine
+
+/// 智能回礼本地计算引擎
+///
+/// ## 输入
+/// - `contact`: 联系人，提供亲密圈层（`circle`）
+/// - `event`: 本次活动，提供活动类型（`type`）用于取最低基准和计算对等系数
+/// - `allContactRecords`: 该联系人名下所有历史往来记录（含双向、含所有活动）
+///
+/// ## 计算流程
+/// ```
+/// 1. 分拣方向（仅统计 recordType == .monetary）
+///    receivedTotal = Σ received 记录的 resolvedDisplayAmount
+///    givenTotal    = Σ given    记录的 resolvedDisplayAmount
+///    netBalance    = receivedTotal − givenTotal
+///
+/// 2. 通胀系数（基于最近一笔 received 记录距今年数）
+///    0年   → ×1.00
+///    1-2年 → ×1.05
+///    3-4年 → ×1.10
+///    5-7年 → ×1.15
+///    8年+  → ×1.20
+///
+/// 3. 活动对等系数（仅 netBalance > 0 时计算，否则系数为 1.0）
+///    对方每笔 received 记录若关联事件，取该事件的活动等级（1/2/3）
+///    以金额加权平均得到参考等级 refTier（取整）
+///    本次活动等级 currentTier vs refTier：
+///    差值 ≥+2 → ×1.20  差值 +1 → ×1.10  差值 0 → ×1.00
+///    差值 -1  → ×0.85  差值 ≤-2 → ×0.70
+///
+/// 4. 基准金额（两步推导，保证推导卡片叙事一致）
+///    若 netBalance ≤ 0：
+///      cpiBaseline = baseline = 活动类型最低基准
+///    否则：
+///      cpiBaseline = max(⌊netBalance × inflation / 50⌋ × 50, floor)   ← CPI 卡片展示此值
+///      baseline    = max(⌊cpiBaseline × symmetry / 50⌋ × 50, floor)   ← 对等性卡片展示此值
+///
+/// 5. 三档金额
+///    conservative = max(⌊baseline × 0.70 / 50⌋ × 50, 最低基准)
+///    standard     = baseline
+///    generous     = max(⌊baseline × 1.25 / 50⌋ × 50, 最低基准)
+///
+/// 6. 活动类型最低基准（eventTypeFloor）
+///    婚礼/订婚       600
+///    出生/寿宴       500
+///    乔迁/开业/晋升  400
+///    生日/升学/丧礼  300
+///    节日/拜访/其他  200
+/// ```
+///
+/// ## 输出
+/// 返回 `SmartReturnGiftResult`，包含所有中间量、三档建议金额和建议依据卡片列表。
 enum SmartReturnGiftEngine {
-    /// 计算智能回礼建议
     static func calculate(
         contact: Contact,
         event: Event,
@@ -62,16 +165,16 @@ enum SmartReturnGiftEngine {
     ) -> SmartReturnGiftResult {
         let sorted = allContactRecords.sorted { $0.date < $1.date }
 
-        let receivedRecords = sorted.filter { $0.direction == .received }
-        let givenRecords = sorted.filter { $0.direction == .given }
+        // 仅统计金额类型记录，排除礼品/拜访等非金额往来
+        let receivedRecords = sorted.filter { $0.direction == .received && $0.recordType == .monetary }
+        let givenRecords = sorted.filter { $0.direction == .given && $0.recordType == .monetary }
 
         let receivedTotal = receivedRecords.reduce(0.0) { $0 + $1.resolvedDisplayAmount }
         let givenTotal = givenRecords.reduce(0.0) { $0 + $1.resolvedDisplayAmount }
         let netBalance = receivedTotal - givenTotal
 
         // 通胀系数
-        let mostRecentReceived = receivedRecords.last
-        let inflationFactor = inflationMultiplier(since: mostRecentReceived?.date)
+        let inflationFactor = inflationMultiplier(since: receivedRecords.last?.date)
 
         // 活动对等系数（仅在净余为正时有意义）
         let symInfo: SymmetryInfo? = netBalance > 0
@@ -79,12 +182,17 @@ enum SmartReturnGiftEngine {
             : nil
         let symmetryFactor = symInfo?.factor ?? 1.0
 
-        // 基准金额 = 净余 × 通胀 × 对等系数（向下取整50）
         let floor = Double(eventTypeFloor(event.type))
-        let baseline: Double = if netBalance <= 0 {
-            floor
+
+        // 两步推导，保证 CPI 卡片和对等性卡片各自展示正确的阶段性基准
+        let cpiBaseline: Double
+        let baseline: Double
+        if netBalance <= 0 {
+            cpiBaseline = floor
+            baseline = floor
         } else {
-            max(roundTo50(netBalance * inflationFactor * symmetryFactor), floor)
+            cpiBaseline = max(roundTo50(netBalance * inflationFactor), floor)
+            baseline = max(roundTo50(cpiBaseline * symmetryFactor), floor)
         }
 
         let conservative = max(roundTo50(baseline * 0.7), floor)
@@ -99,6 +207,7 @@ enum SmartReturnGiftEngine {
             netBalance: netBalance,
             inflationFactor: inflationFactor,
             symInfo: symInfo,
+            cpiBaseline: cpiBaseline,
             baseline: baseline,
             conservative: conservative,
             generous: generous
@@ -130,6 +239,7 @@ enum SmartReturnGiftEngine {
         netBalance: Double,
         inflationFactor: Double,
         symInfo: SymmetryInfo?,
+        cpiBaseline: Double,
         baseline: Double,
         conservative: Double,
         generous: Double
@@ -162,16 +272,16 @@ enum SmartReturnGiftEngine {
             ))
         }
 
-        // ── 通胀调整（净余为正 + 超过1年）────────────────────────────
+        // ── 通胀调整（净余为正 + 超过1年）──── 展示阶段性 cpiBaseline ──
         if netBalance > 0, inflationFactor > 1.0 {
             let pct = Int(round((inflationFactor - 1.0) * 100))
             cards.append(.init(
                 type: .cpi,
-                params: .cpi(inflationFactor: inflationFactor, pct: pct, baseline: baseline)
+                params: .cpi(inflationFactor: inflationFactor, pct: pct, cpiBaseline: cpiBaseline)
             ))
         }
 
-        // ── 活动对等性（净余为正 + 等级不对等）──────────────────────
+        // ── 活动对等性（净余为正 + 等级不对等）── 展示最终 baseline ───
         if let sym = symInfo, sym.factor != 1.0 {
             let isUpgrade = sym.currentTier > sym.refTier
             let pct = Int(round(abs(sym.factor - 1.0) * 100))
@@ -218,7 +328,6 @@ enum SmartReturnGiftEngine {
         let totalAmount = withEvents.reduce(0.0) { $0 + $1.amount }
         guard totalAmount > 0 else { return nil }
 
-        // 金额加权平均活动等级
         let weightedTier = withEvents.reduce(0.0) { sum, item in
             sum + Double(item.tier) * (item.amount / totalAmount)
         }
@@ -228,18 +337,18 @@ enum SmartReturnGiftEngine {
         let tierDiff = currentTier - refTier
 
         let factor = switch tierDiff {
-        case 2...: 1.20 // 本次大幅升格
-        case 1: 1.10 // 本次小幅升格
-        case 0: 1.00 // 对等，无需调整
-        case -1: 0.85 // 本次小幅降格
-        default: 0.70 // 本次大幅降格
+        case 2...: 1.20
+        case 1: 1.10
+        case 0: 1.00
+        case -1: 0.85
+        default: 0.70
         }
 
         return SymmetryInfo(factor: factor, currentTier: currentTier, refTier: refTier)
     }
 
     /// 活动等级（1=日常场合，2=重要活动，3=大型仪式）
-    static func eventTier(_ type: EventType) -> Int {
+    private static func eventTier(_ type: EventType) -> Int {
         switch type {
         case .wedding, .engagement, .longevity, .birth: 3
         case .birthday, .education, .property, .business, .promotion, .funeral: 2
@@ -265,8 +374,9 @@ enum SmartReturnGiftEngine {
         max(0, Calendar.current.dateComponents([.year], from: from, to: to).year ?? 0)
     }
 
+    /// 向下取整到最近的 50
     private static func roundTo50(_ value: Double) -> Double {
-        Double(Int((value / 50).rounded()) * 50)
+        Double(Int((value / 50).rounded(.down)) * 50)
     }
 
     private static func eventTypeFloor(_ type: EventType) -> Int {
@@ -277,12 +387,5 @@ enum SmartReturnGiftEngine {
         case .property, .business, .promotion: 400
         case .festival, .visit, .other: 200
         }
-    }
-
-    private static func formatAmount(_ value: Double) -> String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .decimal
-        formatter.maximumFractionDigits = 0
-        return formatter.string(from: NSNumber(value: value)) ?? String(format: "%.0f", value)
     }
 }
