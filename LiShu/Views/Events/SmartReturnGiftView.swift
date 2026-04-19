@@ -194,8 +194,8 @@ struct SmartReturnGiftView: View {
             HStack(spacing: 0) {
                 Spacer()
                 Text(String(format: String(localized: "event.smartGift.timeline.balance"),
-                            formatAmount(result.receivedTotal),
-                            formatAmount(result.givenTotal)))
+                            formatNumber(result.receivedTotal),
+                            formatNumber(result.givenTotal)))
                     .font(DesignSystem.Typography.small)
                     .foregroundStyle(DesignSystem.Colors.textSecondary)
                     .multilineTextAlignment(.trailing)
