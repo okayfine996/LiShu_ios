@@ -351,6 +351,13 @@ struct SmartReturnGiftBannerCard: View {
     let baselineAmount: Double?
     let onTap: () -> Void
 
+    private static let amountFormatter: NumberFormatter = {
+        let f = NumberFormatter()
+        f.numberStyle = .decimal
+        f.maximumFractionDigits = 0
+        return f
+    }()
+
     var body: some View {
         Button(action: onTap) {
             HStack(spacing: 12) {
@@ -368,12 +375,8 @@ struct SmartReturnGiftBannerCard: View {
                         .foregroundStyle(DesignSystem.Colors.bgSurface)
 
                     if let amount = baselineAmount {
-                        let formatted = {
-                            let f = NumberFormatter()
-                            f.numberStyle = .decimal
-                            f.maximumFractionDigits = 0
-                            return "¥" + (f.string(from: NSNumber(value: amount)) ?? String(format: "%.0f", amount))
-                        }()
+                        let formatted = "¥" + (Self.amountFormatter.string(from: NSNumber(value: amount))
+                            ?? String(format: "%.0f", amount))
                         Text(String(format: String(localized: "event.smartGift.banner.subtitle"), formatted))
                             .font(DesignSystem.Typography.small)
                             .foregroundStyle(DesignSystem.Colors.bgSurface.opacity(0.8))

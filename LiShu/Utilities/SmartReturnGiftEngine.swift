@@ -145,9 +145,9 @@ struct SmartReturnGiftResult {
 ///      baseline    = max(⌊cpiBaseline × symmetry / 50⌋ × 50, floor)   ← 对等性卡片展示此值
 ///
 /// 5. 三档金额
-///    conservative = max(⌊baseline × 0.70 / 50⌋ × 50, 最低基准)
+///    conservative = max(⌊baseline × 0.70 / 50⌋ × 50, 50)  — 绝对最低 50，不受 floor 下限
 ///    standard     = baseline
-///    generous     = max(⌊baseline × 1.25 / 50⌋ × 50, 最低基准)
+///    generous     = ⌈baseline × 1.25 / 50⌉ × 50           — 向上取整，保证 generous > standard
 ///
 /// 6. 活动类型最低基准（eventTypeFloor × adjustCircle，二维表）
 ///    先用 adjustCircle 修正有效圈层（圈层 3 中职场关系降为 4），再查表
