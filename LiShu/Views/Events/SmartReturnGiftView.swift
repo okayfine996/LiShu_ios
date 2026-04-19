@@ -1,0 +1,588 @@
+import SwiftData
+import SwiftUI
+
+struct SmartReturnGiftView: View {
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
+
+    let eventID: PersistentIdentifier
+    let contactID: PersistentIdentifier
+
+    @State private var result: SmartReturnGiftResult?
+    @State private var selectedTier: GiftTier = .standard
+    @State private var amountText: String = ""
+    @State private var isShowingErrorAlert = false
+    @State private var errorMessage: String?
+
+    enum GiftTier {
+        case conservative, standard, generous
+    }
+
+    var body: some View {
+        ScrollView(showsIndicators: false) {
+            VStack(spacing: 16) {
+                if let result {
+                    contactHeaderCard(result)
+                    timelineSection(result)
+                    reasoningSection(result)
+                    tierSelector(result)
+                    confirmSection(result)
+                } else {
+                    ProgressView()
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 60)
+                }
+                Spacer(minLength: 40)
+            }
+            .padding(.horizontal, DesignSystem.Spacing.pageHorizontal)
+            .padding(.top, DesignSystem.Spacing.block)
+        }
+        .background(DesignSystem.Colors.bgPage)
+        .navigationTitle(String(localized: "event.smartGift.sheet.title"))
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button(String(localized: "common.cancel")) { dismiss() }
+                    .foregroundStyle(DesignSystem.Colors.textSecondary)
+            }
+        }
+        .onAppear(perform: loadResult)
+        .alert(String(localized: "common.error"), isPresented: $isShowingErrorAlert) {
+            Button(String(localized: "common.ok"), role: .cancel) {}
+        } message: {
+            if let errorMessage { Text(errorMessage) }
+        }
+    }
+
+    // MARK: - Contact Header
+
+    private func contactHeaderCard(_ result: SmartReturnGiftResult) -> some View {
+        HStack(spacing: 12) {
+            AvatarView(
+                imageData: result.contact.avatar,
+                name: result.contact.name,
+                size: 48
+            )
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(result.contact.name)
+                    .font(DesignSystem.Typography.title3)
+                    .foregroundStyle(DesignSystem.Colors.textPrimary)
+
+                HStack(spacing: 4) {
+                    if !result.contact.relation.isEmpty {
+                        Text(result.contact.relation)
+                            .font(DesignSystem.Typography.small)
+                            .foregroundStyle(DesignSystem.Colors.textSecondary)
+                        Text("·")
+                            .font(DesignSystem.Typography.small)
+                            .foregroundStyle(DesignSystem.Colors.textTertiary)
+                    }
+                    Text(result.event.name)
+                        .font(DesignSystem.Typography.small)
+                        .foregroundStyle(DesignSystem.Colors.textSecondary)
+
+                    if let days = daysUntil(result.event.date), days >= 0 {
+                        Text("·")
+                            .font(DesignSystem.Typography.small)
+                            .foregroundStyle(DesignSystem.Colors.textTertiary)
+                        Text(countdownText(days: days))
+                            .font(DesignSystem.Typography.small)
+                            .foregroundStyle(DesignSystem.Colors.primary)
+                    }
+                }
+            }
+            Spacer()
+        }
+        .padding(16)
+        .background(DesignSystem.Colors.bgSurface)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+    }
+
+    // MARK: - Timeline
+
+    private func timelineSection(_ result: SmartReturnGiftResult) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(String(localized: "event.smartGift.timeline.title"))
+                .font(DesignSystem.Typography.caption)
+                .foregroundStyle(DesignSystem.Colors.textSecondary)
+                .fontWeight(.semibold)
+
+            if result.historicalRecords.isEmpty {
+                Text(String(format: String(localized: "event.smartGift.reason.noHistory"), result.event.type.displayName))
+                    .font(DesignSystem.Typography.caption)
+                    .foregroundStyle(DesignSystem.Colors.textSecondary)
+                    .padding(.vertical, 8)
+            } else {
+                VStack(spacing: 0) {
+                    let displayed = Array(result.historicalRecords.suffix(5))
+                    ForEach(Array(displayed.enumerated()), id: \.offset) { index, record in
+                        timelineRow(record: record, isLast: index == displayed.count - 1)
+                    }
+                }
+
+                Divider()
+                    .foregroundStyle(DesignSystem.Colors.separator)
+                    .padding(.top, 4)
+
+                balanceSummaryRow(result)
+            }
+        }
+        .padding(16)
+        .background(DesignSystem.Colors.bgSurface)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+    }
+
+    private func timelineRow(record: Record, isLast: Bool) -> some View {
+        HStack(alignment: .top, spacing: 14) {
+            // Dot + connector line
+            VStack(spacing: 0) {
+                Circle()
+                    .fill(DesignSystem.Colors.accentGold)
+                    .frame(width: 10, height: 10)
+                    .padding(.top, 4)
+
+                if !isLast {
+                    Rectangle()
+                        .fill(DesignSystem.Colors.separator)
+                        .frame(width: 1.5)
+                        .frame(minHeight: 32)
+                }
+            }
+            .frame(width: 10)
+
+            // Date + name + amount pill
+            VStack(alignment: .leading, spacing: 6) {
+                Text(shortDate(record.date))
+                    .font(DesignSystem.Typography.small)
+                    .foregroundStyle(DesignSystem.Colors.textTertiary)
+
+                Text(record.contextDisplayName)
+                    .font(DesignSystem.Typography.caption)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(DesignSystem.Colors.textPrimary)
+
+                // Amount pill
+                let prefix = record.direction == .received
+                    ? String(localized: "event.smartGift.timeline.received")
+                    : String(localized: "event.smartGift.timeline.given")
+                Text("\(prefix) \(formatAmount(record.resolvedDisplayAmount))")
+                    .font(DesignSystem.Typography.caption)
+                    .foregroundStyle(DesignSystem.Colors.textPrimary)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 6)
+                    .background(DesignSystem.Colors.bgInput)
+                    .clipShape(Capsule())
+            }
+            .padding(.bottom, isLast ? 4 : 16)
+
+            Spacer()
+        }
+    }
+
+    private func balanceSummaryRow(_ result: SmartReturnGiftResult) -> some View {
+        VStack(alignment: .trailing, spacing: 6) {
+            // Summary line: "TA 累计送你 ¥X | 你累计送TA ¥Y"
+            HStack(spacing: 0) {
+                Spacer()
+                Text(String(format: String(localized: "event.smartGift.timeline.balance"),
+                            formatAmount(result.receivedTotal),
+                            formatAmount(result.givenTotal)))
+                    .font(DesignSystem.Typography.small)
+                    .foregroundStyle(DesignSystem.Colors.textSecondary)
+                    .multilineTextAlignment(.trailing)
+            }
+
+            // Outstanding balance
+            if result.netReceivedBalance > 0 {
+                Text(String(localized: "event.smartGift.timeline.outstanding"))
+                    .font(DesignSystem.Typography.small)
+                    .foregroundStyle(DesignSystem.Colors.textSecondary)
+
+                Text(formatAmount(result.netReceivedBalance))
+                    .font(.system(size: 28, weight: .bold))
+                    .foregroundStyle(DesignSystem.Colors.primary)
+            }
+        }
+        .padding(.top, 10)
+    }
+
+    // MARK: - Reasoning
+
+    private func reasoningSection(_ result: SmartReturnGiftResult) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(String(localized: "event.smartGift.reasoning.title"))
+                .font(DesignSystem.Typography.caption)
+                .foregroundStyle(DesignSystem.Colors.textSecondary)
+                .fontWeight(.semibold)
+
+            ForEach(result.reasoningCards, id: \.type) { card in
+                reasoningCard(
+                    iconName: iconName(for: card.type),
+                    title: title(for: card.type),
+                    body: card.body,
+                    badge: card.badge
+                )
+            }
+        }
+    }
+
+    private func iconName(for type: SmartReturnGiftReasoningCard.CardType) -> String {
+        switch type {
+        case .historicalPositive: "clock.arrow.circlepath"
+        case .historicalNonPositive: "clock.arrow.circlepath"
+        case .noHistory: "tray"
+        case .cpi: "chart.line.uptrend.xyaxis"
+        case .eventSymmetry: "arrow.up.arrow.down.circle"
+        case .relationship: "person.2.fill"
+        }
+    }
+
+    private func title(for type: SmartReturnGiftReasoningCard.CardType) -> String {
+        switch type {
+        case .historicalPositive: String(localized: "event.smartGift.reason.historical.title")
+        case .historicalNonPositive: String(localized: "event.smartGift.reason.historical.title")
+        case .noHistory: String(localized: "event.smartGift.reason.noHistory.title")
+        case .cpi: String(localized: "event.smartGift.reason.cpi.title")
+        case .eventSymmetry: String(localized: "event.smartGift.reason.eventSymmetry.title")
+        case .relationship: String(localized: "event.smartGift.reason.relationship.title")
+        }
+    }
+
+    private func reasoningCard(iconName: String, title: String, body: String, badge: String?) -> some View {
+        HStack(alignment: .top, spacing: 14) {
+            Image(systemName: iconName)
+                .font(.system(size: 18, weight: .medium))
+                .foregroundStyle(DesignSystem.Colors.primary)
+                .frame(width: 40, height: 40)
+                .background(DesignSystem.Colors.bgIconSubtle)
+                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.input))
+
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(alignment: .center) {
+                    Text(title)
+                        .font(DesignSystem.Typography.body)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(DesignSystem.Colors.textPrimary)
+                    Spacer()
+                    if let badge {
+                        Text(badge)
+                            .font(DesignSystem.Typography.small)
+                            .foregroundStyle(DesignSystem.Colors.textSecondary)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 3)
+                            .background(DesignSystem.Colors.bgCard)
+                            .clipShape(Capsule())
+                    }
+                }
+
+                Text(body)
+                    .font(DesignSystem.Typography.caption)
+                    .foregroundStyle(DesignSystem.Colors.textSecondary)
+                    .lineSpacing(3)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(16)
+        .background(DesignSystem.Colors.bgSurface)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+    }
+
+    // MARK: - Tier Selector
+
+    private func tierSelector(_ result: SmartReturnGiftResult) -> some View {
+        VStack(alignment: .leading, spacing: 20) {
+            HStack {
+                Text(String(localized: "event.smartGift.tier.title"))
+                    .font(DesignSystem.Typography.title3)
+                    .foregroundStyle(DesignSystem.Colors.textPrimary)
+
+                Spacer()
+
+                Text(tierName(selectedTier))
+                    .font(DesignSystem.Typography.small)
+                    .foregroundStyle(DesignSystem.Colors.primary)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 5)
+                    .background(DesignSystem.Colors.primary.opacity(0.1))
+                    .clipShape(Capsule())
+            }
+
+            VStack(spacing: 14) {
+                // Track + nodes
+                ZStack {
+                    Capsule()
+                        .fill(DesignSystem.Colors.separator)
+                        .frame(height: 2)
+
+                    HStack {
+                        tierNode(.conservative, amount: result.conservativeAmount)
+                        Spacer()
+                        tierNode(.standard, amount: result.standardAmount)
+                        Spacer()
+                        tierNode(.generous, amount: result.generousAmount)
+                    }
+                }
+
+                // Labels
+                HStack(alignment: .top, spacing: 0) {
+                    tierLabel(.conservative, amount: result.conservativeAmount, alignment: .leading)
+                    tierLabel(.standard, amount: result.standardAmount, alignment: .center)
+                    tierLabel(.generous, amount: result.generousAmount, alignment: .trailing, plusSuffix: true)
+                }
+            }
+        }
+        .padding(16)
+        .background(DesignSystem.Colors.bgSurface)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+    }
+
+    private func tierNode(_ tier: GiftTier, amount: Double) -> some View {
+        let isSelected = selectedTier == tier
+        return Button {
+            selectedTier = tier
+            amountText = formatRawAmount(amount)
+        } label: {
+            Circle()
+                .fill(isSelected ? DesignSystem.Colors.primary : DesignSystem.Colors.bgCard)
+                .frame(width: isSelected ? 22 : 10, height: isSelected ? 22 : 10)
+                .overlay(
+                    Circle()
+                        .stroke(isSelected ? .clear : DesignSystem.Colors.separator, lineWidth: 1.5)
+                )
+                .shadow(
+                    color: isSelected ? DesignSystem.Colors.primary.opacity(0.30) : .clear,
+                    radius: 6, y: 2
+                )
+        }
+        .buttonStyle(.plain)
+        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: selectedTier)
+    }
+
+    private func tierLabel(_ tier: GiftTier, amount: Double, alignment: HorizontalAlignment, plusSuffix: Bool = false) -> some View {
+        let isSelected = selectedTier == tier
+        let amountStr = plusSuffix ? "\(formatAmount(amount))+" : formatAmount(amount)
+        let name = tierName(tier)
+
+        return Button {
+            selectedTier = tier
+            amountText = formatRawAmount(amount)
+        } label: {
+            VStack(alignment: alignment, spacing: 2) {
+                Text(isSelected ? "\(name) (\(amountStr))" : name)
+                    .font(DesignSystem.Typography.caption)
+                    .fontWeight(isSelected ? .semibold : .regular)
+                    .foregroundStyle(isSelected ? DesignSystem.Colors.primary : DesignSystem.Colors.textSecondary)
+
+                if !isSelected {
+                    Text("(\(amountStr))")
+                        .font(DesignSystem.Typography.small)
+                        .foregroundStyle(DesignSystem.Colors.textTertiary)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: Alignment(horizontal: alignment, vertical: .top))
+        }
+        .buttonStyle(.plain)
+        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: selectedTier)
+    }
+
+    private func tierName(_ tier: GiftTier) -> String {
+        switch tier {
+        case .conservative: String(localized: "event.smartGift.tier.conservative")
+        case .standard: String(localized: "event.smartGift.tier.standard")
+        case .generous: String(localized: "event.smartGift.tier.generous")
+        }
+    }
+
+    // MARK: - Confirm Section
+
+    private func confirmSection(_ result: SmartReturnGiftResult) -> some View {
+        VStack(spacing: 12) {
+            HStack(spacing: 8) {
+                Text("¥")
+                    .font(DesignSystem.Typography.title2)
+                    .foregroundStyle(DesignSystem.Colors.textPrimary)
+
+                TextField(String(localized: "0"), text: $amountText)
+                    .font(DesignSystem.Typography.title2)
+                    .foregroundStyle(DesignSystem.Colors.textPrimary)
+                    .keyboardType(.decimalPad)
+            }
+            .padding(12)
+            .background(DesignSystem.Colors.bgSurface)
+            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.input))
+            .overlay(
+                RoundedRectangle(cornerRadius: DesignSystem.Radius.input)
+                    .stroke(DesignSystem.Colors.border, lineWidth: 1)
+            )
+
+            Button {
+                confirmGift(result)
+            } label: {
+                Text(String(localized: "event.smartGift.confirm"))
+            }
+            .buttonStyle(PrimaryButtonStyle())
+            .disabled(!isConfirmEnabled)
+            .opacity(isConfirmEnabled ? 1.0 : 0.6)
+        }
+    }
+
+    // MARK: - Logic
+
+    private var isConfirmEnabled: Bool {
+        guard let value = UserEnteredDecimal.parse(amountText) else { return false }
+        return value > 0
+    }
+
+    private func loadResult() {
+        guard
+            let event = modelContext.model(for: eventID) as? Event,
+            let contact = modelContext.model(for: contactID) as? Contact
+        else { return }
+
+        let allRecords = contact.records ?? []
+        result = SmartReturnGiftEngine.calculate(
+            contact: contact,
+            event: event,
+            allContactRecords: allRecords
+        )
+
+        if let r = result {
+            amountText = formatRawAmount(r.standardAmount)
+        }
+    }
+
+    @MainActor
+    private func confirmGift(_ result: SmartReturnGiftResult) {
+        guard let amount = UserEnteredDecimal.parse(amountText), amount > 0 else {
+            errorMessage = String(localized: "record.returnGift.amountRequired")
+            isShowingErrorAlert = true
+            return
+        }
+
+        let record = Record.makeMonetaryRecord(
+            contact: result.contact,
+            event: result.event,
+            amount: amount,
+            direction: .given,
+            paymentMethod: .cash,
+            date: .now
+        )
+        modelContext.insert(record)
+
+        do {
+            try modelContext.save()
+            dismiss()
+        } catch {
+            errorMessage = error.localizedDescription
+            isShowingErrorAlert = true
+        }
+    }
+
+    // MARK: - Formatting Helpers
+
+    private func formatAmount(_ value: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.maximumFractionDigits = 0
+        let formatted = formatter.string(from: NSNumber(value: value)) ?? String(format: "%.0f", value)
+        return "¥\(formatted)"
+    }
+
+    private func formatRawAmount(_ value: Double) -> String {
+        String(format: "%.0f", value)
+    }
+
+    private func shortDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "zh_Hans")
+        formatter.dateFormat = "yyyy年M月"
+        return formatter.string(from: date)
+    }
+
+    private func daysUntil(_ date: Date) -> Int? {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        let eventDay = calendar.startOfDay(for: date)
+        return calendar.dateComponents([.day], from: today, to: eventDay).day
+    }
+
+    private func countdownText(days: Int) -> String {
+        if days == 0 { return String(localized: "home.today") }
+        return String(format: String(localized: "event.detail.countdown"), days)
+    }
+}
+
+// MARK: - Preview
+
+private struct SmartReturnGiftPreviewWrapper: View {
+    private let container: ModelContainer?
+    private let eventID: PersistentIdentifier?
+    private let contactID: PersistentIdentifier?
+
+    init() {
+        guard let c = try? ModelContainer(
+            for: Contact.self, Event.self, Record.self,
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+        ) else {
+            container = nil; eventID = nil; contactID = nil; return
+        }
+
+        let ctx = c.mainContext
+        let cal = Calendar.current
+
+        let contact = Contact(name: "张三", relation: "朋友", circle: 2)
+        ctx.insert(contact)
+
+        let wedding = Event(name: "我的婚礼", type: .wedding,
+                            date: cal.liShuDateByAddingDays(-1200))
+        ctx.insert(wedding)
+        ctx.insert(Record.makeMonetaryRecord(
+            contact: contact, event: wedding, amount: 1000, direction: .received,
+            date: cal.liShuDateByAddingDays(-1200)
+        ))
+
+        let festivalEvent = Event(name: "春节", type: .festival,
+                                  date: cal.liShuDateByAddingDays(-400))
+        ctx.insert(festivalEvent)
+        ctx.insert(Record.makeMonetaryRecord(
+            contact: contact, event: festivalEvent, amount: 200, direction: .given,
+            date: cal.liShuDateByAddingDays(-400)
+        ))
+
+        let property = Event(name: "你的乔迁", type: .property,
+                             date: cal.liShuDateByAddingDays(-180))
+        ctx.insert(property)
+        ctx.insert(Record.makeMonetaryRecord(
+            contact: contact, event: property, amount: 600, direction: .received,
+            date: cal.liShuDateByAddingDays(-180)
+        ))
+
+        let upcoming = Event(
+            name: "张三婚礼", type: .wedding,
+            date: cal.liShuDateByAddingDays(15),
+            primaryContact: contact
+        )
+        ctx.insert(upcoming)
+        try? ctx.save()
+
+        container = c
+        eventID = upcoming.persistentModelID
+        contactID = contact.persistentModelID
+    }
+
+    var body: some View {
+        if let container, let eventID, let contactID {
+            NavigationStack {
+                SmartReturnGiftView(eventID: eventID, contactID: contactID)
+            }
+            .modelContainer(container)
+        } else {
+            Text(String(localized: "common.preview.unavailable"))
+        }
+    }
+}
+
+#Preview {
+    SmartReturnGiftPreviewWrapper()
+}

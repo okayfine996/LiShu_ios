@@ -26,6 +26,9 @@ final class Contact {
     /// 关联的往来记录，删除联系人时级联删除
     @Relationship(deleteRule: .cascade, inverse: \Record.contact)
     var records: [Record]?
+    /// 作为主人公关联的事件（智能回礼），删除联系人时置空
+    @Relationship(deleteRule: .nullify, inverse: \Event.primaryContact)
+    var hostedEvents: [Event]?
     /// 创建时间
     var createdAt: Date = Date()
 

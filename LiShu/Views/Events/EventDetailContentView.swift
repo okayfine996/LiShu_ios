@@ -7,6 +7,8 @@ struct EventDetailContentView: View {
     let onAddRecord: () -> Void
     let onAddLedgerReceipt: () -> Void
     let onShowLegacyAnomalies: () -> Void
+    var onSmartReturnGift: (() -> Void)?
+    var smartReturnGiftBaseline: Double?
 
     var body: some View {
         Group {
@@ -26,7 +28,9 @@ struct EventDetailContentView: View {
                     isUpcoming: viewModel.isUpcoming,
                     daysUntilEvent: viewModel.daysUntilEvent,
                     pendingDeleteRecord: $pendingDeleteRecord,
-                    onAddRecord: onAddRecord
+                    onAddRecord: onAddRecord,
+                    onSmartReturnGift: onSmartReturnGift,
+                    smartReturnGiftBaseline: smartReturnGiftBaseline
                 )
             }
         }

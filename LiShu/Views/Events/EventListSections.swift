@@ -192,6 +192,16 @@ private struct EventListRow: View {
     let onTap: () -> Void
     let onDelete: () -> Void
 
+    private var effectiveBadge: String? {
+        let hasSmartGift = event.hostMode == .guest && event.primaryContact != nil && !event.hasGivenRecord
+        if let badge {
+            return hasSmartGift ? "✦ " + badge : badge
+        } else if hasSmartGift {
+            return String(localized: "event.smartGift.badge")
+        }
+        return nil
+    }
+
     var body: some View {
         Button(action: onTap) {
             EventRowCard(
@@ -201,7 +211,7 @@ private struct EventListRow: View {
                 date: event.date,
                 location: event.location,
                 recordCount: (event.records ?? []).count,
-                badge: badge
+                badge: effectiveBadge
             )
         }
         .buttonStyle(.plain)

@@ -14,6 +14,7 @@ class AddEventViewModel {
     var location: String = ""
     var note: String = ""
     var coverImageData: Data?
+    var primaryContact: Contact?
 
     var isValid: Bool {
         !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -46,6 +47,7 @@ class AddEventViewModel {
         location = event.location
         note = event.note
         coverImageData = event.coverImage
+        primaryContact = event.primaryContact
     }
 
     @MainActor
@@ -71,6 +73,7 @@ class AddEventViewModel {
             existing.date = date
             existing.location = location.trimmingCharacters(in: .whitespacesAndNewlines)
             existing.note = note.trimmingCharacters(in: .whitespacesAndNewlines)
+            existing.primaryContact = primaryContact
             existing.coverImage = coverImageData.flatMap {
                 ImagePipeline.optimizedJPEGData(
                     from: $0,
@@ -125,7 +128,8 @@ class AddEventViewModel {
                 hostMode: hostMode,
                 date: date,
                 location: location.trimmingCharacters(in: .whitespacesAndNewlines),
-                note: note.trimmingCharacters(in: .whitespacesAndNewlines)
+                note: note.trimmingCharacters(in: .whitespacesAndNewlines),
+                primaryContact: primaryContact
             )
             event.coverImage = coverImageData.flatMap {
                 ImagePipeline.optimizedJPEGData(

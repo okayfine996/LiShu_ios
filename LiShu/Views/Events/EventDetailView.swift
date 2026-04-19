@@ -11,6 +11,7 @@ struct EventDetailView: View {
     @State var viewModel = EventDetailViewModel()
     @State var pendingDeleteRecord: Record?
     @State var sheetRoute: SheetRoute?
+    @State var smartReturnGiftResult: SmartReturnGiftResult?
     @State var ledgerImportPreviewViewModel: LedgerCSVImportPreviewViewModel?
     @State var ledgerExportPreviewViewModel: LedgerCSVExportPreviewViewModel?
     @State var showLedgerCSVImporter = false
@@ -33,7 +34,9 @@ struct EventDetailView: View {
                         pendingDeleteRecord: $pendingDeleteRecord,
                         onAddRecord: { openAddRecord(for: event) },
                         onAddLedgerReceipt: { openAddLedgerReceipt(for: event) },
-                        onShowLegacyAnomalies: { showLegacyAnomalyList = true }
+                        onShowLegacyAnomalies: { showLegacyAnomalyList = true },
+                        onSmartReturnGift: smartReturnGiftCallback(for: event),
+                        smartReturnGiftBaseline: smartReturnGiftResult?.baselineAmount
                     )
                 } else {
                     ProgressView()
