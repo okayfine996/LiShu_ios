@@ -261,22 +261,22 @@ struct SmartReturnGiftView: View {
         case let .historicalPositive(received, given, net):
             return String(
                 format: String(localized: "event.smartGift.reason.historical.body"),
-                formatAmount(received), formatAmount(given), formatAmount(net)
+                formatNumber(received), formatNumber(given), formatNumber(net)
             )
         case let .historicalNonPositive(received, given, eventTypeName, baseline):
             return String(
                 format: String(localized: "event.smartGift.reason.historical.nonPositive"),
-                formatAmount(received), formatAmount(given), eventTypeName, formatAmount(baseline)
+                formatNumber(received), formatNumber(given), eventTypeName, formatNumber(baseline)
             )
         case let .noHistory(eventTypeName, baseline):
             return String(
                 format: String(localized: "event.smartGift.reason.noHistory.body"),
-                eventTypeName, formatAmount(baseline)
+                eventTypeName, formatNumber(baseline)
             )
         case let .cpi(inflationFactor, pct, cpiBaseline):
             return String(
                 format: String(localized: "event.smartGift.reason.cpi.body"),
-                inflationYearsLabel(inflationFactor), pct, formatAmount(cpiBaseline)
+                inflationYearsLabel(inflationFactor), pct, formatNumber(cpiBaseline)
             )
         case let .eventSymmetry(currentTier, refTier, pct, baseline, isUpgrade):
             let key = isUpgrade
@@ -284,12 +284,12 @@ struct SmartReturnGiftView: View {
                 : "event.smartGift.reason.eventSymmetry.downgrade"
             return String(
                 format: String(localized: String.LocalizationValue(key)),
-                tierName(currentTier), tierName(refTier), pct, formatAmount(baseline)
+                tierName(currentTier), tierName(refTier), pct, formatNumber(baseline)
             )
         case let .relationship(conservative, generous, _):
             return String(
                 format: String(localized: "event.smartGift.reason.relationship.body"),
-                formatAmount(conservative), formatAmount(generous)
+                formatNumber(conservative), formatNumber(generous)
             )
         }
     }
@@ -561,12 +561,17 @@ struct SmartReturnGiftView: View {
 
     // MARK: - Formatting Helpers
 
+    /// 带 ¥ 前缀，用于直接展示（时间轴、余额行、档位标签等）
     private func formatAmount(_ value: Double) -> String {
+        "¥\(formatNumber(value))"
+    }
+
+    /// 不含 ¥ 前缀，用于传入已含 ¥ 的本地化格式串（避免 ¥¥ 重复）
+    private func formatNumber(_ value: Double) -> String {
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
         formatter.maximumFractionDigits = 0
-        let formatted = formatter.string(from: NSNumber(value: value)) ?? String(format: "%.0f", value)
-        return "¥\(formatted)"
+        return formatter.string(from: NSNumber(value: value)) ?? String(format: "%.0f", value)
     }
 
     private func formatRawAmount(_ value: Double) -> String {
