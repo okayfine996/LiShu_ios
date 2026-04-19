@@ -7,6 +7,9 @@
     "·" : {
 
     },
+    "(%@)" : {
+
+    },
     "/" : {
 
     },
@@ -3012,16 +3015,6 @@
         }
       }
     },
-    "event.smartGift.reason.cpi.noAdjust" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "最近往来时间较短，暂不考虑通货膨胀影响，基准金额维持原有水平。"
-          }
-        }
-      }
-    },
     "event.smartGift.reason.cpi.title" : {
       "localizations" : {
         "zh-Hans" : {
@@ -3072,17 +3065,6 @@
         }
       }
     },
-    "event.smartGift.reason.eventMatch" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "本次事件 %@，与历史往来对等"
-          }
-        }
-      }
-    },
     "event.smartGift.reason.eventSymmetry.badge.downgrade" : {
       "localizations" : {
         "zh-Hans" : {
@@ -3104,6 +3086,7 @@
       }
     },
     "event.smartGift.reason.eventSymmetry.downgrade" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -3124,6 +3107,7 @@
       }
     },
     "event.smartGift.reason.eventSymmetry.upgrade" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -3163,6 +3147,16 @@
         }
       }
     },
+    "event.smartGift.reason.noHistory" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无历史往来，按 %@ 事件最低基准"
+          }
+        }
+      }
+    },
     "event.smartGift.reason.noHistory.body" : {
       "localizations" : {
         "zh-Hans" : {
@@ -3179,38 +3173,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "活动类型基准"
-          }
-        }
-      }
-    },
-    "event.smartGift.reason.inflation" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "距今约 %d 年，通胀系数 ×%.2f"
-          }
-        }
-      }
-    },
-    "event.smartGift.reason.netReceived" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "历史累计收入 ¥%@，送出 ¥%@"
-          }
-        }
-      }
-    },
-    "event.smartGift.reason.noHistory" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "无历史往来，按 %@ 事件最低基准"
           }
         }
       }
@@ -3247,7 +3209,6 @@
       }
     },
     "event.smartGift.reasoning.title" : {
-      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -3287,16 +3248,6 @@
         }
       }
     },
-    "event.smartGift.tier.standard" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "适中"
-          }
-        }
-      }
-    },
     "event.smartGift.tier.level.casual" : {
       "localizations" : {
         "zh-Hans" : {
@@ -3323,6 +3274,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "重要活动"
+          }
+        }
+      }
+    },
+    "event.smartGift.tier.standard" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "适中"
           }
         }
       }

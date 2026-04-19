@@ -220,8 +220,8 @@ struct SmartReturnGiftView: View {
                 reasoningCard(
                     iconName: iconName(for: card.type),
                     title: title(for: card.type),
-                    body: card.body,
-                    badge: card.badge
+                    body: bodyText(for: card),
+                    badge: badgeText(for: card)
                 )
             }
         }
@@ -246,6 +246,85 @@ struct SmartReturnGiftView: View {
         case .cpi: String(localized: "event.smartGift.reason.cpi.title")
         case .eventSymmetry: String(localized: "event.smartGift.reason.eventSymmetry.title")
         case .relationship: String(localized: "event.smartGift.reason.relationship.title")
+        }
+    }
+
+    // MARK: - Reasoning Rendering Helpers
+
+    private func bodyText(for card: SmartReturnGiftReasoningCard) -> String {
+        switch card.params {
+        case let .historicalPositive(received, given, net):
+            return String(
+                format: String(localized: "event.smartGift.reason.historical.body"),
+                formatAmount(received), formatAmount(given), formatAmount(net)
+            )
+        case let .historicalNonPositive(received, given, eventTypeName, baseline):
+            return String(
+                format: String(localized: "event.smartGift.reason.historical.nonPositive"),
+                formatAmount(received), formatAmount(given), eventTypeName, formatAmount(baseline)
+            )
+        case let .noHistory(eventTypeName, baseline):
+            return String(
+                format: String(localized: "event.smartGift.reason.noHistory.body"),
+                eventTypeName, formatAmount(baseline)
+            )
+        case let .cpi(inflationFactor, pct, baseline):
+            return String(
+                format: String(localized: "event.smartGift.reason.cpi.body"),
+                inflationYearsLabel(inflationFactor), pct, formatAmount(baseline)
+            )
+        case let .eventSymmetry(currentTier, refTier, pct, baseline, isUpgrade):
+            let key = isUpgrade
+                ? "event.smartGift.reason.eventSymmetry.upgrade"
+                : "event.smartGift.reason.eventSymmetry.downgrade"
+            return String(
+                format: String(localized: String.LocalizationValue(key)),
+                tierName(currentTier), tierName(refTier), pct, formatAmount(baseline)
+            )
+        case let .relationship(conservative, generous, _):
+            return String(
+                format: String(localized: "event.smartGift.reason.relationship.body"),
+                formatAmount(conservative), formatAmount(generous)
+            )
+        }
+    }
+
+    private func badgeText(for card: SmartReturnGiftReasoningCard) -> String? {
+        switch card.params {
+        case let .eventSymmetry(_, _, _, _, isUpgrade):
+            isUpgrade
+                ? String(localized: "event.smartGift.reason.eventSymmetry.badge.upgrade")
+                : String(localized: "event.smartGift.reason.eventSymmetry.badge.downgrade")
+        case let .relationship(_, _, circle):
+            circleBadge(circle)
+        default:
+            nil
+        }
+    }
+
+    private func circleBadge(_ circle: Int) -> String {
+        switch circle {
+        case 1: String(localized: "event.smartGift.circle.family")
+        case 2: String(localized: "event.smartGift.circle.relative")
+        case 3: String(localized: "event.smartGift.circle.social")
+        default: String(localized: "event.smartGift.circle.other")
+        }
+    }
+
+    private func inflationYearsLabel(_ factor: Double) -> String {
+        switch factor {
+        case 1.05: String(localized: "event.smartGift.reason.cpi.years.1to2")
+        case 1.10: String(localized: "event.smartGift.reason.cpi.years.3to4")
+        case 1.15: String(localized: "event.smartGift.reason.cpi.years.5to7")
+        default: String(localized: "event.smartGift.reason.cpi.years.8plus")
+        }
+    }
+
+    private func tierName(_ tier: Int) -> String {
+        switch tier {
+        case 3: String(localized: "event.smartGift.tier.level.major")
+        case 2: String(localized: "event.smartGift.tier.level.significant")
+        default: String(localized: "event.smartGift.tier.level.casual")
         }
     }
 

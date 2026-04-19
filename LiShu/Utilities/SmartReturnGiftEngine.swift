@@ -17,9 +17,21 @@ struct SmartReturnGiftReasoningCard {
         case relationship
     }
 
+    /// 结构化参数，由 View 层结合本地化格式串渲染为最终文案
+    enum ReasoningParams {
+        case historicalPositive(received: Double, given: Double, net: Double)
+        case historicalNonPositive(received: Double, given: Double, eventTypeName: String, baseline: Double)
+        case noHistory(eventTypeName: String, baseline: Double)
+        /// inflationFactor 传原始系数，View 负责映射为年限文案
+        case cpi(inflationFactor: Double, pct: Int, baseline: Double)
+        /// tier 传整数，View 负责映射为等级名称
+        case eventSymmetry(currentTier: Int, refTier: Int, pct: Int, baseline: Double, isUpgrade: Bool)
+        /// circle 传整数，View 负责映射为关系圈层名称
+        case relationship(conservative: Double, generous: Double, circle: Int)
+    }
+
     let type: CardType
-    let body: String
-    let badge: String?
+    let params: ReasoningParams
 }
 
 /// 智能回礼计算结果
@@ -128,70 +140,58 @@ enum SmartReturnGiftEngine {
         // ── 历史往来 / 无历史 ──────────────────────────────────────────
         if hasAnyHistory {
             if netBalance > 0 {
-                let body = String(
-                    format: String(localized: "event.smartGift.reason.historical.body"),
-                    formatAmount(receivedTotal),
-                    formatAmount(givenTotal),
-                    formatAmount(netBalance)
-                )
-                cards.append(.init(type: .historicalPositive, body: body, badge: nil))
+                cards.append(.init(
+                    type: .historicalPositive,
+                    params: .historicalPositive(received: receivedTotal, given: givenTotal, net: netBalance)
+                ))
             } else {
-                let body = String(
-                    format: String(localized: "event.smartGift.reason.historical.nonPositive"),
-                    formatAmount(receivedTotal),
-                    formatAmount(givenTotal),
-                    event.type.displayName,
-                    formatAmount(baseline)
-                )
-                cards.append(.init(type: .historicalNonPositive, body: body, badge: nil))
+                cards.append(.init(
+                    type: .historicalNonPositive,
+                    params: .historicalNonPositive(
+                        received: receivedTotal,
+                        given: givenTotal,
+                        eventTypeName: event.type.displayName,
+                        baseline: baseline
+                    )
+                ))
             }
         } else {
-            let body = String(
-                format: String(localized: "event.smartGift.reason.noHistory.body"),
-                event.type.displayName,
-                formatAmount(baseline)
-            )
-            cards.append(.init(type: .noHistory, body: body, badge: nil))
+            cards.append(.init(
+                type: .noHistory,
+                params: .noHistory(eventTypeName: event.type.displayName, baseline: baseline)
+            ))
         }
 
         // ── 通胀调整（净余为正 + 超过1年）────────────────────────────
         if netBalance > 0, inflationFactor > 1.0 {
             let pct = Int(round((inflationFactor - 1.0) * 100))
-            let yearsText = inflationYearsText(inflationFactor)
-            let body = String(
-                format: String(localized: "event.smartGift.reason.cpi.body"),
-                yearsText, pct, formatAmount(baseline)
-            )
-            cards.append(.init(type: .cpi, body: body, badge: nil))
+            cards.append(.init(
+                type: .cpi,
+                params: .cpi(inflationFactor: inflationFactor, pct: pct, baseline: baseline)
+            ))
         }
 
         // ── 活动对等性（净余为正 + 等级不对等）──────────────────────
         if let sym = symInfo, sym.factor != 1.0 {
             let isUpgrade = sym.currentTier > sym.refTier
             let pct = Int(round(abs(sym.factor - 1.0) * 100))
-            let currentTierName = eventTierName(sym.currentTier)
-            let refTierName = eventTierName(sym.refTier)
-            let key = isUpgrade
-                ? "event.smartGift.reason.eventSymmetry.upgrade"
-                : "event.smartGift.reason.eventSymmetry.downgrade"
-            let body = String(
-                format: String(localized: String.LocalizationValue(key)),
-                currentTierName, refTierName, pct, formatAmount(baseline)
-            )
-            let badge = isUpgrade
-                ? String(localized: "event.smartGift.reason.eventSymmetry.badge.upgrade")
-                : String(localized: "event.smartGift.reason.eventSymmetry.badge.downgrade")
-            cards.append(.init(type: .eventSymmetry, body: body, badge: badge))
+            cards.append(.init(
+                type: .eventSymmetry,
+                params: .eventSymmetry(
+                    currentTier: sym.currentTier,
+                    refTier: sym.refTier,
+                    pct: pct,
+                    baseline: baseline,
+                    isUpgrade: isUpgrade
+                )
+            ))
         }
 
         // ── 关系权重（始终出现）──────────────────────────────────────
-        let relBadge = circleBadge(contact.circle)
-        let relBody = String(
-            format: String(localized: "event.smartGift.reason.relationship.body"),
-            formatAmount(conservative),
-            formatAmount(generous)
-        )
-        cards.append(.init(type: .relationship, body: relBody, badge: relBadge))
+        cards.append(.init(
+            type: .relationship,
+            params: .relationship(conservative: conservative, generous: generous, circle: contact.circle)
+        ))
 
         return cards
     }
@@ -239,19 +239,11 @@ enum SmartReturnGiftEngine {
     }
 
     /// 活动等级（1=日常场合，2=重要活动，3=大型仪式）
-    private static func eventTier(_ type: EventType) -> Int {
+    static func eventTier(_ type: EventType) -> Int {
         switch type {
         case .wedding, .engagement, .longevity, .birth: 3
         case .birthday, .education, .property, .business, .promotion, .funeral: 2
         case .festival, .visit, .other: 1
-        }
-    }
-
-    private static func eventTierName(_ tier: Int) -> String {
-        switch tier {
-        case 3: String(localized: "event.smartGift.tier.level.major")
-        case 2: String(localized: "event.smartGift.tier.level.significant")
-        default: String(localized: "event.smartGift.tier.level.casual")
         }
     }
 
@@ -266,24 +258,6 @@ enum SmartReturnGiftEngine {
         case 3 ... 4: return 1.10
         case 5 ... 7: return 1.15
         default: return 1.20
-        }
-    }
-
-    private static func inflationYearsText(_ factor: Double) -> String {
-        switch factor {
-        case 1.05: String(localized: "event.smartGift.reason.cpi.years.1to2")
-        case 1.10: String(localized: "event.smartGift.reason.cpi.years.3to4")
-        case 1.15: String(localized: "event.smartGift.reason.cpi.years.5to7")
-        default: String(localized: "event.smartGift.reason.cpi.years.8plus")
-        }
-    }
-
-    private static func circleBadge(_ circle: Int) -> String {
-        switch circle {
-        case 1: String(localized: "event.smartGift.circle.family")
-        case 2: String(localized: "event.smartGift.circle.relative")
-        case 3: String(localized: "event.smartGift.circle.social")
-        default: String(localized: "event.smartGift.circle.other")
         }
     }
 
