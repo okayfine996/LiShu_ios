@@ -9,6 +9,8 @@ struct EventDetailStandardView: View {
     let daysUntilEvent: Int?
     @Binding var pendingDeleteRecord: Record?
     let onAddRecord: () -> Void
+    var onSmartReturnGift: (() -> Void)?
+    var smartReturnGiftBaseline: Double?
 
     private let rowInsets = EdgeInsets(
         top: 0,
@@ -32,6 +34,15 @@ struct EventDetailStandardView: View {
                     isUpcoming: isUpcoming,
                     daysUntilEvent: daysUntilEvent
                 )
+            }
+
+            if isUpcoming, let onSmartReturnGift {
+                EventDetailCardListRow {
+                    SmartReturnGiftBannerCard(
+                        baselineAmount: smartReturnGiftBaseline,
+                        onTap: onSmartReturnGift
+                    )
+                }
             }
 
             if !event.note.isEmpty {
@@ -331,5 +342,63 @@ private enum EventDetailRecordFormatters {
         let formatted = currencyFormatter.string(from: NSNumber(value: amount))
             ?? String(format: "%.0f", amount)
         return "¥" + formatted
+    }
+}
+
+// MARK: - Smart Return Gift Banner
+
+struct SmartReturnGiftBannerCard: View {
+    let baselineAmount: Double?
+    let onTap: () -> Void
+
+    private static let amountFormatter: NumberFormatter = {
+        let f = NumberFormatter()
+        f.numberStyle = .decimal
+        f.maximumFractionDigits = 0
+        return f
+    }()
+
+    var body: some View {
+        Button(action: onTap) {
+            HStack(spacing: 12) {
+                Image(systemName: "sparkles")
+                    .font(DesignSystem.Typography.body)
+                    .foregroundStyle(.white)
+                    .frame(width: 40, height: 40)
+                    .background(DesignSystem.Colors.primary.opacity(0.85))
+                    .clipShape(Circle())
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(String(localized: "event.smartGift.banner.title"))
+                        .font(DesignSystem.Typography.caption)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(DesignSystem.Colors.bgSurface)
+
+                    if let amount = baselineAmount {
+                        let formatted = "¥" + (Self.amountFormatter.string(from: NSNumber(value: amount))
+                            ?? String(format: "%.0f", amount))
+                        Text(String(format: String(localized: "event.smartGift.banner.subtitle"), formatted))
+                            .font(DesignSystem.Typography.small)
+                            .foregroundStyle(DesignSystem.Colors.bgSurface.opacity(0.8))
+                    }
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(DesignSystem.Typography.small)
+                    .foregroundStyle(DesignSystem.Colors.bgSurface.opacity(0.7))
+            }
+            .padding(16)
+            .background(
+                LinearGradient(
+                    colors: [DesignSystem.Colors.primary, DesignSystem.Colors.primary.opacity(0.75)],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+            )
+            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+        }
+        .buttonStyle(.plain)
     }
 }

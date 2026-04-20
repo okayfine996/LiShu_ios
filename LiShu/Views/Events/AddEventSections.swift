@@ -1,4 +1,5 @@
 import PhotosUI
+import SwiftData
 import SwiftUI
 
 struct AddEventFormView: View {
@@ -7,8 +8,10 @@ struct AddEventFormView: View {
 
     let screenName: String
     let navigationTitleText: String
+    let contacts: [Contact]
     let onCancel: () -> Void
     let onSave: () -> Void
+    var onCreateContact: (() -> Void)?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -32,6 +35,24 @@ struct AddEventFormView: View {
                     )
 
                     AddEventDateSection(date: $viewModel.date)
+
+                    if viewModel.hostMode == .guest {
+                        VStack(alignment: .leading, spacing: 8) {
+                            sectionTitle(String(localized: "event.add.primaryContact"))
+
+                            if let contact = viewModel.primaryContact {
+                                ContactIdentitySelectorCard(contact: contact)
+                            }
+
+                            ContactAvatarSelectorStrip(
+                                contacts: contacts,
+                                selectedContactID: viewModel.primaryContact?.persistentModelID,
+                                accessibilityIdentifier: "event.add.contactSelector",
+                                onSelectContact: { viewModel.primaryContact = $0 },
+                                onCreateContact: { onCreateContact?() }
+                            )
+                        }
+                    }
 
                     AddEventTextFieldSection(
                         title: String(localized: "event.add.location"),

@@ -81,6 +81,9 @@ extension EventDetailView {
 
     func loadEvent() {
         viewModel.load(id: eventID, context: modelContext)
+        if let event = viewModel.event {
+            computeSmartReturnGiftResult(for: event)
+        }
     }
 
     func handleSheetRouteChange(_: SheetRoute?, _ newValue: SheetRoute?) {
@@ -139,6 +142,42 @@ extension EventDetailView {
         )
     }
 
+    func openSmartReturnGift(for event: Event) {
+        guard let contact = event.primaryContact else { return }
+        sheetRoute = .smartReturnGift(
+            eventID: event.persistentModelID,
+            contactID: contact.persistentModelID
+        )
+    }
+
+    /// Returns the smart return gift callback only when the event is upcoming, guest-mode, has a primaryContact, and no gift has been given
+    /// yet.
+    func smartReturnGiftCallback(for event: Event) -> (() -> Void)? {
+        guard viewModel.isUpcoming,
+              event.hostMode == .guest,
+              event.primaryContact != nil,
+              !event.hasGivenRecord else { return nil }
+        return { openSmartReturnGift(for: event) }
+    }
+
+    func computeSmartReturnGiftResult(for event: Event) {
+        guard
+            viewModel.isUpcoming,
+            event.hostMode == .guest,
+            !event.hasGivenRecord,
+            let contact = event.primaryContact
+        else {
+            smartReturnGiftResult = nil
+            return
+        }
+        let allRecords = contact.records ?? []
+        smartReturnGiftResult = SmartReturnGiftEngine.calculate(
+            contact: contact,
+            event: event,
+            allContactRecords: allRecords
+        )
+    }
+
     func openAddLedgerReceipt(for event: Event) {
         sheetRoute = .addLedgerReceipt(eventID: event.persistentModelID)
     }
@@ -178,6 +217,10 @@ extension EventDetailView {
             }
         case let .ocrImport(eventID):
             OCRImportView(eventID: eventID)
+        case let .smartReturnGift(eventID, contactID):
+            NavigationStack {
+                SmartReturnGiftView(eventID: eventID, contactID: contactID)
+            }
         default:
             EmptyView()
         }

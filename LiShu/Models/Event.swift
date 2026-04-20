@@ -22,6 +22,8 @@ final class Event {
     /// 关联的往来记录，删除事件时级联删除其关联记录
     @Relationship(deleteRule: .cascade, inverse: \Record.event)
     var records: [Record]?
+    /// 主联系人，用于智能回礼建议（仅宾客模式事件有意义）
+    var primaryContact: Contact?
     /// 创建时间
     var createdAt: Date = Date()
 
@@ -29,6 +31,11 @@ final class Event {
     var type: EventType {
         get { EventType(rawValue: typeRaw) ?? .other }
         set { typeRaw = newValue.rawValue }
+    }
+
+    /// 该事件下已有送出记录（智能回礼建议的抑制条件）
+    var hasGivenRecord: Bool {
+        (records ?? []).contains { $0.direction == .given }
     }
 
     /// 是否为主场礼簿事件
@@ -43,7 +50,8 @@ final class Event {
         hostMode: EventHostMode = .guest,
         date: Date = .now,
         location: String = "",
-        note: String = ""
+        note: String = "",
+        primaryContact: Contact? = nil
     ) {
         self.name = name
         typeRaw = type.rawValue
@@ -51,6 +59,7 @@ final class Event {
         self.date = date
         self.location = location
         self.note = note
+        self.primaryContact = primaryContact
         createdAt = .now
     }
 }

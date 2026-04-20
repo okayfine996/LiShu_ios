@@ -26,6 +26,9 @@ final class Contact {
     /// 关联的往来记录，删除联系人时级联删除
     @Relationship(deleteRule: .cascade, inverse: \Record.contact)
     var records: [Record]?
+    /// CloudKit 要求所有关系必须有反向关系；删除联系人时置空对应事件的 primaryContact
+    @Relationship(deleteRule: .nullify, inverse: \Event.primaryContact)
+    var hostedEvents: [Event]?
     /// 创建时间
     var createdAt: Date = Date()
 

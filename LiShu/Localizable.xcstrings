@@ -7,8 +7,21 @@
     "·" : {
 
     },
+    "(%@)" : {
+
+    },
     "/" : {
 
+    },
+    "%@ %@" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ %2$@"
+          }
+        }
+      }
     },
     "%@ %lld" : {
       "localizations" : {
@@ -2259,6 +2272,38 @@
         }
       }
     },
+    "event.add.primaryContact" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关联主人公"
+          }
+        }
+      }
+    },
+    "event.add.primaryContact.clear" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消关联"
+          }
+        }
+      }
+    },
+    "event.add.primaryContact.placeholder" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "可选，用于智能回礼建议"
+          }
+        }
+      }
+    },
     "event.add.save" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -2876,6 +2921,450 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "即将到来"
+          }
+        }
+      }
+    },
+    "event.smartGift.badge" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "智能回礼"
+          }
+        }
+      }
+    },
+    "event.smartGift.banner.subtitle" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "基于往来历史，建议回礼 %@"
+          }
+        }
+      }
+    },
+    "event.smartGift.banner.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "智能回礼建议"
+          }
+        }
+      }
+    },
+    "event.smartGift.circle.family" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "至亲"
+          }
+        }
+      }
+    },
+    "event.smartGift.circle.other" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一般"
+          }
+        }
+      }
+    },
+    "event.smartGift.circle.relative" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "密切"
+          }
+        }
+      }
+    },
+    "event.smartGift.circle.social" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "普通"
+          }
+        }
+      }
+    },
+    "event.smartGift.confirm" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "确认，记入账本"
+          }
+        }
+      }
+    },
+    "event.smartGift.reason.cpi.body" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "综合过去%1$@通货膨胀率约%2$d%%，基准金额建议上调至 ¥%3$@ 左右以维持购买力对等。"
+          }
+        }
+      }
+    },
+    "event.smartGift.reason.cpi.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "物价涨幅调整 (CPI)"
+          }
+        }
+      }
+    },
+    "event.smartGift.reason.cpi.years.1to2" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1-2年"
+          }
+        }
+      }
+    },
+    "event.smartGift.reason.cpi.years.3to4" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "3-4年"
+          }
+        }
+      }
+    },
+    "event.smartGift.reason.cpi.years.5to7" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "5-7年"
+          }
+        }
+      }
+    },
+    "event.smartGift.reason.cpi.years.8plus" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "8年以上"
+          }
+        }
+      }
+    },
+    "event.smartGift.reason.eventSymmetry.badge.downgrade" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "降格"
+          }
+        }
+      }
+    },
+    "event.smartGift.reason.eventSymmetry.badge.upgrade" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "升格"
+          }
+        }
+      }
+    },
+    "event.smartGift.reason.eventSymmetry.downgrade" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本次 %1$@ 规格低于 TA 过往随礼场合（%2$@），基准下调 %3$d%%，调整后参考金额 ¥%4$@。"
+          }
+        }
+      }
+    },
+    "event.smartGift.reason.eventSymmetry.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "活动对等性"
+          }
+        }
+      }
+    },
+    "event.smartGift.reason.eventSymmetry.upgrade" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本次 %1$@ 规格高于 TA 过往随礼场合（%2$@），基准上调 %3$d%%，调整后参考金额 ¥%4$@。"
+          }
+        }
+      }
+    },
+    "event.smartGift.reason.historical.body" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TA 累计随礼 ¥%1$@，你累计送出 ¥%2$@，净余 ¥%3$@ 作为本次回礼的计算依据。"
+          }
+        }
+      }
+    },
+    "event.smartGift.reason.historical.nonPositive" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TA 累计随礼 ¥%1$@，你累计送出 ¥%2$@，净余为负值，改以 %3$@ 类型活动最低标准 ¥%4$@ 作为基准。"
+          }
+        }
+      }
+    },
+    "event.smartGift.reason.historical.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "历史往来参考"
+          }
+        }
+      }
+    },
+    "event.smartGift.reason.noHistory" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无历史往来，按 %@ 事件最低基准"
+          }
+        }
+      }
+    },
+    "event.smartGift.reason.noHistory.body" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "与该联系人暂无历史往来记录，按 %1$@ 类型活动行业最低标准 ¥%2$@ 作为回礼基准。"
+          }
+        }
+      }
+    },
+    "event.smartGift.reason.noHistory.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "活动类型基准"
+          }
+        }
+      }
+    },
+    "event.smartGift.reason.relationship.body" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "根据近期互动频率与重要性标记，建议回礼区间为 ¥%1$@ 至 ¥%2$@，您可根据实际关系亲疏选择合适档位。"
+          }
+        }
+      }
+    },
+    "event.smartGift.reason.relationship.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关系权置系数"
+          }
+        }
+      }
+    },
+    "event.smartGift.reasoning.baseline" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "建议基准"
+          }
+        }
+      }
+    },
+    "event.smartGift.reasoning.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "建议依据"
+          }
+        }
+      }
+    },
+    "event.smartGift.sheet.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "智能回礼"
+          }
+        }
+      }
+    },
+    "event.smartGift.tier.conservative" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保守"
+          }
+        }
+      }
+    },
+    "event.smartGift.tier.generous" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "慷慨"
+          }
+        }
+      }
+    },
+    "event.smartGift.tier.level.casual" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "日常场合"
+          }
+        }
+      }
+    },
+    "event.smartGift.tier.level.major" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "大型仪式"
+          }
+        }
+      }
+    },
+    "event.smartGift.tier.level.significant" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重要活动"
+          }
+        }
+      }
+    },
+    "event.smartGift.tier.standard" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "适中"
+          }
+        }
+      }
+    },
+    "event.smartGift.tier.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "随礼策略"
+          }
+        }
+      }
+    },
+    "event.smartGift.timeline.balance" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TA 累计送你 ¥%@ | 你累计送TA ¥%@"
+          }
+        }
+      }
+    },
+    "event.smartGift.timeline.given" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "送"
+          }
+        }
+      }
+    },
+    "event.smartGift.timeline.outstanding" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你尚欠人情"
+          }
+        }
+      }
+    },
+    "event.smartGift.timeline.received" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "收"
+          }
+        }
+      }
+    },
+    "event.smartGift.timeline.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "往来历史"
+          }
+        }
+      }
+    },
+    "event.smartGift.timeline.more" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "还有 %d 条更早的往来记录"
+          }
+        }
+      }
+    },
+    "event.smartGift.disclaimer" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "以上建议仅供参考，不构成任何财务或社交建议，请结合实际情况自行判断。"
           }
         }
       }

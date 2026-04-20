@@ -67,6 +67,10 @@ private extension HomeView {
             NavigationStack {
                 ProMembershipView()
             }
+        case let .smartReturnGift(eventID, contactID):
+            NavigationStack {
+                SmartReturnGiftView(eventID: eventID, contactID: contactID)
+            }
         }
     }
 }
