@@ -1956,9 +1956,6 @@
         }
       }
     },
-    "DEBUG: 清除购买状态" : {
-
-    },
     "debug.clearAllData" : {
       "localizations" : {
         "en" : {
@@ -3005,6 +3002,16 @@
         }
       }
     },
+    "event.smartGift.disclaimer" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "以上建议仅供参考，不构成任何财务或社交建议，请结合实际情况自行判断。"
+          }
+        }
+      }
+    },
     "event.smartGift.reason.cpi.body" : {
       "localizations" : {
         "zh-Hans" : {
@@ -3319,6 +3326,16 @@
         }
       }
     },
+    "event.smartGift.timeline.more" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "还有 %d 条更早的往来记录"
+          }
+        }
+      }
+    },
     "event.smartGift.timeline.outstanding" : {
       "localizations" : {
         "zh-Hans" : {
@@ -3345,26 +3362,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "往来历史"
-          }
-        }
-      }
-    },
-    "event.smartGift.timeline.more" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "还有 %d 条更早的往来记录"
-          }
-        }
-      }
-    },
-    "event.smartGift.disclaimer" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "以上建议仅供参考，不构成任何财务或社交建议，请结合实际情况自行判断。"
           }
         }
       }
