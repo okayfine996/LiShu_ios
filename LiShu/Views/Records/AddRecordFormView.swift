@@ -82,17 +82,10 @@ private struct AddRecordCurrentEventSection: View {
     let event: Event
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(String(localized: "record.add.currentEvent"))
-                .font(DesignSystem.Typography.caption)
-                .foregroundStyle(DesignSystem.Colors.textSecondary)
-                .fontWeight(.semibold)
-
-            RecordEventSummaryCard(
-                title: String(localized: "record.add.currentEvent"),
-                event: event
-            )
-        }
+        RecordEventSummaryCard(
+            title: String(localized: "record.add.currentEvent"),
+            event: event
+        )
     }
 }
 
@@ -106,13 +99,15 @@ private struct AddRecordContactSection: View {
                 ContactIdentitySelectorCard(contact: selectedContact)
             }
 
-            ContactAvatarSelectorStrip(
-                contacts: viewModel.allContacts,
-                selectedContactID: viewModel.selectedContact?.persistentModelID,
-                accessibilityIdentifier: "record.add.contactSelector",
-                onSelectContact: selectContact,
-                onCreateContact: onCreateContact
-            )
+            if !viewModel.isContactLockedByEvent {
+                ContactAvatarSelectorStrip(
+                    contacts: viewModel.allContacts,
+                    selectedContactID: viewModel.selectedContact?.persistentModelID,
+                    accessibilityIdentifier: "record.add.contactSelector",
+                    onSelectContact: selectContact,
+                    onCreateContact: onCreateContact
+                )
+            }
         }
     }
 

@@ -1956,6 +1956,9 @@
         }
       }
     },
+    "DEBUG: 清除购买状态" : {
+
+    },
     "debug.clearAllData" : {
       "localizations" : {
         "en" : {
@@ -6949,6 +6952,46 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "接送陪伴"
+          }
+        }
+      }
+    },
+    "record.dailyTag.cashFlow" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "资金周转"
+          }
+        }
+      }
+    },
+    "record.dailyTag.casualGift" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "随手赠礼"
+          }
+        }
+      }
+    },
+    "record.dailyTag.errand" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "代买代办"
+          }
+        }
+      }
+    },
+    "record.dailyTag.loanRepay" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "借款还款"
           }
         }
       }

@@ -63,6 +63,10 @@ class AddRecordViewModel {
         String(localized: "record.dailyTag.helpOut"),
         String(localized: "record.dailyTag.accompany"),
         String(localized: "record.dailyTag.lendReturn"),
+        String(localized: "record.dailyTag.cashFlow"),
+        String(localized: "record.dailyTag.loanRepay"),
+        String(localized: "record.dailyTag.errand"),
+        String(localized: "record.dailyTag.casualGift"),
     ]
 
     var allDailyTags: [String] {
@@ -128,6 +132,11 @@ class AddRecordViewModel {
         contextSelection == .event && selectedEvent != nil
     }
 
+    /// 当事件存在主人公时，联系人由事件绑定，不允许用户自行更改。
+    var isContactLockedByEvent: Bool {
+        contextSelection == .event && selectedEvent?.primaryContact != nil
+    }
+
     func directionTitle(for direction: RecordDirection) -> String {
         switch (recordType, direction) {
         case (.monetary, .given): String(localized: "record.direction.monetary.given")
@@ -160,7 +169,7 @@ class AddRecordViewModel {
             tagDescriptor.propertiesToFetch = [\.contextTag]
             let tagRecords = try context.fetch(tagDescriptor)
             let existingTags = Set(tagRecords.map(\.contextTag))
-            customDailyTags = existingTags.filter { !Self.builtInDailyTags.contains($0) }.sorted()
+            customDailyTags = existingTags.filter { !$0.isEmpty && !Self.builtInDailyTags.contains($0) }.sorted()
             recordsViewModelLogger.info("Loaded add record dependencies", metadata: [
                 "step": .string("load_data"),
                 "count": .stringConvertible(allContacts.count + allEvents.count),
@@ -196,6 +205,9 @@ class AddRecordViewModel {
         }
         if let eventID {
             selectEvent(context.model(for: eventID) as? Event)
+        }
+        if contactID == nil {
+            applyPrimaryContactBinding(from: selectedEvent)
         }
         applyDirectionConstraintForSelectedEvent()
         recordsViewModelLogger.info("Configured add record context", metadata: [
@@ -302,6 +314,12 @@ class AddRecordViewModel {
     func applyDirectionConstraintForSelectedEvent() {
         guard contextSelection == .event, let event = selectedEvent else { return }
         direction = event.hostMode == .host ? .received : .given
+    }
+
+    private func applyPrimaryContactBinding(from event: Event?) {
+        if let primaryContact = event?.primaryContact {
+            selectedContact = primaryContact
+        }
     }
 
     private func buildDraftPayload(
@@ -492,6 +510,7 @@ class AddRecordViewModel {
         selectedContact = nil
         selectedEvent = preservedEvent
         contextSelection = preservedEvent == nil ? .daily : .event
+        applyPrimaryContactBinding(from: preservedEvent)
         note = ""
         date = preservedDate
         newPhotoItems = []
