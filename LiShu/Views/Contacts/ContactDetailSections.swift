@@ -63,25 +63,7 @@ struct ContactDetailPersonalInfoSection: View {
                 .padding(.bottom, 12)
 
             VStack(spacing: 0) {
-                if contact.birthdayMonth > 0 {
-                    let birthdayValue = contact.birthdayIsLunar
-                        ? LunarCalendarHelper.format(month: contact.birthdayMonth, day: contact.birthdayDay)
-                        : LunarCalendarHelper.formatGregorian(month: contact.birthdayMonth, day: contact.birthdayDay)
-                    ContactDetailInfoRow(
-                        icon: "birthday.cake.fill",
-                        label: String(localized: "contact.add.birthday"),
-                        value: birthdayValue
-                    )
-                    ContactDetailInfoDivider()
-                } else if let birthday = contact.birthday {
-                    // 旧数据兼容：birthday 字段仍有值但 birthdayMonth 未迁移
-                    let birthdayValue: String
-                    if contact.birthdayIsLunar, let md = LunarCalendarHelper.lunarMonthDay(from: birthday) {
-                        birthdayValue = LunarCalendarHelper.format(month: md.month, day: md.day)
-                    } else {
-                        let md = LunarCalendarHelper.gregorianMonthDay(from: birthday)
-                        birthdayValue = LunarCalendarHelper.formatGregorian(month: md.month, day: md.day)
-                    }
+                if let birthdayValue = birthdayText(for: contact) {
                     ContactDetailInfoRow(
                         icon: "birthday.cake.fill",
                         label: String(localized: "contact.add.birthday"),
@@ -118,6 +100,22 @@ struct ContactDetailPersonalInfoSection: View {
             .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.smallCard))
             .padding(.horizontal, 16)
         }
+    }
+
+    private func birthdayText(for contact: Contact) -> String? {
+        if contact.birthdayMonth > 0 {
+            return contact.birthdayIsLunar
+                ? LunarCalendarHelper.format(month: contact.birthdayMonth, day: contact.birthdayDay)
+                : LunarCalendarHelper.formatGregorian(month: contact.birthdayMonth, day: contact.birthdayDay)
+        } else if let legacyDate = contact.birthday {
+            if contact.birthdayIsLunar, let md = LunarCalendarHelper.lunarMonthDay(from: legacyDate) {
+                return LunarCalendarHelper.format(month: md.month, day: md.day)
+            } else {
+                let md = LunarCalendarHelper.gregorianMonthDay(from: legacyDate)
+                return LunarCalendarHelper.formatGregorian(month: md.month, day: md.day)
+            }
+        }
+        return nil
     }
 }
 
