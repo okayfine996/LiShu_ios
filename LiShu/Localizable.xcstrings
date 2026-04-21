@@ -466,6 +466,56 @@
         }
       }
     },
+    "contact.add.birthday.gregorian" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "公历"
+          }
+        }
+      }
+    },
+    "contact.add.birthday.lunar" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "农历"
+          }
+        }
+      }
+    },
+    "contact.add.birthdayReminder" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "开启生日提醒"
+          }
+        }
+      }
+    },
+    "contact.birthday.lunar.format" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "农历%@%@"
+          }
+        }
+      }
+    },
+    "contact.birthday.gregorian.format" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%d月%d日"
+          }
+        }
+      }
+    },
     "contact.add.birthdayPlaceholder" : {
       "localizations" : {
         "zh-Hans" : {
@@ -1955,9 +2005,6 @@
           }
         }
       }
-    },
-    "DEBUG: 清除购买状态" : {
-
     },
     "debug.clearAllData" : {
       "localizations" : {
@@ -6956,6 +7003,16 @@
         }
       }
     },
+    "record.dailyTag.callOn" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拜访探望"
+          }
+        }
+      }
+    },
     "record.dailyTag.cashFlow" : {
       "localizations" : {
         "zh-Hans" : {
@@ -6976,42 +7033,22 @@
         }
       }
     },
-    "record.dailyTag.errand" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "代买代办"
-          }
-        }
-      }
-    },
-    "record.dailyTag.loanRepay" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "借款还款"
-          }
-        }
-      }
-    },
-    "record.dailyTag.callOn" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "拜访探望"
-          }
-        }
-      }
-    },
     "record.dailyTag.dining" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "聚餐请客"
+          }
+        }
+      }
+    },
+    "record.dailyTag.errand" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "代买代办"
           }
         }
       }
@@ -7042,6 +7079,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "借还物品"
+          }
+        }
+      }
+    },
+    "record.dailyTag.loanRepay" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "借款还款"
           }
         }
       }

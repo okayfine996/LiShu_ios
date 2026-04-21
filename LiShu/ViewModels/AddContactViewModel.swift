@@ -11,8 +11,13 @@ class AddContactViewModel {
     var name: String = ""
     var selectedCategory: RelationshipCategory?
     var selectedTag: String = ""
-    var birthday: Date = .now
+    /// 生日月份（1–12），仅在 hasBirthday == true 时有效
+    var birthdayMonth: Int = 1
+    /// 生日日（1–31 公历，1–30 农历），仅在 hasBirthday == true 时有效
+    var birthdayDay: Int = 1
     var hasBirthday: Bool = false
+    var birthdayIsLunar: Bool = false
+    var birthdayReminderEnabled: Bool = false
     var phone: String = ""
     var location: String = ""
     var note: String = ""
@@ -31,7 +36,7 @@ class AddContactViewModel {
             relation: selectedTag,
             category: selectedCategory?.rawValue ?? "",
             circle: selectedCategory?.circle ?? 4,
-            birthday: hasBirthday ? birthday : nil,
+            birthday: nil,
             location: location.trimmingCharacters(in: .whitespacesAndNewlines),
             note: note.trimmingCharacters(in: .whitespacesAndNewlines),
             avatarPresent: avatar != nil,
@@ -50,11 +55,38 @@ class AddContactViewModel {
         name = contact.name
         selectedCategory = RelationshipCategory(rawValue: contact.category)
         selectedTag = contact.relation
-        birthday = contact.birthday ?? .now
-        hasBirthday = contact.birthday != nil
+        birthdayIsLunar = contact.birthdayIsLunar
+        birthdayReminderEnabled = contact.birthdayReminderEnabled
         phone = contact.phone
         location = contact.location
         note = contact.note
+
+        if contact.birthdayMonth > 0 {
+            // 新数据：直接读取月日
+            birthdayMonth = contact.birthdayMonth
+            birthdayDay = contact.birthdayDay
+            hasBirthday = true
+        } else if let legacyDate = contact.birthday {
+            // 旧数据迁移：从 Date 提取月日
+            if contact.birthdayIsLunar {
+                if let md = LunarCalendarHelper.lunarMonthDay(from: legacyDate) {
+                    birthdayMonth = md.month
+                    birthdayDay = md.day
+                } else {
+                    hasBirthday = false
+                    return
+                }
+            } else {
+                let md = LunarCalendarHelper.gregorianMonthDay(from: legacyDate)
+                birthdayMonth = md.month
+                birthdayDay = md.day
+            }
+            hasBirthday = true
+        } else {
+            birthdayMonth = 1
+            birthdayDay = 1
+            hasBirthday = false
+        }
     }
 
     @MainActor
@@ -99,14 +131,18 @@ class AddContactViewModel {
             existing.relation = selectedTag
             existing.category = selectedCategory?.rawValue ?? ""
             existing.circle = circle
-            existing.birthday = hasBirthday ? birthday : nil
+            existing.birthdayMonth = hasBirthday ? birthdayMonth : 0
+            existing.birthdayDay = hasBirthday ? birthdayDay : 0
+            existing.birthday = nil // 新数据不再使用旧字段
+            existing.birthdayIsLunar = hasBirthday ? birthdayIsLunar : false
+            existing.birthdayReminderEnabled = hasBirthday && birthdayReminderEnabled
             existing.location = location.trimmingCharacters(in: .whitespacesAndNewlines)
             existing.note = note.trimmingCharacters(in: .whitespaces)
 
             do {
                 try context.save()
                 NotificationManager.shared.cancelBirthdayReminder(contact: existing)
-                if hasBirthday {
+                if hasBirthday, birthdayReminderEnabled {
                     NotificationManager.shared.scheduleBirthdayReminder(contact: existing)
                 }
                 BusinessDataLogger.entityMutation(
@@ -158,7 +194,10 @@ class AddContactViewModel {
                 relation: selectedTag,
                 category: selectedCategory?.rawValue ?? "",
                 circle: circle,
-                birthday: hasBirthday ? birthday : nil,
+                birthdayMonth: hasBirthday ? birthdayMonth : 0,
+                birthdayDay: hasBirthday ? birthdayDay : 0,
+                birthdayIsLunar: hasBirthday ? birthdayIsLunar : false,
+                birthdayReminderEnabled: hasBirthday && birthdayReminderEnabled,
                 location: location.trimmingCharacters(in: .whitespacesAndNewlines),
                 note: note.trimmingCharacters(in: .whitespaces)
             )
@@ -167,7 +206,7 @@ class AddContactViewModel {
 
             do {
                 try context.save()
-                if hasBirthday {
+                if hasBirthday, birthdayReminderEnabled {
                     NotificationManager.shared.scheduleBirthdayReminder(contact: contact)
                 }
                 BusinessDataLogger.entityMutation(

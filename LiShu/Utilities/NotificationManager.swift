@@ -182,13 +182,45 @@ final class NotificationManager {
     // MARK: - Birthday Reminders
 
     func scheduleBirthdayReminder(contact: Contact) {
+        // 优先用新字段，兼容旧 birthday 字段
+        let month: Int
+        let day: Int
+        if contact.birthdayMonth > 0 {
+            month = contact.birthdayMonth
+            day = contact.birthdayDay
+        } else if let legacyDate = contact.birthday {
+            if contact.birthdayIsLunar {
+                guard let md = LunarCalendarHelper.lunarMonthDay(from: legacyDate) else {
+                    notificationLogger.info("Skipped birthday reminder", metadata: [
+                        "step": .string("schedule_birthday"),
+                        "contact_id": .string(stableIdentifier(for: contact.persistentModelID)),
+                        "reason": .string("lunar_legacy_date_resolution_failed"),
+                    ])
+                    return
+                }
+                month = md.month
+                day = md.day
+            } else {
+                let md = LunarCalendarHelper.gregorianMonthDay(from: legacyDate)
+                month = md.month
+                day = md.day
+            }
+        } else {
+            notificationLogger.info("Skipped birthday reminder", metadata: [
+                "step": .string("schedule_birthday"),
+                "contact_id": .string(stableIdentifier(for: contact.persistentModelID)),
+                "reason": .string("no_birthday_data"),
+            ])
+            return
+        }
+
         guard settings.notificationEnabled, settings.birthdayReminder,
-              let birthday = contact.birthday
+              contact.birthdayReminderEnabled
         else {
             notificationLogger.info("Skipped birthday reminder", metadata: [
                 "step": .string("schedule_birthday"),
                 "contact_id": .string(stableIdentifier(for: contact.persistentModelID)),
-                "reason": .string("notifications_disabled_or_missing_birthday"),
+                "reason": .string("notifications_disabled_or_reminder_off"),
             ])
             return
         }
@@ -203,18 +235,38 @@ final class NotificationManager {
             "contactID": stableIdentifier(for: contact.persistentModelID),
         ]
 
-        var components = Calendar.current.dateComponents([.month, .day], from: birthday)
-        components.hour = 9
-        components.minute = 0
-
-        let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: true)
         let identifier = birthdayNotificationID(contact)
-        let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
 
-        center.add(request)
+        if contact.birthdayIsLunar {
+            // 农历：用 Calendar.nextDate 计算下次公历日期，调度一次性通知（启动时 rescheduleAll 续约）
+            guard let nextDate = LunarCalendarHelper.nextGregorianDate(lunarMonth: month, lunarDay: day) else {
+                notificationLogger.info("Skipped birthday reminder", metadata: [
+                    "step": .string("schedule_birthday"),
+                    "contact_id": .string(stableIdentifier(for: contact.persistentModelID)),
+                    "reason": .string("lunar_date_resolution_failed"),
+                ])
+                return
+            }
+            var components = Calendar.current.dateComponents([.year, .month, .day], from: nextDate)
+            components.hour = 9
+            components.minute = 0
+            let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
+            center.add(UNNotificationRequest(identifier: identifier, content: content, trigger: trigger))
+        } else {
+            // 公历：按月日每年重复，无需年份
+            var components = DateComponents()
+            components.month = month
+            components.day = day
+            components.hour = 9
+            components.minute = 0
+            let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: true)
+            center.add(UNNotificationRequest(identifier: identifier, content: content, trigger: trigger))
+        }
+
         notificationLogger.notice("Scheduled birthday reminder", metadata: [
             "step": .string("schedule_birthday"),
             "contact_id": .string(stableIdentifier(for: contact.persistentModelID)),
+            "isLunar": .string(contact.birthdayIsLunar ? "true" : "false"),
             "result": .string("scheduled"),
         ])
     }
@@ -376,15 +428,17 @@ final class NotificationManager {
 
         if settings.birthdayReminder {
             let descriptor = FetchDescriptor<Contact>(
-                predicate: #Predicate<Contact> { $0.birthday != nil }
+                predicate: #Predicate<Contact> { $0.birthdayReminderEnabled == true }
             )
             if let contacts = try? context.fetch(descriptor) {
-                for contact in contacts {
+                // 过滤出真正有生日数据的联系人（新字段或旧字段）
+                let eligible = contacts.filter { $0.birthdayMonth > 0 || $0.birthday != nil }
+                for contact in eligible {
                     scheduleBirthdayReminder(contact: contact)
                 }
                 notificationLogger.info("Rescheduled birthday reminders", metadata: [
                     "step": .string("reschedule_all"),
-                    "count": .stringConvertible(contacts.count),
+                    "count": .stringConvertible(eligible.count),
                 ])
             }
         }

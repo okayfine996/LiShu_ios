@@ -5,8 +5,11 @@ struct AddContactEditorContent: View {
     @Binding var name: String
     @Binding var selectedCategory: RelationshipCategory?
     @Binding var selectedTag: String
-    @Binding var birthday: Date
+    @Binding var birthdayMonth: Int
+    @Binding var birthdayDay: Int
     @Binding var hasBirthday: Bool
+    @Binding var birthdayIsLunar: Bool
+    @Binding var birthdayReminderEnabled: Bool
     @Binding var phone: String
     @Binding var location: String
     @Binding var note: String
@@ -23,8 +26,11 @@ struct AddContactEditorContent: View {
                     name: $name,
                     selectedCategory: $selectedCategory,
                     selectedTag: $selectedTag,
-                    birthday: $birthday,
+                    birthdayMonth: $birthdayMonth,
+                    birthdayDay: $birthdayDay,
                     hasBirthday: $hasBirthday,
+                    birthdayIsLunar: $birthdayIsLunar,
+                    birthdayReminderEnabled: $birthdayReminderEnabled,
                     phone: $phone,
                     location: $location,
                     note: $note,
@@ -55,8 +61,11 @@ private struct AddContactFormSection: View {
     @Binding var name: String
     @Binding var selectedCategory: RelationshipCategory?
     @Binding var selectedTag: String
-    @Binding var birthday: Date
+    @Binding var birthdayMonth: Int
+    @Binding var birthdayDay: Int
     @Binding var hasBirthday: Bool
+    @Binding var birthdayIsLunar: Bool
+    @Binding var birthdayReminderEnabled: Bool
     @Binding var phone: String
     @Binding var location: String
     @Binding var note: String
@@ -83,8 +92,11 @@ private struct AddContactFormSection: View {
             }
 
             AddContactBirthdayField(
-                birthday: $birthday,
+                birthdayMonth: $birthdayMonth,
+                birthdayDay: $birthdayDay,
                 hasBirthday: $hasBirthday,
+                birthdayIsLunar: $birthdayIsLunar,
+                birthdayReminderEnabled: $birthdayReminderEnabled,
                 onToggle: onBirthdayToggle
             )
 
@@ -124,48 +136,147 @@ private struct AddContactField<Content: View>: View {
 }
 
 private struct AddContactBirthdayField: View {
-    @Binding var birthday: Date
+    @Binding var birthdayMonth: Int
+    @Binding var birthdayDay: Int
     @Binding var hasBirthday: Bool
+    @Binding var birthdayIsLunar: Bool
+    @Binding var birthdayReminderEnabled: Bool
 
     let onToggle: () -> Void
 
+    /// 农历月名
+    private static let lunarMonths = (1 ... 12).map { m in
+        LunarCalendarHelper.monthNames[m] ?? "\(m)月"
+    }
+
+    /// 农历日名
+    private static let lunarDays = (1 ... 30).map { d in
+        LunarCalendarHelper.dayNames[d] ?? "\(d)日"
+    }
+
+    /// 公历月名
+    private static let gregorianMonths = (1 ... 12).map { "\($0)月" }
+    /// 公历日名（最大 31 日）
+    private static let gregorianDays = (1 ... 31).map { "\($0)日" }
+
+    private var monthList: [String] {
+        birthdayIsLunar ? Self.lunarMonths : Self.gregorianMonths
+    }
+
+    private var dayList: [String] {
+        birthdayIsLunar ? Self.lunarDays : Self.gregorianDays
+    }
+
+    private var maxDay: Int {
+        birthdayIsLunar ? 30 : 31
+    }
+
     var body: some View {
         AddContactField(label: String(localized: "contact.add.birthday")) {
-            HStack {
-                if hasBirthday {
-                    DatePicker(
-                        "",
-                        selection: $birthday,
-                        displayedComponents: .date
-                    )
-                    .labelsHidden()
-                    .tint(DesignSystem.Colors.primary)
-                } else {
-                    Text(String(localized: "contact.add.birthdayPlaceholder"))
-                        .font(DesignSystem.Typography.caption)
-                        .foregroundStyle(DesignSystem.Colors.textTertiary)
+            VStack(spacing: 10) {
+                // Row 1: 日历类型切换 + 月日 Picker + 日历 icon 按钮
+                HStack(spacing: 8) {
+                    if hasBirthday {
+                        // 公历/农历 pill 切换
+                        HStack(spacing: 0) {
+                            calendarTypeButton(
+                                title: String(localized: "contact.add.birthday.gregorian"),
+                                isSelected: !birthdayIsLunar
+                            ) {
+                                birthdayIsLunar = false
+                                birthdayDay = min(birthdayDay, 31)
+                            }
+                            calendarTypeButton(
+                                title: String(localized: "contact.add.birthday.lunar"),
+                                isSelected: birthdayIsLunar
+                            ) {
+                                birthdayIsLunar = true
+                                birthdayDay = min(birthdayDay, 30)
+                            }
+                        }
+                        .clipShape(Capsule())
+                        .overlay(Capsule().stroke(DesignSystem.Colors.border, lineWidth: 1))
+
+                        Spacer()
+
+                        // 月 Picker
+                        Picker("", selection: $birthdayMonth) {
+                            ForEach(1 ... 12, id: \.self) { m in
+                                Text(monthList[m - 1]).tag(m)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                        .tint(DesignSystem.Colors.primary)
+
+                        // 日 Picker
+                        Picker("", selection: $birthdayDay) {
+                            ForEach(1 ... maxDay, id: \.self) { d in
+                                Text(dayList[d - 1]).tag(d)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                        .tint(DesignSystem.Colors.primary)
+                    } else {
+                        Text(String(localized: "contact.add.birthdayPlaceholder"))
+                            .font(DesignSystem.Typography.caption)
+                            .foregroundStyle(DesignSystem.Colors.textTertiary)
+                        Spacer()
+                    }
+
+                    Button(action: onToggle) {
+                        Image(systemName: "calendar")
+                            .font(DesignSystem.Typography.body)
+                            .foregroundStyle(
+                                hasBirthday
+                                    ? DesignSystem.Colors.primary
+                                    : DesignSystem.Colors.textTertiary
+                            )
+                    }
                 }
+                .padding(.vertical, 12)
+                .padding(.horizontal, 16)
+                .background(DesignSystem.Colors.bgSurface)
+                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.input))
+                .overlay(
+                    RoundedRectangle(cornerRadius: DesignSystem.Radius.input)
+                        .stroke(DesignSystem.Colors.border, lineWidth: 1)
+                )
 
-                Spacer()
-
-                Button(action: onToggle) {
-                    Image(systemName: "calendar")
-                        .font(DesignSystem.Typography.body)
-                        .foregroundStyle(
-                            hasBirthday
-                                ? DesignSystem.Colors.primary
-                                : DesignSystem.Colors.textTertiary
-                        )
+                // Row 2: 生日提醒开关（仅在已设置生日时显示）
+                if hasBirthday {
+                    HStack {
+                        Image(systemName: "bell.fill")
+                            .font(DesignSystem.Typography.caption)
+                            .foregroundStyle(DesignSystem.Colors.primary)
+                        Text(String(localized: "contact.add.birthdayReminder"))
+                            .font(DesignSystem.Typography.caption)
+                            .foregroundStyle(DesignSystem.Colors.textPrimary)
+                        Spacer()
+                        Toggle("", isOn: $birthdayReminderEnabled)
+                            .labelsHidden()
+                            .tint(DesignSystem.Colors.primary)
+                    }
+                    .padding(.vertical, 12)
+                    .padding(.horizontal, 16)
+                    .background(DesignSystem.Colors.bgSurface)
+                    .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.input))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: DesignSystem.Radius.input)
+                            .stroke(DesignSystem.Colors.border, lineWidth: 1)
+                    )
                 }
             }
-            .padding(.vertical, 12)
-            .padding(.horizontal, 16)
-            .background(DesignSystem.Colors.bgSurface)
-            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.input))
-            .overlay(
-                RoundedRectangle(cornerRadius: DesignSystem.Radius.input)
-                    .stroke(DesignSystem.Colors.border, lineWidth: 1)
-            )
+        }
+    }
+
+    private func calendarTypeButton(title: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(DesignSystem.Typography.small)
+                .foregroundStyle(isSelected ? DesignSystem.Colors.bgSurface : DesignSystem.Colors.textSecondary)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(isSelected ? DesignSystem.Colors.primary : Color.clear)
         }
     }
 }

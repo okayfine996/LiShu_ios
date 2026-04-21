@@ -63,11 +63,29 @@ struct ContactDetailPersonalInfoSection: View {
                 .padding(.bottom, 12)
 
             VStack(spacing: 0) {
-                if let birthday = contact.birthday {
+                if contact.birthdayMonth > 0 {
+                    let birthdayValue = contact.birthdayIsLunar
+                        ? LunarCalendarHelper.format(month: contact.birthdayMonth, day: contact.birthdayDay)
+                        : LunarCalendarHelper.formatGregorian(month: contact.birthdayMonth, day: contact.birthdayDay)
                     ContactDetailInfoRow(
                         icon: "birthday.cake.fill",
                         label: String(localized: "contact.add.birthday"),
-                        value: viewModel.formatDate(birthday)
+                        value: birthdayValue
+                    )
+                    ContactDetailInfoDivider()
+                } else if let birthday = contact.birthday {
+                    // 旧数据兼容：birthday 字段仍有值但 birthdayMonth 未迁移
+                    let birthdayValue: String
+                    if contact.birthdayIsLunar, let md = LunarCalendarHelper.lunarMonthDay(from: birthday) {
+                        birthdayValue = LunarCalendarHelper.format(month: md.month, day: md.day)
+                    } else {
+                        let md = LunarCalendarHelper.gregorianMonthDay(from: birthday)
+                        birthdayValue = LunarCalendarHelper.formatGregorian(month: md.month, day: md.day)
+                    }
+                    ContactDetailInfoRow(
+                        icon: "birthday.cake.fill",
+                        label: String(localized: "contact.add.birthday"),
+                        value: birthdayValue
                     )
                     ContactDetailInfoDivider()
                 }
