@@ -5,8 +5,7 @@ struct AddContactEditorContent: View {
     @Binding var name: String
     @Binding var selectedCategory: RelationshipCategory?
     @Binding var selectedTag: String
-    @Binding var birthdayMonth: Int
-    @Binding var birthdayDay: Int
+    @Binding var birthdayDate: Date
     @Binding var hasBirthday: Bool
     @Binding var birthdayIsLunar: Bool
     @Binding var birthdayReminderEnabled: Bool
@@ -25,8 +24,7 @@ struct AddContactEditorContent: View {
                     name: $name,
                     selectedCategory: $selectedCategory,
                     selectedTag: $selectedTag,
-                    birthdayMonth: $birthdayMonth,
-                    birthdayDay: $birthdayDay,
+                    birthdayDate: $birthdayDate,
                     hasBirthday: $hasBirthday,
                     birthdayIsLunar: $birthdayIsLunar,
                     birthdayReminderEnabled: $birthdayReminderEnabled,
@@ -59,8 +57,7 @@ private struct AddContactFormSection: View {
     @Binding var name: String
     @Binding var selectedCategory: RelationshipCategory?
     @Binding var selectedTag: String
-    @Binding var birthdayMonth: Int
-    @Binding var birthdayDay: Int
+    @Binding var birthdayDate: Date
     @Binding var hasBirthday: Bool
     @Binding var birthdayIsLunar: Bool
     @Binding var birthdayReminderEnabled: Bool
@@ -89,8 +86,7 @@ private struct AddContactFormSection: View {
             }
 
             AddContactBirthdayField(
-                birthdayMonth: $birthdayMonth,
-                birthdayDay: $birthdayDay,
+                birthdayDate: $birthdayDate,
                 hasBirthday: $hasBirthday,
                 birthdayIsLunar: $birthdayIsLunar,
                 birthdayReminderEnabled: $birthdayReminderEnabled
@@ -132,128 +128,47 @@ private struct AddContactField<Content: View>: View {
 }
 
 private struct AddContactBirthdayField: View {
-    @Binding var birthdayMonth: Int
-    @Binding var birthdayDay: Int
+    @Binding var birthdayDate: Date
     @Binding var hasBirthday: Bool
     @Binding var birthdayIsLunar: Bool
     @Binding var birthdayReminderEnabled: Bool
 
-    private static let lunarMonths = (1 ... 12).map { LunarCalendarHelper.lunarMonthName(month: $0) }
-    private static let lunarDays = (1 ... 30).map { LunarCalendarHelper.lunarDayName(day: $0) }
-
-    /// 公历月名
-    private static let gregorianMonths = (1 ... 12).map { "\($0)月" }
-    /// 公历日名（最大 31 日）
-    private static let gregorianDays = (1 ... 31).map { "\($0)日" }
-
-    private var monthList: [String] {
-        birthdayIsLunar ? Self.lunarMonths : Self.gregorianMonths
-    }
-
-    private var dayList: [String] {
-        birthdayIsLunar ? Self.lunarDays : Self.gregorianDays
-    }
-
-    /// 当前月实际天数，直接从 birthdayIsLunar/birthdayMonth 计算，与渲染同步（无 @State 竞态）
-    private var maxDay: Int {
-        birthdayIsLunar
-            ? LunarCalendarHelper.lunarDayCount(for: birthdayMonth)
-            : Self.gregorianMaxDay(for: birthdayMonth)
-    }
-
-    /// 公历各月实际天数（以当前年为参考，自动识别闰年 2月）
-    private static func gregorianMaxDay(for month: Int) -> Int {
-        let year = Calendar.current.component(.year, from: Date())
-        var comps = DateComponents()
-        comps.year = year
-        comps.month = month
-        guard let date = Calendar.current.date(from: comps),
-              let range = Calendar.current.range(of: .day, in: .month, for: date)
-        else { return 31 }
-        return range.count
+    private var birthdayCalendar: Calendar {
+        Calendar(identifier: birthdayIsLunar ? .chinese : .gregorian)
     }
 
     var body: some View {
         AddContactField(label: String(localized: "contact.add.birthday")) {
             VStack(spacing: 10) {
-                // Row 1: 公历/农历切换 + 月日 Picker（始终可见，无需触发）
                 HStack(spacing: 8) {
                     // 公历/农历 pill 切换
                     HStack(spacing: 0) {
                         calendarTypeButton(
                             title: String(localized: "contact.add.birthday.gregorian"),
                             isSelected: !birthdayIsLunar
-                        ) {
-                            guard birthdayIsLunar else { return }
-                            if hasBirthday {
-                                if let converted = LunarCalendarHelper.lunarToGregorian(month: birthdayMonth, day: birthdayDay) {
-                                    birthdayMonth = converted.month
-                                    birthdayDay = converted.day
-                                    birthdayIsLunar = false
-                                }
-                                // 转换失败时保持农历不切换
-                            } else {
-                                birthdayIsLunar = false
-                            }
-                        }
+                        ) { birthdayIsLunar = false }
                         calendarTypeButton(
                             title: String(localized: "contact.add.birthday.lunar"),
                             isSelected: birthdayIsLunar
-                        ) {
-                            guard !birthdayIsLunar else { return }
-                            if hasBirthday {
-                                if let converted = LunarCalendarHelper.gregorianToLunar(month: birthdayMonth, day: birthdayDay) {
-                                    birthdayMonth = converted.month
-                                    birthdayDay = min(converted.day, LunarCalendarHelper.lunarDayCount(for: converted.month))
-                                    birthdayIsLunar = true
-                                }
-                                // 转换失败时保持公历不切换
-                            } else {
-                                birthdayIsLunar = true
-                            }
-                        }
+                        ) { birthdayIsLunar = true }
                     }
                     .clipShape(Capsule())
                     .overlay(Capsule().stroke(DesignSystem.Colors.border, lineWidth: 1))
 
                     Spacer()
 
-                    // 月 Picker
-                    Picker("", selection: $birthdayMonth) {
-                        ForEach(1 ... 12, id: \.self) { m in
-                            Text(monthList[m - 1]).tag(m)
-                        }
-                    }
-                    .pickerStyle(.menu)
-                    .tint(DesignSystem.Colors.primary)
-                    .onChange(of: birthdayMonth) { _, newMonth in
-                        hasBirthday = true
-                        // clamp 当前日到新月的实际天数（maxDay 已是 computed，直接用）
-                        let newMax = birthdayIsLunar
-                            ? LunarCalendarHelper.lunarDayCount(for: newMonth)
-                            : Self.gregorianMaxDay(for: newMonth)
-                        if birthdayDay > newMax { birthdayDay = newMax }
-                    }
+                    DatePicker("", selection: $birthdayDate, displayedComponents: [.date])
+                        .labelsHidden()
+                        .environment(\.calendar, birthdayCalendar)
+                        .tint(DesignSystem.Colors.primary)
+                        .onChange(of: birthdayDate) { _, _ in hasBirthday = true }
 
-                    // 日 Picker
-                    Picker("", selection: $birthdayDay) {
-                        ForEach(1 ... maxDay, id: \.self) { d in
-                            Text(dayList[d - 1]).tag(d)
-                        }
-                    }
-                    .pickerStyle(.menu)
-                    .tint(DesignSystem.Colors.primary)
-                    .onChange(of: birthdayDay) { _, _ in hasBirthday = true }
-
-                    // 已设置生日时显示清除按钮
                     if hasBirthday {
                         Button {
                             withAnimation(.easeInOut(duration: 0.15)) {
                                 hasBirthday = false
                                 birthdayIsLunar = false
                                 birthdayReminderEnabled = false
-                                birthdayMonth = 1
-                                birthdayDay = 1
                             }
                         } label: {
                             Image(systemName: "xmark.circle.fill")
@@ -271,7 +186,6 @@ private struct AddContactBirthdayField: View {
                         .stroke(DesignSystem.Colors.border, lineWidth: 1)
                 )
 
-                // Row 2: 生日提醒开关（仅在已设置生日时显示）
                 if hasBirthday {
                     BirthdayReminderRow(
                         isEnabled: birthdayReminderEnabled,
@@ -284,13 +198,6 @@ private struct AddContactBirthdayField: View {
                             .stroke(DesignSystem.Colors.border, lineWidth: 1)
                     )
                 }
-            }
-            .onChange(of: birthdayIsLunar) { _, isLunar in
-                // clamp 当前日到新历法月的实际天数
-                let newMax = isLunar
-                    ? LunarCalendarHelper.lunarDayCount(for: birthdayMonth)
-                    : Self.gregorianMaxDay(for: birthdayMonth)
-                if birthdayDay > newMax { birthdayDay = newMax }
             }
         }
     }

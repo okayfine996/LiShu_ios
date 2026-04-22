@@ -87,7 +87,6 @@ struct AddContactViewModelTests {
 
     @Test func configureReadsLunarBirthdayDate() throws {
         let db = try TestDB()
-        // 农历八月十五 → dateFromLunar 构造 Date 存入，configure 应提取回 (8, 15)
         let birthday = try #require(LunarCalendarHelper.dateFromLunar(month: 8, day: 15))
         let contact = Contact(
             name: "农历生日测试",
@@ -100,8 +99,7 @@ struct AddContactViewModelTests {
         let vm = AddContactViewModel()
         vm.configure(with: contact)
 
-        #expect(vm.birthdayMonth == 8)
-        #expect(vm.birthdayDay == 15)
+        #expect(vm.birthdayDate == birthday)
         #expect(vm.birthdayIsLunar == true)
         #expect(vm.birthdayReminderEnabled == true)
         #expect(vm.hasBirthday == true)
@@ -117,14 +115,13 @@ struct AddContactViewModelTests {
         vm.configure(with: contact)
 
         #expect(vm.hasBirthday == true)
-        #expect(vm.birthdayMonth == 5)
-        #expect(vm.birthdayDay == 20)
+        #expect(vm.birthdayDate == date)
         #expect(vm.birthdayIsLunar == false)
     }
 
     @Test func configureReadsLunarFromStoredGregorianDate() throws {
         let db = try TestDB()
-        // 2024-09-17 公历 = 农历八月十五，验证 lunarMonthDay 提取正确
+        // 2024-09-17 公历 = 农历八月十五
         let date = try #require(Calendar.current.date(from: DateComponents(year: 2024, month: 9, day: 17)))
         let contact = Contact(name: "农历存公历Date测试", birthday: date, birthdayIsLunar: true)
         db.context.insert(contact)
@@ -133,9 +130,12 @@ struct AddContactViewModelTests {
         vm.configure(with: contact)
 
         #expect(vm.hasBirthday == true)
-        #expect(vm.birthdayMonth == 8)
-        #expect(vm.birthdayDay == 15)
+        #expect(vm.birthdayDate == date)
         #expect(vm.birthdayIsLunar == true)
+        // 验证 Date 对应农历八月十五
+        let md = try #require(LunarCalendarHelper.lunarMonthDay(from: vm.birthdayDate))
+        #expect(md.month == 8)
+        #expect(md.day == 15)
     }
 
     @Test func saveContactWritesBirthdayDate() throws {
@@ -143,8 +143,7 @@ struct AddContactViewModelTests {
         let vm = AddContactViewModel()
         vm.name = "生日保存测试"
         vm.hasBirthday = true
-        vm.birthdayMonth = 3
-        vm.birthdayDay = 5
+        vm.birthdayDate = try #require(LunarCalendarHelper.dateFromLunar(month: 3, day: 5))
         vm.birthdayIsLunar = true
         vm.birthdayReminderEnabled = true
 
@@ -167,8 +166,6 @@ struct AddContactViewModelTests {
         let vm = AddContactViewModel()
         vm.name = "无生日测试"
         vm.hasBirthday = false
-        vm.birthdayMonth = 5
-        vm.birthdayDay = 10
         vm.birthdayIsLunar = true
         vm.birthdayReminderEnabled = true
 
@@ -186,8 +183,7 @@ struct AddContactViewModelTests {
         let vm = AddContactViewModel()
         vm.name = "提醒关闭测试"
         vm.hasBirthday = true
-        vm.birthdayMonth = 8
-        vm.birthdayDay = 15
+        vm.birthdayDate = try #require(LunarCalendarHelper.dateFromGregorian(month: 8, day: 15))
         vm.birthdayIsLunar = false
         vm.birthdayReminderEnabled = false
 

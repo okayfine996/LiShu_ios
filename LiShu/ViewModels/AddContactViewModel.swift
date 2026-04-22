@@ -11,10 +11,8 @@ class AddContactViewModel {
     var name: String = ""
     var selectedCategory: RelationshipCategory?
     var selectedTag: String = ""
-    /// 生日月份（1–12），仅在 hasBirthday == true 时有效
-    var birthdayMonth: Int = 1
-    /// 生日日（1–31 公历，1–30 农历），仅在 hasBirthday == true 时有效
-    var birthdayDay: Int = 1
+    /// 生日日期（含年份占位，存储时仅取月日）；仅在 hasBirthday == true 时有效
+    var birthdayDate: Date = .init()
     var hasBirthday: Bool = false
     var birthdayIsLunar: Bool = false
     var birthdayReminderEnabled: Bool = false
@@ -61,20 +59,11 @@ class AddContactViewModel {
         note = contact.note
 
         if let date = contact.birthday {
-            if contact.birthdayIsLunar, let md = LunarCalendarHelper.lunarMonthDay(from: date) {
-                birthdayMonth = md.month
-                birthdayDay = md.day
-                birthdayIsLunar = true
-            } else {
-                let md = LunarCalendarHelper.gregorianMonthDay(from: date)
-                birthdayMonth = md.month
-                birthdayDay = md.day
-                birthdayIsLunar = false
-            }
+            birthdayDate = date
+            birthdayIsLunar = contact.birthdayIsLunar
             hasBirthday = true
         } else {
-            birthdayMonth = 1
-            birthdayDay = 1
+            birthdayDate = Date()
             hasBirthday = false
             birthdayIsLunar = false
             birthdayReminderEnabled = false
@@ -123,14 +112,9 @@ class AddContactViewModel {
             existing.relation = selectedTag
             existing.category = selectedCategory?.rawValue ?? ""
             existing.circle = circle
-            let resolvedDate: Date? = hasBirthday
-                ? (birthdayIsLunar
-                    ? LunarCalendarHelper.dateFromLunar(month: birthdayMonth, day: birthdayDay)
-                    : LunarCalendarHelper.dateFromGregorian(month: birthdayMonth, day: birthdayDay))
-                : nil
-            existing.birthday = resolvedDate
-            existing.birthdayIsLunar = resolvedDate != nil && birthdayIsLunar
-            existing.birthdayReminderEnabled = resolvedDate != nil && birthdayReminderEnabled
+            existing.birthday = hasBirthday ? birthdayDate : nil
+            existing.birthdayIsLunar = hasBirthday && birthdayIsLunar
+            existing.birthdayReminderEnabled = hasBirthday && birthdayReminderEnabled
             existing.location = location.trimmingCharacters(in: .whitespacesAndNewlines)
             existing.note = note.trimmingCharacters(in: .whitespaces)
 
@@ -176,11 +160,6 @@ class AddContactViewModel {
                 payload: draftPayload,
                 results: [draftPayload]
             )
-            let resolvedDate: Date? = hasBirthday
-                ? (birthdayIsLunar
-                    ? LunarCalendarHelper.dateFromLunar(month: birthdayMonth, day: birthdayDay)
-                    : LunarCalendarHelper.dateFromGregorian(month: birthdayMonth, day: birthdayDay))
-                : nil
             let contact = Contact(
                 name: name.trimmingCharacters(in: .whitespaces),
                 phone: phone.trimmingCharacters(in: .whitespaces),
@@ -194,9 +173,9 @@ class AddContactViewModel {
                 relation: selectedTag,
                 category: selectedCategory?.rawValue ?? "",
                 circle: circle,
-                birthday: resolvedDate,
-                birthdayIsLunar: resolvedDate != nil && birthdayIsLunar,
-                birthdayReminderEnabled: resolvedDate != nil && birthdayReminderEnabled,
+                birthday: hasBirthday ? birthdayDate : nil,
+                birthdayIsLunar: hasBirthday && birthdayIsLunar,
+                birthdayReminderEnabled: hasBirthday && birthdayReminderEnabled,
                 location: location.trimmingCharacters(in: .whitespacesAndNewlines),
                 note: note.trimmingCharacters(in: .whitespaces)
             )
