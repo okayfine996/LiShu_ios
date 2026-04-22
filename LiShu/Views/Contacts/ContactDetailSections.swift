@@ -71,7 +71,7 @@ struct ContactDetailPersonalInfoSection: View {
                         value: birthdayValue
                     )
                     ContactDetailInfoDivider()
-                    ContactDetailBirthdayReminderRow(
+                    BirthdayReminderRow(
                         isEnabled: contact.birthdayReminderEnabled,
                         onToggle: {
                             viewModel.toggleBirthdayReminder(contact: contact, context: modelContext)
@@ -165,32 +165,6 @@ private struct ContactDetailInfoRow: View {
                 .font(DesignSystem.Typography.caption)
                 .foregroundStyle(DesignSystem.Colors.textPrimary)
                 .multilineTextAlignment(.trailing)
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-    }
-}
-
-private struct ContactDetailBirthdayReminderRow: View {
-    let isEnabled: Bool
-    let onToggle: () -> Void
-
-    var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: isEnabled ? "bell.fill" : "bell.slash.fill")
-                .font(DesignSystem.Typography.body)
-                .foregroundStyle(isEnabled ? DesignSystem.Colors.primary : DesignSystem.Colors.textTertiary)
-                .frame(width: 24, height: 24)
-
-            Text(String(localized: "contact.add.birthdayReminder"))
-                .font(DesignSystem.Typography.caption)
-                .foregroundStyle(DesignSystem.Colors.textSecondary)
-
-            Spacer()
-
-            Toggle("", isOn: Binding(get: { isEnabled }, set: { _ in onToggle() }))
-                .labelsHidden()
-                .tint(DesignSystem.Colors.primary)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)

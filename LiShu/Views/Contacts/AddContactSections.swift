@@ -240,20 +240,10 @@ private struct AddContactBirthdayField: View {
 
                 // Row 2: 生日提醒开关（仅在已设置生日时显示）
                 if hasBirthday {
-                    HStack {
-                        Image(systemName: "bell.fill")
-                            .font(DesignSystem.Typography.caption)
-                            .foregroundStyle(DesignSystem.Colors.primary)
-                        Text(String(localized: "contact.add.birthdayReminder"))
-                            .font(DesignSystem.Typography.caption)
-                            .foregroundStyle(DesignSystem.Colors.textPrimary)
-                        Spacer()
-                        Toggle("", isOn: $birthdayReminderEnabled)
-                            .labelsHidden()
-                            .tint(DesignSystem.Colors.primary)
-                    }
-                    .padding(.vertical, 12)
-                    .padding(.horizontal, 16)
+                    BirthdayReminderRow(
+                        isEnabled: birthdayReminderEnabled,
+                        onToggle: { birthdayReminderEnabled.toggle() }
+                    )
                     .background(DesignSystem.Colors.bgSurface)
                     .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.input))
                     .overlay(
