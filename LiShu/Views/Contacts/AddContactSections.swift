@@ -15,7 +15,6 @@ struct AddContactEditorContent: View {
     @Binding var note: String
 
     let screenName: String
-    let onBirthdayToggle: () -> Void
     let onImportContacts: () -> Void
 
     var body: some View {
@@ -34,7 +33,6 @@ struct AddContactEditorContent: View {
                     phone: $phone,
                     location: $location,
                     note: $note,
-                    onBirthdayToggle: onBirthdayToggle,
                     onImportContacts: onImportContacts
                 )
             }
@@ -70,7 +68,6 @@ private struct AddContactFormSection: View {
     @Binding var location: String
     @Binding var note: String
 
-    let onBirthdayToggle: () -> Void
     let onImportContacts: () -> Void
 
     var body: some View {
@@ -96,8 +93,7 @@ private struct AddContactFormSection: View {
                 birthdayDay: $birthdayDay,
                 hasBirthday: $hasBirthday,
                 birthdayIsLunar: $birthdayIsLunar,
-                birthdayReminderEnabled: $birthdayReminderEnabled,
-                onToggle: onBirthdayToggle
+                birthdayReminderEnabled: $birthdayReminderEnabled
             )
 
             AddContactPhoneField(
@@ -142,8 +138,6 @@ private struct AddContactBirthdayField: View {
     @Binding var birthdayIsLunar: Bool
     @Binding var birthdayReminderEnabled: Bool
 
-    let onToggle: () -> Void
-
     /// 农历月名
     private static let lunarMonths = (1 ... 12).map { m in
         LunarCalendarHelper.monthNames[m] ?? "\(m)月"
@@ -174,7 +168,7 @@ private struct AddContactBirthdayField: View {
     var body: some View {
         AddContactField(label: String(localized: "contact.add.birthday")) {
             VStack(spacing: 10) {
-                // Row 1: 日历类型切换 + 月日 Picker + 日历 icon 按钮
+                // Row 1: 未设置时显示「添加生日」按钮；已设置时显示 Picker 和清除按钮
                 HStack(spacing: 8) {
                     if hasBirthday {
                         // 公历/农历 pill 切换
@@ -216,21 +210,37 @@ private struct AddContactBirthdayField: View {
                         }
                         .pickerStyle(.menu)
                         .tint(DesignSystem.Colors.primary)
-                    } else {
-                        Text(String(localized: "contact.add.birthdayPlaceholder"))
-                            .font(DesignSystem.Typography.caption)
-                            .foregroundStyle(DesignSystem.Colors.textTertiary)
-                        Spacer()
-                    }
 
-                    Button(action: onToggle) {
-                        Image(systemName: "calendar")
-                            .font(DesignSystem.Typography.body)
-                            .foregroundStyle(
-                                hasBirthday
-                                    ? DesignSystem.Colors.primary
-                                    : DesignSystem.Colors.textTertiary
-                            )
+                        // 清除生日按钮
+                        Button {
+                            withAnimation(.easeInOut(duration: 0.15)) {
+                                hasBirthday = false
+                                birthdayIsLunar = false
+                                birthdayReminderEnabled = false
+                                birthdayMonth = 1
+                                birthdayDay = 1
+                            }
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(DesignSystem.Typography.body)
+                                .foregroundStyle(DesignSystem.Colors.textTertiary)
+                        }
+                    } else {
+                        // 「添加生日」触发按钮
+                        Button {
+                            withAnimation(.easeInOut(duration: 0.15)) {
+                                hasBirthday = true
+                            }
+                        } label: {
+                            HStack(spacing: 6) {
+                                Image(systemName: "plus.circle")
+                                    .font(DesignSystem.Typography.caption)
+                                Text(String(localized: "contact.add.birthdayAdd"))
+                                    .font(DesignSystem.Typography.caption)
+                            }
+                            .foregroundStyle(DesignSystem.Colors.primary)
+                        }
+                        Spacer()
                     }
                 }
                 .padding(.vertical, 12)

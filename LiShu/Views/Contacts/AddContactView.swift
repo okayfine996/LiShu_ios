@@ -34,7 +34,6 @@ struct AddContactView: View {
                 location: $viewModel.location,
                 note: $viewModel.note,
                 screenName: screenName,
-                onBirthdayToggle: toggleBirthday,
                 onImportContacts: showContactsPicker
             )
 
@@ -104,17 +103,6 @@ struct AddContactView: View {
             target: "contacts.editor.cancel"
         )
         dismiss()
-    }
-
-    private func toggleBirthday() {
-        withAnimation(.easeInOut(duration: 0.15)) {
-            viewModel.hasBirthday.toggle()
-        }
-        InteractionLogger.toggle(
-            screen: screenName,
-            target: "contacts.editor.birthday",
-            isOn: viewModel.hasBirthday
-        )
     }
 
     private func showContactsPicker() {

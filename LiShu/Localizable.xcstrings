@@ -486,32 +486,12 @@
         }
       }
     },
-    "contact.add.birthdayReminder" : {
+    "contact.add.birthdayAdd" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "开启生日提醒"
-          }
-        }
-      }
-    },
-    "contact.birthday.lunar.format" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "农历%@%@"
-          }
-        }
-      }
-    },
-    "contact.birthday.gregorian.format" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%d月%d日"
+            "value" : "添加生日"
           }
         }
       }
@@ -522,6 +502,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "设置生日"
+          }
+        }
+      }
+    },
+    "contact.add.birthdayReminder" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "开启生日提醒"
           }
         }
       }
@@ -737,6 +727,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "从通讯录导入"
+          }
+        }
+      }
+    },
+    "contact.birthday.gregorian.format" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%d月%d日"
+          }
+        }
+      }
+    },
+    "contact.birthday.lunar.format" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "农历%@%@"
           }
         }
       }
@@ -2005,6 +2015,9 @@
           }
         }
       }
+    },
+    "DEBUG: 清除购买状态" : {
+
     },
     "debug.clearAllData" : {
       "localizations" : {
