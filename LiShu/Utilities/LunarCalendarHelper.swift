@@ -55,4 +55,40 @@ enum LunarCalendarHelper {
         let comps = Calendar.current.dateComponents([.month, .day], from: date)
         return (comps.month ?? 1, comps.day ?? 1)
     }
+
+    /// 将公历月日转换为农历月日（以当前年为参考）
+    static func gregorianToLunar(month: Int, day: Int) -> (month: Int, day: Int)? {
+        let year = Calendar.current.component(.year, from: Date())
+        var comps = DateComponents()
+        comps.year = year
+        comps.month = month
+        comps.day = day
+        guard let date = Calendar.current.date(from: comps) else { return nil }
+        return lunarMonthDay(from: date)
+    }
+
+    /// 将农历月日转换为公历月日（以当前年对应的农历年为参考）
+    static func lunarToGregorian(month: Int, day: Int) -> (month: Int, day: Int)? {
+        let now = Date()
+        let era = chineseCal.component(.era, from: now)
+        let chineseYear = chineseCal.component(.year, from: now)
+        var comps = DateComponents()
+        comps.era = era
+        comps.year = chineseYear
+        comps.month = month
+        comps.day = day
+        if let date = chineseCal.date(from: comps) {
+            return gregorianMonthDay(from: date)
+        }
+        // 回退：用 nextDate 搜索（处理闰月等边界情况）
+        var matchComps = DateComponents()
+        matchComps.month = month
+        matchComps.day = day
+        guard let date = chineseCal.nextDate(
+            after: Calendar.current.startOfDay(for: now),
+            matching: matchComps,
+            matchingPolicy: .nextTime
+        ) else { return nil }
+        return gregorianMonthDay(from: date)
+    }
 }

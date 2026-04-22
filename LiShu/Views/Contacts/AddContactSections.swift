@@ -176,15 +176,29 @@ private struct AddContactBirthdayField: View {
                             title: String(localized: "contact.add.birthday.gregorian"),
                             isSelected: !birthdayIsLunar
                         ) {
+                            guard birthdayIsLunar else { return }
+                            if hasBirthday,
+                               let converted = LunarCalendarHelper.lunarToGregorian(month: birthdayMonth, day: birthdayDay)
+                            {
+                                birthdayMonth = converted.month
+                                birthdayDay = converted.day
+                            }
                             birthdayIsLunar = false
-                            birthdayDay = min(birthdayDay, 31)
                         }
                         calendarTypeButton(
                             title: String(localized: "contact.add.birthday.lunar"),
                             isSelected: birthdayIsLunar
                         ) {
+                            guard !birthdayIsLunar else { return }
+                            if hasBirthday,
+                               let converted = LunarCalendarHelper.gregorianToLunar(month: birthdayMonth, day: birthdayDay)
+                            {
+                                birthdayMonth = converted.month
+                                birthdayDay = min(converted.day, 30)
+                            } else {
+                                birthdayDay = min(birthdayDay, 30)
+                            }
                             birthdayIsLunar = true
-                            birthdayDay = min(birthdayDay, 30)
                         }
                     }
                     .clipShape(Capsule())
