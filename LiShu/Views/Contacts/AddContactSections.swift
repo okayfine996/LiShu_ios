@@ -138,15 +138,8 @@ private struct AddContactBirthdayField: View {
     @Binding var birthdayIsLunar: Bool
     @Binding var birthdayReminderEnabled: Bool
 
-    /// 农历月名
-    private static let lunarMonths = (1 ... 12).map { m in
-        LunarCalendarHelper.monthNames[m] ?? "\(m)月"
-    }
-
-    /// 农历日名
-    private static let lunarDays = (1 ... 30).map { d in
-        LunarCalendarHelper.dayNames[d] ?? "\(d)日"
-    }
+    private static let lunarMonths = (1 ... 12).map { LunarCalendarHelper.lunarMonthName(month: $0) }
+    private static let lunarDays = (1 ... 30).map { LunarCalendarHelper.lunarDayName(day: $0) }
 
     /// 公历月名
     private static let gregorianMonths = (1 ... 12).map { "\($0)月" }

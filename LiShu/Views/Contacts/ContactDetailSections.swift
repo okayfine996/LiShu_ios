@@ -111,19 +111,13 @@ struct ContactDetailPersonalInfoSection: View {
     }
 
     private func birthdayText(for contact: Contact) -> String? {
-        if contact.birthdayMonth > 0 {
-            return contact.birthdayIsLunar
-                ? LunarCalendarHelper.format(month: contact.birthdayMonth, day: contact.birthdayDay)
-                : LunarCalendarHelper.formatGregorian(month: contact.birthdayMonth, day: contact.birthdayDay)
-        } else if let legacyDate = contact.birthday {
-            if contact.birthdayIsLunar, let md = LunarCalendarHelper.lunarMonthDay(from: legacyDate) {
-                return LunarCalendarHelper.format(month: md.month, day: md.day)
-            } else {
-                let md = LunarCalendarHelper.gregorianMonthDay(from: legacyDate)
-                return LunarCalendarHelper.formatGregorian(month: md.month, day: md.day)
-            }
+        guard let date = contact.birthday else { return nil }
+        if contact.birthdayIsLunar, let md = LunarCalendarHelper.lunarMonthDay(from: date) {
+            return LunarCalendarHelper.format(month: md.month, day: md.day)
+        } else {
+            let md = LunarCalendarHelper.gregorianMonthDay(from: date)
+            return LunarCalendarHelper.formatGregorian(month: md.month, day: md.day)
         }
-        return nil
     }
 }
 

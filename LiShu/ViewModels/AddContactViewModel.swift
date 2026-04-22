@@ -61,29 +61,15 @@ class AddContactViewModel {
         location = contact.location
         note = contact.note
 
-        if contact.birthdayMonth > 0 {
-            // 新数据：直接读取月日
-            birthdayMonth = contact.birthdayMonth
-            birthdayDay = contact.birthdayDay
-            hasBirthday = true
-        } else if let legacyDate = contact.birthday {
-            // 旧数据迁移：从 Date 提取月日
-            if contact.birthdayIsLunar {
-                if let md = LunarCalendarHelper.lunarMonthDay(from: legacyDate) {
-                    birthdayMonth = md.month
-                    birthdayDay = md.day
-                } else {
-                    birthdayMonth = 1
-                    birthdayDay = 1
-                    hasBirthday = false
-                    birthdayIsLunar = false
-                    birthdayReminderEnabled = false
-                    return
-                }
-            } else {
-                let md = LunarCalendarHelper.gregorianMonthDay(from: legacyDate)
+        if let date = contact.birthday {
+            if contact.birthdayIsLunar, let md = LunarCalendarHelper.lunarMonthDay(from: date) {
                 birthdayMonth = md.month
                 birthdayDay = md.day
+            } else {
+                let md = LunarCalendarHelper.gregorianMonthDay(from: date)
+                birthdayMonth = md.month
+                birthdayDay = md.day
+                if contact.birthdayIsLunar { birthdayIsLunar = false }
             }
             hasBirthday = true
         } else {
@@ -137,9 +123,11 @@ class AddContactViewModel {
             existing.relation = selectedTag
             existing.category = selectedCategory?.rawValue ?? ""
             existing.circle = circle
-            existing.birthdayMonth = hasBirthday ? birthdayMonth : 0
-            existing.birthdayDay = hasBirthday ? birthdayDay : 0
-            existing.birthday = nil // 新数据不再使用旧字段
+            existing.birthday = hasBirthday
+                ? (birthdayIsLunar
+                    ? LunarCalendarHelper.dateFromLunar(month: birthdayMonth, day: birthdayDay)
+                    : LunarCalendarHelper.dateFromGregorian(month: birthdayMonth, day: birthdayDay))
+                : nil
             existing.birthdayIsLunar = hasBirthday ? birthdayIsLunar : false
             existing.birthdayReminderEnabled = hasBirthday && birthdayReminderEnabled
             existing.location = location.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -187,6 +175,11 @@ class AddContactViewModel {
                 payload: draftPayload,
                 results: [draftPayload]
             )
+            let birthdayDate: Date? = hasBirthday
+                ? (birthdayIsLunar
+                    ? LunarCalendarHelper.dateFromLunar(month: birthdayMonth, day: birthdayDay)
+                    : LunarCalendarHelper.dateFromGregorian(month: birthdayMonth, day: birthdayDay))
+                : nil
             let contact = Contact(
                 name: name.trimmingCharacters(in: .whitespaces),
                 phone: phone.trimmingCharacters(in: .whitespaces),
@@ -200,8 +193,7 @@ class AddContactViewModel {
                 relation: selectedTag,
                 category: selectedCategory?.rawValue ?? "",
                 circle: circle,
-                birthdayMonth: hasBirthday ? birthdayMonth : 0,
-                birthdayDay: hasBirthday ? birthdayDay : 0,
+                birthday: birthdayDate,
                 birthdayIsLunar: hasBirthday ? birthdayIsLunar : false,
                 birthdayReminderEnabled: hasBirthday && birthdayReminderEnabled,
                 location: location.trimmingCharacters(in: .whitespacesAndNewlines),

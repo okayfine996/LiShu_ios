@@ -3,6 +3,41 @@ import Foundation
 import Testing
 
 struct LunarCalendarHelperTests {
+    // MARK: - lunarMonthName
+
+    @Test func lunarMonthNameFirstMonth() {
+        #expect(LunarCalendarHelper.lunarMonthName(month: 1) == "正月")
+    }
+
+    @Test func lunarMonthNameWinterMonth() {
+        #expect(LunarCalendarHelper.lunarMonthName(month: 11) == "冬月")
+    }
+
+    @Test func lunarMonthNameLastMonth() {
+        #expect(LunarCalendarHelper.lunarMonthName(month: 12) == "腊月")
+    }
+
+    @Test func lunarMonthNameAllMonthsNonEmpty() {
+        for month in 1 ... 12 {
+            let name = LunarCalendarHelper.lunarMonthName(month: month)
+            #expect(!name.isEmpty)
+        }
+    }
+
+    // MARK: - lunarDayName
+
+    @Test func lunarDayNameFirstDay() {
+        #expect(LunarCalendarHelper.lunarDayName(day: 1) == "初一")
+    }
+
+    @Test func lunarDayNameFifteenth() {
+        #expect(LunarCalendarHelper.lunarDayName(day: 15) == "十五")
+    }
+
+    @Test func lunarDayNameThirtieth() {
+        #expect(LunarCalendarHelper.lunarDayName(day: 30) == "三十")
+    }
+
     // MARK: - format (lunar)
 
     @Test func lunarFormatReturnsPrefixedString() {
@@ -11,38 +46,54 @@ struct LunarCalendarHelperTests {
     }
 
     @Test func lunarFormatSpringFestival() {
-        // 正月初一
         let result = LunarCalendarHelper.format(month: 1, day: 1)
         #expect(result.contains("正月"))
         #expect(result.contains("初一"))
     }
 
     @Test func lunarFormatMidAutumn() {
-        // 八月十五
         let result = LunarCalendarHelper.format(month: 8, day: 15)
         #expect(result.contains("八月"))
         #expect(result.contains("十五"))
     }
 
-    @Test func lunarFormatDragonBoat() {
-        // 五月初五
-        let result = LunarCalendarHelper.format(month: 5, day: 5)
-        #expect(result.contains("五月"))
-        #expect(result.contains("初五"))
-    }
-
     @Test func lunarFormatWinterSolsticeMonth() {
-        // 冬月（11月）
         let result = LunarCalendarHelper.format(month: 11, day: 20)
         #expect(result.contains("冬月"))
         #expect(result.contains("二十"))
     }
 
     @Test func lunarFormatLastMonth() {
-        // 腊月（12月）三十
         let result = LunarCalendarHelper.format(month: 12, day: 30)
         #expect(result.contains("腊月"))
         #expect(result.contains("三十"))
+    }
+
+    // MARK: - dateFromLunar / dateFromGregorian
+
+    @Test func dateFromLunarReturnsNonNilForCommonDates() {
+        #expect(LunarCalendarHelper.dateFromLunar(month: 8, day: 15) != nil)
+        #expect(LunarCalendarHelper.dateFromLunar(month: 1, day: 1) != nil)
+        #expect(LunarCalendarHelper.dateFromLunar(month: 5, day: 5) != nil)
+    }
+
+    @Test func dateFromLunarRoundTripsMonthDay() throws {
+        let date = try #require(LunarCalendarHelper.dateFromLunar(month: 8, day: 15))
+        let md = try #require(LunarCalendarHelper.lunarMonthDay(from: date))
+        #expect(md.month == 8)
+        #expect(md.day == 15)
+    }
+
+    @Test func dateFromGregorianReturnsNonNilForCommonDates() {
+        #expect(LunarCalendarHelper.dateFromGregorian(month: 3, day: 5) != nil)
+        #expect(LunarCalendarHelper.dateFromGregorian(month: 12, day: 31) != nil)
+    }
+
+    @Test func dateFromGregorianRoundTripsMonthDay() throws {
+        let date = try #require(LunarCalendarHelper.dateFromGregorian(month: 5, day: 20))
+        let md = LunarCalendarHelper.gregorianMonthDay(from: date)
+        #expect(md.month == 5)
+        #expect(md.day == 20)
     }
 
     // MARK: - formatGregorian

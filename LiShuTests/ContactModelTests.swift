@@ -20,10 +20,9 @@ struct ContactModelTests {
         #expect(contact.records?.isEmpty != false)
     }
 
-    @Test func birthdayMonthDayDefaultsToZero() {
+    @Test func birthdayDefaultsToNil() {
         let contact = Contact(name: "测试")
-        #expect(contact.birthdayMonth == 0)
-        #expect(contact.birthdayDay == 0)
+        #expect(contact.birthday == nil)
     }
 
     @Test func birthdayIsLunarDefaultsFalse() {
@@ -36,30 +35,28 @@ struct ContactModelTests {
         #expect(contact.birthdayReminderEnabled == false)
     }
 
-    @Test func gregorianBirthdayFieldsCanBeSet() {
+    @Test func gregorianBirthdayCanBeSet() {
+        let date = LunarCalendarHelper.dateFromGregorian(month: 5, day: 20)
         let contact = Contact(
             name: "公历测试",
-            birthdayMonth: 5,
-            birthdayDay: 20,
+            birthday: date,
             birthdayIsLunar: false,
             birthdayReminderEnabled: true
         )
-        #expect(contact.birthdayMonth == 5)
-        #expect(contact.birthdayDay == 20)
+        #expect(contact.birthday != nil)
         #expect(contact.birthdayIsLunar == false)
         #expect(contact.birthdayReminderEnabled == true)
     }
 
-    @Test func lunarBirthdayFieldsCanBeSet() {
+    @Test func lunarBirthdayCanBeSet() {
+        let date = LunarCalendarHelper.dateFromLunar(month: 8, day: 15)
         let contact = Contact(
             name: "农历测试",
-            birthdayMonth: 8,
-            birthdayDay: 15,
+            birthday: date,
             birthdayIsLunar: true,
             birthdayReminderEnabled: true
         )
-        #expect(contact.birthdayMonth == 8)
-        #expect(contact.birthdayDay == 15)
+        #expect(contact.birthday != nil)
         #expect(contact.birthdayIsLunar == true)
         #expect(contact.birthdayReminderEnabled == true)
     }

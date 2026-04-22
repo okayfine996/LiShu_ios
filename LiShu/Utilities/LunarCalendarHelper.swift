@@ -7,89 +7,45 @@ enum LunarCalendarHelper {
         return cal
     }()
 
-    static let monthNames: [Int: String] = [
-        1: "正月", 2: "二月", 3: "三月", 4: "四月",
-        5: "五月", 6: "六月", 7: "七月", 8: "八月",
-        9: "九月", 10: "十月", 11: "冬月", 12: "腊月",
-    ]
+    private static let lunarFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.calendar = Calendar(identifier: .chinese)
+        f.locale = Locale(identifier: "zh_CN")
+        return f
+    }()
 
-    static let dayNames: [Int: String] = [
-        1: "初一", 2: "初二", 3: "初三", 4: "初四", 5: "初五",
-        6: "初六", 7: "初七", 8: "初八", 9: "初九", 10: "初十",
-        11: "十一", 12: "十二", 13: "十三", 14: "十四", 15: "十五",
-        16: "十六", 17: "十七", 18: "十八", 19: "十九", 20: "二十",
-        21: "廿一", 22: "廿二", 23: "廿三", 24: "廿四", 25: "廿五",
-        26: "廿六", 27: "廿七", 28: "廿八", 29: "廿九", 30: "三十",
-    ]
+    // MARK: - Name helpers (via system API)
 
-    /// 格式化农历生日，如"农历三月初五"
-    static func format(month: Int, day: Int) -> String {
-        let monthName = monthNames[month] ?? "\(month)月"
-        let dayName = dayNames[day] ?? "\(day)日"
-        return String(format: String(localized: "contact.birthday.lunar.format"), monthName, dayName)
+    /// 农历月名，如"正月"、"腊月"
+    static func lunarMonthName(month: Int) -> String {
+        guard let date = dateFromLunar(month: month, day: 1) else { return "\(month)月" }
+        lunarFormatter.dateFormat = "MMM"
+        return lunarFormatter.string(from: date)
     }
 
-    /// 格式化公历生日（无年份），如"3月5日"
-    static func formatGregorian(month: Int, day: Int) -> String {
-        String(format: String(localized: "contact.birthday.gregorian.format"), month, day)
-    }
-
-    /// 计算下一次农历月日对应的公历 Date。
-    /// 使用 Calendar.nextDate(after:matching:) 自动处理跨年和甲子边界。
-    static func nextGregorianDate(lunarMonth: Int, lunarDay: Int) -> Date? {
-        var comps = DateComponents()
-        comps.month = lunarMonth
-        comps.day = lunarDay
-        return chineseCal.nextDate(after: Date(), matching: comps, matchingPolicy: .nextTime)
-    }
-
-    /// 从公历 Date 提取农历月日（用于旧数据迁移）
-    static func lunarMonthDay(from date: Date) -> (month: Int, day: Int)? {
-        let comps = chineseCal.dateComponents([.month, .day], from: date)
-        guard let month = comps.month, let day = comps.day else { return nil }
-        return (month, day)
-    }
-
-    /// 从公历 Date 提取公历月日（用于旧数据迁移）
-    static func gregorianMonthDay(from date: Date) -> (month: Int, day: Int) {
-        let comps = Calendar.current.dateComponents([.month, .day], from: date)
-        return (comps.month ?? 1, comps.day ?? 1)
-    }
-
-    /// 获取指定农历月的实际天数（以当前农历年为参考，大月 30 天，小月 29 天）。
-    static func lunarDayCount(for month: Int) -> Int {
+    /// 农历日名，如"初一"、"三十"
+    static func lunarDayName(day: Int) -> String {
         let now = Date()
         let era = chineseCal.component(.era, from: now)
-        let chineseYear = chineseCal.component(.year, from: now)
-        var comps = DateComponents()
-        comps.era = era
-        comps.year = chineseYear
-        comps.month = month
-        comps.day = 1
-        guard let date = chineseCal.date(from: comps),
-              let range = chineseCal.range(of: .day, in: .month, for: date)
-        else { return 30 }
-        return range.count
+        let year = chineseCal.component(.year, from: now)
+        for month in 1 ... 12 {
+            var comps = DateComponents()
+            comps.era = era
+            comps.year = year
+            comps.month = month
+            comps.day = day
+            if let date = chineseCal.date(from: comps) {
+                lunarFormatter.dateFormat = "d"
+                return lunarFormatter.string(from: date)
+            }
+        }
+        return "\(day)日"
     }
 
-    /// 将公历月日转换为农历月日（以当前年为参考）。
-    /// 注意：同一公历月日在不同年份可能对应不同农历月，例如公历 1月28日 在某年是腊月，
-    /// 另一年可能恰好是正月初一（春节）。仅用于 picker 切换时的即时转换，不保存年份。
-    static func gregorianToLunar(month: Int, day: Int) -> (month: Int, day: Int)? {
-        let year = Calendar.current.component(.year, from: Date())
-        var comps = DateComponents()
-        comps.year = year
-        comps.month = month
-        comps.day = day
-        guard let date = Calendar.current.date(from: comps) else { return nil }
-        return lunarMonthDay(from: date)
-    }
+    // MARK: - Date construction
 
-    /// 将农历月日转换为公历月日（以当前年对应的农历年为参考）。
-    /// 注意：同一农历月日在不同年份对应不同公历日期（农历不等长于公历）。
-    /// fallback 路径（闰月/腊月三十等不存在的情况）使用 nextDate 向前搜索，
-    /// 结果可能跳到下一公历年，月日仍在有效范围内。
-    static func lunarToGregorian(month: Int, day: Int) -> (month: Int, day: Int)? {
+    /// 农历月日 → Date（以当前农历年为参考，失败时 nextDate fallback）
+    static func dateFromLunar(month: Int, day: Int) -> Date? {
         let now = Date()
         let era = chineseCal.component(.era, from: now)
         let chineseYear = chineseCal.component(.year, from: now)
@@ -99,17 +55,89 @@ enum LunarCalendarHelper {
         comps.month = month
         comps.day = day
         if let date = chineseCal.date(from: comps) {
-            return gregorianMonthDay(from: date)
+            return date
         }
-        // fallback：用 nextDate 搜索（处理腊月三十、闰月等在当年不存在的情况）
+        // fallback：nextDate 处理腊月三十、闰月等在当年不存在的情况
         var matchComps = DateComponents()
         matchComps.month = month
         matchComps.day = day
-        guard let date = chineseCal.nextDate(
+        return chineseCal.nextDate(
             after: Calendar.current.startOfDay(for: now),
             matching: matchComps,
             matchingPolicy: .nextTime
-        ) else { return nil }
+        )
+    }
+
+    /// 公历月日 → Date（以当前年为参考）
+    static func dateFromGregorian(month: Int, day: Int) -> Date? {
+        let year = Calendar.current.component(.year, from: Date())
+        var comps = DateComponents()
+        comps.year = year
+        comps.month = month
+        comps.day = day
+        return Calendar.current.date(from: comps)
+    }
+
+    // MARK: - Format
+
+    /// 格式化农历生日，如"农历三月初五"
+    static func format(month: Int, day: Int) -> String {
+        let monthName = lunarMonthName(month: month)
+        let dayName = lunarDayName(day: day)
+        return String(format: String(localized: "contact.birthday.lunar.format"), monthName, dayName)
+    }
+
+    /// 格式化公历生日（无年份），如"3月5日"
+    static func formatGregorian(month: Int, day: Int) -> String {
+        String(format: String(localized: "contact.birthday.gregorian.format"), month, day)
+    }
+
+    // MARK: - Reminder scheduling
+
+    /// 计算下一次农历月日对应的公历 Date
+    static func nextGregorianDate(lunarMonth: Int, lunarDay: Int) -> Date? {
+        var comps = DateComponents()
+        comps.month = lunarMonth
+        comps.day = lunarDay
+        return chineseCal.nextDate(after: Date(), matching: comps, matchingPolicy: .nextTime)
+    }
+
+    // MARK: - Extraction helpers
+
+    /// 从公历 Date 提取农历月日
+    static func lunarMonthDay(from date: Date) -> (month: Int, day: Int)? {
+        let comps = chineseCal.dateComponents([.month, .day], from: date)
+        guard let month = comps.month, let day = comps.day else { return nil }
+        return (month, day)
+    }
+
+    /// 从公历 Date 提取公历月日
+    static func gregorianMonthDay(from date: Date) -> (month: Int, day: Int) {
+        let comps = Calendar.current.dateComponents([.month, .day], from: date)
+        return (comps.month ?? 1, comps.day ?? 1)
+    }
+
+    // MARK: - Day count
+
+    /// 获取指定农历月的实际天数（大月 30 天，小月 29 天）
+    static func lunarDayCount(for month: Int) -> Int {
+        guard let date = dateFromLunar(month: month, day: 1),
+              let range = chineseCal.range(of: .day, in: .month, for: date)
+        else { return 30 }
+        return range.count
+    }
+
+    // MARK: - Conversion (month/day only, current year as reference)
+
+    /// 公历月日转农历月日（以当前年为参考）
+    static func gregorianToLunar(month: Int, day: Int) -> (month: Int, day: Int)? {
+        guard let date = dateFromGregorian(month: month, day: day) else { return nil }
+        return lunarMonthDay(from: date)
+    }
+
+    /// 农历月日转公历月日（以当前农历年为参考）
+    static func lunarToGregorian(month: Int, day: Int) -> (month: Int, day: Int)? {
+        guard let date = dateFromLunar(month: month, day: day) else { return nil }
         return gregorianMonthDay(from: date)
     }
 }

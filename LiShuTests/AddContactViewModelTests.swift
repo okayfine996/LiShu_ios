@@ -85,12 +85,13 @@ struct AddContactViewModelTests {
         #expect(contacts[0].name == "赵六 updated")
     }
 
-    @Test func configureReadsNewBirthdayFields() throws {
+    @Test func configureReadsLunarBirthdayDate() throws {
         let db = try TestDB()
+        // 农历八月十五 → dateFromLunar 构造 Date 存入，configure 应提取回 (8, 15)
+        let birthday = try #require(LunarCalendarHelper.dateFromLunar(month: 8, day: 15))
         let contact = Contact(
             name: "农历生日测试",
-            birthdayMonth: 8,
-            birthdayDay: 15,
+            birthday: birthday,
             birthdayIsLunar: true,
             birthdayReminderEnabled: true
         )
@@ -106,11 +107,10 @@ struct AddContactViewModelTests {
         #expect(vm.hasBirthday == true)
     }
 
-    @Test func configureMigratesLegacyGregorianBirthday() throws {
+    @Test func configureReadsGregorianBirthdayDate() throws {
         let db = try TestDB()
-        // 旧数据：只有 birthday: Date，birthdayMonth == 0
-        let legacyDate = try #require(Calendar.current.date(from: DateComponents(year: 1990, month: 5, day: 20)))
-        let contact = Contact(name: "旧公历数据", birthday: legacyDate, birthdayIsLunar: false)
+        let date = try #require(Calendar.current.date(from: DateComponents(year: 1990, month: 5, day: 20)))
+        let contact = Contact(name: "公历生日测试", birthday: date, birthdayIsLunar: false)
         db.context.insert(contact)
 
         let vm = AddContactViewModel()
@@ -122,11 +122,11 @@ struct AddContactViewModelTests {
         #expect(vm.birthdayIsLunar == false)
     }
 
-    @Test func configureMigratesLegacyLunarBirthday() throws {
+    @Test func configureReadsLunarFromStoredGregorianDate() throws {
         let db = try TestDB()
-        // 旧农历数据：2024-09-17 公历 = 农历八月十五
-        let legacyDate = try #require(Calendar.current.date(from: DateComponents(year: 2024, month: 9, day: 17)))
-        let contact = Contact(name: "旧农历数据", birthday: legacyDate, birthdayIsLunar: true)
+        // 2024-09-17 公历 = 农历八月十五，验证 lunarMonthDay 提取正确
+        let date = try #require(Calendar.current.date(from: DateComponents(year: 2024, month: 9, day: 17)))
+        let contact = Contact(name: "农历存公历Date测试", birthday: date, birthdayIsLunar: true)
         db.context.insert(contact)
 
         let vm = AddContactViewModel()
@@ -138,10 +138,10 @@ struct AddContactViewModelTests {
         #expect(vm.birthdayIsLunar == true)
     }
 
-    @Test func saveContactWritesMonthDayFields() throws {
+    @Test func saveContactWritesBirthdayDate() throws {
         let db = try TestDB()
         let vm = AddContactViewModel()
-        vm.name = "月日保存测试"
+        vm.name = "生日保存测试"
         vm.hasBirthday = true
         vm.birthdayMonth = 3
         vm.birthdayDay = 5
@@ -152,19 +152,22 @@ struct AddContactViewModelTests {
 
         let contacts = try db.context.fetch(FetchDescriptor<Contact>())
         #expect(contacts.count == 1)
-        #expect(contacts[0].birthdayMonth == 3)
-        #expect(contacts[0].birthdayDay == 5)
-        #expect(contacts[0].birthdayIsLunar == true)
-        #expect(contacts[0].birthdayReminderEnabled == true)
-        #expect(contacts[0].birthday == nil) // 新数据不写 birthday 字段
+        let saved = contacts[0]
+        let savedDate = try #require(saved.birthday)
+        #expect(saved.birthdayIsLunar == true)
+        #expect(saved.birthdayReminderEnabled == true)
+        // 验证存储的 Date 还原出正确农历月日
+        let md = try #require(LunarCalendarHelper.lunarMonthDay(from: savedDate))
+        #expect(md.month == 3)
+        #expect(md.day == 5)
     }
 
-    @Test func saveContactWithNoBirthdayClearsBirthdayFields() throws {
+    @Test func saveContactWithNoBirthdayClearsBirthdayDate() throws {
         let db = try TestDB()
         let vm = AddContactViewModel()
         vm.name = "无生日测试"
         vm.hasBirthday = false
-        vm.birthdayMonth = 5 // 即使有值，无生日时应存 0
+        vm.birthdayMonth = 5
         vm.birthdayDay = 10
         vm.birthdayIsLunar = true
         vm.birthdayReminderEnabled = true
@@ -173,8 +176,7 @@ struct AddContactViewModelTests {
 
         let contacts = try db.context.fetch(FetchDescriptor<Contact>())
         #expect(contacts.count == 1)
-        #expect(contacts[0].birthdayMonth == 0)
-        #expect(contacts[0].birthdayDay == 0)
+        #expect(contacts[0].birthday == nil)
         #expect(contacts[0].birthdayIsLunar == false)
         #expect(contacts[0].birthdayReminderEnabled == false)
     }
@@ -196,12 +198,12 @@ struct AddContactViewModelTests {
         #expect(contacts[0].birthdayReminderEnabled == false)
     }
 
-    @Test func editContactPreservesBirthdayFields() throws {
+    @Test func editContactPreservesBirthdayDate() throws {
         let db = try TestDB()
+        let birthday = LunarCalendarHelper.dateFromLunar(month: 6, day: 1)
         let contact = Contact(
             name: "编辑测试",
-            birthdayMonth: 6,
-            birthdayDay: 1,
+            birthday: birthday,
             birthdayIsLunar: true,
             birthdayReminderEnabled: true
         )
@@ -216,18 +218,18 @@ struct AddContactViewModelTests {
 
         let contacts = try db.context.fetch(FetchDescriptor<Contact>())
         #expect(contacts.count == 1)
-        #expect(contacts[0].birthdayMonth == 6)
-        #expect(contacts[0].birthdayDay == 1)
-        #expect(contacts[0].birthdayIsLunar == true)
-        #expect(contacts[0].birthdayReminderEnabled == true)
+        let saved = contacts[0]
+        let savedDate = try #require(saved.birthday)
+        #expect(saved.birthdayIsLunar == true)
+        #expect(saved.birthdayReminderEnabled == true)
+        let md = try #require(LunarCalendarHelper.lunarMonthDay(from: savedDate))
+        #expect(md.month == 6)
+        #expect(md.day == 1)
     }
 
-    /// Bug 2 回归：旧农历数据迁移失败时，birthdayIsLunar/birthdayReminderEnabled 应被重置
-    @Test func configureLegacyLunarFailureResetsFlags() throws {
+    /// birthday == nil 时，isLunar/reminderEnabled 应被重置为 false
+    @Test func configureNoBirthdayResetsFlags() throws {
         let db = try TestDB()
-        // 构造一个 birthday = Date() 但 birthdayIsLunar = true 且 birthdayMonth = 0 的旧数据联系人
-        // lunarMonthDay 在正常 Date 下不会失败，所以直接用 birthdayMonth > 0 路径无法触发
-        // 此处测试无生日路径：contact.birthdayMonth == 0 且 contact.birthday == nil
         let contact = Contact(
             name: "无生日农历标志",
             birthdayIsLunar: true,
@@ -238,7 +240,6 @@ struct AddContactViewModelTests {
         let vm = AddContactViewModel()
         vm.configure(with: contact)
 
-        // 无生日时，两个标志应被重置为 false，避免 Picker 误显示农历月名
         #expect(vm.hasBirthday == false)
         #expect(vm.birthdayIsLunar == false)
         #expect(vm.birthdayReminderEnabled == false)
