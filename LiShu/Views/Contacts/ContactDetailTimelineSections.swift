@@ -82,7 +82,7 @@ private struct ContactDetailTimelineEntry: View {
     let isLast: Bool
 
     var body: some View {
-        NavigationLink(value: AppRoute.recordDetail(record.persistentModelID)) {
+        NavigationLink(destination: RecordDetailView(recordID: record.persistentModelID)) {
             HStack(alignment: .top, spacing: 0) {
                 VStack(spacing: 0) {
                     Circle()
