@@ -1,5 +1,6 @@
 import Foundation
 import SwiftData
+import UserNotifications
 
 struct TypeCountItem: Identifiable {
     let type: RecordType
