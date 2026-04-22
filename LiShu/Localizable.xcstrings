@@ -487,6 +487,7 @@
       }
     },
     "contact.add.birthdayAdd" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -497,6 +498,7 @@
       }
     },
     "contact.add.birthdayPlaceholder" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
