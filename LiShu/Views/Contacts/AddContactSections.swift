@@ -162,7 +162,16 @@ private struct AddContactBirthdayField: View {
     }
 
     private var maxDay: Int {
-        birthdayIsLunar ? 30 : 31
+        birthdayIsLunar ? 30 : Self.gregorianMaxDay(for: birthdayMonth)
+    }
+
+    /// 公历各月最大天数（不知年份时 2月保守取 28，闰年用户可选 29 时自行处理）
+    private static func gregorianMaxDay(for month: Int) -> Int {
+        switch month {
+        case 2: 28
+        case 4, 6, 9, 11: 30
+        default: 31
+        }
     }
 
     var body: some View {
@@ -218,7 +227,14 @@ private struct AddContactBirthdayField: View {
                     }
                     .pickerStyle(.menu)
                     .tint(DesignSystem.Colors.primary)
-                    .onChange(of: birthdayMonth) { _, _ in hasBirthday = true }
+                    .onChange(of: birthdayMonth) { _, newMonth in
+                        hasBirthday = true
+                        // 切换月份后，若当前日超出新月上限则 clamp（如从1月31日换到2月）
+                        if !birthdayIsLunar {
+                            let max = Self.gregorianMaxDay(for: newMonth)
+                            if birthdayDay > max { birthdayDay = max }
+                        }
+                    }
 
                     // 日 Picker
                     Picker("", selection: $birthdayDay) {

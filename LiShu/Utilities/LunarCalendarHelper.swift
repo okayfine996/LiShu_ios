@@ -56,7 +56,9 @@ enum LunarCalendarHelper {
         return (comps.month ?? 1, comps.day ?? 1)
     }
 
-    /// 将公历月日转换为农历月日（以当前年为参考）
+    /// 将公历月日转换为农历月日（以当前年为参考）。
+    /// 注意：同一公历月日在不同年份可能对应不同农历月，例如公历 1月28日 在某年是腊月，
+    /// 另一年可能恰好是正月初一（春节）。仅用于 picker 切换时的即时转换，不保存年份。
     static func gregorianToLunar(month: Int, day: Int) -> (month: Int, day: Int)? {
         let year = Calendar.current.component(.year, from: Date())
         var comps = DateComponents()
@@ -67,7 +69,10 @@ enum LunarCalendarHelper {
         return lunarMonthDay(from: date)
     }
 
-    /// 将农历月日转换为公历月日（以当前年对应的农历年为参考）
+    /// 将农历月日转换为公历月日（以当前年对应的农历年为参考）。
+    /// 注意：同一农历月日在不同年份对应不同公历日期（农历不等长于公历）。
+    /// fallback 路径（闰月/腊月三十等不存在的情况）使用 nextDate 向前搜索，
+    /// 结果可能跳到下一公历年，月日仍在有效范围内。
     static func lunarToGregorian(month: Int, day: Int) -> (month: Int, day: Int)? {
         let now = Date()
         let era = chineseCal.component(.era, from: now)
@@ -80,7 +85,7 @@ enum LunarCalendarHelper {
         if let date = chineseCal.date(from: comps) {
             return gregorianMonthDay(from: date)
         }
-        // 回退：用 nextDate 搜索（处理闰月等边界情况）
+        // fallback：用 nextDate 搜索（处理腊月三十、闰月等在当年不存在的情况）
         var matchComps = DateComponents()
         matchComps.month = month
         matchComps.day = day

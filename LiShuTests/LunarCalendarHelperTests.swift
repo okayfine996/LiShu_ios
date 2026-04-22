@@ -86,6 +86,81 @@ struct LunarCalendarHelperTests {
         #expect(next != nil)
     }
 
+    // MARK: - gregorianToLunar
+
+    @Test func gregorianToLunarReturnsValidRange() {
+        // 9月17日 远离春节边界，结果应为有效农历月日
+        let result = LunarCalendarHelper.gregorianToLunar(month: 9, day: 17)
+        #expect(result != nil)
+        if let result {
+            #expect((1 ... 12).contains(result.month))
+            #expect((1 ... 30).contains(result.day))
+        }
+    }
+
+    @Test func gregorianToLunarMidSummerReturnsValidRange() {
+        let result = LunarCalendarHelper.gregorianToLunar(month: 6, day: 15)
+        #expect(result != nil)
+        if let result {
+            #expect((1 ... 12).contains(result.month))
+            #expect((1 ... 30).contains(result.day))
+        }
+    }
+
+    @Test func gregorianToLunarRoundTrip() {
+        // 公历 → 农历 → 公历，同年内双向转换应还原（同年参考，无年份边界跳跃）
+        guard let lunar = LunarCalendarHelper.gregorianToLunar(month: 9, day: 17) else { return }
+        guard let back = LunarCalendarHelper.lunarToGregorian(month: lunar.month, day: lunar.day) else { return }
+        #expect(back.month == 9)
+        #expect(back.day == 17)
+    }
+
+    // MARK: - lunarToGregorian
+
+    @Test func lunarToGregorianReturnsValidRange() {
+        let result = LunarCalendarHelper.lunarToGregorian(month: 8, day: 15)
+        #expect(result != nil)
+        if let result {
+            #expect((1 ... 12).contains(result.month))
+            #expect((1 ... 31).contains(result.day))
+        }
+    }
+
+    @Test func lunarMidAutumnFallsInSeptOrOct() {
+        // 农历八月十五（中秋节）历年均在公历 9月或10月
+        let result = LunarCalendarHelper.lunarToGregorian(month: 8, day: 15)
+        #expect(result != nil)
+        if let result {
+            #expect([9, 10].contains(result.month))
+        }
+    }
+
+    @Test func lunarSpringFestivalFallsInJanOrFeb() {
+        // 农历正月初一（春节）历年均在公历 1月或2月
+        let result = LunarCalendarHelper.lunarToGregorian(month: 1, day: 1)
+        #expect(result != nil)
+        if let result {
+            #expect([1, 2].contains(result.month))
+        }
+    }
+
+    @Test func lunarDragonBoatFallsInJunOrJul() {
+        // 农历五月初五（端午节）历年均在公历 6月或7月
+        let result = LunarCalendarHelper.lunarToGregorian(month: 5, day: 5)
+        #expect(result != nil)
+        if let result {
+            #expect([6, 7].contains(result.month))
+        }
+    }
+
+    @Test func lunarToGregorianRoundTrip() {
+        // 农历 → 公历 → 农历，同年内应还原八月十五
+        guard let gregorian = LunarCalendarHelper.lunarToGregorian(month: 8, day: 15) else { return }
+        guard let back = LunarCalendarHelper.gregorianToLunar(month: gregorian.month, day: gregorian.day) else { return }
+        #expect(back.month == 8)
+        #expect(back.day == 15)
+    }
+
     // MARK: - Migration helpers
 
     @Test func gregorianMonthDayExtraction() throws {

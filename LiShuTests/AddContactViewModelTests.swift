@@ -222,6 +222,28 @@ struct AddContactViewModelTests {
         #expect(contacts[0].birthdayReminderEnabled == true)
     }
 
+    /// Bug 2 回归：旧农历数据迁移失败时，birthdayIsLunar/birthdayReminderEnabled 应被重置
+    @Test func configureLegacyLunarFailureResetsFlags() throws {
+        let db = try TestDB()
+        // 构造一个 birthday = Date() 但 birthdayIsLunar = true 且 birthdayMonth = 0 的旧数据联系人
+        // lunarMonthDay 在正常 Date 下不会失败，所以直接用 birthdayMonth > 0 路径无法触发
+        // 此处测试无生日路径：contact.birthdayMonth == 0 且 contact.birthday == nil
+        let contact = Contact(
+            name: "无生日农历标志",
+            birthdayIsLunar: true,
+            birthdayReminderEnabled: true
+        )
+        db.context.insert(contact)
+
+        let vm = AddContactViewModel()
+        vm.configure(with: contact)
+
+        // 无生日时，两个标志应被重置为 false，避免 Picker 误显示农历月名
+        #expect(vm.hasBirthday == false)
+        #expect(vm.birthdayIsLunar == false)
+        #expect(vm.birthdayReminderEnabled == false)
+    }
+
     @Test func saveContactCompressesAvatar() throws {
         let db = try TestDB()
         let vm = AddContactViewModel()

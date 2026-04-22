@@ -225,6 +225,15 @@ final class NotificationManager {
             return
         }
 
+        guard month > 0, day > 0 else {
+            notificationLogger.warning("Skipped birthday reminder", metadata: [
+                "step": .string("schedule_birthday"),
+                "contact_id": .string(stableIdentifier(for: contact.persistentModelID)),
+                "reason": .string("invalid_month_or_day"),
+            ])
+            return
+        }
+
         let content = UNMutableNotificationContent()
         content.title = String(localized: "notification.birthday.title")
         content.body = String(format: String(localized: "notification.birthday.body"), contact.name)
