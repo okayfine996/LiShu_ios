@@ -55,7 +55,6 @@ class AddContactViewModel {
         name = contact.name
         selectedCategory = RelationshipCategory(rawValue: contact.category)
         selectedTag = contact.relation
-        birthdayIsLunar = contact.birthdayIsLunar
         birthdayReminderEnabled = contact.birthdayReminderEnabled
         phone = contact.phone
         location = contact.location
@@ -65,11 +64,12 @@ class AddContactViewModel {
             if contact.birthdayIsLunar, let md = LunarCalendarHelper.lunarMonthDay(from: date) {
                 birthdayMonth = md.month
                 birthdayDay = md.day
+                birthdayIsLunar = true
             } else {
                 let md = LunarCalendarHelper.gregorianMonthDay(from: date)
                 birthdayMonth = md.month
                 birthdayDay = md.day
-                if contact.birthdayIsLunar { birthdayIsLunar = false }
+                birthdayIsLunar = false
             }
             hasBirthday = true
         } else {
@@ -123,13 +123,14 @@ class AddContactViewModel {
             existing.relation = selectedTag
             existing.category = selectedCategory?.rawValue ?? ""
             existing.circle = circle
-            existing.birthday = hasBirthday
+            let resolvedDate: Date? = hasBirthday
                 ? (birthdayIsLunar
                     ? LunarCalendarHelper.dateFromLunar(month: birthdayMonth, day: birthdayDay)
                     : LunarCalendarHelper.dateFromGregorian(month: birthdayMonth, day: birthdayDay))
                 : nil
-            existing.birthdayIsLunar = hasBirthday ? birthdayIsLunar : false
-            existing.birthdayReminderEnabled = hasBirthday && birthdayReminderEnabled
+            existing.birthday = resolvedDate
+            existing.birthdayIsLunar = resolvedDate != nil && birthdayIsLunar
+            existing.birthdayReminderEnabled = resolvedDate != nil && birthdayReminderEnabled
             existing.location = location.trimmingCharacters(in: .whitespacesAndNewlines)
             existing.note = note.trimmingCharacters(in: .whitespaces)
 
@@ -175,7 +176,7 @@ class AddContactViewModel {
                 payload: draftPayload,
                 results: [draftPayload]
             )
-            let birthdayDate: Date? = hasBirthday
+            let resolvedDate: Date? = hasBirthday
                 ? (birthdayIsLunar
                     ? LunarCalendarHelper.dateFromLunar(month: birthdayMonth, day: birthdayDay)
                     : LunarCalendarHelper.dateFromGregorian(month: birthdayMonth, day: birthdayDay))
@@ -193,9 +194,9 @@ class AddContactViewModel {
                 relation: selectedTag,
                 category: selectedCategory?.rawValue ?? "",
                 circle: circle,
-                birthday: birthdayDate,
-                birthdayIsLunar: hasBirthday ? birthdayIsLunar : false,
-                birthdayReminderEnabled: hasBirthday && birthdayReminderEnabled,
+                birthday: resolvedDate,
+                birthdayIsLunar: resolvedDate != nil && birthdayIsLunar,
+                birthdayReminderEnabled: resolvedDate != nil && birthdayReminderEnabled,
                 location: location.trimmingCharacters(in: .whitespacesAndNewlines),
                 note: note.trimmingCharacters(in: .whitespaces)
             )
