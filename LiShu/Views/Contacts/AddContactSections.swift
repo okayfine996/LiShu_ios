@@ -177,28 +177,32 @@ private struct AddContactBirthdayField: View {
                             isSelected: !birthdayIsLunar
                         ) {
                             guard birthdayIsLunar else { return }
-                            if hasBirthday,
-                               let converted = LunarCalendarHelper.lunarToGregorian(month: birthdayMonth, day: birthdayDay)
-                            {
-                                birthdayMonth = converted.month
-                                birthdayDay = converted.day
+                            if hasBirthday {
+                                if let converted = LunarCalendarHelper.lunarToGregorian(month: birthdayMonth, day: birthdayDay) {
+                                    birthdayMonth = converted.month
+                                    birthdayDay = converted.day
+                                    birthdayIsLunar = false
+                                }
+                                // 转换失败时保持农历不切换
+                            } else {
+                                birthdayIsLunar = false
                             }
-                            birthdayIsLunar = false
                         }
                         calendarTypeButton(
                             title: String(localized: "contact.add.birthday.lunar"),
                             isSelected: birthdayIsLunar
                         ) {
                             guard !birthdayIsLunar else { return }
-                            if hasBirthday,
-                               let converted = LunarCalendarHelper.gregorianToLunar(month: birthdayMonth, day: birthdayDay)
-                            {
-                                birthdayMonth = converted.month
-                                birthdayDay = min(converted.day, 30)
+                            if hasBirthday {
+                                if let converted = LunarCalendarHelper.gregorianToLunar(month: birthdayMonth, day: birthdayDay) {
+                                    birthdayMonth = converted.month
+                                    birthdayDay = min(converted.day, 30)
+                                    birthdayIsLunar = true
+                                }
+                                // 转换失败时保持公历不切换
                             } else {
-                                birthdayDay = min(birthdayDay, 30)
+                                birthdayIsLunar = true
                             }
-                            birthdayIsLunar = true
                         }
                     }
                     .clipShape(Capsule())

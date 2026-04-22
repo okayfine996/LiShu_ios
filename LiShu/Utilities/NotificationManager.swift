@@ -182,6 +182,17 @@ final class NotificationManager {
     // MARK: - Birthday Reminders
 
     func scheduleBirthdayReminder(contact: Contact) {
+        guard settings.notificationEnabled, settings.birthdayReminder,
+              contact.birthdayReminderEnabled
+        else {
+            notificationLogger.info("Skipped birthday reminder", metadata: [
+                "step": .string("schedule_birthday"),
+                "contact_id": .string(stableIdentifier(for: contact.persistentModelID)),
+                "reason": .string("notifications_disabled_or_reminder_off"),
+            ])
+            return
+        }
+
         // 优先用新字段，兼容旧 birthday 字段
         let month: Int
         let day: Int
@@ -210,17 +221,6 @@ final class NotificationManager {
                 "step": .string("schedule_birthday"),
                 "contact_id": .string(stableIdentifier(for: contact.persistentModelID)),
                 "reason": .string("no_birthday_data"),
-            ])
-            return
-        }
-
-        guard settings.notificationEnabled, settings.birthdayReminder,
-              contact.birthdayReminderEnabled
-        else {
-            notificationLogger.info("Skipped birthday reminder", metadata: [
-                "step": .string("schedule_birthday"),
-                "contact_id": .string(stableIdentifier(for: contact.persistentModelID)),
-                "reason": .string("notifications_disabled_or_reminder_off"),
             ])
             return
         }

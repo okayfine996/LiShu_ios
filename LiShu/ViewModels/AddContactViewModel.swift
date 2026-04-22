@@ -73,7 +73,11 @@ class AddContactViewModel {
                     birthdayMonth = md.month
                     birthdayDay = md.day
                 } else {
+                    birthdayMonth = 1
+                    birthdayDay = 1
                     hasBirthday = false
+                    birthdayIsLunar = false
+                    birthdayReminderEnabled = false
                     return
                 }
             } else {
@@ -86,6 +90,8 @@ class AddContactViewModel {
             birthdayMonth = 1
             birthdayDay = 1
             hasBirthday = false
+            birthdayIsLunar = false
+            birthdayReminderEnabled = false
         }
     }
 
