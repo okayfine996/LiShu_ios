@@ -123,6 +123,7 @@ enum LunarCalendarHelper {
     /// 从公历 Date 提取公历月日
     static func gregorianMonthDay(from date: Date) -> (month: Int, day: Int) {
         let comps = Calendar.current.dateComponents([.month, .day], from: date)
+        // ?? 1 is a defensive fallback; for any valid Date these components are always present.
         return (comps.month ?? 1, comps.day ?? 1)
     }
 

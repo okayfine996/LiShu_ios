@@ -14,6 +14,7 @@ class ContactDetailViewModel {
     var contact: Contact?
     var isLoading: Bool = true
     var isShowingDeleteAlert: Bool = false
+    var showNotificationPermissionAlert: Bool = false
 
     /// Sorted records for the contact, newest first
     var sortedRecords: [Record] {
@@ -61,13 +62,24 @@ class ContactDetailViewModel {
     }
 
     /// Toggle birthday reminder for the contact and reschedule/cancel notifications.
+    /// When enabling, checks system notification permission and reverts if denied.
     @MainActor
     func toggleBirthdayReminder(contact: Contact, context: ModelContext) {
         contact.birthdayReminderEnabled.toggle()
-        try? context.save()
         if contact.birthdayReminderEnabled {
-            NotificationManager.shared.scheduleBirthdayReminder(contact: contact)
+            Task {
+                let status = await NotificationManager.shared.checkAuthorizationStatus()
+                if status == .denied {
+                    contact.birthdayReminderEnabled = false
+                    try? context.save()
+                    showNotificationPermissionAlert = true
+                } else {
+                    try? context.save()
+                    NotificationManager.shared.scheduleBirthdayReminder(contact: contact)
+                }
+            }
         } else {
+            try? context.save()
             NotificationManager.shared.cancelBirthdayReminder(contact: contact)
         }
     }

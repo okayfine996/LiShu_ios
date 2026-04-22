@@ -237,7 +237,7 @@ final class NotificationManager {
                 notificationLogger.info("Skipped birthday reminder", metadata: [
                     "step": .string("schedule_birthday"),
                     "contact_id": .string(stableIdentifier(for: contact.persistentModelID)),
-                    "reason": .string("lunar_date_resolution_failed"),
+                    "reason": .string("lunar_next_date_resolution_failed"),
                 ])
                 return
             }

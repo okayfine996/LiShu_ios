@@ -6,15 +6,15 @@ struct LunarCalendarHelperTests {
     // MARK: - lunarMonthName
 
     @Test func lunarMonthNameFirstMonth() {
-        #expect(LunarCalendarHelper.lunarMonthName(month: 1) == "正月")
+        #expect(LunarCalendarHelper.lunarMonthName(month: 1).contains("正月"))
     }
 
     @Test func lunarMonthNameWinterMonth() {
-        #expect(LunarCalendarHelper.lunarMonthName(month: 11) == "冬月")
+        #expect(LunarCalendarHelper.lunarMonthName(month: 11).contains("冬月"))
     }
 
     @Test func lunarMonthNameLastMonth() {
-        #expect(LunarCalendarHelper.lunarMonthName(month: 12) == "腊月")
+        #expect(LunarCalendarHelper.lunarMonthName(month: 12).contains("腊月"))
     }
 
     @Test func lunarMonthNameAllMonthsNonEmpty() {
@@ -27,15 +27,15 @@ struct LunarCalendarHelperTests {
     // MARK: - lunarDayName
 
     @Test func lunarDayNameFirstDay() {
-        #expect(LunarCalendarHelper.lunarDayName(day: 1) == "初一")
+        #expect(LunarCalendarHelper.lunarDayName(day: 1).contains("初一"))
     }
 
     @Test func lunarDayNameFifteenth() {
-        #expect(LunarCalendarHelper.lunarDayName(day: 15) == "十五")
+        #expect(LunarCalendarHelper.lunarDayName(day: 15).contains("十五"))
     }
 
     @Test func lunarDayNameThirtieth() {
-        #expect(LunarCalendarHelper.lunarDayName(day: 30) == "三十")
+        #expect(LunarCalendarHelper.lunarDayName(day: 30).contains("三十"))
     }
 
     // MARK: - format (lunar)

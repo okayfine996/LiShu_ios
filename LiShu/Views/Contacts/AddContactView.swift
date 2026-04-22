@@ -80,6 +80,13 @@ struct AddContactView: View {
         .onChange(of: showContactPicker) { oldValue, newValue in
             handleContactPickerChange(oldValue, newValue)
         }
+        .onChange(of: viewModel.hasBirthday) { _, isOn in
+            InteractionLogger.toggle(
+                screen: screenName,
+                target: "contacts.editor.birthday",
+                isOn: isOn
+            )
+        }
     }
 
     private var screenName: String {

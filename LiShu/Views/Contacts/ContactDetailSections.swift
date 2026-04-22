@@ -108,6 +108,22 @@ struct ContactDetailPersonalInfoSection: View {
             .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.smallCard))
             .padding(.horizontal, 16)
         }
+        .alert(
+            String(localized: "notification.permission.denied.title"),
+            isPresented: Binding(
+                get: { viewModel.showNotificationPermissionAlert },
+                set: { viewModel.showNotificationPermissionAlert = $0 }
+            )
+        ) {
+            Button(String(localized: "notification.permission.denied.openSettings")) {
+                if let url = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(url)
+                }
+            }
+            Button(String(localized: "common.cancel"), role: .cancel) {}
+        } message: {
+            Text(String(localized: "notification.permission.denied.message"))
+        }
     }
 
     private func birthdayText(for contact: Contact) -> String? {

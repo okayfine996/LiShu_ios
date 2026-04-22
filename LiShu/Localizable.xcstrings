@@ -4346,6 +4346,36 @@
         }
       }
     },
+    "notification.permission.denied.message" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请前往「设置 › 通知」开启礼数的通知权限，以便接收生日提醒"
+          }
+        }
+      }
+    },
+    "notification.permission.denied.openSettings" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "前往设置"
+          }
+        }
+      }
+    },
+    "notification.permission.denied.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "通知权限已关闭"
+          }
+        }
+      }
+    },
     "notification.birthday.body" : {
       "localizations" : {
         "zh-Hans" : {
