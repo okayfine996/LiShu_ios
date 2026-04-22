@@ -154,7 +154,12 @@ private struct AddContactBirthdayField: View {
         birthdayIsLunar ? Self.lunarDays : Self.gregorianDays
     }
 
-    @State private var maxDay: Int = 31
+    /// 当前月实际天数，直接从 birthdayIsLunar/birthdayMonth 计算，与渲染同步（无 @State 竞态）
+    private var maxDay: Int {
+        birthdayIsLunar
+            ? LunarCalendarHelper.lunarDayCount(for: birthdayMonth)
+            : Self.gregorianMaxDay(for: birthdayMonth)
+    }
 
     /// 公历各月实际天数（以当前年为参考，自动识别闰年 2月）
     private static func gregorianMaxDay(for month: Int) -> Int {
@@ -223,11 +228,10 @@ private struct AddContactBirthdayField: View {
                     .tint(DesignSystem.Colors.primary)
                     .onChange(of: birthdayMonth) { _, newMonth in
                         hasBirthday = true
-                        // 切换月份后，更新 maxDay 并 clamp 当前日（公历/农历均适用）
+                        // clamp 当前日到新月的实际天数（maxDay 已是 computed，直接用）
                         let newMax = birthdayIsLunar
                             ? LunarCalendarHelper.lunarDayCount(for: newMonth)
                             : Self.gregorianMaxDay(for: newMonth)
-                        maxDay = newMax
                         if birthdayDay > newMax { birthdayDay = newMax }
                     }
 
@@ -282,16 +286,11 @@ private struct AddContactBirthdayField: View {
                 }
             }
             .onChange(of: birthdayIsLunar) { _, isLunar in
+                // clamp 当前日到新历法月的实际天数
                 let newMax = isLunar
                     ? LunarCalendarHelper.lunarDayCount(for: birthdayMonth)
                     : Self.gregorianMaxDay(for: birthdayMonth)
-                maxDay = newMax
                 if birthdayDay > newMax { birthdayDay = newMax }
-            }
-            .onAppear {
-                maxDay = birthdayIsLunar
-                    ? LunarCalendarHelper.lunarDayCount(for: birthdayMonth)
-                    : Self.gregorianMaxDay(for: birthdayMonth)
             }
         }
     }
