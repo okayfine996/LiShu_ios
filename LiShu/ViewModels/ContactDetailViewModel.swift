@@ -60,6 +60,18 @@ class ContactDetailViewModel {
         self.contact = context.model(for: contact.persistentModelID) as? Contact
     }
 
+    /// Toggle birthday reminder for the contact and reschedule/cancel notifications.
+    @MainActor
+    func toggleBirthdayReminder(contact: Contact, context: ModelContext) {
+        contact.birthdayReminderEnabled.toggle()
+        try? context.save()
+        if contact.birthdayReminderEnabled {
+            NotificationManager.shared.scheduleBirthdayReminder(contact: contact)
+        } else {
+            NotificationManager.shared.cancelBirthdayReminder(contact: contact)
+        }
+    }
+
     /// Delete the current contact. Returns true if successful.
     @MainActor
     func deleteContact(context: ModelContext) -> Bool {
