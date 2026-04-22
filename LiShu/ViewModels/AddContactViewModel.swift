@@ -15,7 +15,7 @@ class AddContactViewModel {
     var birthdayMonth: Int = 1
     /// 生日日（1–31 公历，1–30 农历），仅在 hasBirthday == true 时有效
     var birthdayDay: Int = 1
-    var hasBirthday: Bool = false
+    var hasBirthday: Bool = true
     var birthdayIsLunar: Bool = false
     var birthdayReminderEnabled: Bool = false
     var phone: String = ""
