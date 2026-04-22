@@ -161,11 +161,7 @@ private struct AddContactBirthdayField: View {
         birthdayIsLunar ? Self.lunarDays : Self.gregorianDays
     }
 
-    private var maxDay: Int {
-        birthdayIsLunar
-            ? LunarCalendarHelper.lunarDayCount(for: birthdayMonth)
-            : Self.gregorianMaxDay(for: birthdayMonth)
-    }
+    @State private var maxDay: Int = 31
 
     /// 公历各月实际天数（以当前年为参考，自动识别闰年 2月）
     private static func gregorianMaxDay(for month: Int) -> Int {
@@ -210,7 +206,7 @@ private struct AddContactBirthdayField: View {
                             if hasBirthday {
                                 if let converted = LunarCalendarHelper.gregorianToLunar(month: birthdayMonth, day: birthdayDay) {
                                     birthdayMonth = converted.month
-                                    birthdayDay = min(converted.day, 30)
+                                    birthdayDay = min(converted.day, LunarCalendarHelper.lunarDayCount(for: converted.month))
                                     birthdayIsLunar = true
                                 }
                                 // 转换失败时保持公历不切换
@@ -234,11 +230,12 @@ private struct AddContactBirthdayField: View {
                     .tint(DesignSystem.Colors.primary)
                     .onChange(of: birthdayMonth) { _, newMonth in
                         hasBirthday = true
-                        // 切换月份后，若当前日超出新月上限则 clamp（公历/农历均适用）
-                        let max = birthdayIsLunar
+                        // 切换月份后，更新 maxDay 并 clamp 当前日（公历/农历均适用）
+                        let newMax = birthdayIsLunar
                             ? LunarCalendarHelper.lunarDayCount(for: newMonth)
                             : Self.gregorianMaxDay(for: newMonth)
-                        if birthdayDay > max { birthdayDay = max }
+                        maxDay = newMax
+                        if birthdayDay > newMax { birthdayDay = newMax }
                     }
 
                     // 日 Picker
@@ -290,6 +287,18 @@ private struct AddContactBirthdayField: View {
                             .stroke(DesignSystem.Colors.border, lineWidth: 1)
                     )
                 }
+            }
+            .onChange(of: birthdayIsLunar) { _, isLunar in
+                let newMax = isLunar
+                    ? LunarCalendarHelper.lunarDayCount(for: birthdayMonth)
+                    : Self.gregorianMaxDay(for: birthdayMonth)
+                maxDay = newMax
+                if birthdayDay > newMax { birthdayDay = newMax }
+            }
+            .onAppear {
+                maxDay = birthdayIsLunar
+                    ? LunarCalendarHelper.lunarDayCount(for: birthdayMonth)
+                    : Self.gregorianMaxDay(for: birthdayMonth)
             }
         }
     }
