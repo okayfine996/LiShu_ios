@@ -168,50 +168,52 @@ private struct AddContactBirthdayField: View {
     var body: some View {
         AddContactField(label: String(localized: "contact.add.birthday")) {
             VStack(spacing: 10) {
-                // Row 1: 未设置时显示「添加生日」按钮；已设置时显示 Picker 和清除按钮
+                // Row 1: 公历/农历切换 + 月日 Picker（始终可见，无需触发）
                 HStack(spacing: 8) {
+                    // 公历/农历 pill 切换
+                    HStack(spacing: 0) {
+                        calendarTypeButton(
+                            title: String(localized: "contact.add.birthday.gregorian"),
+                            isSelected: !birthdayIsLunar
+                        ) {
+                            birthdayIsLunar = false
+                            birthdayDay = min(birthdayDay, 31)
+                        }
+                        calendarTypeButton(
+                            title: String(localized: "contact.add.birthday.lunar"),
+                            isSelected: birthdayIsLunar
+                        ) {
+                            birthdayIsLunar = true
+                            birthdayDay = min(birthdayDay, 30)
+                        }
+                    }
+                    .clipShape(Capsule())
+                    .overlay(Capsule().stroke(DesignSystem.Colors.border, lineWidth: 1))
+
+                    Spacer()
+
+                    // 月 Picker
+                    Picker("", selection: $birthdayMonth) {
+                        ForEach(1 ... 12, id: \.self) { m in
+                            Text(monthList[m - 1]).tag(m)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .tint(DesignSystem.Colors.primary)
+                    .onChange(of: birthdayMonth) { _, _ in hasBirthday = true }
+
+                    // 日 Picker
+                    Picker("", selection: $birthdayDay) {
+                        ForEach(1 ... maxDay, id: \.self) { d in
+                            Text(dayList[d - 1]).tag(d)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .tint(DesignSystem.Colors.primary)
+                    .onChange(of: birthdayDay) { _, _ in hasBirthday = true }
+
+                    // 已设置生日时显示清除按钮
                     if hasBirthday {
-                        // 公历/农历 pill 切换
-                        HStack(spacing: 0) {
-                            calendarTypeButton(
-                                title: String(localized: "contact.add.birthday.gregorian"),
-                                isSelected: !birthdayIsLunar
-                            ) {
-                                birthdayIsLunar = false
-                                birthdayDay = min(birthdayDay, 31)
-                            }
-                            calendarTypeButton(
-                                title: String(localized: "contact.add.birthday.lunar"),
-                                isSelected: birthdayIsLunar
-                            ) {
-                                birthdayIsLunar = true
-                                birthdayDay = min(birthdayDay, 30)
-                            }
-                        }
-                        .clipShape(Capsule())
-                        .overlay(Capsule().stroke(DesignSystem.Colors.border, lineWidth: 1))
-
-                        Spacer()
-
-                        // 月 Picker
-                        Picker("", selection: $birthdayMonth) {
-                            ForEach(1 ... 12, id: \.self) { m in
-                                Text(monthList[m - 1]).tag(m)
-                            }
-                        }
-                        .pickerStyle(.menu)
-                        .tint(DesignSystem.Colors.primary)
-
-                        // 日 Picker
-                        Picker("", selection: $birthdayDay) {
-                            ForEach(1 ... maxDay, id: \.self) { d in
-                                Text(dayList[d - 1]).tag(d)
-                            }
-                        }
-                        .pickerStyle(.menu)
-                        .tint(DesignSystem.Colors.primary)
-
-                        // 清除生日按钮
                         Button {
                             withAnimation(.easeInOut(duration: 0.15)) {
                                 hasBirthday = false
@@ -225,22 +227,6 @@ private struct AddContactBirthdayField: View {
                                 .font(DesignSystem.Typography.body)
                                 .foregroundStyle(DesignSystem.Colors.textTertiary)
                         }
-                    } else {
-                        // 「添加生日」触发按钮
-                        Button {
-                            withAnimation(.easeInOut(duration: 0.15)) {
-                                hasBirthday = true
-                            }
-                        } label: {
-                            HStack(spacing: 6) {
-                                Image(systemName: "plus.circle")
-                                    .font(DesignSystem.Typography.caption)
-                                Text(String(localized: "contact.add.birthdayAdd"))
-                                    .font(DesignSystem.Typography.caption)
-                            }
-                            .foregroundStyle(DesignSystem.Colors.primary)
-                        }
-                        Spacer()
                     }
                 }
                 .padding(.vertical, 12)
