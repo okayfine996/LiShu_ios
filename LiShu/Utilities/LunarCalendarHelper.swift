@@ -56,6 +56,22 @@ enum LunarCalendarHelper {
         return (comps.month ?? 1, comps.day ?? 1)
     }
 
+    /// 获取指定农历月的实际天数（以当前农历年为参考，大月 30 天，小月 29 天）。
+    static func lunarDayCount(for month: Int) -> Int {
+        let now = Date()
+        let era = chineseCal.component(.era, from: now)
+        let chineseYear = chineseCal.component(.year, from: now)
+        var comps = DateComponents()
+        comps.era = era
+        comps.year = chineseYear
+        comps.month = month
+        comps.day = 1
+        guard let date = chineseCal.date(from: comps),
+              let range = chineseCal.range(of: .day, in: .month, for: date)
+        else { return 30 }
+        return range.count
+    }
+
     /// 将公历月日转换为农历月日（以当前年为参考）。
     /// 注意：同一公历月日在不同年份可能对应不同农历月，例如公历 1月28日 在某年是腊月，
     /// 另一年可能恰好是正月初一（春节）。仅用于 picker 切换时的即时转换，不保存年份。

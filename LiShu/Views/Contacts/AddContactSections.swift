@@ -162,16 +162,21 @@ private struct AddContactBirthdayField: View {
     }
 
     private var maxDay: Int {
-        birthdayIsLunar ? 30 : Self.gregorianMaxDay(for: birthdayMonth)
+        birthdayIsLunar
+            ? LunarCalendarHelper.lunarDayCount(for: birthdayMonth)
+            : Self.gregorianMaxDay(for: birthdayMonth)
     }
 
-    /// 公历各月最大天数（不知年份时 2月保守取 28，闰年用户可选 29 时自行处理）
+    /// 公历各月实际天数（以当前年为参考，自动识别闰年 2月）
     private static func gregorianMaxDay(for month: Int) -> Int {
-        switch month {
-        case 2: 28
-        case 4, 6, 9, 11: 30
-        default: 31
-        }
+        let year = Calendar.current.component(.year, from: Date())
+        var comps = DateComponents()
+        comps.year = year
+        comps.month = month
+        guard let date = Calendar.current.date(from: comps),
+              let range = Calendar.current.range(of: .day, in: .month, for: date)
+        else { return 31 }
+        return range.count
     }
 
     var body: some View {
@@ -229,11 +234,11 @@ private struct AddContactBirthdayField: View {
                     .tint(DesignSystem.Colors.primary)
                     .onChange(of: birthdayMonth) { _, newMonth in
                         hasBirthday = true
-                        // 切换月份后，若当前日超出新月上限则 clamp（如从1月31日换到2月）
-                        if !birthdayIsLunar {
-                            let max = Self.gregorianMaxDay(for: newMonth)
-                            if birthdayDay > max { birthdayDay = max }
-                        }
+                        // 切换月份后，若当前日超出新月上限则 clamp（公历/农历均适用）
+                        let max = birthdayIsLunar
+                            ? LunarCalendarHelper.lunarDayCount(for: newMonth)
+                            : Self.gregorianMaxDay(for: newMonth)
+                        if birthdayDay > max { birthdayDay = max }
                     }
 
                     // 日 Picker
