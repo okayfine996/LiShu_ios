@@ -155,18 +155,11 @@ private struct AddContactBirthdayField: View {
 
                         Spacer()
 
-                        VStack(alignment: .trailing, spacing: 2) {
-                            DatePicker("", selection: $birthdayDate, displayedComponents: [.date])
-                                .labelsHidden()
-                                .environment(\.calendar, Calendar(identifier: birthdayIsLunar ? .chinese : .gregorian))
-                                .environment(\.locale, birthdayIsLunar ? Locale(identifier: "zh_CN") : .current)
-                                .tint(DesignSystem.Colors.primary)
-                            if let annotation = calendarAnnotation {
-                                Text(annotation)
-                                    .font(DesignSystem.Typography.small)
-                                    .foregroundStyle(DesignSystem.Colors.textTertiary)
-                            }
-                        }
+                        DatePicker("", selection: $birthdayDate, displayedComponents: [.date])
+                            .labelsHidden()
+                            .environment(\.calendar, Calendar(identifier: birthdayIsLunar ? .chinese : .gregorian))
+                            .environment(\.locale, birthdayIsLunar ? Locale(identifier: "zh_CN") : .current)
+                            .tint(DesignSystem.Colors.primary)
 
                         Button {
                             hasBirthday = false
@@ -224,17 +217,6 @@ private struct AddContactBirthdayField: View {
                 }
             }
             .animation(.spring(duration: 0.3, bounce: 0.15), value: hasBirthday)
-        }
-    }
-
-    /// 另一历法的对应日期注释：公历模式显示农历，农历模式显示公历
-    private var calendarAnnotation: String? {
-        if birthdayIsLunar {
-            let md = LunarCalendarHelper.gregorianMonthDay(from: birthdayDate)
-            return LunarCalendarHelper.formatGregorian(month: md.month, day: md.day)
-        } else {
-            guard let md = LunarCalendarHelper.lunarMonthDay(from: birthdayDate) else { return nil }
-            return LunarCalendarHelper.format(month: md.month, day: md.day)
         }
     }
 
