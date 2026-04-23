@@ -154,12 +154,20 @@ private struct AddContactBirthdayField: View {
                     Spacer()
 
                     VStack(alignment: .trailing, spacing: 2) {
-                        DatePicker("", selection: $birthdayDate, displayedComponents: [.date])
-                            .labelsHidden()
-                            .environment(\.calendar, Calendar(identifier: birthdayIsLunar ? .chinese : .gregorian))
-                            .environment(\.locale, birthdayIsLunar ? Locale(identifier: "zh_CN") : .current)
-                            .tint(DesignSystem.Colors.primary)
-                            .onChange(of: birthdayDate) { _, _ in hasBirthday = true }
+                        // DatePicker 透明但保留点击区域，用自定义标签覆盖以隐藏年份
+                        ZStack {
+                            DatePicker("", selection: $birthdayDate, displayedComponents: [.date])
+                                .labelsHidden()
+                                .environment(\.calendar, Calendar(identifier: birthdayIsLunar ? .chinese : .gregorian))
+                                .environment(\.locale, birthdayIsLunar ? Locale(identifier: "zh_CN") : .current)
+                                .tint(DesignSystem.Colors.primary)
+                                .opacity(0.011)
+                                .onChange(of: birthdayDate) { _, _ in hasBirthday = true }
+                            Text(dateDisplayLabel)
+                                .font(DesignSystem.Typography.caption)
+                                .foregroundStyle(hasBirthday ? DesignSystem.Colors.textPrimary : DesignSystem.Colors.textTertiary)
+                                .allowsHitTesting(false)
+                        }
                         if hasBirthday, let annotation = calendarAnnotation {
                             Text(annotation)
                                 .font(DesignSystem.Typography.small)
@@ -203,6 +211,18 @@ private struct AddContactBirthdayField: View {
                     )
                 }
             }
+        }
+    }
+
+    /// 主标签：所选历法的月日，无年份；未选中时显示提示文字
+    private var dateDisplayLabel: String {
+        guard hasBirthday else { return String(localized: "contact.add.birthday.pick") }
+        if birthdayIsLunar {
+            guard let md = LunarCalendarHelper.lunarMonthDay(from: birthdayDate) else { return "" }
+            return LunarCalendarHelper.format(month: md.month, day: md.day)
+        } else {
+            let md = LunarCalendarHelper.gregorianMonthDay(from: birthdayDate)
+            return LunarCalendarHelper.formatGregorian(month: md.month, day: md.day)
         }
     }
 
