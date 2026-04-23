@@ -40,10 +40,8 @@ struct AddLedgerReceiptView: View {
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
         ToolbarItem(placement: .topBarLeading) {
-            Button(action: dismiss.callAsFunction) {
-                Image(systemName: "xmark")
-                    .foregroundStyle(DesignSystem.Colors.textPrimary)
-            }
+            Button(String(localized: "common.cancel"), action: dismiss.callAsFunction)
+                .foregroundStyle(DesignSystem.Colors.textSecondary)
         }
 
         ToolbarItem(placement: .topBarTrailing) {

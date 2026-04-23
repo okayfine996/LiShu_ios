@@ -33,15 +33,7 @@ struct ReturnGiftSheet: View {
         .background(DesignSystem.Colors.bgPage)
         .navigationTitle(String(localized: "record.detail.returnGift"))
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                Button(String(localized: "common.cancel")) {
-                    dismiss()
-                }
-                .foregroundStyle(DesignSystem.Colors.textSecondary)
-                .accessibilityIdentifier("returnGift.cancelButton")
-            }
-        }
+        .sheetCancelButton(action: dismiss.callAsFunction)
         .onAppear {
             record = modelContext.model(for: recordID) as? Record
         }

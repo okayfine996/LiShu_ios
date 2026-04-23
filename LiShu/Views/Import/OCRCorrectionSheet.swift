@@ -17,17 +17,7 @@ struct OCRCorrectionSheet: View {
             .background(DesignSystem.Colors.bgPage)
             .navigationTitle(String(localized: "ocr.correction.title"))
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        dismiss()
-                    } label: {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(DesignSystem.Colors.textSecondary)
-                    }
-                }
-            }
+            .sheetCancelButton(action: dismiss.callAsFunction)
         }
         .presentationDetents([.medium, .large])
     }

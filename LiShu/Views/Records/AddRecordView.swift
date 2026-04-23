@@ -66,11 +66,9 @@ struct AddRecordView: View {
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
         ToolbarItem(placement: .topBarLeading) {
-            Button(action: dismiss.callAsFunction) {
-                Image(systemName: "xmark")
-                    .foregroundStyle(DesignSystem.Colors.textPrimary)
-            }
-            .accessibilityIdentifier("record.add.closeButton")
+            Button(String(localized: "common.cancel"), action: dismiss.callAsFunction)
+                .foregroundStyle(DesignSystem.Colors.textSecondary)
+                .accessibilityIdentifier("record.add.cancelButton")
         }
 
         ToolbarItem(placement: .topBarTrailing) {

@@ -45,6 +45,7 @@ struct ProMembershipView: View {
         .background(DesignSystem.Colors.bgPage)
         .navigationTitle(String(localized: "pro.title"))
         .navigationBarTitleDisplayMode(.inline)
+        .sheetCloseButton(action: dismiss.callAsFunction)
         .task {
             await reloadProductsIfNeeded()
         }

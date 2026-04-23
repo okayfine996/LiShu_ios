@@ -40,13 +40,13 @@ struct AddEventView: View {
             screenName: screenName,
             navigationTitleText: navigationTitleText,
             contacts: contacts,
-            onCancel: cancel,
             onSave: saveEvent,
             onCreateContact: openAddContact
         )
         .background(DesignSystem.Colors.bgPage)
         .navigationTitle(navigationTitleText)
         .navigationBarTitleDisplayMode(.inline)
+        .sheetCancelButton(action: cancel)
         .trackScreen(screenName)
         .onAppear(perform: configureInitialState)
         .onChange(of: selectedCoverItem) { _, newValue in

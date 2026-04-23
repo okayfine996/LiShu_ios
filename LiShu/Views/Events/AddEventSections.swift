@@ -9,7 +9,6 @@ struct AddEventFormView: View {
     let screenName: String
     let navigationTitleText: String
     let contacts: [Contact]
-    let onCancel: () -> Void
     let onSave: () -> Void
     var onCreateContact: (() -> Void)?
 
@@ -68,7 +67,6 @@ struct AddEventFormView: View {
 
             AddEventActionBar(
                 isSaveEnabled: viewModel.isValid,
-                onCancel: onCancel,
                 onSave: onSave
             )
         }
@@ -241,22 +239,15 @@ private struct AddEventTextFieldSection: View {
 
 private struct AddEventActionBar: View {
     let isSaveEnabled: Bool
-    let onCancel: () -> Void
     let onSave: () -> Void
 
     var body: some View {
-        HStack(spacing: 12) {
-            Button(String(localized: "common.cancel"), action: onCancel)
-                .buttonStyle(SecondaryButtonStyle())
-
-            Button(String(localized: "common.save"), action: onSave)
-                .buttonStyle(PrimaryButtonStyle())
-                .disabled(!isSaveEnabled)
-                .opacity(isSaveEnabled ? 1 : 0.6)
-        }
-        .padding(.horizontal, DesignSystem.Spacing.pageHorizontal)
-        .padding(.vertical, 12)
-        .background(DesignSystem.Colors.bgPage)
+        Button(String(localized: "common.save"), action: onSave)
+            .buttonStyle(PrimaryButtonStyle())
+            .disabled(!isSaveEnabled)
+            .opacity(isSaveEnabled ? 1 : 0.6)
+            .padding(.horizontal, DesignSystem.Spacing.pageHorizontal)
+            .padding(.vertical, 12)
     }
 }
 
