@@ -466,16 +466,6 @@
         }
       }
     },
-    "contact.add.birthday.pick" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "选择日期"
-          }
-        }
-      }
-    },
     "contact.add.birthday.gregorian" : {
       "localizations" : {
         "zh-Hans" : {
