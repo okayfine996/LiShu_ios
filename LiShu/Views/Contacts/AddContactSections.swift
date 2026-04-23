@@ -136,39 +136,38 @@ private struct AddContactBirthdayField: View {
     var body: some View {
         AddContactField(label: String(localized: "contact.add.birthday")) {
             VStack(spacing: 10) {
-                HStack(spacing: 8) {
-                    // 公历/农历 pill 切换
-                    HStack(spacing: 0) {
-                        calendarTypeButton(
-                            title: String(localized: "contact.add.birthday.gregorian"),
-                            isSelected: !birthdayIsLunar
-                        ) { birthdayIsLunar = false }
-                        calendarTypeButton(
-                            title: String(localized: "contact.add.birthday.lunar"),
-                            isSelected: birthdayIsLunar
-                        ) { birthdayIsLunar = true }
-                    }
-                    .clipShape(Capsule())
-                    .overlay(Capsule().stroke(DesignSystem.Colors.border, lineWidth: 1))
-
-                    Spacer()
-
-                    VStack(alignment: .trailing, spacing: 2) {
-                        DatePicker("", selection: $birthdayDate, displayedComponents: [.date])
-                            .labelsHidden()
-                            .environment(\.calendar, Calendar(identifier: birthdayIsLunar ? .chinese : .gregorian))
-                            .environment(\.locale, birthdayIsLunar ? Locale(identifier: "zh_CN") : .current)
-                            .tint(DesignSystem.Colors.primary)
-                            .onChange(of: birthdayDate) { _, _ in hasBirthday = true }
-                            .simultaneousGesture(TapGesture().onEnded { hasBirthday = true })
-                        if hasBirthday, let annotation = calendarAnnotation {
-                            Text(annotation)
-                                .font(DesignSystem.Typography.small)
-                                .foregroundStyle(DesignSystem.Colors.textTertiary)
+                if hasBirthday {
+                    // 已设置：显示完整选择器行
+                    HStack(spacing: 8) {
+                        // 公历/农历 pill 切换
+                        HStack(spacing: 0) {
+                            calendarTypeButton(
+                                title: String(localized: "contact.add.birthday.gregorian"),
+                                isSelected: !birthdayIsLunar
+                            ) { birthdayIsLunar = false }
+                            calendarTypeButton(
+                                title: String(localized: "contact.add.birthday.lunar"),
+                                isSelected: birthdayIsLunar
+                            ) { birthdayIsLunar = true }
                         }
-                    }
+                        .clipShape(Capsule())
+                        .overlay(Capsule().stroke(DesignSystem.Colors.border, lineWidth: 1))
 
-                    if hasBirthday {
+                        Spacer()
+
+                        VStack(alignment: .trailing, spacing: 2) {
+                            DatePicker("", selection: $birthdayDate, displayedComponents: [.date])
+                                .labelsHidden()
+                                .environment(\.calendar, Calendar(identifier: birthdayIsLunar ? .chinese : .gregorian))
+                                .environment(\.locale, birthdayIsLunar ? Locale(identifier: "zh_CN") : .current)
+                                .tint(DesignSystem.Colors.primary)
+                            if let annotation = calendarAnnotation {
+                                Text(annotation)
+                                    .font(DesignSystem.Typography.small)
+                                    .foregroundStyle(DesignSystem.Colors.textTertiary)
+                            }
+                        }
+
                         Button {
                             withAnimation(.easeInOut(duration: 0.15)) {
                                 hasBirthday = false
@@ -181,17 +180,15 @@ private struct AddContactBirthdayField: View {
                                 .foregroundStyle(DesignSystem.Colors.textTertiary)
                         }
                     }
-                }
-                .padding(.vertical, 12)
-                .padding(.horizontal, 16)
-                .background(DesignSystem.Colors.bgSurface)
-                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.input))
-                .overlay(
-                    RoundedRectangle(cornerRadius: DesignSystem.Radius.input)
-                        .stroke(DesignSystem.Colors.border, lineWidth: 1)
-                )
+                    .padding(.vertical, 12)
+                    .padding(.horizontal, 16)
+                    .background(DesignSystem.Colors.bgSurface)
+                    .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.input))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: DesignSystem.Radius.input)
+                            .stroke(DesignSystem.Colors.border, lineWidth: 1)
+                    )
 
-                if hasBirthday {
                     BirthdayReminderRow(
                         isEnabled: birthdayReminderEnabled,
                         onToggle: { birthdayReminderEnabled.toggle() }
@@ -202,6 +199,27 @@ private struct AddContactBirthdayField: View {
                         RoundedRectangle(cornerRadius: DesignSystem.Radius.input)
                             .stroke(DesignSystem.Colors.border, lineWidth: 1)
                     )
+                } else {
+                    // 未设置：显示添加按钮
+                    Button {
+                        hasBirthday = true
+                    } label: {
+                        HStack {
+                            Image(systemName: "calendar.badge.plus")
+                                .font(DesignSystem.Typography.body)
+                                .foregroundStyle(DesignSystem.Colors.textSecondary)
+                            Spacer()
+                        }
+                        .padding(.vertical, 12)
+                        .padding(.horizontal, 16)
+                        .background(DesignSystem.Colors.bgSurface)
+                        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.input))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: DesignSystem.Radius.input)
+                                .stroke(DesignSystem.Colors.border, lineWidth: 1)
+                        )
+                    }
+                    .buttonStyle(.plain)
                 }
             }
         }
