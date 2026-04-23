@@ -85,6 +85,162 @@ struct AddContactViewModelTests {
         #expect(contacts[0].name == "赵六 updated")
     }
 
+    @Test func configureReadsLunarBirthdayDate() throws {
+        let db = try TestDB()
+        let birthday = try #require(LunarCalendarHelper.dateFromLunar(month: 8, day: 15))
+        let contact = Contact(
+            name: "农历生日测试",
+            birthday: birthday,
+            birthdayIsLunar: true,
+            birthdayReminderEnabled: true
+        )
+        db.context.insert(contact)
+
+        let vm = AddContactViewModel()
+        vm.configure(with: contact)
+
+        #expect(vm.birthdayDate == birthday)
+        #expect(vm.birthdayIsLunar == true)
+        #expect(vm.birthdayReminderEnabled == true)
+        #expect(vm.hasBirthday == true)
+    }
+
+    @Test func configureReadsGregorianBirthdayDate() throws {
+        let db = try TestDB()
+        let date = try #require(Calendar.current.date(from: DateComponents(year: 1990, month: 5, day: 20)))
+        let contact = Contact(name: "公历生日测试", birthday: date, birthdayIsLunar: false)
+        db.context.insert(contact)
+
+        let vm = AddContactViewModel()
+        vm.configure(with: contact)
+
+        #expect(vm.hasBirthday == true)
+        #expect(vm.birthdayDate == date)
+        #expect(vm.birthdayIsLunar == false)
+    }
+
+    @Test func configureReadsLunarFromStoredGregorianDate() throws {
+        let db = try TestDB()
+        // 2024-09-17 公历 = 农历八月十五
+        let date = try #require(Calendar.current.date(from: DateComponents(year: 2024, month: 9, day: 17)))
+        let contact = Contact(name: "农历存公历Date测试", birthday: date, birthdayIsLunar: true)
+        db.context.insert(contact)
+
+        let vm = AddContactViewModel()
+        vm.configure(with: contact)
+
+        #expect(vm.hasBirthday == true)
+        #expect(vm.birthdayDate == date)
+        #expect(vm.birthdayIsLunar == true)
+        // 验证 Date 对应农历八月十五
+        let md = try #require(LunarCalendarHelper.lunarMonthDay(from: vm.birthdayDate))
+        #expect(md.month == 8)
+        #expect(md.day == 15)
+    }
+
+    @Test func saveContactWritesBirthdayDate() throws {
+        let db = try TestDB()
+        let vm = AddContactViewModel()
+        vm.name = "生日保存测试"
+        vm.hasBirthday = true
+        vm.birthdayDate = try #require(LunarCalendarHelper.dateFromLunar(month: 3, day: 5))
+        vm.birthdayIsLunar = true
+        vm.birthdayReminderEnabled = true
+
+        #expect(vm.saveContact(context: db.context) == true)
+
+        let contacts = try db.context.fetch(FetchDescriptor<Contact>())
+        #expect(contacts.count == 1)
+        let saved = contacts[0]
+        let savedDate = try #require(saved.birthday)
+        #expect(saved.birthdayIsLunar == true)
+        #expect(saved.birthdayReminderEnabled == true)
+        // 验证存储的 Date 还原出正确农历月日
+        let md = try #require(LunarCalendarHelper.lunarMonthDay(from: savedDate))
+        #expect(md.month == 3)
+        #expect(md.day == 5)
+    }
+
+    @Test func saveContactWithNoBirthdayClearsBirthdayDate() throws {
+        let db = try TestDB()
+        let vm = AddContactViewModel()
+        vm.name = "无生日测试"
+        vm.hasBirthday = false
+        vm.birthdayIsLunar = true
+        vm.birthdayReminderEnabled = true
+
+        #expect(vm.saveContact(context: db.context) == true)
+
+        let contacts = try db.context.fetch(FetchDescriptor<Contact>())
+        #expect(contacts.count == 1)
+        #expect(contacts[0].birthday == nil)
+        #expect(contacts[0].birthdayIsLunar == false)
+        #expect(contacts[0].birthdayReminderEnabled == false)
+    }
+
+    @Test func saveContactReminderDisabledDoesNotEnable() throws {
+        let db = try TestDB()
+        let vm = AddContactViewModel()
+        vm.name = "提醒关闭测试"
+        vm.hasBirthday = true
+        vm.birthdayDate = try #require(LunarCalendarHelper.dateFromGregorian(month: 8, day: 15))
+        vm.birthdayIsLunar = false
+        vm.birthdayReminderEnabled = false
+
+        #expect(vm.saveContact(context: db.context) == true)
+
+        let contacts = try db.context.fetch(FetchDescriptor<Contact>())
+        #expect(contacts.count == 1)
+        #expect(contacts[0].birthdayReminderEnabled == false)
+    }
+
+    @Test func editContactPreservesBirthdayDate() throws {
+        let db = try TestDB()
+        let birthday = LunarCalendarHelper.dateFromLunar(month: 6, day: 1)
+        let contact = Contact(
+            name: "编辑测试",
+            birthday: birthday,
+            birthdayIsLunar: true,
+            birthdayReminderEnabled: true
+        )
+        db.context.insert(contact)
+        try db.context.save()
+
+        let vm = AddContactViewModel()
+        vm.configure(with: contact)
+        vm.name = "编辑测试 updated"
+
+        #expect(vm.saveContact(context: db.context) == true)
+
+        let contacts = try db.context.fetch(FetchDescriptor<Contact>())
+        #expect(contacts.count == 1)
+        let saved = contacts[0]
+        let savedDate = try #require(saved.birthday)
+        #expect(saved.birthdayIsLunar == true)
+        #expect(saved.birthdayReminderEnabled == true)
+        let md = try #require(LunarCalendarHelper.lunarMonthDay(from: savedDate))
+        #expect(md.month == 6)
+        #expect(md.day == 1)
+    }
+
+    /// birthday == nil 时，isLunar/reminderEnabled 应被重置为 false
+    @Test func configureNoBirthdayResetsFlags() throws {
+        let db = try TestDB()
+        let contact = Contact(
+            name: "无生日农历标志",
+            birthdayIsLunar: true,
+            birthdayReminderEnabled: true
+        )
+        db.context.insert(contact)
+
+        let vm = AddContactViewModel()
+        vm.configure(with: contact)
+
+        #expect(vm.hasBirthday == false)
+        #expect(vm.birthdayIsLunar == false)
+        #expect(vm.birthdayReminderEnabled == false)
+    }
+
     @Test func saveContactCompressesAvatar() throws {
         let db = try TestDB()
         let vm = AddContactViewModel()

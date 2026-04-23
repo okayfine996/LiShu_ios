@@ -43,12 +43,7 @@ struct SmartReturnGiftView: View {
         .background(DesignSystem.Colors.bgPage)
         .navigationTitle(String(localized: "event.smartGift.sheet.title"))
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                Button(String(localized: "common.cancel")) { dismiss() }
-                    .foregroundStyle(DesignSystem.Colors.textSecondary)
-            }
-        }
+        .sheetCancelButton(action: dismiss.callAsFunction)
         .onAppear(perform: loadResult)
         .alert(String(localized: "common.error"), isPresented: $isShowingErrorAlert) {
             Button(String(localized: "common.ok"), role: .cancel) {}

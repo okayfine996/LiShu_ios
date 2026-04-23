@@ -17,8 +17,12 @@ final class Contact {
     var category: String = ""
     /// 亲密圈层 1-4，1=家人 2=亲属 3=社交 4=其他
     var circle: Int = 4
-    /// 生日
+    /// 生日（公历存公历 Date，农历存对应公历 Date；nil 表示未设置）
     var birthday: Date?
+    /// 生日是否为农历
+    var birthdayIsLunar: Bool = false
+    /// 是否开启生日提醒
+    var birthdayReminderEnabled: Bool = false
     /// 所在地
     var location: String = ""
     /// 备注
@@ -40,6 +44,8 @@ final class Contact {
         category: String = "",
         circle: Int = 4,
         birthday: Date? = nil,
+        birthdayIsLunar: Bool = false,
+        birthdayReminderEnabled: Bool = false,
         location: String = "",
         note: String = ""
     ) {
@@ -50,6 +56,8 @@ final class Contact {
         self.category = category
         self.circle = circle
         self.birthday = birthday
+        self.birthdayIsLunar = birthdayIsLunar
+        self.birthdayReminderEnabled = birthdayReminderEnabled
         self.location = location
         self.note = note
         createdAt = .now

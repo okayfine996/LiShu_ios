@@ -20,6 +20,47 @@ struct ContactModelTests {
         #expect(contact.records?.isEmpty != false)
     }
 
+    @Test func birthdayDefaultsToNil() {
+        let contact = Contact(name: "测试")
+        #expect(contact.birthday == nil)
+    }
+
+    @Test func birthdayIsLunarDefaultsFalse() {
+        let contact = Contact(name: "测试")
+        #expect(contact.birthdayIsLunar == false)
+    }
+
+    @Test func birthdayReminderEnabledDefaultsFalse() {
+        let contact = Contact(name: "测试")
+        #expect(contact.birthdayReminderEnabled == false)
+    }
+
+    @Test func gregorianBirthdayCanBeSet() {
+        let date = LunarCalendarHelper.dateFromGregorian(month: 5, day: 20)
+        let contact = Contact(
+            name: "公历测试",
+            birthday: date,
+            birthdayIsLunar: false,
+            birthdayReminderEnabled: true
+        )
+        #expect(contact.birthday != nil)
+        #expect(contact.birthdayIsLunar == false)
+        #expect(contact.birthdayReminderEnabled == true)
+    }
+
+    @Test func lunarBirthdayCanBeSet() {
+        let date = LunarCalendarHelper.dateFromLunar(month: 8, day: 15)
+        let contact = Contact(
+            name: "农历测试",
+            birthday: date,
+            birthdayIsLunar: true,
+            birthdayReminderEnabled: true
+        )
+        #expect(contact.birthday != nil)
+        #expect(contact.birthdayIsLunar == true)
+        #expect(contact.birthdayReminderEnabled == true)
+    }
+
     @Test func testNetValue() throws {
         let db = try TestDB()
         let contact = SampleData.contact()

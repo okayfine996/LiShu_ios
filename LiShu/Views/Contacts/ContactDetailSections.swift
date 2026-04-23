@@ -53,6 +53,7 @@ struct ContactDetailProfileSection: View {
 struct ContactDetailPersonalInfoSection: View {
     let contact: Contact
     let viewModel: ContactDetailViewModel
+    @Environment(\.modelContext) private var modelContext
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -63,11 +64,18 @@ struct ContactDetailPersonalInfoSection: View {
                 .padding(.bottom, 12)
 
             VStack(spacing: 0) {
-                if let birthday = contact.birthday {
+                if let birthdayValue = birthdayText(for: contact) {
                     ContactDetailInfoRow(
                         icon: "birthday.cake.fill",
                         label: String(localized: "contact.add.birthday"),
-                        value: viewModel.formatDate(birthday)
+                        value: birthdayValue
+                    )
+                    ContactDetailInfoDivider()
+                    BirthdayReminderRow(
+                        isEnabled: contact.birthdayReminderEnabled,
+                        onToggle: {
+                            viewModel.toggleBirthdayReminder(contact: contact, context: modelContext)
+                        }
                     )
                     ContactDetailInfoDivider()
                 }
@@ -99,6 +107,32 @@ struct ContactDetailPersonalInfoSection: View {
             .background(DesignSystem.Colors.bgSurface)
             .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.smallCard))
             .padding(.horizontal, 16)
+        }
+        .alert(
+            String(localized: "notification.permission.denied.title"),
+            isPresented: Binding(
+                get: { viewModel.showNotificationPermissionAlert },
+                set: { viewModel.showNotificationPermissionAlert = $0 }
+            )
+        ) {
+            Button(String(localized: "notification.permission.denied.openSettings")) {
+                if let url = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(url)
+                }
+            }
+            Button(String(localized: "common.cancel"), role: .cancel) {}
+        } message: {
+            Text(String(localized: "notification.permission.denied.message"))
+        }
+    }
+
+    private func birthdayText(for contact: Contact) -> String? {
+        guard let date = contact.birthday else { return nil }
+        if contact.birthdayIsLunar, let md = LunarCalendarHelper.lunarMonthDay(from: date) {
+            return LunarCalendarHelper.format(month: md.month, day: md.day)
+        } else {
+            let md = LunarCalendarHelper.gregorianMonthDay(from: date)
+            return LunarCalendarHelper.formatGregorian(month: md.month, day: md.day)
         }
     }
 }

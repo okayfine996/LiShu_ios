@@ -1,5 +1,6 @@
 import Foundation
 import SwiftData
+import UserNotifications
 
 struct TypeCountItem: Identifiable {
     let type: RecordType
@@ -14,6 +15,7 @@ class ContactDetailViewModel {
     var contact: Contact?
     var isLoading: Bool = true
     var isShowingDeleteAlert: Bool = false
+    var showNotificationPermissionAlert: Bool = false
 
     /// Sorted records for the contact, newest first
     var sortedRecords: [Record] {
@@ -58,6 +60,29 @@ class ContactDetailViewModel {
     func reload(context: ModelContext) {
         guard let contact else { return }
         self.contact = context.model(for: contact.persistentModelID) as? Contact
+    }
+
+    /// Toggle birthday reminder for the contact and reschedule/cancel notifications.
+    /// When enabling, checks system notification permission and reverts if denied.
+    @MainActor
+    func toggleBirthdayReminder(contact: Contact, context: ModelContext) {
+        contact.birthdayReminderEnabled.toggle()
+        if contact.birthdayReminderEnabled {
+            Task {
+                let status = await NotificationManager.shared.checkAuthorizationStatus()
+                if status == .denied {
+                    contact.birthdayReminderEnabled = false
+                    try? context.save()
+                    showNotificationPermissionAlert = true
+                } else {
+                    try? context.save()
+                    NotificationManager.shared.scheduleBirthdayReminder(contact: contact)
+                }
+            }
+        } else {
+            try? context.save()
+            NotificationManager.shared.cancelBirthdayReminder(contact: contact)
+        }
     }
 
     /// Delete the current contact. Returns true if successful.

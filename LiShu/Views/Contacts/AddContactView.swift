@@ -25,13 +25,14 @@ struct AddContactView: View {
                 name: $viewModel.name,
                 selectedCategory: $viewModel.selectedCategory,
                 selectedTag: $viewModel.selectedTag,
-                birthday: $viewModel.birthday,
+                birthdayDate: $viewModel.birthdayDate,
                 hasBirthday: $viewModel.hasBirthday,
+                birthdayIsLunar: $viewModel.birthdayIsLunar,
+                birthdayReminderEnabled: $viewModel.birthdayReminderEnabled,
                 phone: $viewModel.phone,
                 location: $viewModel.location,
                 note: $viewModel.note,
                 screenName: screenName,
-                onBirthdayToggle: toggleBirthday,
                 onImportContacts: showContactsPicker
             )
 
@@ -78,6 +79,13 @@ struct AddContactView: View {
         .onChange(of: showContactPicker) { oldValue, newValue in
             handleContactPickerChange(oldValue, newValue)
         }
+        .onChange(of: viewModel.hasBirthday) { _, isOn in
+            InteractionLogger.toggle(
+                screen: screenName,
+                target: "contacts.editor.birthday",
+                isOn: isOn
+            )
+        }
     }
 
     private var screenName: String {
@@ -101,17 +109,6 @@ struct AddContactView: View {
             target: "contacts.editor.cancel"
         )
         dismiss()
-    }
-
-    private func toggleBirthday() {
-        withAnimation(.easeInOut(duration: 0.15)) {
-            viewModel.hasBirthday.toggle()
-        }
-        InteractionLogger.toggle(
-            screen: screenName,
-            target: "contacts.editor.birthday",
-            isOn: viewModel.hasBirthday
-        )
     }
 
     private func showContactsPicker() {

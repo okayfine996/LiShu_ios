@@ -11,8 +11,11 @@ class AddContactViewModel {
     var name: String = ""
     var selectedCategory: RelationshipCategory?
     var selectedTag: String = ""
-    var birthday: Date = .now
+    /// 生日日期（含年份占位，存储时仅取月日）；仅在 hasBirthday == true 时有效
+    var birthdayDate: Date = .init()
     var hasBirthday: Bool = false
+    var birthdayIsLunar: Bool = false
+    var birthdayReminderEnabled: Bool = false
     var phone: String = ""
     var location: String = ""
     var note: String = ""
@@ -31,7 +34,7 @@ class AddContactViewModel {
             relation: selectedTag,
             category: selectedCategory?.rawValue ?? "",
             circle: selectedCategory?.circle ?? 4,
-            birthday: hasBirthday ? birthday : nil,
+            birthday: nil,
             location: location.trimmingCharacters(in: .whitespacesAndNewlines),
             note: note.trimmingCharacters(in: .whitespacesAndNewlines),
             avatarPresent: avatar != nil,
@@ -50,11 +53,21 @@ class AddContactViewModel {
         name = contact.name
         selectedCategory = RelationshipCategory(rawValue: contact.category)
         selectedTag = contact.relation
-        birthday = contact.birthday ?? .now
-        hasBirthday = contact.birthday != nil
+        birthdayReminderEnabled = contact.birthdayReminderEnabled
         phone = contact.phone
         location = contact.location
         note = contact.note
+
+        if let date = contact.birthday {
+            birthdayDate = date
+            birthdayIsLunar = contact.birthdayIsLunar
+            hasBirthday = true
+        } else {
+            birthdayDate = Date()
+            hasBirthday = false
+            birthdayIsLunar = false
+            birthdayReminderEnabled = false
+        }
     }
 
     @MainActor
@@ -99,14 +112,16 @@ class AddContactViewModel {
             existing.relation = selectedTag
             existing.category = selectedCategory?.rawValue ?? ""
             existing.circle = circle
-            existing.birthday = hasBirthday ? birthday : nil
+            existing.birthday = hasBirthday ? birthdayDate : nil
+            existing.birthdayIsLunar = hasBirthday && birthdayIsLunar
+            existing.birthdayReminderEnabled = hasBirthday && birthdayReminderEnabled
             existing.location = location.trimmingCharacters(in: .whitespacesAndNewlines)
             existing.note = note.trimmingCharacters(in: .whitespaces)
 
             do {
                 try context.save()
                 NotificationManager.shared.cancelBirthdayReminder(contact: existing)
-                if hasBirthday {
+                if hasBirthday, birthdayReminderEnabled {
                     NotificationManager.shared.scheduleBirthdayReminder(contact: existing)
                 }
                 BusinessDataLogger.entityMutation(
@@ -158,7 +173,9 @@ class AddContactViewModel {
                 relation: selectedTag,
                 category: selectedCategory?.rawValue ?? "",
                 circle: circle,
-                birthday: hasBirthday ? birthday : nil,
+                birthday: hasBirthday ? birthdayDate : nil,
+                birthdayIsLunar: hasBirthday && birthdayIsLunar,
+                birthdayReminderEnabled: hasBirthday && birthdayReminderEnabled,
                 location: location.trimmingCharacters(in: .whitespacesAndNewlines),
                 note: note.trimmingCharacters(in: .whitespaces)
             )
@@ -167,7 +184,7 @@ class AddContactViewModel {
 
             do {
                 try context.save()
-                if hasBirthday {
+                if hasBirthday, birthdayReminderEnabled {
                     NotificationManager.shared.scheduleBirthdayReminder(contact: contact)
                 }
                 BusinessDataLogger.entityMutation(
