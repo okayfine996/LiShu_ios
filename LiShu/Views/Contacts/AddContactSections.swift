@@ -133,10 +133,6 @@ private struct AddContactBirthdayField: View {
     @Binding var birthdayIsLunar: Bool
     @Binding var birthdayReminderEnabled: Bool
 
-    private var birthdayCalendar: Calendar {
-        Calendar(identifier: birthdayIsLunar ? .chinese : .gregorian)
-    }
-
     var body: some View {
         AddContactField(label: String(localized: "contact.add.birthday")) {
             VStack(spacing: 10) {
@@ -159,7 +155,8 @@ private struct AddContactBirthdayField: View {
 
                     DatePicker("", selection: $birthdayDate, displayedComponents: [.date])
                         .labelsHidden()
-                        .environment(\.calendar, birthdayCalendar)
+                        .environment(\.calendar, Calendar(identifier: birthdayIsLunar ? .chinese : .gregorian))
+                        .environment(\.locale, birthdayIsLunar ? Locale(identifier: "zh_CN") : .current)
                         .tint(DesignSystem.Colors.primary)
                         .onChange(of: birthdayDate) { _, _ in hasBirthday = true }
 
