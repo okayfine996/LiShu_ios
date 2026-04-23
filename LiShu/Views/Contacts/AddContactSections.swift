@@ -169,11 +169,9 @@ private struct AddContactBirthdayField: View {
                         }
 
                         Button {
-                            withAnimation(.easeInOut(duration: 0.15)) {
-                                hasBirthday = false
-                                birthdayIsLunar = false
-                                birthdayReminderEnabled = false
-                            }
+                            hasBirthday = false
+                            birthdayIsLunar = false
+                            birthdayReminderEnabled = false
                         } label: {
                             Image(systemName: "xmark.circle.fill")
                                 .font(DesignSystem.Typography.body)
@@ -188,6 +186,7 @@ private struct AddContactBirthdayField: View {
                         RoundedRectangle(cornerRadius: DesignSystem.Radius.input)
                             .stroke(DesignSystem.Colors.border, lineWidth: 1)
                     )
+                    .transition(.opacity.combined(with: .scale(scale: 0.97, anchor: .top)))
 
                     BirthdayReminderRow(
                         isEnabled: birthdayReminderEnabled,
@@ -199,6 +198,7 @@ private struct AddContactBirthdayField: View {
                         RoundedRectangle(cornerRadius: DesignSystem.Radius.input)
                             .stroke(DesignSystem.Colors.border, lineWidth: 1)
                     )
+                    .transition(.opacity.combined(with: .scale(scale: 0.97, anchor: .top)))
                 } else {
                     // 未设置：显示添加按钮
                     Button {
@@ -220,8 +220,10 @@ private struct AddContactBirthdayField: View {
                         )
                     }
                     .buttonStyle(.plain)
+                    .transition(.opacity.combined(with: .scale(scale: 0.97, anchor: .top)))
                 }
             }
+            .animation(.spring(duration: 0.3, bounce: 0.15), value: hasBirthday)
         }
     }
 
