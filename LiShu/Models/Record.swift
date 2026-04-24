@@ -32,7 +32,7 @@ final class Record {
     /// 类型专属数据 (JSON)
     var kvData: String = "{}"
     /// 解码缓存，避免每次访问 resolvedTypeData 都重复 JSON 解码（不持久化）
-    @Transient var _cachedTypeData: RecordTypeData? = nil
+    @Transient private var _cachedTypeData: RecordTypeData? = nil
     /// 附属照片（如参加婚礼的留念照）
     @Relationship(deleteRule: .cascade, inverse: \RecordPhoto.record)
     var photos: [RecordPhoto]?
@@ -69,7 +69,10 @@ final class Record {
             let raw = recordTypeRaw.trimmingCharacters(in: .whitespacesAndNewlines)
             return RecordType(rawValue: raw) ?? .monetary
         }
-        set { recordTypeRaw = newValue.rawValue }
+        set {
+            recordTypeRaw = newValue.rawValue
+            _cachedTypeData = nil
+        }
     }
 
     /// 情分分量

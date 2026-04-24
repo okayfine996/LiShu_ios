@@ -96,6 +96,12 @@ class ContactDetailViewModel {
         }
     }
 
+    deinit {
+        MainActor.assumeIsolated {
+            toggleTask?.cancel()
+        }
+    }
+
     /// Delete the current contact. Returns true if successful.
     @MainActor
     func deleteContact(context: ModelContext) -> Bool {
