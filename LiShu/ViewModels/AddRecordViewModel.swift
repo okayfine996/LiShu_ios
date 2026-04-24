@@ -345,14 +345,6 @@ class AddRecordViewModel {
         )
     }
 
-    private func compressedPhotoData(from data: Data) -> Data {
-        ImagePipeline.optimizedJPEGData(
-            from: data,
-            maxPixelSize: ImagePipeline.Preset.recordPhotoMaxPixelSize,
-            compressionQuality: 0.84
-        ) ?? data
-    }
-
     @MainActor
     func save(context: ModelContext) -> Bool {
         guard isValid,
@@ -402,7 +394,7 @@ class AddRecordViewModel {
             existing.applyTypeData(typeData)
 
             for item in newPhotoItems {
-                let photo = RecordPhoto(record: existing, imageData: compressedPhotoData(from: item.data))
+                let photo = RecordPhoto(record: existing, imageData: item.data)
                 context.insert(photo)
             }
             newPhotoItems = []
@@ -461,7 +453,7 @@ class AddRecordViewModel {
             context.insert(record)
 
             for item in newPhotoItems {
-                let photo = RecordPhoto(record: record, imageData: compressedPhotoData(from: item.data))
+                let photo = RecordPhoto(record: record, imageData: item.data)
                 context.insert(photo)
             }
             newPhotoItems = []

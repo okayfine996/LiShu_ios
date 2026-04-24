@@ -124,6 +124,19 @@ struct ContactDetailPersonalInfoSection: View {
         } message: {
             Text(String(localized: "notification.permission.denied.message"))
         }
+        .alert(
+            String(localized: "common.error"),
+            isPresented: Binding(
+                get: { viewModel.saveError != nil },
+                set: { if !$0 { viewModel.saveError = nil } }
+            )
+        ) {
+            Button(String(localized: "common.ok"), role: .cancel) {}
+        } message: {
+            if let error = viewModel.saveError {
+                Text(error)
+            }
+        }
     }
 
     private func birthdayText(for contact: Contact) -> String? {

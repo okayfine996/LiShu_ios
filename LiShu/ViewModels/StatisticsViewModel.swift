@@ -57,6 +57,8 @@ class StatisticsViewModel {
     var relationshipHealthSummary = RelationshipHealthSummary()
     var state: LoadingState<Bool> = .idle
 
+    private var loadTask: Task<Void, Never>?
+
     var chartBars: [(label: String, income: Double, expense: Double)] {
         monthlyData.map { ("\($0.month)" + String(localized: "statistics.month"), $0.income, $0.expense) }
     }
@@ -68,33 +70,54 @@ class StatisticsViewModel {
 
     func loadData(context: ModelContext) {
         state = .loading
-        do {
-            let allRecords = try context.fetch(FetchDescriptor<Record>())
-            computeAvailableYears(from: allRecords)
-            let normalizedYear = selectedYear
-            let yearRecords = allRecords.filter {
-                Calendar.current.component(.year, from: $0.date) == normalizedYear
+        loadTask?.cancel()
+        loadTask = Task { @MainActor in
+            do {
+                let allRecords = try context.fetch(FetchDescriptor<Record>())
+                guard !Task.isCancelled else { return }
+                computeAvailableYears(from: allRecords)
+                await Task.yield()
+                guard !Task.isCancelled else { return }
+                let normalizedYear = selectedYear
+                computeYearlyStats(from: allRecords)
+                await Task.yield()
+                guard !Task.isCancelled else { return }
+                computeMonthlyData(from: allRecords)
+                await Task.yield()
+                guard !Task.isCancelled else { return }
+                computeEventTypeDistribution(from: allRecords)
+                await Task.yield()
+                guard !Task.isCancelled else { return }
+                computeContactRanking(from: allRecords)
+                await Task.yield()
+                guard !Task.isCancelled else { return }
+                computeCircleAnalysis(from: allRecords)
+                await Task.yield()
+                guard !Task.isCancelled else { return }
+                computeHeatmapGrid(from: allRecords)
+                await Task.yield()
+                guard !Task.isCancelled else { return }
+                computeRecordTypeDistribution(from: allRecords)
+                await Task.yield()
+                guard !Task.isCancelled else { return }
+                computeYearOverYearChange(from: allRecords)
+                computeRelationshipHealthSummary()
+                state = .loaded(true)
+                let yearRecords = allRecords.filter {
+                    Calendar.current.component(.year, from: $0.date) == normalizedYear
+                }
+                BusinessDataLogger.recordQuery(
+                    screen: "statistics.overview",
+                    operation: "load",
+                    searchText: "",
+                    filters: ["year": String(normalizedYear)],
+                    sort: "date_desc",
+                    records: yearRecords
+                )
+            } catch {
+                guard !Task.isCancelled else { return }
+                state = .error(error.localizedDescription)
             }
-            computeYearlyStats(from: allRecords)
-            computeMonthlyData(from: allRecords)
-            computeEventTypeDistribution(from: allRecords)
-            computeContactRanking(from: allRecords)
-            computeCircleAnalysis(from: allRecords)
-            computeHeatmapGrid(from: allRecords)
-            computeRecordTypeDistribution(from: allRecords)
-            computeYearOverYearChange(from: allRecords)
-            computeRelationshipHealthSummary()
-            state = .loaded(true)
-            BusinessDataLogger.recordQuery(
-                screen: "statistics.overview",
-                operation: "load",
-                searchText: "",
-                filters: ["year": String(normalizedYear)],
-                sort: "date_desc",
-                records: yearRecords
-            )
-        } catch {
-            state = .error(error.localizedDescription)
         }
     }
 
@@ -361,11 +384,15 @@ class StatisticsViewModel {
     }
 
     func formatAmountWithComma(_ amount: Double) -> String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .decimal
-        formatter.maximumFractionDigits = 0
-        return formatter.string(from: NSNumber(value: amount)) ?? String(format: "%.0f", amount)
+        Self.commaFormatter.string(from: NSNumber(value: amount)) ?? String(format: "%.0f", amount)
     }
+
+    private static let commaFormatter: NumberFormatter = {
+        let f = NumberFormatter()
+        f.numberStyle = .decimal
+        f.maximumFractionDigits = 0
+        return f
+    }()
 
     func formatNetValue(_ value: Double) -> String {
         let prefix = value >= 0 ? "+" : ""
