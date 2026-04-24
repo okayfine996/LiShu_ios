@@ -155,7 +155,9 @@ class EventListViewModel {
     }
 
     deinit {
-        cancelPendingSearchLog()
+        MainActor.assumeIsolated {
+            cancelPendingSearchLog()
+        }
     }
 
     private func scheduleSearchQueryLog() {

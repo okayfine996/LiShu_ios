@@ -1,9 +1,9 @@
 import SwiftUI
 
-public enum DesignSystem {
+public nonisolated enum DesignSystem {
     // MARK: - Colors
 
-    public enum Colors {
+    public nonisolated enum Colors {
         // Accent Color
         public static let primary = Color(hexLight: "#B76E5A", hexDark: "#B76E5A")
         public static let accentGold = Color(hexLight: "#C5A065", hexDark: "#C5A065")
@@ -39,7 +39,7 @@ public enum DesignSystem {
 
     // MARK: - Typography
 
-    public enum Typography {
+    public nonisolated enum Typography {
         public static let title1 = Font.system(size: 28, weight: .bold, design: .default)
         public static let title2 = Font.system(size: 22, weight: .bold, design: .default)
         public static let title3 = Font.system(size: 20, weight: .semibold, design: .default)
@@ -51,7 +51,7 @@ public enum DesignSystem {
 
     // MARK: - Radius
 
-    public enum Radius {
+    public nonisolated enum Radius {
         public static let card: CGFloat = 20
         public static let smallCard: CGFloat = 14
         public static let input: CGFloat = 12
@@ -63,7 +63,7 @@ public enum DesignSystem {
 
     // MARK: - Spacing
 
-    public enum Spacing {
+    public nonisolated enum Spacing {
         public static let section: CGFloat = 28
         public static let block: CGFloat = 12
         /// 页面水平内边距（与导航内容区对齐）
@@ -88,7 +88,7 @@ public enum DesignSystem {
 
     // MARK: - Layout（常用固定尺寸，避免视图内魔法数）
 
-    public enum Layout {
+    public nonisolated enum Layout {
         public static let statisticsBarChartHeight: CGFloat = 160
         public static let rankBadgeSize: CGFloat = 28
         /// 列表行左侧头像、事件封面等缩略图
@@ -97,6 +97,7 @@ public enum DesignSystem {
         public static let homeInlineActionHeight: CGFloat = 40
         /// 首页区块右上角紧凑操作按钮图标底块尺寸
         public static let homeInlineActionIconSize: CGFloat = 24
+        @MainActor
         public static var homeLedgerCardWidth: CGFloat {
             UIScreen.main.bounds.width - (DesignSystem.Spacing.pageHorizontal * 2) - DesignSystem.Spacing.stackTight
         }
@@ -116,7 +117,7 @@ public enum DesignSystem {
 
     // MARK: - Effects
 
-    public enum Effects {
+    public nonisolated enum Effects {
         public static let selectedFillOpacity: CGFloat = 0.1
         public static let selectedShadowOpacity: CGFloat = 0.12
         public static let disabledOpacity: CGFloat = 0.6
@@ -211,7 +212,7 @@ public struct StandardTextFieldStyle: TextFieldStyle {
 // MARK: - Color Hex Extensions
 
 extension Color {
-    init(hexLight: String, hexDark: String) {
+    nonisolated init(hexLight: String, hexDark: String) {
         self.init(UIColor { traitCollection in
             let isDark = traitCollection.userInterfaceStyle == .dark
             return UIColor(hex: isDark ? hexDark : hexLight)
@@ -220,7 +221,7 @@ extension Color {
 }
 
 extension UIColor {
-    convenience init(hex: String) {
+    convenience nonisolated init(hex: String) {
         let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
         var int: UInt64 = 0
         Scanner(string: hex).scanHexInt64(&int)

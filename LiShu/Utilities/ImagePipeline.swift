@@ -2,10 +2,11 @@ import Foundation
 import ImageIO
 import UIKit
 
-enum ImagePipeline {
-    private static let imageCache = NSCache<NSString, UIImage>()
+nonisolated enum ImagePipeline {
+    /// NSCache is thread-safe per Apple docs; nonisolated(unsafe) opts out of actor-checking
+    private nonisolated(unsafe) static let imageCache = NSCache<NSString, UIImage>()
 
-    enum Preset {
+    nonisolated enum Preset {
         static let avatarMaxPixelSize = 256
         static let eventCoverMaxPixelSize = 1600
         static let recordPhotoMaxPixelSize = 1800
@@ -41,11 +42,11 @@ enum ImagePipeline {
         return resizedImage.jpegData(compressionQuality: compressionQuality)
     }
 
-    static func pixelSize(for points: CGFloat, scale: CGFloat = UIScreen.main.scale) -> Int {
+    static func pixelSize(for points: CGFloat, scale: CGFloat = 3.0) -> Int {
         max(Int(ceil(points * scale)), 1)
     }
 
-    static func pixelSize(for size: CGSize, scale: CGFloat = UIScreen.main.scale) -> Int {
+    static func pixelSize(for size: CGSize, scale: CGFloat = 3.0) -> Int {
         max(Int(ceil(max(size.width, size.height) * scale)), 1)
     }
 

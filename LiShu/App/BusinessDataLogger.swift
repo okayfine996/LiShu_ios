@@ -147,7 +147,7 @@ nonisolated enum BusinessDataLogger {
             screen: screen,
             queryInput: QueryInputLogPayload(searchText: "", filters: [:], sort: "", screen: screen),
             payload: AnyEncodable(payload),
-            results: results.map(AnyEncodable.init),
+            results: results.map { AnyEncodable($0) },
             error: error
         )
     }
@@ -238,7 +238,7 @@ nonisolated enum BusinessDataLogger {
             screen: screen,
             queryInput: QueryInputLogPayload(searchText: "", filters: [:], sort: "", screen: screen),
             payload: AnyEncodable(payload),
-            results: results.map(AnyEncodable.init),
+            results: results.map { AnyEncodable($0) },
             error: error
         )
     }
@@ -276,7 +276,7 @@ nonisolated enum BusinessDataLogger {
                 resultCount: results.count,
                 results: results
             )
-            let loggedResults = results.map(AnyEncodable.init)
+            let loggedResults = results.map { AnyEncodable($0) }
         #endif
         log(
             logger: queryLogger,
@@ -312,7 +312,7 @@ nonisolated enum BusinessDataLogger {
             screen: screen,
             queryInput: QueryInputLogPayload(searchText: searchText, filters: filters, sort: sort, screen: screen),
             payload: AnyEncodable(payload),
-            results: results.map(AnyEncodable.init),
+            results: results.map { AnyEncodable($0) },
             error: error
         )
     }

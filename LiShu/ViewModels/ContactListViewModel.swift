@@ -204,7 +204,9 @@ class ContactListViewModel {
     }
 
     deinit {
-        cancelPendingSearchLog()
+        MainActor.assumeIsolated {
+            cancelPendingSearchLog()
+        }
     }
 
     private func scheduleSearchQueryLog() {
