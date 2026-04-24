@@ -16,6 +16,9 @@ class ContactDetailViewModel {
     var isLoading: Bool = true
     var isShowingDeleteAlert: Bool = false
     var showNotificationPermissionAlert: Bool = false
+    var saveError: String?
+
+    private var toggleTask: Task<Void, Never>?
 
     /// Sorted records for the contact, newest first
     var sortedRecords: [Record] {
@@ -44,10 +47,14 @@ class ContactDetailViewModel {
 
     /// Format date for timeline display (e.g. "2025.02")
     func timelineDateText(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy.MM"
-        return formatter.string(from: date)
+        Self.timelineDateFormatter.string(from: date)
     }
+
+    private static let timelineDateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy.MM"
+        return f
+    }()
 
     /// Load the contact by its persistent identifier
     func load(id: PersistentIdentifier, context: ModelContext) {
@@ -68,19 +75,23 @@ class ContactDetailViewModel {
     func toggleBirthdayReminder(contact: Contact, context: ModelContext) {
         contact.birthdayReminderEnabled.toggle()
         if contact.birthdayReminderEnabled {
-            Task {
+            toggleTask?.cancel()
+            toggleTask = Task {
                 let status = await NotificationManager.shared.checkAuthorizationStatus()
+                guard !Task.isCancelled else { return }
                 if status == .denied {
                     contact.birthdayReminderEnabled = false
-                    try? context.save()
+                    do { try context.save() } catch { saveError = error.localizedDescription }
                     showNotificationPermissionAlert = true
                 } else {
-                    try? context.save()
+                    do { try context.save() } catch { saveError = error.localizedDescription; return }
                     NotificationManager.shared.scheduleBirthdayReminder(contact: contact)
                 }
             }
         } else {
-            try? context.save()
+            toggleTask?.cancel()
+            toggleTask = nil
+            do { try context.save() } catch { saveError = error.localizedDescription; return }
             NotificationManager.shared.cancelBirthdayReminder(contact: contact)
         }
     }
