@@ -3,13 +3,13 @@ import SwiftData
 
 // MARK: - Import Result Types
 
-struct ImportResult {
+nonisolated struct ImportResult {
     var imported: Int = 0
     var skipped: Int = 0
     var errors: Int = 0
 }
 
-struct ContactImportResult {
+nonisolated struct ContactImportResult {
     var created: Int = 0
     var updated: Int = 0
     var failed: Int = 0
@@ -17,14 +17,14 @@ struct ContactImportResult {
 
 // MARK: - Import Preview Results
 
-struct CSVImportPreviewResult {
+nonisolated struct CSVImportPreviewResult {
     let sourceFileName: String
     var items: [CSVImportPreviewItem]
     var skipped: Int = 0
     var errors: Int = 0
 }
 
-struct LedgerCSVImportPreviewResult {
+nonisolated struct LedgerCSVImportPreviewResult {
     let sourceFileName: String
     let eventName: String
     var items: [LedgerCSVImportPreviewItem]
@@ -32,7 +32,7 @@ struct LedgerCSVImportPreviewResult {
     var errors: Int = 0
 }
 
-struct ContactCSVPreviewResult {
+nonisolated struct ContactCSVPreviewResult {
     let sourceFileName: String
     var items: [ContactCSVPreviewItem]
     var errors: Int = 0
@@ -108,7 +108,7 @@ nonisolated struct LedgerCSVImportPreviewItem: Identifiable {
     }
 }
 
-struct ContactCSVPreviewItem: Identifiable {
+nonisolated struct ContactCSVPreviewItem: Identifiable {
     let id = UUID()
     let rowNumber: Int
     var isSelected: Bool
@@ -239,11 +239,11 @@ nonisolated enum CSVImportPreviewStatus: Equatable {
 
 // MARK: - Payloads
 
-struct CSVExportPayload {
+nonisolated struct CSVExportPayload {
     let csvRow: String
 }
 
-struct LedgerCSVExportPayload {
+nonisolated struct LedgerCSVExportPayload {
     let csvRow: String
 }
 
@@ -270,7 +270,7 @@ nonisolated struct LedgerCSVImportPayload {
     let paymentMethod: PaymentMethod
 }
 
-struct ContactCSVPayload {
+nonisolated struct ContactCSVPayload {
     let name: String
     var phone: String?
     var relation: String?
@@ -283,7 +283,7 @@ struct ContactCSVPayload {
 
 // MARK: - Errors
 
-enum ImportError: LocalizedError {
+nonisolated enum ImportError: LocalizedError {
     case accessDenied
     case invalidFormat
 
