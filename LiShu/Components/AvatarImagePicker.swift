@@ -7,9 +7,10 @@ struct AvatarImagePicker: View {
     @State private var selectedItem: PhotosPickerItem?
 
     var body: some View {
+        let currentImageData = imageData
         PhotosPicker(selection: $selectedItem, matching: .images) {
             ZStack {
-                AvatarView(imageData: imageData, name: name, size: 88)
+                AvatarView(imageData: currentImageData, name: name, size: 88)
                     .overlay {
                         Circle()
                             .stroke(DesignSystem.Colors.bgSurface, lineWidth: 1)
