@@ -25,13 +25,8 @@ final class GuideMaskViewModel {
         return steps[currentStepIndex]
     }
 
-    var isLastStep: Bool {
+    private var isLastStep: Bool {
         currentStepIndex == steps.count - 1
-    }
-
-    var progress: Double {
-        guard !steps.isEmpty else { return 0 }
-        return Double(currentStepIndex + 1) / Double(steps.count)
     }
 
     /// The `AppTab` that should be selected for the current step.
