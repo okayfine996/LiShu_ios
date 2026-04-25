@@ -14,6 +14,8 @@ class AppSettings {
 
     private enum Keys {
         static let hasSeenOnboarding = "hasSeenOnboarding"
+        static let hasSeenGuideTour = "hasSeenGuideTour"
+        static let hasSeenSuiLiGuide = "hasSeenSuiLiGuide"
         static let colorScheme = "colorScheme"
 
         static let icloudSyncEnabled = "icloudSyncEnabled"
@@ -38,6 +40,32 @@ class AppSettings {
             appSettingsLogger.notice("Updated app setting", metadata: [
                 "action": .string("set"),
                 "target": .string("onboarding.seen"),
+                "result": .string(newValue ? "true" : "false"),
+            ])
+        }
+    }
+
+    // MARK: - Guide Tour
+
+    var hasSeenGuideTour: Bool {
+        get { access(keyPath: \.hasSeenGuideTour); return defaults.bool(forKey: Keys.hasSeenGuideTour) }
+        set {
+            withMutation(keyPath: \.hasSeenGuideTour) { defaults.set(newValue, forKey: Keys.hasSeenGuideTour) }
+            appSettingsLogger.notice("Updated app setting", metadata: [
+                "action": .string("set"),
+                "target": .string("guide.shou.seen"),
+                "result": .string(newValue ? "true" : "false"),
+            ])
+        }
+    }
+
+    var hasSeenSuiLiGuide: Bool {
+        get { access(keyPath: \.hasSeenSuiLiGuide); return defaults.bool(forKey: Keys.hasSeenSuiLiGuide) }
+        set {
+            withMutation(keyPath: \.hasSeenSuiLiGuide) { defaults.set(newValue, forKey: Keys.hasSeenSuiLiGuide) }
+            appSettingsLogger.notice("Updated app setting", metadata: [
+                "action": .string("set"),
+                "target": .string("guide.sui.seen"),
                 "result": .string(newValue ? "true" : "false"),
             ])
         }
