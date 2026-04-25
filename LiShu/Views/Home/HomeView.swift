@@ -6,19 +6,31 @@ struct HomeView: View {
     @Query private var contacts: [Contact]
     @Query private var events: [Event]
     @State private var sheetRoute: SheetRoute?
+    @Environment(\.guideCurrentAnchorID) private var guideAnchorID
 
     private var snapshot: HomeDashboardSnapshot {
         HomeDashboardSnapshot.build(records: records, events: events, contacts: contacts)
     }
 
     var body: some View {
-        ScrollView(showsIndicators: false) {
-            HomeDashboardContentView(snapshot: snapshot, sheetRoute: $sheetRoute)
-                .padding(.horizontal, 16)
-                .padding(.top, 8)
-                .padding(.bottom, 100)
+        ScrollViewReader { proxy in
+            ScrollView(showsIndicators: false) {
+                HomeDashboardContentView(snapshot: snapshot, sheetRoute: $sheetRoute)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 8)
+                    .padding(.bottom, 100)
+            }
+            .background(DesignSystem.Colors.bgPage)
+            .onChange(of: guideAnchorID) { _, newID in
+                guard let newID else { return }
+                // Delay slightly so the layout (e.g. newly created ledger card) has settled
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                    withAnimation(.easeInOut(duration: 0.45)) {
+                        proxy.scrollTo(newID, anchor: .center)
+                    }
+                }
+            }
         }
-        .background(DesignSystem.Colors.bgPage)
         .navigationTitle(String(localized: "home.title"))
         .navigationBarTitleDisplayMode(.automatic)
         .sheet(item: $sheetRoute, content: sheetContent)

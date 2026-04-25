@@ -141,6 +141,7 @@ nonisolated enum AppLogLabel {
     static let importFlow = "storage.import"
     static let ocr = "ocr.pipeline"
     static let ai = "ai.analysis"
+    static let uiGuide = "ui.guide"
     static let contactsViewModel = "contacts.viewmodel"
     static let eventsViewModel = "events.viewmodel"
     static let recordsViewModel = "records.viewmodel"

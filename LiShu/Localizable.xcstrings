@@ -3847,6 +3847,344 @@
     "Ghost" : {
 
     },
+    "guide.action.done" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "完成"
+          }
+        }
+      }
+    },
+    "guide.action.next" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下一步"
+          }
+        }
+      }
+    },
+    "guide.action.skip" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "跳过"
+          }
+        }
+      }
+    },
+    "guide.contact.create.body" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "联系人是礼尚往来的对象。点击右上角 + 按钮，添加一位亲友"
+          }
+        }
+      }
+    },
+    "guide.contact.create.title" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加第一位联系人"
+          }
+        }
+      }
+    },
+    "guide.contacts.body" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "管理您的亲友，查看与每位联系人的往来详情"
+          }
+        }
+      }
+    },
+    "guide.contacts.title" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "联系人"
+          }
+        }
+      }
+    },
+    "guide.done.body" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "您已了解礼数的基本功能，开始记录您的人情往来吧"
+          }
+        }
+      }
+    },
+    "guide.done.title" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "准备就绪！"
+          }
+        }
+      }
+    },
+    "guide.sui.addRecord.body" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "点击右上角的 + 按钮，选择「添加记录」，填写联系人和金额后保存"
+          }
+        }
+      }
+    },
+    "guide.sui.addRecord.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加随礼记录"
+          }
+        }
+      }
+    },
+    "guide.sui.done.body" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "太好了！随礼记录完成。在「记录」页面随时查看所有往来明细"
+          }
+        }
+      }
+    },
+    "guide.sui.done.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "随礼已记录"
+          }
+        }
+      }
+    },
+    "guide.sui.welcome.body" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "随礼是指您送出礼金。接下来我们一起记录一笔随礼，帮您掌握整个流程"
+          }
+        }
+      }
+    },
+    "guide.sui.welcome.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "学习随礼记录"
+          }
+        }
+      }
+    },
+    "guide.event.create.body" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "礼簿是记录场合往来的账本（如婚礼、生日）。点击右上角 + 按钮，创建您的第一个礼簿"
+          }
+        }
+      }
+    },
+    "guide.event.create.title" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "创建第一个礼簿"
+          }
+        }
+      }
+    },
+    "guide.events.body" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "记录婚礼、生日等重要场合，掌握礼尚往来全貌"
+          }
+        }
+      }
+    },
+    "guide.events.title" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "事件"
+          }
+        }
+      }
+    },
+    "guide.home.body" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在这里快速查看往来概览、余额统计和即将到来的重要日期"
+          }
+        }
+      }
+    },
+    "guide.home.title" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "首页"
+          }
+        }
+      }
+    },
+    "guide.record.create.body" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "往来记录追踪每一笔礼金或情意。点击右上角 + 按钮，记录您的第一笔往来"
+          }
+        }
+      }
+    },
+    "guide.record.create.title" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "记录第一笔往来"
+          }
+        }
+      }
+    },
+    "guide.records.body" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "记录每一笔人情往来，支持收支双向记账"
+          }
+        }
+      }
+    },
+    "guide.records.title" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "账本"
+          }
+        }
+      }
+    },
+    "guide.shou.addReceipt.body" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "礼簿已建好！点击「登记收礼」，将宾客的礼金记录进来"
+          }
+        }
+      }
+    },
+    "guide.shou.addReceipt.title" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "登记第一笔收礼"
+          }
+        }
+      }
+    },
+    "guide.shou.createLedger.body" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "礼簿用于记录这次场合的收礼情况。点击「新建」按钮，为您的场合（婚礼、生日等）建立专属礼簿"
+          }
+        }
+      }
+    },
+    "guide.shou.createLedger.title" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "创建您的礼簿"
+          }
+        }
+      }
+    },
+    "guide.welcome.body" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "让我们快速认识礼数的主要功能"
+          }
+        }
+      }
+    },
+    "guide.welcome.title" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "功能导览"
+          }
+        }
+      }
+    },
     "heatmap.detail.insightBody" : {
       "localizations" : {
         "zh-Hans" : {
@@ -8550,6 +8888,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "前往 App Store 评分"
+          }
+        }
+      }
+    },
+    "settings.restartGuideTour" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重新查看功能导览"
           }
         }
       }

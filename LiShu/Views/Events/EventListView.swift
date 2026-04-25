@@ -41,6 +41,7 @@ struct EventListView: View {
                         .foregroundStyle(DesignSystem.Colors.primary)
                 }
                 .accessibilityIdentifier("event.list.addButton")
+                .guideAnchor(id: "event.list.addButton")
             }
         }
         .onAppear(perform: loadData)

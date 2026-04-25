@@ -80,6 +80,7 @@ private struct HomeLedgerSection: View {
                     .clipShape(Capsule())
                 }
                 .buttonStyle(.plain)
+                .guideAnchor(id: "home.ledger.newButton")
             }
 
             if snapshot.hostLedgerEvents.isEmpty {
@@ -105,6 +106,8 @@ private struct HomeLedgerSection: View {
                 .scrollClipDisabled()
             }
         }
+        // Scroll target: guide will call proxy.scrollTo("home.ledger.receiptButton")
+        .id("home.ledger.receiptButton")
     }
 }
 

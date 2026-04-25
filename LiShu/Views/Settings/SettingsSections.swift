@@ -12,6 +12,7 @@ struct SettingsContentView: View {
     let onOpenDataManagement: () -> Void
     let onOpenAbout: () -> Void
     let onRateApp: () -> Void
+    let onRestartGuideTour: () -> Void
 
     var body: some View {
         VStack(spacing: 20) {
@@ -72,6 +73,11 @@ struct SettingsContentView: View {
                         icon: "star.fill",
                         title: String(localized: "settings.rateApp"),
                         action: onRateApp
+                    ),
+                    .button(
+                        icon: "questionmark.circle.fill",
+                        title: String(localized: "settings.restartGuideTour"),
+                        action: onRestartGuideTour
                     ),
                 ]
             )

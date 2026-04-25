@@ -4,6 +4,7 @@ struct SettingsView: View {
     @Environment(SubscriptionManager.self) private var subscriptionManager
     @Environment(DebugOverrideManager.self) private var debugOverrides
     @Environment(AppSettings.self) private var settings
+    @Environment(\.restartGuideTour) private var restartGuideTour: () -> Void
 
     @State private var showProSheet = false
     @State private var showRestartAlert = false
@@ -32,7 +33,8 @@ struct SettingsView: View {
                 onOpenNotifications: logNotificationNavigation,
                 onOpenDataManagement: logDataManagementNavigation,
                 onOpenAbout: logAboutNavigation,
-                onRateApp: rateApp
+                onRateApp: rateApp,
+                onRestartGuideTour: restartGuideTour
             )
             .padding(.horizontal, 16)
             .padding(.bottom, 20)

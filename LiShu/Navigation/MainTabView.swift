@@ -1,6 +1,8 @@
 import SwiftData
 import SwiftUI
 
+// MARK: - AppTab
+
 enum AppTab: String, CaseIterable {
     case home
     case records
@@ -21,8 +23,15 @@ enum AppTab: String, CaseIterable {
 
 struct MainTabView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(AppSettings.self) private var settings
     @State private var selectedTab: AppTab = .home
     @State private var sheetRoute: SheetRoute?
+    @State private var guideMask = GuideMaskViewModel()
+    @State private var suiLiGuideActive = false
+
+    @Query private var allEvents: [Event]
+    @Query private var allContacts: [Contact]
+    @Query private var allRecords: [Record]
 
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -32,6 +41,7 @@ struct MainTabView: View {
                         routeDestination(route)
                     }
             }
+            .guideAnchor(id: "tab.home")
             .accessibilityIdentifier("tab.home")
             .tabItem {
                 Label(String(localized: "tab.home"), systemImage: "house.fill")
@@ -44,6 +54,7 @@ struct MainTabView: View {
                         routeDestination(route)
                     }
             }
+            .guideAnchor(id: "tab.records")
             .accessibilityIdentifier("tab.records")
             .tabItem {
                 Label(String(localized: "tab.records"), systemImage: "doc.text")
@@ -56,6 +67,7 @@ struct MainTabView: View {
                         routeDestination(route)
                     }
             }
+            .guideAnchor(id: "tab.contacts")
             .accessibilityIdentifier("tab.contacts")
             .tabItem {
                 Label(String(localized: "tab.contacts"), systemImage: "person.2.fill")
@@ -68,6 +80,7 @@ struct MainTabView: View {
                         routeDestination(route)
                     }
             }
+            .guideAnchor(id: "tab.events")
             .accessibilityIdentifier("tab.events")
             .tabItem {
                 Label(String(localized: "tab.events"), systemImage: "calendar")
@@ -80,6 +93,7 @@ struct MainTabView: View {
                         routeDestination(route)
                     }
             }
+            .guideAnchor(id: "tab.settings")
             .accessibilityIdentifier("tab.settings")
             .tabItem {
                 Label(String(localized: "tab.settings"), systemImage: "gearshape.fill")
@@ -87,6 +101,56 @@ struct MainTabView: View {
             .tag(AppTab.settings)
         }
         .tint(DesignSystem.Colors.primary)
+        .guideMask(viewModel: guideMask)
+        .environment(\.guideCurrentAnchorID, guideMask.currentStep?.anchorID)
+        .environment(\.restartGuideTour) {
+            settings.hasSeenGuideTour = false
+            settings.hasSeenSuiLiGuide = false
+            suiLiGuideActive = false
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                guideMask.start(
+                    flow: AppGuideFlow.mainTour(),
+                    eventCount: allEvents.count,
+                    contactCount: allContacts.count,
+                    recordCount: allRecords.count
+                )
+            }
+        }
+        .onChange(of: guideMask.isActive) { wasActive, isNowActive in
+            guard wasActive, !isNowActive else { return }
+            if suiLiGuideActive {
+                suiLiGuideActive = false
+                settings.hasSeenSuiLiGuide = true
+            } else {
+                settings.hasSeenGuideTour = true
+                guard !settings.hasSeenSuiLiGuide else { return }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    suiLiGuideActive = true
+                    guideMask.start(
+                        flow: AppGuideFlow.suiLiTour(),
+                        eventCount: allEvents.count,
+                        contactCount: allContacts.count,
+                        recordCount: allRecords.count
+                    )
+                }
+            }
+        }
+        .onChange(of: guideMask.requiredTab) { _, newTab in
+            if let newTab {
+                withAnimation {
+                    selectedTab = newTab
+                }
+            }
+        }
+        .onChange(of: allEvents.count) { _, newCount in
+            guideMask.notifyDataChanged(eventCount: newCount, contactCount: allContacts.count, recordCount: allRecords.count)
+        }
+        .onChange(of: allContacts.count) { _, newCount in
+            guideMask.notifyDataChanged(eventCount: allEvents.count, contactCount: newCount, recordCount: allRecords.count)
+        }
+        .onChange(of: allRecords.count) { _, newCount in
+            guideMask.notifyDataChanged(eventCount: allEvents.count, contactCount: allContacts.count, recordCount: newCount)
+        }
         .sheet(item: $sheetRoute) { route in
             sheetContent(for: route)
         }
@@ -125,6 +189,26 @@ struct MainTabView: View {
                     modelContext.insert(event)
                     try? modelContext.save()
                     sheetRoute = .ocrImport(eventID: event.persistentModelID)
+                }
+            }
+            if !settings.hasSeenGuideTour {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                    guideMask.start(
+                        flow: AppGuideFlow.mainTour(),
+                        eventCount: allEvents.count,
+                        contactCount: allContacts.count,
+                        recordCount: allRecords.count
+                    )
+                }
+            } else if !settings.hasSeenSuiLiGuide {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                    suiLiGuideActive = true
+                    guideMask.start(
+                        flow: AppGuideFlow.suiLiTour(),
+                        eventCount: allEvents.count,
+                        contactCount: allContacts.count,
+                        recordCount: allRecords.count
+                    )
                 }
             }
         }

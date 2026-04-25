@@ -60,6 +60,7 @@ struct ContactListView: View {
                     onImportCSV: { showContactCSVImporter = true },
                     onDownloadTemplate: downloadContactTemplate
                 )
+                .guideAnchor(id: "contact.list.addButton")
             }
         }
         .sheet(isPresented: $showBatchImport, onDismiss: loadContacts) {

@@ -85,6 +85,7 @@ struct RecordListView: View {
                 .foregroundStyle(DesignSystem.Colors.primary)
         }
         .accessibilityIdentifier("record.list.addButton")
+        .guideAnchor(id: "record.list.addButton")
     }
 
     private var hasActiveQuery: Bool {

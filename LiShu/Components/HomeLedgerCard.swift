@@ -84,7 +84,7 @@ struct HomeLedgerCard: View {
 
             Spacer(minLength: DesignSystem.Spacing.block)
 
-            // 右上角书本图标和整张卡片都进入详情，符合“看礼簿”的操作预期。
+            // 右上角书本图标和整张卡片都进入详情，符合"看礼簿"的操作预期。
             Button {
                 isShowingEventDetail = true
             } label: {
@@ -141,7 +141,7 @@ struct HomeLedgerCard: View {
     }
 
     private var actionSection: some View {
-        // 卡片内部只保留一个强操作，减少“看详情”和“去登记”之间的抢焦点。
+        // 卡片内部只保留一个强操作，减少"看详情"和"去登记"之间的抢焦点。
         Button(action: onPrimaryAction) {
             HStack(spacing: DesignSystem.Spacing.inlineTight) {
                 Image(systemName: "plus.circle.fill")
@@ -154,6 +154,7 @@ struct HomeLedgerCard: View {
             .frame(maxWidth: .infinity)
         }
         .buttonStyle(PrimaryButtonStyle())
+        .guideAnchor(id: "home.ledger.receiptButton")
     }
 
     private func compactMetric(title: String, value: String) -> some View {
