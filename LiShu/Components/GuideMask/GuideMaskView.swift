@@ -47,8 +47,6 @@ struct GuideCalloutView: View {
     let step: GuideStep
     let stepIndex: Int
     let totalSteps: Int
-    /// When `true` the step expects the user to tap a real button; "Next" is hidden.
-    let isPassThrough: Bool
     let onSkip: () -> Void
     let onAdvance: () -> Void
 
@@ -110,7 +108,7 @@ struct GuideCalloutView: View {
             }
             // On passThrough steps the user must perform the real action (or skip).
             // Hide "Next" to make the intention clear; keep "Done" on the final step.
-            if !isPassThrough || isLastStep {
+            if !step.isPassThrough || isLastStep {
                 Button(
                     isLastStep
                         ? String(localized: "guide.action.done")
@@ -164,7 +162,6 @@ struct GuideMaskOverlay: View {
                         step: step,
                         stepIndex: stepIndex,
                         totalSteps: totalSteps,
-                        isPassThrough: step.isPassThrough,
                         onSkip: onSkip,
                         onAdvance: onAdvance
                     )
@@ -177,7 +174,6 @@ struct GuideMaskOverlay: View {
                         step: step,
                         stepIndex: stepIndex,
                         totalSteps: totalSteps,
-                        isPassThrough: step.isPassThrough,
                         onSkip: onSkip,
                         onAdvance: onAdvance
                     )
