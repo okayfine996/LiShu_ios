@@ -97,7 +97,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "记人情，懂礼数"
+            "value" : "一来一往皆是礼，一笔一画总关情"
           }
         }
       }
@@ -2017,9 +2017,6 @@
           }
         }
       }
-    },
-    "DEBUG: 清除购买状态" : {
-
     },
     "debug.clearAllData" : {
       "localizations" : {

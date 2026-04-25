@@ -7,20 +7,21 @@ struct SplashView: View {
                 .ignoresSafeArea()
 
             VStack(spacing: 16) {
-                Text("礼")
-                    .font(.system(size: 44, weight: .bold, design: .serif))
-                    .foregroundStyle(DesignSystem.Colors.primary)
-                    .frame(width: 80, height: 80)
-                    .background(DesignSystem.Colors.bgCard)
-                    .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+                Image("AppLogo")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 120, height: 120)
+                    .blendMode(.multiply)
 
                 Text(String(localized: "app.name"))
                     .font(DesignSystem.Typography.title1)
                     .foregroundStyle(DesignSystem.Colors.textPrimary)
+                    .tracking(12)
 
                 Text(String(localized: "app.slogan"))
-                    .font(DesignSystem.Typography.caption)
-                    .foregroundStyle(DesignSystem.Colors.textSecondary)
+                    .font(DesignSystem.Typography.small)
+                    .foregroundStyle(DesignSystem.Colors.accentGold)
+                    .tracking(2)
             }
         }
     }
