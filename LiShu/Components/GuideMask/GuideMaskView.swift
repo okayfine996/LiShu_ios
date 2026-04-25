@@ -210,7 +210,7 @@ struct GuideMaskOverlay: View {
                         .ignoresSafeArea()
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel(Text("继续"))
+                .accessibilityLabel(Text(String(localized: "guide.action.continue")))
             }
         } else {
             // 无聚光灯步骤（Welcome / Done）：整个暗色背景可点击推进
@@ -219,7 +219,7 @@ struct GuideMaskOverlay: View {
                     .ignoresSafeArea()
             }
             .buttonStyle(.plain)
-            .accessibilityLabel(Text("继续"))
+            .accessibilityLabel(Text(String(localized: "guide.action.continue")))
         }
     }
 }

@@ -41,7 +41,6 @@ struct MainTabView: View {
                         routeDestination(route)
                     }
             }
-            .guideAnchor(id: "tab.home")
             .accessibilityIdentifier("tab.home")
             .tabItem {
                 Label(String(localized: "tab.home"), systemImage: "house.fill")
@@ -54,7 +53,6 @@ struct MainTabView: View {
                         routeDestination(route)
                     }
             }
-            .guideAnchor(id: "tab.records")
             .accessibilityIdentifier("tab.records")
             .tabItem {
                 Label(String(localized: "tab.records"), systemImage: "doc.text")
@@ -67,7 +65,6 @@ struct MainTabView: View {
                         routeDestination(route)
                     }
             }
-            .guideAnchor(id: "tab.contacts")
             .accessibilityIdentifier("tab.contacts")
             .tabItem {
                 Label(String(localized: "tab.contacts"), systemImage: "person.2.fill")
@@ -80,7 +77,6 @@ struct MainTabView: View {
                         routeDestination(route)
                     }
             }
-            .guideAnchor(id: "tab.events")
             .accessibilityIdentifier("tab.events")
             .tabItem {
                 Label(String(localized: "tab.events"), systemImage: "calendar")
@@ -93,7 +89,6 @@ struct MainTabView: View {
                         routeDestination(route)
                     }
             }
-            .guideAnchor(id: "tab.settings")
             .accessibilityIdentifier("tab.settings")
             .tabItem {
                 Label(String(localized: "tab.settings"), systemImage: "gearshape.fill")
