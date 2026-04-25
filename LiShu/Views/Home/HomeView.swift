@@ -22,7 +22,7 @@ struct HomeView: View {
             }
             .background(DesignSystem.Colors.bgPage)
             .onChange(of: guideAnchorID) { _, newID in
-                guard let newID else { return }
+                guard newID == "home.ledger.receiptButton" else { return }
                 // Delay slightly so the layout (e.g. newly created ledger card) has settled
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
                     withAnimation(.easeInOut(duration: 0.45)) {

@@ -60,7 +60,7 @@ struct GuideCalloutView: View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.block) {
             progressDots
             // 标题+正文合并为单个无障碍元素，VoiceOver 一次性读出完整提示内容
-            VStack(alignment: .leading, spacing: DesignSystem.Spacing.stackTight) {
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.block) {
                 titleText
                 bodyText
             }
