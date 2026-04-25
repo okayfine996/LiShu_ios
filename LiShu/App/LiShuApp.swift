@@ -38,6 +38,7 @@ struct LiShuApp: App {
         } else if CommandLine.arguments.contains("--uitesting") {
             AppSettings.shared.hasSeenOnboarding = true
             AppSettings.shared.hasSeenGuideTour = true
+            AppSettings.shared.hasSeenSuiLiGuide = true
         }
 
         let schema = Schema([

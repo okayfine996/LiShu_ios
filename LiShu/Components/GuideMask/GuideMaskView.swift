@@ -4,6 +4,10 @@ import SwiftUI
 
 /// Full-screen rectangle with a rounded-rect "hole" cut through it using even-odd fill.
 /// Conforms to `Animatable` so the spotlight position interpolates smoothly between steps.
+///
+/// - Note: On iOS 26+ this manual `animatableData` implementation could be replaced with
+///   the `@Animatable` macro (and `@AnimatableIgnored` on `cornerRadius`), but the current
+///   implementation is fully correct for the iOS 18 deployment target.
 struct SpotlightHoleShape: Shape {
     var spotlightRect: CGRect
     var cornerRadius: CGFloat
@@ -55,8 +59,12 @@ struct GuideCalloutView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.block) {
             progressDots
-            titleText
-            bodyText
+            // 标题+正文合并为单个无障碍元素，VoiceOver 一次性读出完整提示内容
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.stackTight) {
+                titleText
+                bodyText
+            }
+            .accessibilityElement(children: .combine)
             actionButtons
         }
         .padding(DesignSystem.Spacing.cardPadding)
@@ -76,6 +84,8 @@ struct GuideCalloutView: View {
             }
             Spacer()
         }
+        // 纯装饰性指示器，VoiceOver 不需要读出
+        .accessibilityHidden(true)
     }
 
     private var titleText: some View {
@@ -176,6 +186,8 @@ struct GuideMaskOverlay: View {
             }
         }
         .animation(.easeInOut(duration: 0.25), value: step.anchorID == nil)
+        // 声明为模态，VoiceOver 不会跳出覆盖层到背后的内容
+        .accessibilityAddTraits(.isModal)
     }
 
     @ViewBuilder
@@ -190,43 +202,35 @@ struct GuideMaskOverlay: View {
                     .ignoresSafeArea()
                     .allowsHitTesting(false)
             } else {
-                // Normal: tapping anywhere on the dim layer advances the guide.
-                SpotlightHoleShape(spotlightRect: spotlight, cornerRadius: DesignSystem.Radius.smallCard)
-                    .fill(style: FillStyle(eoFill: true))
-                    .foregroundStyle(Color.black.opacity(0.72))
-                    .ignoresSafeArea()
-                    .onTapGesture { onAdvance() }
+                // Normal: 用 Button 代替 onTapGesture，确保 VoiceOver 可以操作
+                Button(action: onAdvance) {
+                    SpotlightHoleShape(spotlightRect: spotlight, cornerRadius: DesignSystem.Radius.smallCard)
+                        .fill(style: FillStyle(eoFill: true))
+                        .foregroundStyle(Color.black.opacity(0.72))
+                        .ignoresSafeArea()
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(Text("继续"))
             }
         } else {
-            Color.black.opacity(0.55)
-                .ignoresSafeArea()
-                .onTapGesture { onAdvance() }
+            // 无聚光灯步骤（Welcome / Done）：整个暗色背景可点击推进
+            Button(action: onAdvance) {
+                Color.black.opacity(0.55)
+                    .ignoresSafeArea()
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(Text("继续"))
         }
     }
 }
 
-// MARK: - Environment Keys
-
-/// Allows child views (e.g. SettingsView) to trigger a guide restart without a direct reference.
-private struct GuideMaskRestartKey: EnvironmentKey {
-    static let defaultValue: () -> Void = {}
-}
-
-/// The anchorID of the currently active guide step — lets scrollable views auto-scroll to the target.
-private struct GuideCurrentAnchorKey: EnvironmentKey {
-    static let defaultValue: String? = nil
-}
+// MARK: - Environment Values
 
 extension EnvironmentValues {
-    var restartGuideTour: () -> Void {
-        get { self[GuideMaskRestartKey.self] }
-        set { self[GuideMaskRestartKey.self] = newValue }
-    }
-
-    var guideCurrentAnchorID: String? {
-        get { self[GuideCurrentAnchorKey.self] }
-        set { self[GuideCurrentAnchorKey.self] = newValue }
-    }
+    /// Allows child views (e.g. SettingsView) to trigger a guide restart without a direct reference.
+    @Entry var restartGuideTour: () -> Void = {}
+    /// The anchorID of the currently active guide step — lets scrollable views auto-scroll to the target.
+    @Entry var guideCurrentAnchorID: String? = nil
 }
 
 // MARK: - View Extension

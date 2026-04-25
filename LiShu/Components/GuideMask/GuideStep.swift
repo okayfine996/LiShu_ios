@@ -28,8 +28,6 @@ struct GuideStep: Identifiable, Equatable {
     let anchorID: String?
     /// Extra padding (in points) added around the raw anchor frame. Positive = larger spotlight.
     let spotlightPadding: CGFloat
-    /// Preferred edge for the callout card. Auto-positioning overrides this at runtime.
-    let calloutPreferredEdge: Edge
     /// How this step advances. `.manual` = user taps Next; others = model count delta.
     let completionTrigger: CompletionTrigger
     /// When `true`, the spotlight overlay does not capture touch events so the
@@ -44,7 +42,6 @@ struct GuideStep: Identifiable, Equatable {
         bodyKey: String,
         anchorID: String? = nil,
         spotlightPadding: CGFloat = 8,
-        calloutPreferredEdge: Edge = .bottom,
         completionTrigger: CompletionTrigger = .manual,
         isPassThrough: Bool = false,
         requiredTab: AppTab? = nil
@@ -54,7 +51,6 @@ struct GuideStep: Identifiable, Equatable {
         self.bodyKey = bodyKey
         self.anchorID = anchorID
         self.spotlightPadding = spotlightPadding
-        self.calloutPreferredEdge = calloutPreferredEdge
         self.completionTrigger = completionTrigger
         self.isPassThrough = isPassThrough
         self.requiredTab = requiredTab
@@ -87,6 +83,12 @@ extension View {
     /// the view's frame in `.global` coordinates and publishes it via
     /// `GuideAnchorKey`.  This approach works inside toolbar items where the
     /// old `anchorPreference` mechanism fails.
+    ///
+    /// **Performance note**: The `GeometryReader` emits a preference update on
+    /// every layout pass, including during scroll animations.  This is intentional
+    /// so the spotlight tracks live position (e.g. inside a horizontal ScrollView),
+    /// but avoid attaching this modifier to views that lay out at very high
+    /// frequency (e.g. inside a continuously-running animation loop).
     ///
     /// - Parameter id: Must match a `GuideStep.anchorID` value.
     func guideAnchor(id: String) -> some View {
