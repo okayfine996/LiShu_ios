@@ -76,35 +76,12 @@ private struct RecordListFilterChips: View {
     let filterTitle: (RecordFilter) -> String
 
     var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                ForEach(RecordFilter.allCases, id: \.self) { filter in
-                    let isSelected = selectedFilter == filter
-
-                    Button {
-                        onSelectFilter(filter)
-                    } label: {
-                        Text(filterTitle(filter))
-                            .font(DesignSystem.Typography.caption)
-                            .foregroundStyle(isSelected ? .white : DesignSystem.Colors.textSecondary)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 8)
-                            .background(
-                                isSelected ? DesignSystem.Colors.primary : DesignSystem.Colors.bgSurface
-                            )
-                            .clipShape(Capsule())
-                            .overlay(
-                                Capsule()
-                                    .stroke(
-                                        isSelected ? Color.clear : DesignSystem.Colors.border,
-                                        lineWidth: 1
-                                    )
-                            )
-                    }
-                    .buttonStyle(.plain)
-                }
+        Picker("", selection: Binding(get: { selectedFilter }, set: { onSelectFilter($0) })) {
+            ForEach(RecordFilter.allCases, id: \.self) { filter in
+                Text(filterTitle(filter)).tag(filter)
             }
         }
+        .pickerStyle(.segmented)
     }
 }
 

@@ -46,11 +46,12 @@ private struct ContactListLoadedContent: View {
     var body: some View {
         List {
             ContactListRow(bottomInset: DesignSystem.Spacing.block) {
-                CapsuleSegmentedControl(
-                    options: ContactCircleFilter.allCases,
-                    selected: $viewModel.selectedFilter,
-                    titleForOption: { $0.title }
-                )
+                Picker("", selection: $viewModel.selectedFilter) {
+                    ForEach(ContactCircleFilter.allCases, id: \.self) { filter in
+                        Text(filter.title).tag(filter)
+                    }
+                }
+                .pickerStyle(.segmented)
             }
 
             if viewModel.filteredContacts.isEmpty {
