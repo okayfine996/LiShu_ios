@@ -53,6 +53,8 @@ private struct HomeSummarySection: View {
 private struct HomeLedgerSection: View {
     let snapshot: HomeDashboardSnapshot
     @Binding var sheetRoute: SheetRoute?
+    @State private var giftReceivingEventID: PersistentIdentifier? = nil
+    @State private var isShowingGiftReceiving = false
 
     var body: some View {
         VStack(spacing: DesignSystem.Spacing.block) {
@@ -96,14 +98,26 @@ private struct HomeLedgerSection: View {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(alignment: .top, spacing: 12) {
                         ForEach(snapshot.hostLedgerEvents) { event in
-                            HomeLedgerCard(event: event) {
-                                sheetRoute = .addLedgerReceipt(eventID: event.persistentModelID)
-                            }
+                            HomeLedgerCard(
+                                event: event,
+                                onPrimaryAction: {
+                                    sheetRoute = .addLedgerReceipt(eventID: event.persistentModelID)
+                                },
+                                onGiftReceivingMode: {
+                                    giftReceivingEventID = event.persistentModelID
+                                    isShowingGiftReceiving = true
+                                }
+                            )
                         }
                     }
                     .padding(.horizontal, 2)
                 }
                 .scrollClipDisabled()
+                .fullScreenCover(isPresented: $isShowingGiftReceiving) {
+                    if let id = giftReceivingEventID {
+                        GiftReceivingModeView(eventID: id)
+                    }
+                }
             }
         }
         // Scroll target: guide will call proxy.scrollTo("home.ledger.receiptButton")

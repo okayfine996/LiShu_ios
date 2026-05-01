@@ -11,6 +11,7 @@ struct EventDetailView: View {
     @State var viewModel = EventDetailViewModel()
     @State var pendingDeleteRecord: Record?
     @State var sheetRoute: SheetRoute?
+    @State var isShowingGiftReceivingMode = false
     @State var smartReturnGiftResult: SmartReturnGiftResult?
     @State var ledgerImportPreviewViewModel: LedgerCSVImportPreviewViewModel?
     @State var ledgerExportPreviewViewModel: LedgerCSVExportPreviewViewModel?
@@ -35,6 +36,7 @@ struct EventDetailView: View {
                         onAddRecord: { openAddRecord(for: event) },
                         onAddLedgerReceipt: { openAddLedgerReceipt(for: event) },
                         onShowLegacyAnomalies: { showLegacyAnomalyList = true },
+                        onOpenGiftReceivingMode: { isShowingGiftReceivingMode = true },
                         onSmartReturnGift: smartReturnGiftCallback(for: event),
                         smartReturnGiftBaseline: smartReturnGiftResult?.baselineAmount
                     )
@@ -115,5 +117,8 @@ struct EventDetailView: View {
             allowsMultipleSelection: false,
             onCompletion: handleLedgerCSVImport
         )
+        .fullScreenCover(isPresented: $isShowingGiftReceivingMode, onDismiss: loadEvent) {
+            GiftReceivingModeView(eventID: eventID)
+        }
     }
 }

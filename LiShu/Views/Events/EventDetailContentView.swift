@@ -7,6 +7,7 @@ struct EventDetailContentView: View {
     let onAddRecord: () -> Void
     let onAddLedgerReceipt: () -> Void
     let onShowLegacyAnomalies: () -> Void
+    let onOpenGiftReceivingMode: () -> Void
     var onSmartReturnGift: (() -> Void)?
     var smartReturnGiftBaseline: Double?
 
@@ -18,7 +19,8 @@ struct EventDetailContentView: View {
                     viewModel: viewModel,
                     pendingDeleteRecord: $pendingDeleteRecord,
                     onAddLedgerReceipt: onAddLedgerReceipt,
-                    onShowLegacyAnomalies: onShowLegacyAnomalies
+                    onShowLegacyAnomalies: onShowLegacyAnomalies,
+                    onOpenGiftReceivingMode: onOpenGiftReceivingMode
                 )
             } else {
                 EventDetailStandardView(

@@ -52,6 +52,9 @@ extension EventDetailView {
 
     @ViewBuilder
     var hostLedgerActions: some View {
+        Button(action: openGiftReceivingMode) {
+            Label(String(localized: "giftReceiving.trigger.button"), systemImage: "hands.and.sparkles")
+        }
         Button(action: addLedgerReceiptFromToolbar) {
             Label(String(localized: "event.ledger.primaryAction"), systemImage: "plus.circle")
         }
@@ -176,6 +179,10 @@ extension EventDetailView {
             event: event,
             allContactRecords: allRecords
         )
+    }
+
+    func openGiftReceivingMode() {
+        isShowingGiftReceivingMode = true
     }
 
     func openAddLedgerReceipt(for event: Event) {

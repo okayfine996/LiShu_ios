@@ -6,6 +6,7 @@ struct HomeLedgerCard: View {
 
     let event: Event
     let onPrimaryAction: () -> Void
+    let onGiftReceivingMode: () -> Void
 
     /// 首页礼簿卡只统计主场事件下真正收到的记录，避免把普通随礼混进来。
     private var receivedRecords: [Record] {
@@ -141,20 +142,30 @@ struct HomeLedgerCard: View {
     }
 
     private var actionSection: some View {
-        // 卡片内部只保留一个强操作，减少"看详情"和"去登记"之间的抢焦点。
-        Button(action: onPrimaryAction) {
-            HStack(spacing: DesignSystem.Spacing.inlineTight) {
-                Image(systemName: "plus.circle.fill")
-                    .font(DesignSystem.Typography.body)
-
-                Text(String(localized: "event.ledger.primaryAction"))
-                    .font(DesignSystem.Typography.title3)
-                    .fontWeight(.semibold)
+        HStack(spacing: DesignSystem.Spacing.inlineTight) {
+            Button(action: onPrimaryAction) {
+                HStack(spacing: DesignSystem.Spacing.dense) {
+                    Image(systemName: "plus.circle.fill")
+                    Text(String(localized: "event.ledger.primaryAction"))
+                        .fontWeight(.semibold)
+                }
+                .font(DesignSystem.Typography.caption)
+                .frame(maxWidth: .infinity)
             }
-            .frame(maxWidth: .infinity)
+            .buttonStyle(PrimaryButtonStyle())
+            .guideAnchor(id: "home.ledger.receiptButton")
+
+            Button(action: onGiftReceivingMode) {
+                HStack(spacing: DesignSystem.Spacing.dense) {
+                    Image(systemName: "hands.and.sparkles")
+                    Text(String(localized: "giftReceiving.nav.title"))
+                        .fontWeight(.semibold)
+                }
+                .font(DesignSystem.Typography.caption)
+                .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(SecondaryButtonStyle())
         }
-        .buttonStyle(PrimaryButtonStyle())
-        .guideAnchor(id: "home.ledger.receiptButton")
     }
 
     private func compactMetric(title: String, value: String) -> some View {
@@ -240,7 +251,8 @@ private func makeHomeLedgerCardPreviewContainer() -> (ModelContainer, Event)? {
         NavigationStack {
             HomeLedgerCard(
                 event: event,
-                onPrimaryAction: {}
+                onPrimaryAction: {},
+                onGiftReceivingMode: {}
             )
             .frame(height: 320)
             .padding()

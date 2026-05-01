@@ -7,6 +7,7 @@ struct EventDetailLedgerView: View {
     @Binding var pendingDeleteRecord: Record?
     let onAddLedgerReceipt: () -> Void
     let onShowLegacyAnomalies: () -> Void
+    let onOpenGiftReceivingMode: () -> Void
 
     var body: some View {
         List {
@@ -39,6 +40,10 @@ struct EventDetailLedgerView: View {
 
             EventDetailCardListRow {
                 EventDetailLedgerSummaryCards(viewModel: viewModel)
+            }
+
+            EventDetailCardListRow {
+                GiftReceivingModeTriggerCard(action: onOpenGiftReceivingMode)
             }
 
             EventDetailLedgerRecordsSection(
@@ -263,6 +268,42 @@ private struct EventDetailLedgerRecordsSection: View {
             bottom: DesignSystem.Spacing.block,
             trailing: DesignSystem.Spacing.pageHorizontal
         )
+    }
+}
+
+private struct GiftReceivingModeTriggerCard: View {
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: DesignSystem.Spacing.inlineTight) {
+                Image(systemName: "hands.and.sparkles")
+                    .font(DesignSystem.Typography.body)
+                    .foregroundStyle(DesignSystem.Colors.primary)
+                    .frame(width: 36, height: 36)
+                    .background(DesignSystem.Colors.primary.opacity(0.1))
+                    .clipShape(Circle())
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(String(localized: "giftReceiving.trigger.button"))
+                        .font(DesignSystem.Typography.caption)
+                        .foregroundStyle(DesignSystem.Colors.textPrimary)
+                    Text(String(localized: "giftReceiving.trigger.subtitle"))
+                        .font(DesignSystem.Typography.small)
+                        .foregroundStyle(DesignSystem.Colors.textSecondary)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(DesignSystem.Typography.small)
+                    .foregroundStyle(DesignSystem.Colors.textTertiary)
+            }
+            .padding(DesignSystem.Spacing.block)
+            .background(DesignSystem.Colors.bgCard)
+            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.smallCard))
+        }
+        .buttonStyle(.plain)
     }
 }
 
