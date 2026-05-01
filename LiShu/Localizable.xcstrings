@@ -881,7 +881,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "活跃月占比"
+            "value" : "年度互动活跃度"
           }
         }
       }
@@ -891,7 +891,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "人情往来一览"
+            "value" : "往来资产概览"
           }
         }
       }
@@ -981,7 +981,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "往来均衡度"
+            "value" : "互惠平衡指数"
           }
         }
       }
@@ -1007,12 +1007,52 @@
         }
       }
     },
+    "contact.detail.circle.core" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "核心亲友"
+          }
+        }
+      }
+    },
+    "contact.detail.circle.kinship" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重要亲属"
+          }
+        }
+      }
+    },
+    "contact.detail.circle.social" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "社交朋友"
+          }
+        }
+      }
+    },
+    "contact.detail.circle.casual" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "普通往来"
+          }
+        }
+      }
+    },
     "contact.detail.circlePosition" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "所在圈层"
+            "value" : "核心圈层位置"
           }
         }
       }
@@ -1042,7 +1082,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "往来类型"
+            "value" : "互动构成"
           }
         }
       }
@@ -1072,7 +1112,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "随礼"
+            "value" : "支"
           }
         }
       }
@@ -1115,7 +1155,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "近一年往来"
+            "value" : "互动频次"
           }
         }
       }
@@ -1136,7 +1176,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "累计收送"
+            "value" : "累计收支"
           }
         }
       }
@@ -1146,7 +1186,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "收礼"
+            "value" : "收"
           }
         }
       }
@@ -1189,7 +1229,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "人情净值"
+            "value" : "礼金净值"
           }
         }
       }
@@ -1280,7 +1320,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "人情与关系"
+            "value" : "关系亲疏洞察"
           }
         }
       }
@@ -1290,7 +1330,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "身份与分类"
+            "value" : "关系标签"
           }
         }
       }

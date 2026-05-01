@@ -190,10 +190,10 @@ class ContactDetailViewModel {
 
     func circleText(_ level: Int) -> String {
         switch level {
-        case 1: String(localized: "contact.filter.family")
-        case 2: String(localized: "contact.filter.relative")
-        case 3: String(localized: "contact.filter.social")
-        default: String(localized: "contact.filter.other")
+        case 1: String(localized: "contact.detail.circle.core")
+        case 2: String(localized: "contact.detail.circle.kinship")
+        case 3: String(localized: "contact.detail.circle.social")
+        default: String(localized: "contact.detail.circle.casual")
         }
     }
 }

@@ -43,9 +43,16 @@ private struct ContactDetailAssetOverviewCard: View {
                     Text(String(localized: "contact.detail.netSurplus"))
                         .font(DesignSystem.Typography.small)
                         .foregroundStyle(DesignSystem.Colors.textSecondary)
-                    Text(viewModel.formatNetValue(contact.netValue))
-                        .font(DesignSystem.Typography.title1)
-                        .foregroundStyle(netValueColor)
+                    if contact.netValue >= 0 {
+                        Text("+")
+                            .font(DesignSystem.Typography.caption)
+                            .foregroundStyle(DesignSystem.Colors.primary)
+                    }
+                    Text(viewModel.formatAmount(abs(contact.netValue)))
+                        .font(DesignSystem.Typography.display)
+                        .foregroundStyle(DesignSystem.Colors.primary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.65)
                 }
 
                 Spacer()
@@ -66,6 +73,10 @@ private struct ContactDetailAssetOverviewCard: View {
             }
             .padding(.bottom, 20)
 
+            Divider()
+                .overlay(DesignSystem.Colors.separator.opacity(0.5))
+                .padding(.bottom, 20)
+
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(String(localized: "contact.detail.composition"))
@@ -78,7 +89,7 @@ private struct ContactDetailAssetOverviewCard: View {
                             ForEach(typeCounts.prefix(3)) { item in
                                 HStack(spacing: 3) {
                                     Circle()
-                                        .fill(DesignSystem.Colors.textTertiary)
+                                        .fill(DesignSystem.Colors.primary)
                                         .frame(width: 4, height: 4)
                                     Text("\(item.type.displayName) \(item.count)")
                                         .font(DesignSystem.Typography.small)
@@ -108,12 +119,6 @@ private struct ContactDetailAssetOverviewCard: View {
         }
         .padding(DesignSystem.Spacing.cardPadding)
         .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    private var netValueColor: Color {
-        contact.netValue >= 0
-            ? DesignSystem.Colors.accentGold
-            : DesignSystem.Colors.primary
     }
 }
 
@@ -175,13 +180,14 @@ private struct ContactDetailRelationshipInsightCard: View {
                         .font(DesignSystem.Typography.small)
                         .foregroundStyle(DesignSystem.Colors.textSecondary)
                     HStack(spacing: 6) {
-                        Image(systemName: "circle.grid.2x2.fill")
-                            .font(DesignSystem.Typography.body)
+                        Image(systemName: "asterisk")
+                            .font(DesignSystem.Typography.title3)
                             .foregroundStyle(DesignSystem.Colors.primary)
                         Text(viewModel.circleLabel(contact.circle))
                             .font(DesignSystem.Typography.caption)
                             .fontWeight(.semibold)
                             .foregroundStyle(DesignSystem.Colors.primary)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                 }
 
@@ -191,13 +197,9 @@ private struct ContactDetailRelationshipInsightCard: View {
                     Text(String(localized: "contact.detail.relationTags"))
                         .font(DesignSystem.Typography.small)
                         .foregroundStyle(DesignSystem.Colors.textSecondary)
-                    HStack(spacing: 6) {
-                        if !contact.relation.isEmpty {
-                            ContactDetailSummaryTag(title: contact.relation)
-                        }
-                        if !contact.category.isEmpty {
-                            ContactDetailSummaryTag(title: contact.category)
-                        }
+                    let tags = [contact.category, contact.relation].filter { !$0.isEmpty }
+                    if !tags.isEmpty {
+                        ContactDetailTagsFlow(tags: tags)
                     }
                 }
             }
@@ -235,5 +237,30 @@ private struct ContactDetailSummaryTag: View {
             .padding(.vertical, 4)
             .background(DesignSystem.Colors.bgTag)
             .clipShape(Capsule())
+    }
+}
+
+private struct ContactDetailTagsFlow: View {
+    let tags: [String]
+
+    var body: some View {
+        var rows: [[String]] = [[]]
+        // Simple wrapping: put tags in rows of max 2
+        for (i, tag) in tags.enumerated() {
+            if i > 0, i % 2 == 0 {
+                rows.append([tag])
+            } else {
+                rows[rows.count - 1].append(tag)
+            }
+        }
+        return VStack(alignment: .trailing, spacing: 6) {
+            ForEach(rows.indices, id: \.self) { rowIndex in
+                HStack(spacing: 6) {
+                    ForEach(rows[rowIndex], id: \.self) { tag in
+                        ContactDetailSummaryTag(title: tag)
+                    }
+                }
+            }
+        }
     }
 }
