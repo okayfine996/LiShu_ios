@@ -9,7 +9,8 @@ struct ContactListView: View {
     @State private var showBatchImport = false
     @State private var pendingDeleteContact: Contact?
     @State private var selectedContactRoute: SelectedContactRoute?
-    @State private var showContactCSVImporter = false
+    @State private var showContactXLSXImporter = false
+    @State private var isPreparingContactExport = false
     @State private var contactShareURL: URL?
     @State private var contactImportResult: ContactImportResult?
     @State private var showContactImportPreview = false
@@ -56,8 +57,8 @@ struct ContactListView: View {
                 ContactListToolbarMenu(
                     onAddContact: presentAddContactSheet,
                     onBatchImport: presentBatchImport,
-                    onExportCSV: exportContactCSV,
-                    onImportCSV: { showContactCSVImporter = true },
+                    onExportXLSX: exportContactXLSX,
+                    onImportXLSX: { showContactXLSXImporter = true },
                     onDownloadTemplate: downloadContactTemplate
                 )
             }
@@ -113,11 +114,11 @@ struct ContactListView: View {
             Text(contactDeleteMessage)
         }
         .fileImporter(
-            isPresented: $showContactCSVImporter,
-            allowedContentTypes: [.commaSeparatedText],
+            isPresented: $showContactXLSXImporter,
+            allowedContentTypes: [.xlsx],
             allowsMultipleSelection: false
         ) { result in
-            handleContactCSVImport(result)
+            handleContactXLSXImport(result)
         }
         .navigationDestination(isPresented: $showContactImportPreview) {
             if let contactImportPreviewViewModel {
@@ -218,49 +219,41 @@ struct ContactListView: View {
         self.pendingDeleteContact = nil
     }
 
-    private func exportContactCSV() {
-        do {
-            let csv = try ExportService.exportContactCSV(context: modelContext)
-            let dateStr = ExportService.csvDateFormatter.string(from: Date())
-            let url = FileManager.default.temporaryDirectory.appendingPathComponent("contacts_\(dateStr).csv")
-            try csv.write(to: url, atomically: true, encoding: .utf8)
-            contactShareURL = url
-        } catch {
-            viewModel.deleteError = error.localizedDescription
+    private func exportContactXLSX() {
+        guard !isPreparingContactExport else { return }
+        isPreparingContactExport = true
+        Task {
+            do {
+                let url = try await ExportService.exportContactXLSXAsync(container: modelContext.container)
+                contactShareURL = url
+                TelemetryDeckAnalytics.signal(TelemetryDeckAnalytics.Signal.contactXlsxExported)
+            } catch {
+                viewModel.deleteError = error.localizedDescription
+            }
+            isPreparingContactExport = false
         }
     }
 
     private func downloadContactTemplate() {
-        let csv = ExportService.contactCSVTemplate()
-        let url = FileManager.default.temporaryDirectory.appendingPathComponent("contacts_template.csv")
         do {
-            try csv.write(to: url, atomically: true, encoding: .utf8)
-            contactShareURL = url
+            contactShareURL = try ExportService.contactXLSXTemplate()
         } catch {
             viewModel.deleteError = error.localizedDescription
         }
     }
 
-    private func handleContactCSVImport(_ result: Result<[URL], Error>) {
+    private func handleContactXLSXImport(_ result: Result<[URL], Error>) {
         switch result {
         case let .success(urls):
             guard let url = urls.first else { return }
-            let didStartAccessing = url.startAccessingSecurityScopedResource()
-            defer {
-                if didStartAccessing {
-                    url.stopAccessingSecurityScopedResource()
+            Task {
+                do {
+                    let preview = try await ExportService.previewContactXLSXAsync(url: url)
+                    contactImportPreviewViewModel = ContactImportPreviewViewModel(previewResult: preview)
+                    showContactImportPreview = true
+                } catch {
+                    viewModel.deleteError = error.localizedDescription
                 }
-            }
-            do {
-                let content = try String(contentsOf: url, encoding: .utf8)
-                let previewResult = ExportService.previewContactCSV(
-                    content: content,
-                    sourceFileName: url.lastPathComponent
-                )
-                contactImportPreviewViewModel = ContactImportPreviewViewModel(previewResult: previewResult)
-                showContactImportPreview = true
-            } catch {
-                viewModel.deleteError = error.localizedDescription
             }
         case let .failure(error):
             viewModel.deleteError = error.localizedDescription
@@ -274,7 +267,10 @@ struct ContactListView: View {
     }
 
     private func cleanUpTempFile(_ url: URL) {
-        try? FileManager.default.removeItem(at: url)
+        let parent = url.deletingLastPathComponent()
+        let tempRoot = URL(fileURLWithPath: NSTemporaryDirectory()).standardized
+        guard parent.standardized != tempRoot else { return }
+        try? FileManager.default.removeItem(at: parent)
     }
 
     @ViewBuilder

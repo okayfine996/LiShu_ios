@@ -1,18 +1,19 @@
 import Foundation
 import SwiftData
 
+@MainActor
 @Observable
 class ContactImportPreviewViewModel {
     let sourceFileName: String
-    var items: [ContactCSVPreviewItem]
+    var items: [ContactPreviewItem]
     var isImporting = false
 
-    init(previewResult: ContactCSVPreviewResult) {
+    init(previewResult: ContactPreviewResult) {
         sourceFileName = previewResult.sourceFileName
         items = previewResult.items
     }
 
-    var selectedItems: [ContactCSVPreviewItem] {
+    var selectedItems: [ContactPreviewItem] {
         items.filter { $0.isSelected && $0.isImportable }
     }
 
@@ -107,9 +108,12 @@ class ContactImportPreviewViewModel {
             throw ImportError.invalidFormat
         }
 
-        return try await ExportService.importContactPreviewItemsAsync(
+        let result = try await ExportService.importContactPreviewItemsAsync(
             selectedItems,
             container: container
         )
+        TelemetryDeckAnalytics.signal(TelemetryDeckAnalytics.Signal.contactXlsxImported,
+                                      parameters: ["imported_count": String(result.created)])
+        return result
     }
 }

@@ -1,8 +1,8 @@
 import SwiftUI
 
-struct CSVExportPreviewView: View {
+struct ExportPreviewView: View {
     @Environment(\.dismiss) private var dismiss
-    @Bindable var viewModel: CSVExportPreviewViewModel
+    @Bindable var viewModel: ExportPreviewViewModel
 
     let onExportConfirmed: @MainActor (URL) -> Void
 
@@ -31,6 +31,7 @@ struct CSVExportPreviewView: View {
                 }
             }
         )
+        .trackScreen("export.xlsx.preview")
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
@@ -43,7 +44,7 @@ struct CSVExportPreviewView: View {
                         .foregroundStyle(DesignSystem.Colors.primary)
                 }
                 .disabled(viewModel.isProcessing)
-                .accessibilityIdentifier("csv.export.preview.backButton")
+                .accessibilityIdentifier("xlsx.export.preview.backButton")
             }
         }
         .alert(String(localized: "common.error"), isPresented: errorBinding) {
@@ -83,24 +84,24 @@ struct CSVExportPreviewView: View {
     }
 
     private var exportFileName: String {
-        "lishu_\(viewModel.recordType.rawValue)_export_\(dateSuffix()).csv"
+        "lishu_\(viewModel.recordType.rawValue)_export_\(Self.exportDateFormatter.string(from: Date())).xlsx"
     }
 
-    private func dateSuffix() -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyyMMdd_HHmmss"
-        return formatter.string(from: Date())
-    }
+    private static let exportDateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "yyyyMMdd_HHmmss"
+        return f
+    }()
 }
 
 #Preview {
     NavigationStack {
-        CSVExportPreviewView(
-            viewModel: CSVExportPreviewViewModel(
-                previewResult: CSVExportPreviewResult(
+        ExportPreviewView(
+            viewModel: ExportPreviewViewModel(
+                previewResult: ExportPreviewResult(
                     recordType: .monetary,
                     items: [
-                        CSVExportPreviewItem(
+                        ExportPreviewItem(
                             rowNumber: 2,
                             isSelected: true,
                             contactName: "张三",
@@ -108,9 +109,13 @@ struct CSVExportPreviewView: View {
                             detailText: "2026-04-09 · 送出 · 金额",
                             trailingText: "¥800",
                             status: .ready,
-                            payload: CSVExportPayload(csvRow: "张三,婚礼,婚礼,,送出,2026-04-09,备注,800.00,微信,0.00")
+                            payload: ExportPayload(rowValues: [
+                                "姓名": .string("张三"),
+                                "事件": .string("婚礼"),
+                                "金额": .number(800.00),
+                            ])
                         ),
-                        CSVExportPreviewItem(
+                        ExportPreviewItem(
                             rowNumber: 3,
                             isSelected: false,
                             contactName: "李四",

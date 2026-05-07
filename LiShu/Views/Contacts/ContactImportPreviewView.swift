@@ -33,7 +33,7 @@ struct ContactImportPreviewView: View {
                 }
             }
         )
-        .trackScreen("import.contact.csv.preview")
+        .trackScreen("import.contact.xlsx.preview")
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
@@ -46,7 +46,7 @@ struct ContactImportPreviewView: View {
                         .foregroundStyle(DesignSystem.Colors.primary)
                 }
                 .disabled(viewModel.isProcessing)
-                .accessibilityIdentifier("contact.csv.preview.backButton")
+                .accessibilityIdentifier("contact.xlsx.preview.backButton")
             }
         }
         .alert(String(localized: "common.error"), isPresented: importErrorBinding) {
@@ -90,18 +90,18 @@ struct ContactImportPreviewView: View {
     NavigationStack {
         ContactImportPreviewView(
             viewModel: ContactImportPreviewViewModel(
-                previewResult: ContactCSVPreviewResult(
-                    sourceFileName: "contacts.csv",
+                previewResult: ContactPreviewResult(
+                    sourceFileName: "contacts.xlsx",
                     items: [
-                        ContactCSVPreviewItem(
+                        ContactPreviewItem(
                             rowNumber: 2,
                             isSelected: true,
                             name: "张三",
                             detailText: "13800138000 · 北京",
                             status: .ready,
-                            payload: ContactCSVPayload(name: "张三", phone: "13800138000", location: "北京")
+                            payload: ContactPayload(name: "张三", phone: "13800138000", location: "北京")
                         ),
-                        ContactCSVPreviewItem(
+                        ContactPreviewItem(
                             rowNumber: 3,
                             isSelected: false,
                             name: "",

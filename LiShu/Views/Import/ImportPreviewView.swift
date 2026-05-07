@@ -1,10 +1,10 @@
 import SwiftData
 import SwiftUI
 
-struct CSVImportPreviewView: View {
+struct ImportPreviewView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
-    @Bindable var viewModel: CSVImportPreviewViewModel
+    @Bindable var viewModel: ImportPreviewViewModel
 
     let onImportCompleted: (ImportResult) -> Void
 
@@ -33,7 +33,7 @@ struct CSVImportPreviewView: View {
                 }
             }
         )
-        .trackScreen("import.csv.preview")
+        .trackScreen("import.xlsx.preview")
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
@@ -46,7 +46,7 @@ struct CSVImportPreviewView: View {
                         .foregroundStyle(DesignSystem.Colors.primary)
                 }
                 .disabled(viewModel.isProcessing)
-                .accessibilityIdentifier("csv.import.preview.backButton")
+                .accessibilityIdentifier("xlsx.import.preview.backButton")
             }
         }
         .alert(String(localized: "common.error"), isPresented: importErrorBinding) {
@@ -88,12 +88,12 @@ struct CSVImportPreviewView: View {
 
 #Preview {
     NavigationStack {
-        CSVImportPreviewView(
-            viewModel: CSVImportPreviewViewModel(
-                previewResult: CSVImportPreviewResult(
-                    sourceFileName: "preview.csv",
+        ImportPreviewView(
+            viewModel: ImportPreviewViewModel(
+                previewResult: ImportPreviewResult(
+                    sourceFileName: "preview.xlsx",
                     items: [
-                        CSVImportPreviewItem(
+                        ImportPreviewItem(
                             rowNumber: 2,
                             isSelected: true,
                             contactName: "张三",
@@ -109,7 +109,7 @@ struct CSVImportPreviewView: View {
                             trailingText: "¥800",
                             detailText: "2026-04-09 · 送出 · 金额",
                             status: .ready,
-                            payload: CSVImportPayload(
+                            payload: ImportPayload(
                                 contactName: "张三",
                                 eventName: "婚礼",
                                 eventType: .wedding,
@@ -129,7 +129,7 @@ struct CSVImportPreviewView: View {
                                 )
                             )
                         ),
-                        CSVImportPreviewItem(
+                        ImportPreviewItem(
                             rowNumber: 3,
                             isSelected: false,
                             contactName: "李四",

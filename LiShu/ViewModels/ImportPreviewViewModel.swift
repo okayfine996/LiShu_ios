@@ -1,22 +1,23 @@
 import Foundation
 import SwiftData
 
+@MainActor
 @Observable
-class CSVImportPreviewViewModel {
+class ImportPreviewViewModel {
     let sourceFileName: String
-    var items: [CSVImportPreviewItem]
+    var items: [ImportPreviewItem]
     var isImporting = false
     var importError: String?
 
     private let baseResult: ImportResult
 
-    init(previewResult: CSVImportPreviewResult) {
+    init(previewResult: ImportPreviewResult) {
         sourceFileName = previewResult.sourceFileName
         items = previewResult.items
         baseResult = ImportResult(imported: 0, skipped: previewResult.skipped, errors: previewResult.errors)
     }
 
-    var selectedItems: [CSVImportPreviewItem] {
+    var selectedItems: [ImportPreviewItem] {
         items.filter { $0.isSelected && $0.isImportable }
     }
 
@@ -110,20 +111,21 @@ class CSVImportPreviewViewModel {
         guard selectedCount > 0 else {
             throw ImportError.invalidFormat
         }
-
-        return try ExportService.importPreviewItems(
+        let result = try ExportService.importPreviewItems(
             items,
             baseResult: baseResult,
             sourceFileName: sourceFileName,
             context: context
         )
+        TelemetryDeckAnalytics.signal(TelemetryDeckAnalytics.Signal.xlsxImported,
+                                      parameters: ["imported_count": String(result.imported)])
+        return result
     }
 
     func performImport(container: ModelContainer) async throws -> ImportResult {
         guard selectedCount > 0 else {
             throw ImportError.invalidFormat
         }
-
         return try await ExportService.importPreviewItemsAsync(
             items,
             baseResult: baseResult,

@@ -1,13 +1,14 @@
 import SwiftData
 import SwiftUI
 
-struct LedgerCSVExportPreviewView: View {
+struct LedgerImportPreviewView: View {
+    @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
-    @Bindable var viewModel: LedgerCSVExportPreviewViewModel
+    @Bindable var viewModel: LedgerImportPreviewViewModel
 
-    let onExportConfirmed: @MainActor (URL) -> Void
+    let onImportCompleted: (ImportResult) -> Void
 
-    @State private var exportErrorMessage: String?
+    @State private var importErrorMessage: String?
 
     var body: some View {
         CSVSelectionPreviewView(
@@ -16,7 +17,7 @@ struct LedgerCSVExportPreviewView: View {
             isAllSelectableSelected: viewModel.isAllSelectableSelected,
             selectableItemsCount: viewModel.selectableItemsCount,
             isProcessing: viewModel.isProcessing,
-            isConfirmEnabled: viewModel.canExport,
+            isConfirmEnabled: viewModel.canImport,
             onToggleSelection: { id in
                 viewModel.toggleSelection(id: id)
             },
@@ -28,7 +29,7 @@ struct LedgerCSVExportPreviewView: View {
             },
             onConfirm: {
                 Task {
-                    await handleConfirmExport()
+                    await handleConfirmImport()
                 }
             }
         )
@@ -44,69 +45,51 @@ struct LedgerCSVExportPreviewView: View {
                         .foregroundStyle(DesignSystem.Colors.primary)
                 }
                 .disabled(viewModel.isProcessing)
-                .accessibilityIdentifier("csv.ledger.export.preview.backButton")
+                .accessibilityIdentifier("xlsx.ledger.import.preview.backButton")
             }
         }
-        .alert(String(localized: "common.error"), isPresented: errorBinding) {
+        .alert(String(localized: "common.error"), isPresented: importErrorBinding) {
             Button(String(localized: "common.ok")) {
-                exportErrorMessage = nil
+                importErrorMessage = nil
             }
         } message: {
-            if let exportErrorMessage {
-                Text(exportErrorMessage)
+            if let importErrorMessage {
+                Text(importErrorMessage)
             }
         }
     }
 
-    private var errorBinding: Binding<Bool> {
+    private var importErrorBinding: Binding<Bool> {
         Binding(
-            get: { exportErrorMessage != nil },
-            set: { if !$0 { exportErrorMessage = nil } }
+            get: { importErrorMessage != nil },
+            set: { if !$0 { importErrorMessage = nil } }
         )
     }
 
     @MainActor
-    private func handleConfirmExport() async {
-        guard viewModel.canExport else { return }
+    private func handleConfirmImport() async {
+        guard viewModel.canImport else { return }
 
-        viewModel.isExporting = true
-        defer { viewModel.isExporting = false }
+        viewModel.isImporting = true
+        defer { viewModel.isImporting = false }
 
         await Task.yield()
         try? await Task.sleep(for: .milliseconds(150))
 
         do {
-            let fileURL = try await viewModel.exportToTemporaryFile(fileName: exportFileName)
-            onExportConfirmed(fileURL)
+            let result = try await viewModel.performImport(container: modelContext.container)
+            onImportCompleted(result)
         } catch {
-            exportErrorMessage = error.localizedDescription
+            importErrorMessage = error.localizedDescription
         }
-    }
-
-    private var exportFileName: String {
-        "lishu_ledger_\(sanitizedEventName)_\(dateSuffix()).csv"
-    }
-
-    private func dateSuffix() -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyyMMdd_HHmmss"
-        return formatter.string(from: Date())
-    }
-
-    private var sanitizedEventName: String {
-        let invalidCharacters = CharacterSet(charactersIn: "/:\\?%*|\"<>")
-        let components = viewModel.eventName.components(separatedBy: invalidCharacters)
-        let joined = components.joined(separator: "_")
-        let trimmed = joined.trimmingCharacters(in: .whitespacesAndNewlines)
-        return trimmed.isEmpty ? "event" : trimmed
     }
 }
 
 #Preview {
-    LedgerCSVExportPreviewContainer()
+    LedgerImportPreviewContainer()
 }
 
-private struct LedgerCSVExportPreviewContainer: View {
+private struct LedgerImportPreviewContainer: View {
     private let container: ModelContainer
     private let eventID: PersistentIdentifier
 
@@ -124,13 +107,13 @@ private struct LedgerCSVExportPreviewContainer: View {
 
     var body: some View {
         NavigationStack {
-            LedgerCSVExportPreviewView(
-                viewModel: LedgerCSVExportPreviewViewModel(
-                    previewResult: LedgerCSVExportPreviewResult(
-                        eventID: eventID,
+            LedgerImportPreviewView(
+                viewModel: LedgerImportPreviewViewModel(
+                    previewResult: LedgerImportPreviewResult(
+                        sourceFileName: "ledger.xlsx",
                         eventName: "我的婚礼",
                         items: [
-                            LedgerCSVExportPreviewItem(
+                            LedgerImportPreviewItem(
                                 rowNumber: 2,
                                 isSelected: true,
                                 contactName: "张三",
@@ -138,25 +121,32 @@ private struct LedgerCSVExportPreviewContainer: View {
                                 detailText: "2026-04-09 · 收到 · 金额",
                                 trailingText: "¥1,000",
                                 status: .ready,
-                                payload: LedgerCSVExportPayload(
-                                    csvRow: "张三,2026-04-09,婚礼签到时登记,礼尚往来,1000.00,微信"
+                                payload: LedgerImportPayload(
+                                    contactName: "张三",
+                                    date: .now,
+                                    note: "婚礼签到时登记",
+                                    relationshipWeight: .reciprocal,
+                                    amount: 1000,
+                                    paymentMethod: .wechat
                                 )
                             ),
-                            LedgerCSVExportPreviewItem(
+                            LedgerImportPreviewItem(
                                 rowNumber: 3,
                                 isSelected: false,
-                                contactName: "李四",
+                                contactName: String(localized: "common.unknown"),
                                 contextText: "我的婚礼",
                                 detailText: "2026-04-09 · 收到 · 金额",
-                                trailingText: "¥800",
-                                status: .skipped(String(localized: "csv.export.preview.invalid.missingContact")),
+                                trailingText: "¥0",
+                                status: .error(String(localized: "csv.import.preview.invalid.missingContact")),
                                 payload: nil
                             ),
                         ],
-                        skipped: 1
-                    )
+                        skipped: 0,
+                        errors: 1
+                    ),
+                    eventID: eventID
                 ),
-                onExportConfirmed: { _ in }
+                onImportCompleted: { _ in }
             )
         }
         .modelContainer(container)

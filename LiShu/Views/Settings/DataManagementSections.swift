@@ -1,15 +1,15 @@
 import SwiftUI
 
 struct DataManagementContentView: View {
-    let onImportCSV: () -> Void
-    let isPreparingCSVPreview: Bool
+    let onImportXLSX: () -> Void
+    let isPreparingXLSXPreview: Bool
 
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 20) {
                 DataManagementImportSection(
-                    onImportCSV: onImportCSV,
-                    isPreparingCSVPreview: isPreparingCSVPreview
+                    onImportXLSX: onImportXLSX,
+                    isPreparingXLSXPreview: isPreparingXLSXPreview
                 )
                 DataManagementExportSection()
             }
@@ -20,8 +20,8 @@ struct DataManagementContentView: View {
 }
 
 private struct DataManagementImportSection: View {
-    let onImportCSV: () -> Void
-    let isPreparingCSVPreview: Bool
+    let onImportXLSX: () -> Void
+    let isPreparingXLSXPreview: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -30,8 +30,8 @@ private struct DataManagementImportSection: View {
             VStack(spacing: 0) {
                 DataManagementActionRow(
                     icon: "doc.text",
-                    title: String(localized: "settings.data.importCSV"),
-                    action: onImportCSV
+                    title: String(localized: "settings.data.importExcel"),
+                    action: onImportXLSX
                 )
 
                 DataManagementSectionDivider()
@@ -40,7 +40,7 @@ private struct DataManagementImportSection: View {
                     icon: "arrow.down.doc",
                     title: String(localized: "settings.data.downloadTemplate")
                 ) {
-                    CSVTypeActionListView(mode: .templateDownload)
+                    ExcelTypeActionListView(mode: .templateDownload)
                 }
             }
             .background(DesignSystem.Colors.bgSurface)
@@ -51,7 +51,7 @@ private struct DataManagementImportSection: View {
                 .foregroundStyle(DesignSystem.Colors.textTertiary)
                 .padding(.leading, 4)
         }
-        .opacity(isPreparingCSVPreview ? DesignSystem.Effects.disabledOpacity : 1)
+        .opacity(isPreparingXLSXPreview ? DesignSystem.Effects.disabledOpacity : 1)
     }
 }
 
@@ -63,10 +63,10 @@ private struct DataManagementExportSection: View {
             VStack(spacing: 0) {
                 DataManagementNavigationRow(
                     icon: "square.and.arrow.up",
-                    title: String(localized: "settings.data.exportCSV"),
+                    title: String(localized: "settings.data.exportExcel"),
                     isPro: true
                 ) {
-                    CSVTypeActionListView(mode: .typedExport)
+                    ExcelTypeActionListView(mode: .typedExport)
                 }
             }
             .background(DesignSystem.Colors.bgSurface)

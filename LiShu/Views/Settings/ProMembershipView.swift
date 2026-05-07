@@ -76,6 +76,13 @@ struct ProMembershipView: View {
 
     private func handlePurchase() async {
         guard let product = subscriptionManager.products.first(where: { $0.id == selectedProductID }) else { return }
+
+        // Track the click intent
+        TelemetryDeckAnalytics.signal(
+            TelemetryDeckAnalytics.Signal.proPurchaseClicked,
+            parameters: ["product_id": selectedProductID]
+        )
+
         isPurchasing = true
         let success = await subscriptionManager.purchase(product)
         isPurchasing = false

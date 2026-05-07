@@ -1,18 +1,19 @@
 import Foundation
 import SwiftData
 
+@MainActor
 @Observable
-class LedgerCSVImportPreviewViewModel {
+class LedgerImportPreviewViewModel {
     let sourceFileName: String
     let eventID: PersistentIdentifier
     let eventName: String
-    var items: [LedgerCSVImportPreviewItem]
+    var items: [LedgerImportPreviewItem]
     var isImporting = false
     var importError: String?
 
     private let baseResult: ImportResult
 
-    init(previewResult: LedgerCSVImportPreviewResult, eventID: PersistentIdentifier) {
+    init(previewResult: LedgerImportPreviewResult, eventID: PersistentIdentifier) {
         sourceFileName = previewResult.sourceFileName
         self.eventID = eventID
         eventName = previewResult.eventName
@@ -20,7 +21,7 @@ class LedgerCSVImportPreviewViewModel {
         baseResult = ImportResult(imported: 0, skipped: previewResult.skipped, errors: previewResult.errors)
     }
 
-    var selectedItems: [LedgerCSVImportPreviewItem] {
+    var selectedItems: [LedgerImportPreviewItem] {
         items.filter { $0.isSelected && $0.isImportable }
     }
 
@@ -114,7 +115,6 @@ class LedgerCSVImportPreviewViewModel {
         guard selectedCount > 0 else {
             throw ImportError.invalidFormat
         }
-
         return try await ExportService.importLedgerPreviewItemsAsync(
             items,
             baseResult: baseResult,

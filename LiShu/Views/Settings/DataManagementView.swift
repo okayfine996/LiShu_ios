@@ -6,27 +6,27 @@ struct DataManagementView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var showComingSoonToast = false
     @State private var toastMessage = ""
-    @State private var showCSVPreview = false
-    @State private var csvPreviewViewModel: CSVImportPreviewViewModel?
+    @State private var showXLSXPreview = false
+    @State private var xlsxPreviewViewModel: ImportPreviewViewModel?
     @State private var exportError: String?
-    @State private var showCSVImporter = false
+    @State private var showXLSXImporter = false
     @State private var importResult: String?
-    @State private var didLoadUITestCSVPreview = false
-    @State private var didRequestUITestCSVImporter = false
-    @State private var isPreparingCSVPreview = false
+    @State private var didLoadUITestXLSXPreview = false
+    @State private var didRequestUITestXLSXImporter = false
+    @State private var isPreparingXLSXPreview = false
 
     var body: some View {
         DataManagementContentView(
-            onImportCSV: openCSVImporter,
-            isPreparingCSVPreview: isPreparingCSVPreview
+            onImportXLSX: openXLSXImporter,
+            isPreparingXLSXPreview: isPreparingXLSXPreview
         )
         .background(DesignSystem.Colors.bgPage)
         .navigationTitle(String(localized: "settings.importExport"))
         .navigationBarTitleDisplayMode(.inline)
-        .navigationDestination(isPresented: $showCSVPreview) {
-            if let csvPreviewViewModel {
-                CSVImportPreviewView(viewModel: csvPreviewViewModel) { result in
-                    handleCompletedCSVImport(result)
+        .navigationDestination(isPresented: $showXLSXPreview) {
+            if let xlsxPreviewViewModel {
+                ImportPreviewView(viewModel: xlsxPreviewViewModel) { result in
+                    handleCompletedXLSXImport(result)
                 }
             }
         }
@@ -38,11 +38,11 @@ struct DataManagementView: View {
             }
         }
         .overlay(alignment: .topLeading) {
-            if CommandLine.arguments.contains("--uitesting"), didRequestUITestCSVImporter {
+            if CommandLine.arguments.contains("--uitesting"), didRequestUITestXLSXImporter {
                 Color.clear
                     .frame(width: 1, height: 1)
                     .accessibilityElement()
-                    .accessibilityIdentifier("csv.importer.requested")
+                    .accessibilityIdentifier("xlsx.importer.requested")
             }
         }
         .alert(String(localized: "common.error"), isPresented: Binding(
@@ -54,24 +54,24 @@ struct DataManagementView: View {
             if let msg = exportError { Text(msg) }
         }
         .overlay {
-            if isPreparingCSVPreview {
-                csvImportLoadingOverlay
+            if isPreparingXLSXPreview {
+                xlsxImportLoadingOverlay
             }
         }
         .fileImporter(
-            isPresented: $showCSVImporter,
-            allowedContentTypes: [.commaSeparatedText],
+            isPresented: $showXLSXImporter,
+            allowedContentTypes: [.xlsx],
             allowsMultipleSelection: false
         ) { result in
-            handleCSVImport(result)
+            handleXLSXImport(result)
         }
-        .onChange(of: showCSVPreview) { _, newValue in
+        .onChange(of: showXLSXPreview) { _, newValue in
             if !newValue {
-                csvPreviewViewModel = nil
+                xlsxPreviewViewModel = nil
             }
         }
         .onAppear {
-            loadUITestCSVPreviewIfNeeded()
+            loadUITestXLSXPreviewIfNeeded()
         }
     }
 
@@ -87,42 +87,42 @@ struct DataManagementView: View {
         }
     }
 
-    private func openCSVImporter() {
-        guard !isPreparingCSVPreview else { return }
+    private func openXLSXImporter() {
+        guard !isPreparingXLSXPreview else { return }
         if CommandLine.arguments.contains("--uitesting") {
-            didRequestUITestCSVImporter = true
-            if ProcessInfo.processInfo.environment["UITEST_SKIP_SYSTEM_CSV_IMPORTER"] == "1" {
+            didRequestUITestXLSXImporter = true
+            if ProcessInfo.processInfo.environment["UITEST_SKIP_SYSTEM_XLSX_IMPORTER"] == "1" {
                 return
             }
         }
-        showCSVImporter = true
+        showXLSXImporter = true
     }
 
-    private func handleCSVImport(_ result: Result<[URL], Error>) {
+    private func handleXLSXImport(_ result: Result<[URL], Error>) {
         switch result {
         case let .success(urls):
             guard let url = urls.first else { return }
-            guard !isPreparingCSVPreview else { return }
-            isPreparingCSVPreview = true
+            guard !isPreparingXLSXPreview else { return }
+            isPreparingXLSXPreview = true
 
             Task {
                 do {
-                    let preview = try await ExportService.previewCSVAsync(url: url)
-                    csvPreviewViewModel = CSVImportPreviewViewModel(previewResult: preview)
-                    showCSVPreview = true
+                    let preview = try await ExportService.previewXLSXAsync(url: url)
+                    xlsxPreviewViewModel = ImportPreviewViewModel(previewResult: preview)
+                    showXLSXPreview = true
                 } catch {
                     exportError = error.localizedDescription
                 }
 
-                isPreparingCSVPreview = false
+                isPreparingXLSXPreview = false
             }
         case let .failure(error):
             exportError = error.localizedDescription
         }
     }
 
-    private func handleCompletedCSVImport(_ result: ImportResult) {
-        showCSVPreview = false
+    private func handleCompletedXLSXImport(_ result: ImportResult) {
+        showXLSXPreview = false
         importResult = String(
             format: String(localized: "settings.data.importResult %lld %lld %lld"),
             Int64(result.imported),
@@ -140,26 +140,26 @@ struct DataManagementView: View {
         }
     }
 
-    private func loadUITestCSVPreviewIfNeeded() {
-        guard !didLoadUITestCSVPreview else { return }
-        didLoadUITestCSVPreview = true
+    private func loadUITestXLSXPreviewIfNeeded() {
+        guard !didLoadUITestXLSXPreview else { return }
+        didLoadUITestXLSXPreview = true
 
         guard CommandLine.arguments.contains("--uitesting") else { return }
-        guard let content = ProcessInfo.processInfo.environment["UITEST_CSV_PREVIEW_CONTENT"], !content.isEmpty else { return }
+        guard let filePath = ProcessInfo.processInfo.environment["UITEST_XLSX_PREVIEW_PATH"], !filePath.isEmpty else { return }
 
-        let fileName = ProcessInfo.processInfo.environment["UITEST_CSV_PREVIEW_FILENAME"] ?? "ui-test-preview.csv"
-        isPreparingCSVPreview = true
+        isPreparingXLSXPreview = true
 
         Task {
             do {
-                let preview = try await ExportService.previewCSVAsync(content: content, sourceFileName: fileName)
-                csvPreviewViewModel = CSVImportPreviewViewModel(previewResult: preview)
-                showCSVPreview = true
+                let url = URL(fileURLWithPath: filePath)
+                let preview = try await ExportService.previewXLSXAsync(url: url)
+                xlsxPreviewViewModel = ImportPreviewViewModel(previewResult: preview)
+                showXLSXPreview = true
             } catch {
                 exportError = error.localizedDescription
             }
 
-            isPreparingCSVPreview = false
+            isPreparingXLSXPreview = false
         }
     }
 
@@ -173,7 +173,7 @@ struct DataManagementView: View {
             .clipShape(Capsule())
     }
 
-    private var csvImportLoadingOverlay: some View {
+    private var xlsxImportLoadingOverlay: some View {
         ZStack {
             DesignSystem.Colors.bgPage.opacity(0.7)
                 .ignoresSafeArea()

@@ -387,6 +387,14 @@ nonisolated enum InteractionLogger {
             payload[key] = .string(value)
         }
         logger.notice("UI interaction", metadata: payload)
+
+        // Fan-out to TelemetryDeck: screen views only
+        if eventType == .screenView {
+            TelemetryDeckAnalytics.signal(
+                TelemetryDeckAnalytics.Signal.screenView,
+                parameters: ["screen": screen]
+            )
+        }
     }
 }
 

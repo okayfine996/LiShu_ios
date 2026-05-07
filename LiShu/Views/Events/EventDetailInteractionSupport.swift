@@ -16,10 +16,10 @@ extension EventDetailView {
         )
     }
 
-    var ledgerCSVErrorBinding: Binding<Bool> {
+    var ledgerXLSXErrorBinding: Binding<Bool> {
         Binding(
-            get: { ledgerCSVError != nil },
-            set: { if !$0 { ledgerCSVError = nil } }
+            get: { ledgerXLSXError != nil },
+            set: { if !$0 { ledgerXLSXError = nil } }
         )
     }
 
@@ -28,7 +28,7 @@ extension EventDetailView {
             get: { ledgerShareURL.map { EventDetailShareableFile(id: $0.absoluteString, url: $0) } },
             set: {
                 if let url = ledgerShareURL, $0 == nil {
-                    try? FileManager.default.removeItem(at: url)
+                    try? FileManager.default.removeItem(at: url.deletingLastPathComponent())
                 }
                 ledgerShareURL = $0?.url
             }
@@ -61,11 +61,11 @@ extension EventDetailView {
         Button(action: openOCRImport) {
             Label(String(localized: "record.ocr.import"), systemImage: "doc.viewfinder")
         }
-        Button(action: openLedgerCSVImporter) {
-            Label(String(localized: "event.ledger.importCSV"), systemImage: "square.and.arrow.down")
+        Button(action: openLedgerXLSXImporter) {
+            Label(String(localized: "event.ledger.importXLSX"), systemImage: "square.and.arrow.down")
         }
         Button(action: prepareLedgerExportPreview) {
-            Label(String(localized: "event.ledger.exportCSV"), systemImage: "square.and.arrow.up")
+            Label(String(localized: "event.ledger.exportXLSX"), systemImage: "square.and.arrow.up")
         }
         Button(action: downloadLedgerTemplate) {
             Label(String(localized: "event.ledger.downloadTemplate"), systemImage: "arrow.down.doc")
@@ -119,8 +119,8 @@ extension EventDetailView {
         pendingDeleteRecord = nil
     }
 
-    func clearLedgerCSVError() {
-        ledgerCSVError = nil
+    func clearLedgerXLSXError() {
+        ledgerXLSXError = nil
     }
 
     func deleteEvent() {
@@ -198,9 +198,9 @@ extension EventDetailView {
         sheetRoute = .ocrImport(eventID: eventID)
     }
 
-    func openLedgerCSVImporter() {
-        guard !isPreparingLedgerCSV else { return }
-        showLedgerCSVImporter = true
+    func openLedgerXLSXImporter() {
+        guard !isPreparingLedgerXLSX else { return }
+        showLedgerXLSXImporter = true
     }
 
     func editEvent() {
@@ -233,58 +233,58 @@ extension EventDetailView {
         }
     }
 
-    func handleLedgerCSVImport(_ result: Result<[URL], Error>) {
+    func handleLedgerXLSXImport(_ result: Result<[URL], Error>) {
         switch result {
         case let .success(urls):
             guard let url = urls.first, let event = viewModel.event else { return }
-            guard !isPreparingLedgerCSV else { return }
-            isPreparingLedgerCSV = true
+            guard !isPreparingLedgerXLSX else { return }
+            isPreparingLedgerXLSX = true
 
             Task {
                 do {
-                    let preview = try await ExportService.previewLedgerCSVAsync(
+                    let preview = try await ExportService.previewLedgerXLSXAsync(
                         url: url,
                         eventName: event.name
                     )
                     await MainActor.run {
-                        ledgerImportPreviewViewModel = LedgerCSVImportPreviewViewModel(
+                        ledgerImportPreviewViewModel = LedgerImportPreviewViewModel(
                             previewResult: preview,
                             eventID: eventID
                         )
                         showLedgerImportPreview = true
-                        isPreparingLedgerCSV = false
+                        isPreparingLedgerXLSX = false
                     }
                 } catch {
                     await MainActor.run {
-                        ledgerCSVError = error.localizedDescription
-                        isPreparingLedgerCSV = false
+                        ledgerXLSXError = error.localizedDescription
+                        isPreparingLedgerXLSX = false
                     }
                 }
             }
         case let .failure(error):
-            ledgerCSVError = error.localizedDescription
+            ledgerXLSXError = error.localizedDescription
         }
     }
 
     func prepareLedgerExportPreview() {
-        guard !isPreparingLedgerCSV else { return }
-        isPreparingLedgerCSV = true
+        guard !isPreparingLedgerXLSX else { return }
+        isPreparingLedgerXLSX = true
 
         Task {
             do {
-                let preview = try await ExportService.previewLedgerExportCSVAsync(
+                let preview = try await ExportService.previewLedgerExportXLSXAsync(
                     container: modelContext.container,
                     eventID: eventID
                 )
                 await MainActor.run {
-                    ledgerExportPreviewViewModel = LedgerCSVExportPreviewViewModel(previewResult: preview)
+                    ledgerExportPreviewViewModel = LedgerExportPreviewViewModel(previewResult: preview)
                     showLedgerExportPreview = true
-                    isPreparingLedgerCSV = false
+                    isPreparingLedgerXLSX = false
                 }
             } catch {
                 await MainActor.run {
-                    ledgerCSVError = error.localizedDescription
-                    isPreparingLedgerCSV = false
+                    ledgerXLSXError = error.localizedDescription
+                    isPreparingLedgerXLSX = false
                 }
             }
         }
@@ -294,7 +294,7 @@ extension EventDetailView {
     func handleCompletedLedgerImport(_: ImportResult) {
         showLedgerImportPreview = false
         loadEvent()
-        ledgerCSVError = nil
+        ledgerXLSXError = nil
     }
 
     @MainActor
@@ -305,23 +305,16 @@ extension EventDetailView {
 
     func downloadLedgerTemplate() {
         do {
-            let fileURL = FileManager.default.temporaryDirectory
-                .appendingPathComponent("lishu_ledger_template.csv")
-            guard let data = ExportService.ledgerTemplateCSV().data(using: .utf8) else {
-                ledgerCSVError = String(localized: "settings.data.export_encoding_failed")
-                return
-            }
-            try data.write(to: fileURL, options: .atomic)
-            ledgerShareURL = fileURL
+            ledgerShareURL = try ExportService.ledgerTemplateXLSX()
         } catch {
-            ledgerCSVError = error.localizedDescription
+            ledgerXLSXError = error.localizedDescription
         }
     }
 
     func clearShareFile() {
         guard let ledgerShareURL else { return }
         self.ledgerShareURL = nil
-        try? FileManager.default.removeItem(at: ledgerShareURL)
+        try? FileManager.default.removeItem(at: ledgerShareURL.deletingLastPathComponent())
     }
 }
 

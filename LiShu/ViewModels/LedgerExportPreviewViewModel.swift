@@ -1,18 +1,22 @@
 import Foundation
+import SwiftData
 
+@MainActor
 @Observable
-class CSVExportPreviewViewModel {
-    let recordType: RecordType
-    var items: [CSVExportPreviewItem]
+class LedgerExportPreviewViewModel {
+    let eventID: PersistentIdentifier
+    let eventName: String
+    var items: [LedgerExportPreviewItem]
     var exportError: String?
     var isExporting = false
 
-    init(previewResult: CSVExportPreviewResult) {
-        recordType = previewResult.recordType
+    init(previewResult: LedgerExportPreviewResult) {
+        eventID = previewResult.eventID
+        eventName = previewResult.eventName
         items = previewResult.items
     }
 
-    var selectedItems: [CSVExportPreviewItem] {
+    var selectedItems: [LedgerExportPreviewItem] {
         items.filter { $0.isSelected && $0.isExportable }
     }
 
@@ -55,21 +59,21 @@ class CSVExportPreviewViewModel {
                 detailText: item.detailText,
                 trailingText: item.trailingText,
                 statusMessage: item.statusMessage,
-                highlightsTrailingText: recordType == .monetary
+                highlightsTrailingText: true
             )
         }
     }
 
     var previewConfig: CSVSelectionPreviewConfig {
         CSVSelectionPreviewConfig(
-            title: String(localized: "csv.export.preview.title"),
+            title: String(localized: "csv.ledger.export.preview.title"),
             summaryText: String(
-                format: String(localized: "csv.export.preview.summary %lld %lld"),
+                format: String(localized: "csv.ledger.export.preview.summary %lld %lld"),
                 Int64(selectedCount),
                 Int64(invalidItemsCount)
             ),
             confirmButtonTitle: String(
-                format: String(localized: "csv.export.preview.confirm %lld"),
+                format: String(localized: "csv.ledger.export.preview.confirm %lld"),
                 Int64(selectedCount)
             ),
             footerSummaryTitle: nil,
@@ -78,11 +82,11 @@ class CSVExportPreviewViewModel {
                 Int64(selectedCount)
             ),
             confirmIconName: "square.and.arrow.up",
-            emptyText: String(localized: "csv.export.preview.empty"),
-            loadingText: String(localized: "csv.export.preview.loading"),
+            emptyText: String(localized: "csv.ledger.export.preview.empty"),
+            loadingText: String(localized: "csv.ledger.export.preview.loading"),
             emptyIconName: "square.and.arrow.up",
-            selectAllAccessibilityID: "csv.export.preview.selectAllButton",
-            confirmAccessibilityID: "csv.export.preview.confirmButton"
+            selectAllAccessibilityID: "csv.ledger.export.preview.selectAllButton",
+            confirmAccessibilityID: "csv.ledger.export.preview.confirmButton"
         )
     }
 
@@ -106,21 +110,12 @@ class CSVExportPreviewViewModel {
         }
     }
 
-    func buildCSV() throws -> String {
-        guard hasSelectedItems else {
-            throw ImportError.invalidFormat
-        }
-        return try ExportService.exportPreviewItems(items, recordType: recordType)
-    }
-
     func exportToTemporaryFile(fileName: String) async throws -> URL {
         guard hasSelectedItems else {
             throw ImportError.invalidFormat
         }
-
-        return try await ExportService.exportPreviewItemsToTemporaryFileAsync(
+        return try await ExportService.exportLedgerPreviewItemsToTemporaryFileAsync(
             items,
-            recordType: recordType,
             fileName: fileName
         )
     }

@@ -1,8 +1,7 @@
 import Foundation
-import ZipArchive
+import ZIPFoundation
 
 enum DiagnosticsExportConstants {
-    static let archivePassword = "LiShuDiagnostics_2026"
     static let archiveFilePrefix = "lishu_diagnostics_detailed"
 }
 
@@ -13,7 +12,7 @@ enum DiagnosticsArchiveService {
         var errorDescription: String? {
             switch self {
             case .archiveCreationFailed:
-                "无法创建加密诊断压缩包。"
+                "无法创建诊断压缩包。"
             }
         }
     }
@@ -30,16 +29,12 @@ enum DiagnosticsArchiveService {
             try? FileManager.default.removeItem(at: archiveURL)
         }
 
-        let success = SSZipArchive.createZipFile(
-            atPath: archiveURL.path,
-            withFilesAtPaths: [sourceURL.path],
-            withPassword: DiagnosticsExportConstants.archivePassword
+        let archive = try Archive(url: archiveURL, accessMode: .create)
+        try archive.addEntry(
+            with: sourceURL.lastPathComponent,
+            fileURL: sourceURL,
+            compressionMethod: .deflate
         )
-
-        guard success else {
-            try? FileManager.default.removeItem(at: archiveURL)
-            throw ArchiveError.archiveCreationFailed
-        }
 
         return archiveURL
     }

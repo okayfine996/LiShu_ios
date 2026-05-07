@@ -769,26 +769,6 @@
         }
       }
     },
-    "contact.csv.export" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "导出联系人"
-          }
-        }
-      }
-    },
-    "contact.csv.import" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "导入联系人"
-          }
-        }
-      }
-    },
     "contact.csv.importResult" : {
       "localizations" : {
         "zh-Hans" : {
@@ -865,16 +845,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "导入预览"
-          }
-        }
-      }
-    },
-    "contact.csv.template" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "联系人模板"
           }
         }
       }
@@ -1397,6 +1367,36 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "编辑联系人"
+          }
+        }
+      }
+    },
+    "contact.excel.export" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导出联系人 Excel"
+          }
+        }
+      }
+    },
+    "contact.excel.import" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导入联系人 Excel"
+          }
+        }
+      }
+    },
+    "contact.excel.template" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "联系人模板"
           }
         }
       }
@@ -1973,7 +1973,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "正在生成礼簿 CSV…"
+            "value" : "正在生成礼簿 Excel…"
           }
         }
       }
@@ -2053,7 +2053,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "正在准备礼簿 CSV…"
+            "value" : "正在准备礼簿 Excel…"
           }
         }
       }
@@ -2777,11 +2777,22 @@
       }
     },
     "event.ledger.exportCSV" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "导出礼簿 CSV"
+          }
+        }
+      }
+    },
+    "event.ledger.exportXLSX" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导出礼簿 Excel"
           }
         }
       }
@@ -2807,11 +2818,22 @@
       }
     },
     "event.ledger.importCSV" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "导入礼簿 CSV"
+          }
+        }
+      }
+    },
+    "event.ledger.importXLSX" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导入礼簿 Excel"
           }
         }
       }
@@ -4813,6 +4835,22 @@
         }
       }
     },
+    "import.error.tooManyRows" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "File contains too many rows (limit: 5,000)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "文件行数过多（上限 5,000 行）"
+          }
+        }
+      }
+    },
     "Input placeholder" : {
 
     },
@@ -6178,7 +6216,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "支持 Excel/CSV 格式导出"
+            "value" : "支持 Excel 格式导出"
           }
         }
       }
@@ -8677,6 +8715,7 @@
       }
     },
     "settings.data.export_encoding_failed" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -8693,6 +8732,7 @@
       }
     },
     "settings.data.exportCSV" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -8703,7 +8743,6 @@
       }
     },
     "settings.data.exportExcel" : {
-      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -8729,18 +8768,19 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Export %@ CSV"
+            "value" : "Export %@ Excel"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "导出 %@ CSV"
+            "value" : "导出 %@ Excel"
           }
         }
       }
     },
     "settings.data.importCSV" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -8757,7 +8797,6 @@
       }
     },
     "settings.data.importExcel" : {
-      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -8772,13 +8811,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Import standard CSV generated from the latest type-specific templates. Fill either Event or Scene Tag for each row. Recommended date format: yyyy-MM-dd. If the date is missing, today's date will be used."
+            "value" : "Import standard Excel generated from the latest type-specific templates. Fill either Event or Scene Tag for each row. Recommended date format: yyyy-MM-dd. If the date is missing, today's date will be used."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "导入最新版普通数据 CSV。每行必须填写事件或场景标签其一；日期建议使用 yyyy-MM-dd，缺失时默认使用当天时间。礼簿 CSV 请在主场事件详情中单独导入。"
+            "value" : "导入最新版普通数据 Excel。每行必须填写事件或场景标签其一；日期建议使用 yyyy-MM-dd，缺失时默认使用当天时间。礼簿 Excel 请在主场事件详情中单独导入。"
           }
         }
       }
@@ -8815,13 +8854,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Exporting CSV by record type is a Pro feature."
+            "value" : "Exporting Excel by record type is a Pro feature."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "按记录类型导出 CSV 为 Pro 会员专享功能"
+            "value" : "按记录类型导出 Excel 为 Pro 会员专享功能"
           }
         }
       }

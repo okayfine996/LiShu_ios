@@ -188,6 +188,13 @@ class SubscriptionManager {
                 subscriptionLogger.notice("Purchase completed", metadata: [
                     "product_id": .string(transaction.productID),
                 ])
+
+                // Track successful completion
+                TelemetryDeckAnalytics.signal(
+                    TelemetryDeckAnalytics.Signal.proPurchaseCompleted,
+                    parameters: ["product_id": transaction.productID]
+                )
+
                 return true
 
             case .userCancelled:

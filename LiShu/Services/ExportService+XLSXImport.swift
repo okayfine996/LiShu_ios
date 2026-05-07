@@ -2,61 +2,35 @@ import Foundation
 import Logging
 import SwiftData
 
-// MARK: - CSV Import
+// MARK: - XLSX Import
+
+/// Strongly-typed cache key for event deduplication during import.
+/// Using a struct avoids the ambiguity of a "|"-delimited string key
+/// when event names contain that character.
+private struct EventCacheKey: Hashable {
+    let name: String
+    let type: EventType
+}
 
 extension ExportService {
-    nonisolated static func previewCSV(url: URL) throws -> CSVImportPreviewResult {
-        importLogger.notice("Starting CSV preview parse", metadata: [
-            "step": .string("preview_csv"),
-            "source": .string(url.lastPathComponent),
-        ])
-
-        let didStartAccessing = url.startAccessingSecurityScopedResource()
-        defer {
-            if didStartAccessing {
-                url.stopAccessingSecurityScopedResource()
-            }
-        }
-
-        let content = try String(contentsOf: url, encoding: .utf8)
-        return try previewCSV(content: content, sourceFileName: url.lastPathComponent)
-    }
-
-    nonisolated static func previewCSVAsync(url: URL) async throws -> CSVImportPreviewResult {
-        let didStartAccessing = url.startAccessingSecurityScopedResource()
-        defer {
-            if didStartAccessing {
-                url.stopAccessingSecurityScopedResource()
-            }
-        }
-
-        return try await Task.detached(priority: .userInitiated) {
-            let content = try String(contentsOf: url, encoding: .utf8)
-            return try previewCSV(content: content, sourceFileName: url.lastPathComponent)
+    nonisolated static func previewXLSXAsync(url: URL) async throws -> ImportPreviewResult {
+        try await Task.detached(priority: .userInitiated) {
+            let rows = try XLSXReader.read(url: url)
+            return try buildImportPreviewResult(rows: rows, sourceFileName: url.lastPathComponent)
         }.value
     }
 
-    nonisolated static func importCSV(url: URL, context: ModelContext) throws -> ImportResult {
-        let preview = try previewCSV(url: url)
-        return try importPreviewItems(preview.items, baseResult: ImportResult(
-            imported: 0,
-            skipped: preview.skipped,
-            errors: preview.errors
-        ), sourceFileName: preview.sourceFileName, context: context)
-    }
-
     nonisolated static func importPreviewItemsAsync(
-        _ items: [CSVImportPreviewItem],
+        _ items: [ImportPreviewItem],
         baseResult: ImportResult,
         sourceFileName: String = "preview",
         container: ModelContainer
     ) async throws -> ImportResult {
         try await Task.detached(priority: .userInitiated) {
             let context = ModelContext(container)
-            if let delayNanoseconds = uiTestDelayNanoseconds(environmentKey: "UITEST_CSV_IMPORT_DELAY_MS") {
+            if let delayNanoseconds = uiTestDelayNanoseconds(environmentKey: "UITEST_XLSX_IMPORT_DELAY_MS") {
                 try await Task.sleep(nanoseconds: delayNanoseconds)
             }
-
             return try importPreviewItems(
                 items,
                 baseResult: baseResult,
@@ -67,20 +41,20 @@ extension ExportService {
     }
 
     nonisolated static func importPreviewItems(
-        _ items: [CSVImportPreviewItem],
+        _ items: [ImportPreviewItem],
         baseResult: ImportResult,
         sourceFileName: String = "preview",
         context: ModelContext
     ) throws -> ImportResult {
-        importLogger.notice("Starting CSV import", metadata: [
-            "step": .string("import_csv"),
+        importLogger.notice("Starting XLSX import", metadata: [
+            "step": .string("import_xlsx"),
             "source": .string(sourceFileName),
         ])
 
         var result = baseResult
         let importableItems = items.filter { $0.isSelected && $0.isImportable }
         var contactCache: [String: Contact] = [:]
-        var eventCache: [String: Event] = [:]
+        var eventCache: [EventCacheKey: Event] = [:]
 
         for item in importableItems {
             guard let payload = item.payload else { continue }
@@ -90,7 +64,7 @@ extension ExportService {
             if let cachedContact = contactCache[contactName] {
                 contact = cachedContact
             } else {
-                let resolvedContact = findOrCreateContact(name: contactName, context: context)
+                let resolvedContact = try findOrCreateContact(name: contactName, context: context)
                 contactCache[contactName] = resolvedContact
                 contact = resolvedContact
             }
@@ -100,11 +74,11 @@ extension ExportService {
             if eventName.isEmpty {
                 event = nil
             } else {
-                let eventKey = "\(eventName)|\(payload.eventType.rawValue)"
+                let eventKey = EventCacheKey(name: eventName, type: payload.eventType)
                 if let cachedEvent = eventCache[eventKey] {
                     event = cachedEvent
                 } else {
-                    let resolvedEvent = findOrCreateEventIfNeeded(name: eventName, type: payload.eventType, context: context)
+                    let resolvedEvent = try findOrCreateEventIfNeeded(name: eventName, type: payload.eventType, context: context)
                     if let resolvedEvent {
                         eventCache[eventKey] = resolvedEvent
                     }
@@ -131,8 +105,8 @@ extension ExportService {
         }
 
         try context.save()
-        Self.importLogger.notice("Finished CSV import", metadata: [
-            "step": .string("import_csv"),
+        Self.importLogger.notice("Finished XLSX import", metadata: [
+            "step": .string("import_xlsx"),
             "source": .string(sourceFileName),
             "count": .stringConvertible(result.imported),
             "result": .string("success"),
@@ -141,86 +115,18 @@ extension ExportService {
         return result
     }
 
-    nonisolated static func previewLedgerCSV(url: URL, eventName: String) throws -> LedgerCSVImportPreviewResult {
-        let didStartAccessing = url.startAccessingSecurityScopedResource()
-        defer {
-            if didStartAccessing {
-                url.stopAccessingSecurityScopedResource()
-            }
-        }
-
-        let content = try String(contentsOf: url, encoding: .utf8)
-        return try previewLedgerCSV(content: content, sourceFileName: url.lastPathComponent, eventName: eventName)
-    }
-
-    nonisolated static func previewLedgerCSVAsync(
+    nonisolated static func previewLedgerXLSXAsync(
         url: URL,
         eventName: String
-    ) async throws -> LedgerCSVImportPreviewResult {
-        let didStartAccessing = url.startAccessingSecurityScopedResource()
-        defer {
-            if didStartAccessing {
-                url.stopAccessingSecurityScopedResource()
-            }
-        }
-
-        return try await Task.detached(priority: .userInitiated) {
-            let content = try String(contentsOf: url, encoding: .utf8)
-            return try previewLedgerCSV(content: content, sourceFileName: url.lastPathComponent, eventName: eventName)
+    ) async throws -> LedgerImportPreviewResult {
+        try await Task.detached(priority: .userInitiated) {
+            let rows = try XLSXReader.read(url: url)
+            return try buildLedgerImportPreviewResult(rows: rows, sourceFileName: url.lastPathComponent, eventName: eventName)
         }.value
     }
 
-    nonisolated static func previewLedgerCSV(
-        content: String,
-        sourceFileName: String,
-        eventName: String
-    ) throws -> LedgerCSVImportPreviewResult {
-        let rows = parseCSVRows(content)
-
-        guard rows.count > 1 else {
-            return LedgerCSVImportPreviewResult(sourceFileName: sourceFileName, eventName: eventName, items: [])
-        }
-
-        let headerRow = rows[0].map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-        try validateLedgerCSVHeader(headerRow)
-        let columnIndex = buildCSVColumnIndexMap(headerRow)
-
-        var items: [LedgerCSVImportPreviewItem] = []
-        var skipped = 0
-        var errors = 0
-
-        for (rowIndex, rawFields) in rows.dropFirst().enumerated() {
-            if rawFields.allSatisfy({ $0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }) {
-                continue
-            }
-
-            let item = buildLedgerPreviewItem(
-                rawFields: rawFields,
-                rowIndex: rowIndex,
-                headerColumnCount: headerRow.count,
-                columnIndex: columnIndex,
-                eventName: eventName
-            )
-            if case .skipped = item.status {
-                skipped += 1
-            }
-            if case .error = item.status {
-                errors += 1
-            }
-            items.append(item)
-        }
-
-        return LedgerCSVImportPreviewResult(
-            sourceFileName: sourceFileName,
-            eventName: eventName,
-            items: items,
-            skipped: skipped,
-            errors: errors
-        )
-    }
-
     nonisolated static func importLedgerPreviewItemsAsync(
-        _ items: [LedgerCSVImportPreviewItem],
+        _ items: [LedgerImportPreviewItem],
         baseResult: ImportResult,
         sourceFileName: String = "preview",
         eventID: PersistentIdentifier,
@@ -239,7 +145,7 @@ extension ExportService {
     }
 
     nonisolated static func importLedgerPreviewItems(
-        _ items: [LedgerCSVImportPreviewItem],
+        _ items: [LedgerImportPreviewItem],
         baseResult: ImportResult,
         sourceFileName: String = "preview",
         eventID: PersistentIdentifier,
@@ -258,7 +164,7 @@ extension ExportService {
             if let cached = contactCache[contactName] {
                 contact = cached
             } else {
-                let resolvedContact = findOrCreateContact(name: contactName, context: context)
+                let resolvedContact = try findOrCreateContact(name: contactName, context: context)
                 contactCache[contactName] = resolvedContact
                 contact = resolvedContact
             }
@@ -283,8 +189,8 @@ extension ExportService {
         }
 
         try context.save()
-        Self.importLogger.notice("Finished ledger CSV import", metadata: [
-            "step": .string("import_ledger_csv"),
+        Self.importLogger.notice("Finished ledger XLSX import", metadata: [
+            "step": .string("import_ledger_xlsx"),
             "source": .string(sourceFileName),
             "event_id": .string(String(describing: eventID)),
             "count": .stringConvertible(result.imported),
@@ -293,126 +199,21 @@ extension ExportService {
         return result
     }
 
-    nonisolated static func previewCSV(content: String, sourceFileName: String) throws -> CSVImportPreviewResult {
-        let rows = parseCSVRows(content)
+    // MARK: - Parse helpers (shared with contact CSV)
 
-        guard rows.count > 1 else {
-            Self.importLogger.warning("CSV preview finished without data rows", metadata: [
-                "step": .string("preview_csv"),
-                "source": .string(sourceFileName),
-                "reason": .string("empty_rows"),
-            ])
-            return CSVImportPreviewResult(sourceFileName: sourceFileName, items: [])
-        }
-
-        let headerRow = rows[0].map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-        try validateCSVHeader(headerRow)
-        let columnIndex = buildCSVColumnIndexMap(headerRow)
-
-        var items: [CSVImportPreviewItem] = []
-        var skipped = 0
-        var errors = 0
-
-        for (rowIndex, rawFields) in rows.dropFirst().enumerated() {
-            if rawFields.allSatisfy({ $0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }) {
-                continue
-            }
-
-            let item = buildPreviewItem(
-                rawFields: rawFields,
-                rowIndex: rowIndex,
-                headerColumnCount: headerRow.count,
-                columnIndex: columnIndex
-            )
-            if case .skipped = item.status {
-                skipped += 1
-            }
-            if case .error = item.status {
-                errors += 1
-            }
-            items.append(item)
-        }
-
-        Self.importLogger.notice("Finished CSV preview parse", metadata: [
-            "step": .string("preview_csv"),
-            "source": .string(sourceFileName),
-            "count": .stringConvertible(items.count),
-            "errors": .stringConvertible(errors),
-        ])
-
-        return CSVImportPreviewResult(
-            sourceFileName: sourceFileName,
-            items: items,
-            skipped: skipped,
-            errors: errors
-        )
-    }
-
-    nonisolated static func previewCSVAsync(content: String, sourceFileName: String) async throws -> CSVImportPreviewResult {
-        try await Task.detached(priority: .userInitiated) {
-            try previewCSV(content: content, sourceFileName: sourceFileName)
-        }.value
-    }
-
-    nonisolated static func parseCSVLine(_ line: String) -> [String] {
-        var result: [String] = []
-        var current = ""
-        var inQuotes = false
-        var index = line.startIndex
-
-        while index < line.endIndex {
-            let ch = line[index]
-
-            switch ch {
-            case "\"":
-                if inQuotes {
-                    let next = line.index(after: index)
-                    if next < line.endIndex, line[next] == "\"" {
-                        current.append("\"")
-                        index = next
-                    } else {
-                        inQuotes = false
-                    }
-                } else if current.isEmpty {
-                    inQuotes = true
-                } else {
-                    current.append(ch)
-                }
-            case "," where !inQuotes:
-                result.append(current.trimmingCharacters(in: .whitespaces))
-                current = ""
-            default:
-                current.append(ch)
-            }
-
-            index = line.index(after: index)
-        }
-
-        result.append(current.trimmingCharacters(in: .whitespaces))
-        return result
-    }
-
-    nonisolated static func findOrCreateContact(name: String, context: ModelContext) -> Contact {
+    nonisolated static func findOrCreateContact(name: String, context: ModelContext) throws -> Contact {
         let trimmed = normalizeImportedText(name)
         let predicate = #Predicate<Contact> { $0.name == trimmed }
         var descriptor = FetchDescriptor<Contact>(predicate: predicate)
         descriptor.fetchLimit = 1
 
-        do {
-            if let existing = try context.fetch(descriptor).first {
-                Self.importLogger.info("Reused contact during import", metadata: [
-                    "step": .string("find_or_create_contact"),
-                    "result": .string("existing"),
-                    "contact_id": .string(String(describing: existing.persistentModelID)),
-                ])
-                return existing
-            }
-        } catch {
-            Self.importLogger.warning("Failed to fetch contact, creating new one", metadata: [
+        if let existing = try context.fetch(descriptor).first {
+            Self.importLogger.info("Reused contact during import", metadata: [
                 "step": .string("find_or_create_contact"),
-                "target": .string(trimmed),
-                "error": .string(error.localizedDescription),
+                "result": .string("existing"),
+                "contact_id": .string(String(describing: existing.persistentModelID)),
             ])
+            return existing
         }
         let contact = Contact(name: trimmed)
         context.insert(contact)
@@ -424,14 +225,14 @@ extension ExportService {
         return contact
     }
 
-    nonisolated static func findOrCreateEvent(name: String, type: EventType, context: ModelContext) -> Event {
+    nonisolated static func findOrCreateEvent(name: String, type: EventType, context: ModelContext) throws -> Event {
         let trimmed = normalizeImportedText(name)
         let typeRaw = type.rawValue
         let predicate = #Predicate<Event> { $0.name == trimmed && $0.typeRaw == typeRaw }
         var descriptor = FetchDescriptor<Event>(predicate: predicate)
         descriptor.fetchLimit = 1
 
-        if let existing = try? context.fetch(descriptor).first {
+        if let existing = try context.fetch(descriptor).first {
             Self.importLogger.info("Reused event during import", metadata: [
                 "step": .string("find_or_create_event"),
                 "result": .string("existing"),
@@ -449,10 +250,9 @@ extension ExportService {
         return event
     }
 
-    nonisolated static func findOrCreateEventIfNeeded(name: String, type: EventType, context: ModelContext) -> Event? {
-        let trimmed = normalizeImportedText(name)
-        guard !trimmed.isEmpty else { return nil }
-        return findOrCreateEvent(name: trimmed, type: type, context: context)
+    nonisolated static func findOrCreateEventIfNeeded(name: String, type: EventType, context: ModelContext) throws -> Event? {
+        guard !normalizeImportedText(name).isEmpty else { return nil }
+        return try findOrCreateEvent(name: name, type: type, context: context)
     }
 
     nonisolated static func parseEventType(_ str: String) -> EventType {
@@ -471,7 +271,11 @@ extension ExportService {
         case "升职": return .promotion
         case "探望": return .visit
         case "其他": return .other
-        default: return .other
+        default:
+            if !s.isEmpty {
+                importLogger.warning("Unrecognized event type '\(s)', defaulting to .other")
+            }
+            return .other
         }
     }
 
@@ -480,7 +284,11 @@ extension ExportService {
         switch s {
         case "送出", "随礼", "given": return .given
         case "收到", "收礼", "received": return .received
-        default: return .given
+        default:
+            if !s.isEmpty {
+                importLogger.warning("Unrecognized direction '\(s)', defaulting to .given")
+            }
+            return .given
         }
     }
 
@@ -490,13 +298,17 @@ extension ExportService {
         case "现金", "cash": return .cash
         case "微信", "wechat": return .wechat
         case "支付宝", "alipay": return .alipay
-        default: return .cash
+        default:
+            if !s.isEmpty {
+                importLogger.warning("Unrecognized payment method '\(s)', defaulting to .cash")
+            }
+            return .cash
         }
     }
 
     nonisolated static func parseDate(_ str: String) -> Date? {
         let trimmed = str.trimmingCharacters(in: .whitespaces)
-        return csvDateFormatter.date(from: trimmed) ?? csvLegacyDateFormatter.date(from: trimmed)
+        return dateFormatter.date(from: trimmed) ?? legacyDateFormatter.date(from: trimmed)
     }
 
     nonisolated static func parseRelationshipWeight(_ str: String) -> RelationshipWeight {
@@ -515,6 +327,7 @@ extension ExportService {
         case RelationshipWeight.reciprocal.rawValue, String(localized: "record.relationshipWeight.reciprocal"):
             return .reciprocal
         default:
+            importLogger.warning("Unrecognized relationship weight '\(trimmed)', defaulting to .reciprocal")
             return .reciprocal
         }
     }
@@ -526,38 +339,166 @@ extension ExportService {
             .joined(separator: " ")
     }
 
-    // MARK: - Private helpers
+    // MARK: - Private builders
 
-    private nonisolated static func validateCSVHeader(_ headerRow: [String]) throws {
+    private nonisolated static func buildImportPreviewResult(
+        rows: [[String]],
+        sourceFileName: String
+    ) throws -> ImportPreviewResult {
+        guard rows.count > 1 else {
+            importLogger.warning("XLSX preview finished without data rows", metadata: [
+                "step": .string("preview_xlsx"),
+                "source": .string(sourceFileName),
+                "reason": .string("empty_rows"),
+            ])
+            return ImportPreviewResult(sourceFileName: sourceFileName, items: [])
+        }
+
+        let dataRowCount = rows.count - 1
+        guard dataRowCount <= maxImportRows else {
+            Self.importLogger.warning("XLSX import rejected: too many rows", metadata: [
+                "step": .string("preview_xlsx"),
+                "source": .string(sourceFileName),
+                "row_count": .stringConvertible(dataRowCount),
+                "limit": .stringConvertible(maxImportRows),
+            ])
+            throw ImportError.tooManyRows
+        }
+
+        let headerRow = rows[0].map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+        try validateHeader(headerRow)
+        let columnIndex = buildColumnIndexMap(headerRow)
+
+        var items: [ImportPreviewItem] = []
+        var skipped = 0
+        var errors = 0
+
+        for (rowIndex, rawFields) in rows.dropFirst().enumerated() {
+            if rawFields.allSatisfy({ $0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }) {
+                continue
+            }
+
+            let item = buildPreviewItem(
+                rawFields: rawFields,
+                rowIndex: rowIndex,
+                headerColumnCount: headerRow.count,
+                columnIndex: columnIndex
+            )
+            if case .skipped = item.status { skipped += 1 }
+            if case .error = item.status { errors += 1 }
+            items.append(item)
+        }
+
+        Self.importLogger.notice("Finished XLSX preview parse", metadata: [
+            "step": .string("preview_xlsx"),
+            "source": .string(sourceFileName),
+            "count": .stringConvertible(items.count),
+            "errors": .stringConvertible(errors),
+        ])
+
+        return ImportPreviewResult(
+            sourceFileName: sourceFileName,
+            items: items,
+            skipped: skipped,
+            errors: errors
+        )
+    }
+
+    private nonisolated static func buildLedgerImportPreviewResult(
+        rows: [[String]],
+        sourceFileName: String,
+        eventName: String
+    ) throws -> LedgerImportPreviewResult {
+        guard rows.count > 1 else {
+            return LedgerImportPreviewResult(sourceFileName: sourceFileName, eventName: eventName, items: [])
+        }
+
+        let dataRowCount = rows.count - 1
+        guard dataRowCount <= maxImportRows else {
+            throw ImportError.tooManyRows
+        }
+
+        let headerRow = rows[0].map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+        try validateLedgerHeader(headerRow)
+        let columnIndex = buildColumnIndexMap(headerRow)
+
+        var items: [LedgerImportPreviewItem] = []
+        var skipped = 0
+        var errors = 0
+
+        for (rowIndex, rawFields) in rows.dropFirst().enumerated() {
+            if rawFields.allSatisfy({ $0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }) {
+                continue
+            }
+
+            let item = buildLedgerPreviewItem(
+                rawFields: rawFields,
+                rowIndex: rowIndex,
+                headerColumnCount: headerRow.count,
+                columnIndex: columnIndex,
+                eventName: eventName
+            )
+            if case .skipped = item.status { skipped += 1 }
+            if case .error = item.status { errors += 1 }
+            items.append(item)
+        }
+
+        return LedgerImportPreviewResult(
+            sourceFileName: sourceFileName,
+            eventName: eventName,
+            items: items,
+            skipped: skipped,
+            errors: errors
+        )
+    }
+
+    private nonisolated static func validateHeader(_ headerRow: [String]) throws {
         guard Set(commonColumns).isSubset(of: Set(headerRow)) else {
             throw ImportError.invalidFormat
         }
-
         guard headerRow.allSatisfy({ allowedColumns.contains($0) }) else {
             throw ImportError.invalidFormat
         }
-
         let typeSpecificHeaderColumns = Set(headerRow).subtracting(commonColumns)
         let matchedRecordType = typeSpecificColumns.first { _, columns in
             Set(columns) == typeSpecificHeaderColumns
         }
-
         guard matchedRecordType != nil else {
             throw ImportError.invalidFormat
         }
     }
 
-    private nonisolated static func validateLedgerCSVHeader(_ headerRow: [String]) throws {
-        guard headerRow.count == ledgerColumns.count else {
-            throw ImportError.invalidFormat
-        }
-        guard headerRow == ledgerColumns else {
+    private nonisolated static func validateLedgerHeader(_ headerRow: [String]) throws {
+        guard Set(headerRow) == Set(ledgerColumns) else {
             throw ImportError.invalidFormat
         }
     }
 
+    private nonisolated static func buildColumnIndexMap(_ headerRow: [String]) -> [String: Int] {
+        var map: [String: Int] = [:]
+        for (i, raw) in headerRow.enumerated() {
+            let key = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !key.isEmpty else { continue }
+            if map[key] == nil { map[key] = i }
+        }
+        return map
+    }
+
+    private nonisolated static func alignFieldsToHeader(_ fields: [String], headerColumnCount: Int) -> [String] {
+        if fields.count >= headerColumnCount {
+            return Array(fields.prefix(headerColumnCount))
+        }
+        return fields + Array(repeating: "", count: headerColumnCount - fields.count)
+    }
+
+    private nonisolated static func cell(_ row: [String], columnIndex: [String: Int], column: String) -> String {
+        let key = column.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let idx = columnIndex[key], idx < row.count else { return "" }
+        return row[idx]
+    }
+
     private nonisolated static func inferRecordType(
-        amount: Double,
+        amount _: Double,
         giftName: String,
         giftEstimatedValueStr: String,
         favorHelp: String,
@@ -567,11 +508,9 @@ extension ExportService {
         humanDescription: String,
         columnIndex: [String: Int]
     ) -> RecordType? {
-        if amount > 0 {
-            return .monetary
-        }
+        // 优先通过列结构判断类型：金额列唯一存在于金钱模板，避免零金额行误报"无法识别类型"
+        if columnIndex["金额"] != nil { return .monetary }
 
-        let normalizedDescription = normalizeImportedText(humanDescription)
         let hasGiftPayload = !normalizeImportedText(giftName).isEmpty
             || UserEnteredDecimal.parse(giftEstimatedValueStr) != nil
         let hasFavorPayload = !normalizeImportedText(favorHelp).isEmpty
@@ -584,55 +523,17 @@ extension ExportService {
             || columnIndex["宴请宾客"] != nil
             || columnIndex["宴请额外费用"] != nil
 
-        if hasGiftPayload {
-            return .gift
-        }
-        if hasFavorPayload {
-            return .favor
-        }
-        if hasBanquetPayload {
-            return .banquet
-        }
-        if !normalizedDescription.isEmpty {
-            if hasFavorColumns {
-                return .favor
-            }
-            if hasBanquetColumns {
-                return .banquet
-            }
-            if hasGiftColumns {
-                return .gift
-            }
+        if hasGiftPayload { return .gift }
+        if hasFavorPayload { return .favor }
+        if hasBanquetPayload { return .banquet }
+
+        if !normalizeImportedText(humanDescription).isEmpty {
+            if hasFavorColumns { return .favor }
+            if hasBanquetColumns { return .banquet }
+            if hasGiftColumns { return .gift }
         }
 
         return nil
-    }
-
-    /// 表头列名 → 列下标（同名取第一次出现）。
-    private nonisolated static func buildCSVColumnIndexMap(_ headerRow: [String]) -> [String: Int] {
-        var map: [String: Int] = [:]
-        for (i, raw) in headerRow.enumerated() {
-            let key = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !key.isEmpty else { continue }
-            if map[key] == nil {
-                map[key] = i
-            }
-        }
-        return map
-    }
-
-    /// 将数据行对齐到表头列数：不足补空串，多余截断（仅与表头对齐，不再按固定列数推断语义）。
-    private nonisolated static func alignFieldsToHeader(_ fields: [String], headerColumnCount: Int) -> [String] {
-        if fields.count >= headerColumnCount {
-            return Array(fields.prefix(headerColumnCount))
-        }
-        return fields + Array(repeating: "", count: headerColumnCount - fields.count)
-    }
-
-    private nonisolated static func csvCell(_ row: [String], columnIndex: [String: Int], column: String) -> String {
-        let key = column.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard let idx = columnIndex[key], idx < row.count else { return "" }
-        return row[idx]
     }
 
     private nonisolated static func buildTypeDataForImport(
@@ -677,98 +578,41 @@ extension ExportService {
         }
     }
 
-    private nonisolated static func parseCSVRows(_ content: String) -> [[String]] {
-        var rows: [[String]] = []
-        var row: [String] = []
-        var field = ""
-        var inQuotes = false
-        var index = content.startIndex
-
-        func commitField() {
-            row.append(field.trimmingCharacters(in: .whitespaces))
-            field = ""
-        }
-
-        func commitRow() {
-            if row.count == 1, row[0].isEmpty {
-                row.removeAll()
-                return
-            }
-            rows.append(row)
-            row.removeAll()
-        }
-
-        while index < content.endIndex {
-            let ch = content[index]
-
-            switch ch {
-            case "\"":
-                if inQuotes {
-                    let next = content.index(after: index)
-                    if next < content.endIndex, content[next] == "\"" {
-                        field.append("\"")
-                        index = next
-                    } else {
-                        inQuotes = false
-                    }
-                } else if field.isEmpty {
-                    inQuotes = true
-                } else {
-                    field.append(ch)
-                }
-            case "," where !inQuotes:
-                commitField()
-            case "\n" where !inQuotes, "\r" where !inQuotes:
-                commitField()
-                commitRow()
-                if ch == "\r" {
-                    let next = content.index(after: index)
-                    if next < content.endIndex, content[next] == "\n" {
-                        index = next
-                    }
-                }
-            default:
-                field.append(ch)
-            }
-
-            index = content.index(after: index)
-        }
-
-        if !field.isEmpty || !row.isEmpty {
-            commitField()
-            commitRow()
-        }
-
-        return rows
-    }
-
     private nonisolated static func buildPreviewItem(
         rawFields: [String],
         rowIndex: Int,
         headerColumnCount: Int,
         columnIndex: [String: Int]
-    ) -> CSVImportPreviewItem {
+    ) -> ImportPreviewItem {
         let lineNumber = rowIndex + 2
         let fields = alignFieldsToHeader(rawFields, headerColumnCount: headerColumnCount)
-        let contactName = normalizeImportedText(csvCell(fields, columnIndex: columnIndex, column: "联系人"))
-        let eventName = normalizeImportedText(csvCell(fields, columnIndex: columnIndex, column: "事件"))
-        let eventTypeName = normalizeImportedText(csvCell(fields, columnIndex: columnIndex, column: "事件类型"))
-        let sceneTag = normalizeImportedText(csvCell(fields, columnIndex: columnIndex, column: "场景标签"))
-        let direction = parseDirection(csvCell(fields, columnIndex: columnIndex, column: "方向"))
-        let dateTextRaw = csvCell(fields, columnIndex: columnIndex, column: "日期")
+        let contactName = normalizeImportedText(cell(fields, columnIndex: columnIndex, column: "联系人"))
+        let eventName = normalizeImportedText(cell(fields, columnIndex: columnIndex, column: "事件"))
+        let eventTypeName = normalizeImportedText(cell(fields, columnIndex: columnIndex, column: "事件类型"))
+        let sceneTag = normalizeImportedText(cell(fields, columnIndex: columnIndex, column: "场景标签"))
+        let direction = parseDirection(cell(fields, columnIndex: columnIndex, column: "方向"))
+        let dateTextRaw = cell(fields, columnIndex: columnIndex, column: "日期")
         let trimmedDateTextRaw = dateTextRaw.trimmingCharacters(in: .whitespacesAndNewlines)
-        let note = normalizeImportedText(csvCell(fields, columnIndex: columnIndex, column: "备注"))
-        let relationshipWeight = parseRelationshipWeight(csvCell(fields, columnIndex: columnIndex, column: "情分分量"))
-        let amountStr = csvCell(fields, columnIndex: columnIndex, column: "金额")
+        let note = normalizeImportedText(cell(fields, columnIndex: columnIndex, column: "备注"))
+        let relationshipWeight = parseRelationshipWeight(cell(fields, columnIndex: columnIndex, column: "情分分量"))
+        let amountStr = cell(fields, columnIndex: columnIndex, column: "金额")
         let amount = UserEnteredDecimal.parse(amountStr) ?? 0
-        let returnedAmount = UserEnteredDecimal.parse(csvCell(fields, columnIndex: columnIndex, column: "已退金额")) ?? 0
-        let giftName = normalizeImportedText(csvCell(fields, columnIndex: columnIndex, column: "礼品名称"))
-        let giftEstimatedValueStr = csvCell(fields, columnIndex: columnIndex, column: "礼品估值")
-        let favorHelp = normalizeImportedText(csvCell(fields, columnIndex: columnIndex, column: "帮忙说明"))
-        let banquetLocation = normalizeImportedText(csvCell(fields, columnIndex: columnIndex, column: "宴请地点"))
-        let banquetAttendees = normalizeImportedText(csvCell(fields, columnIndex: columnIndex, column: "宴请宾客"))
-        let banquetExtra = normalizeImportedText(csvCell(fields, columnIndex: columnIndex, column: "宴请额外费用"))
-        let humanDescription = normalizeImportedText(csvCell(fields, columnIndex: columnIndex, column: "人情描述"))
+        let returnedAmountRaw = UserEnteredDecimal.parse(cell(fields, columnIndex: columnIndex, column: "已退金额")) ?? 0
+        let returnedAmount = max(0, min(returnedAmountRaw, amount))
+        if returnedAmountRaw != returnedAmount {
+            importLogger.warning("returnedAmount clamped during preview", metadata: [
+                "row": .stringConvertible(rowIndex + 2),
+                "raw": .stringConvertible(returnedAmountRaw),
+                "clamped": .stringConvertible(returnedAmount),
+            ])
+        }
+        let giftName = normalizeImportedText(cell(fields, columnIndex: columnIndex, column: "礼品名称"))
+        let giftEstimatedValueStr = cell(fields, columnIndex: columnIndex, column: "礼品估值")
+        let favorHelp = normalizeImportedText(cell(fields, columnIndex: columnIndex, column: "帮忙说明"))
+        let banquetLocation = normalizeImportedText(cell(fields, columnIndex: columnIndex, column: "宴请地点"))
+        let banquetAttendees = normalizeImportedText(cell(fields, columnIndex: columnIndex, column: "宴请宾客"))
+        let banquetExtra = normalizeImportedText(cell(fields, columnIndex: columnIndex, column: "宴请额外费用"))
+        let humanDescription = normalizeImportedText(cell(fields, columnIndex: columnIndex, column: "人情描述"))
         let recordType = inferRecordType(
             amount: amount,
             giftName: giftName,
@@ -781,13 +625,14 @@ extension ExportService {
             columnIndex: columnIndex
         )
         let contextText = eventName.isEmpty ? sceneTag : eventName
-        let parsedDate = if trimmedDateTextRaw.isEmpty {
-            Date()
-        } else {
-            parseDate(dateTextRaw)
-        }
+        let parsedDate = if trimmedDateTextRaw.isEmpty { Date() } else { parseDate(trimmedDateTextRaw) }
+        let trailingTextForType = previewTrailingText(
+            recordType: recordType, amount: amount, giftName: giftName,
+            favorHelp: favorHelp, banquetLocation: banquetLocation, humanDescription: humanDescription
+        )
+
         if !trimmedDateTextRaw.isEmpty, parsedDate == nil {
-            return CSVImportPreviewItem(
+            return ImportPreviewItem(
                 rowNumber: lineNumber,
                 isSelected: false,
                 contactName: contactName.isEmpty ? String(localized: "common.unknown") : contactName,
@@ -800,24 +645,17 @@ extension ExportService {
                 note: note,
                 recordType: recordType,
                 contextText: contextText,
-                trailingText: previewTrailingText(
-                    recordType: recordType,
-                    amount: amount,
-                    giftName: giftName,
-                    favorHelp: favorHelp,
-                    banquetLocation: banquetLocation,
-                    humanDescription: humanDescription
-                ),
+                trailingText: trailingTextForType,
                 detailText: previewDetailText(dateText: trimmedDateTextRaw, direction: direction, recordType: recordType),
                 status: .error(String(localized: "csv.import.preview.invalid.invalidDate")),
                 payload: nil
             )
         }
         let resolvedDate = parsedDate ?? Date()
-        let dateText = csvDateFormatter.string(from: resolvedDate)
+        let dateText = dateFormatter.string(from: resolvedDate)
 
         guard !contactName.isEmpty else {
-            return CSVImportPreviewItem(
+            return ImportPreviewItem(
                 rowNumber: lineNumber,
                 isSelected: false,
                 contactName: String(localized: "common.unknown"),
@@ -830,14 +668,7 @@ extension ExportService {
                 note: note,
                 recordType: recordType,
                 contextText: contextText,
-                trailingText: previewTrailingText(
-                    recordType: recordType,
-                    amount: amount,
-                    giftName: giftName,
-                    favorHelp: favorHelp,
-                    banquetLocation: banquetLocation,
-                    humanDescription: humanDescription
-                ),
+                trailingText: trailingTextForType,
                 detailText: previewDetailText(dateText: dateText, direction: direction, recordType: recordType),
                 status: .error(String(localized: "csv.import.preview.invalid.missingContact")),
                 payload: nil
@@ -845,7 +676,7 @@ extension ExportService {
         }
 
         guard let resolvedRecordType = recordType else {
-            return CSVImportPreviewItem(
+            return ImportPreviewItem(
                 rowNumber: lineNumber,
                 isSelected: false,
                 contactName: contactName,
@@ -866,7 +697,7 @@ extension ExportService {
         }
 
         guard !eventName.isEmpty || !sceneTag.isEmpty else {
-            return CSVImportPreviewItem(
+            return ImportPreviewItem(
                 rowNumber: lineNumber,
                 isSelected: false,
                 contactName: contactName,
@@ -879,22 +710,15 @@ extension ExportService {
                 note: note,
                 recordType: resolvedRecordType,
                 contextText: String(localized: "record.context.daily"),
-                trailingText: previewTrailingText(
-                    recordType: resolvedRecordType,
-                    amount: amount,
-                    giftName: giftName,
-                    favorHelp: favorHelp,
-                    banquetLocation: banquetLocation,
-                    humanDescription: humanDescription
-                ),
+                trailingText: trailingTextForType,
                 detailText: previewDetailText(dateText: dateText, direction: direction, recordType: resolvedRecordType),
-                status: .skipped(String(localized: "csv.import.preview.invalid.missingContext")),
+                status: .error(String(localized: "csv.import.preview.invalid.missingContext")),
                 payload: nil
             )
         }
 
         if resolvedRecordType == .monetary, amount <= 0 {
-            return CSVImportPreviewItem(
+            return ImportPreviewItem(
                 rowNumber: lineNumber,
                 isSelected: false,
                 contactName: contactName,
@@ -907,14 +731,7 @@ extension ExportService {
                 note: note,
                 recordType: resolvedRecordType,
                 contextText: eventName.isEmpty ? sceneTag : eventName,
-                trailingText: previewTrailingText(
-                    recordType: resolvedRecordType,
-                    amount: amount,
-                    giftName: giftName,
-                    favorHelp: favorHelp,
-                    banquetLocation: banquetLocation,
-                    humanDescription: humanDescription
-                ),
+                trailingText: trailingTextForType,
                 detailText: previewDetailText(dateText: dateText, direction: direction, recordType: resolvedRecordType),
                 status: .error(String(localized: "csv.import.preview.invalid.invalidAmount")),
                 payload: nil
@@ -922,7 +739,7 @@ extension ExportService {
         }
 
         let resolvedEventType = eventName.isEmpty ? .other : parseEventType(eventTypeName)
-        let payload = CSVImportPayload(
+        let payload = ImportPayload(
             contactName: contactName,
             eventName: eventName,
             eventType: resolvedEventType,
@@ -936,7 +753,7 @@ extension ExportService {
             typeData: buildTypeDataForImport(
                 recordType: resolvedRecordType,
                 amount: amount,
-                paymentMethod: parsePaymentMethod(csvCell(fields, columnIndex: columnIndex, column: "支付方式")),
+                paymentMethod: parsePaymentMethod(cell(fields, columnIndex: columnIndex, column: "支付方式")),
                 returnedAmount: returnedAmount,
                 humanDesc: humanDescription,
                 giftName: giftName,
@@ -948,7 +765,7 @@ extension ExportService {
             )
         )
 
-        return CSVImportPreviewItem(
+        return ImportPreviewItem(
             rowNumber: lineNumber,
             isSelected: true,
             contactName: contactName,
@@ -961,14 +778,7 @@ extension ExportService {
             note: note,
             recordType: resolvedRecordType,
             contextText: eventName.isEmpty ? sceneTag : eventName,
-            trailingText: previewTrailingText(
-                recordType: resolvedRecordType,
-                amount: amount,
-                giftName: giftName,
-                favorHelp: favorHelp,
-                banquetLocation: banquetLocation,
-                humanDescription: humanDescription
-            ),
+            trailingText: trailingTextForType,
             detailText: previewDetailText(dateText: dateText, direction: direction, recordType: resolvedRecordType),
             status: .ready,
             payload: payload
@@ -981,24 +791,20 @@ extension ExportService {
         headerColumnCount: Int,
         columnIndex: [String: Int],
         eventName: String
-    ) -> LedgerCSVImportPreviewItem {
+    ) -> LedgerImportPreviewItem {
         let lineNumber = rowIndex + 2
         let fields = alignFieldsToHeader(rawFields, headerColumnCount: headerColumnCount)
-        let contactName = normalizeImportedText(csvCell(fields, columnIndex: columnIndex, column: "联系人"))
-        let dateTextRaw = csvCell(fields, columnIndex: columnIndex, column: "日期")
+        let contactName = normalizeImportedText(cell(fields, columnIndex: columnIndex, column: "联系人"))
+        let dateTextRaw = cell(fields, columnIndex: columnIndex, column: "日期")
         let trimmedDateTextRaw = dateTextRaw.trimmingCharacters(in: .whitespacesAndNewlines)
-        let note = normalizeImportedText(csvCell(fields, columnIndex: columnIndex, column: "备注"))
-        let relationshipWeight = parseRelationshipWeight(csvCell(fields, columnIndex: columnIndex, column: "情分分量"))
-        let amount = UserEnteredDecimal.parse(csvCell(fields, columnIndex: columnIndex, column: "金额")) ?? 0
-        let paymentMethod = parsePaymentMethod(csvCell(fields, columnIndex: columnIndex, column: "支付方式"))
-        let parsedDate = if trimmedDateTextRaw.isEmpty {
-            Date()
-        } else {
-            parseDate(dateTextRaw)
-        }
+        let note = normalizeImportedText(cell(fields, columnIndex: columnIndex, column: "备注"))
+        let relationshipWeight = parseRelationshipWeight(cell(fields, columnIndex: columnIndex, column: "情分分量"))
+        let amount = UserEnteredDecimal.parse(cell(fields, columnIndex: columnIndex, column: "金额")) ?? 0
+        let paymentMethod = parsePaymentMethod(cell(fields, columnIndex: columnIndex, column: "支付方式"))
+        let parsedDate = if trimmedDateTextRaw.isEmpty { Date() } else { parseDate(trimmedDateTextRaw) }
 
         if !trimmedDateTextRaw.isEmpty, parsedDate == nil {
-            return LedgerCSVImportPreviewItem(
+            return LedgerImportPreviewItem(
                 rowNumber: lineNumber,
                 isSelected: false,
                 contactName: contactName.isEmpty ? String(localized: "common.unknown") : contactName,
@@ -1011,10 +817,10 @@ extension ExportService {
         }
 
         let resolvedDate = parsedDate ?? Date()
-        let dateText = csvDateFormatter.string(from: resolvedDate)
+        let dateText = dateFormatter.string(from: resolvedDate)
 
         guard !contactName.isEmpty else {
-            return LedgerCSVImportPreviewItem(
+            return LedgerImportPreviewItem(
                 rowNumber: lineNumber,
                 isSelected: false,
                 contactName: String(localized: "common.unknown"),
@@ -1027,7 +833,7 @@ extension ExportService {
         }
 
         guard amount > 0 else {
-            return LedgerCSVImportPreviewItem(
+            return LedgerImportPreviewItem(
                 rowNumber: lineNumber,
                 isSelected: false,
                 contactName: contactName,
@@ -1039,7 +845,7 @@ extension ExportService {
             )
         }
 
-        return LedgerCSVImportPreviewItem(
+        return LedgerImportPreviewItem(
             rowNumber: lineNumber,
             isSelected: true,
             contactName: contactName,
@@ -1047,7 +853,7 @@ extension ExportService {
             detailText: previewDetailText(dateText: dateText, direction: .received, recordType: .monetary),
             trailingText: formatPreviewCurrency(amount),
             status: .ready,
-            payload: LedgerCSVImportPayload(
+            payload: LedgerImportPayload(
                 contactName: contactName,
                 date: resolvedDate,
                 note: note,
@@ -1068,14 +874,10 @@ extension ExportService {
     ) -> String {
         guard let recordType else { return "" }
         switch recordType {
-        case .monetary:
-            return formatPreviewCurrency(amount)
-        case .gift:
-            return firstNonEmpty(giftName, humanDescription)
-        case .favor:
-            return firstNonEmpty(favorHelp, humanDescription)
-        case .banquet:
-            return firstNonEmpty(banquetLocation, humanDescription)
+        case .monetary: return formatPreviewCurrency(amount)
+        case .gift: return firstNonEmpty(giftName, humanDescription)
+        case .favor: return firstNonEmpty(favorHelp, humanDescription)
+        case .banquet: return firstNonEmpty(banquetLocation, humanDescription)
         }
     }
 }

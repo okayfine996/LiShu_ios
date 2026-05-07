@@ -3,12 +3,12 @@ import Foundation
 import Testing
 
 @MainActor
-struct CSVExportPreviewViewModelTests {
+struct ExportPreviewViewModelTests {
     @Test func selectAllOnlySelectsExportableRows() {
-        let viewModel = CSVExportPreviewViewModel(previewResult: CSVExportPreviewResult(
+        let viewModel = ExportPreviewViewModel(previewResult: ExportPreviewResult(
             recordType: .monetary,
             items: [
-                CSVExportPreviewItem(
+                ExportPreviewItem(
                     rowNumber: 2,
                     isSelected: true,
                     contactName: "张三",
@@ -16,9 +16,9 @@ struct CSVExportPreviewViewModelTests {
                     detailText: "2026-04-09 · 送出 · 金额",
                     trailingText: "¥800",
                     status: .ready,
-                    payload: CSVExportPayload(csvRow: "张三,婚礼,婚礼,,送出,2026-04-09,备注,800.00,微信,0.00")
+                    payload: ExportPayload(rowValues: ["姓名": .string("张三"), "事件": .string("婚礼"), "金额": .number(800.00)])
                 ),
-                CSVExportPreviewItem(
+                ExportPreviewItem(
                     rowNumber: 3,
                     isSelected: false,
                     contactName: "李四",
@@ -43,10 +43,10 @@ struct CSVExportPreviewViewModelTests {
     }
 
     @Test func exportingDisablesFurtherSelectionAndConfirm() {
-        let viewModel = CSVExportPreviewViewModel(previewResult: CSVExportPreviewResult(
+        let viewModel = ExportPreviewViewModel(previewResult: ExportPreviewResult(
             recordType: .monetary,
             items: [
-                CSVExportPreviewItem(
+                ExportPreviewItem(
                     rowNumber: 2,
                     isSelected: true,
                     contactName: "张三",
@@ -54,7 +54,7 @@ struct CSVExportPreviewViewModelTests {
                     detailText: "2026-04-09 · 送出 · 金额",
                     trailingText: "¥800",
                     status: .ready,
-                    payload: CSVExportPayload(csvRow: "row")
+                    payload: ExportPayload(rowValues: ["姓名": .string("张三")])
                 ),
             ]
         ))

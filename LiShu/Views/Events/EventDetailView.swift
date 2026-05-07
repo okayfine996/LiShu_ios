@@ -13,14 +13,14 @@ struct EventDetailView: View {
     @State var sheetRoute: SheetRoute?
     @State var isShowingGiftReceivingMode = false
     @State var smartReturnGiftResult: SmartReturnGiftResult?
-    @State var ledgerImportPreviewViewModel: LedgerCSVImportPreviewViewModel?
-    @State var ledgerExportPreviewViewModel: LedgerCSVExportPreviewViewModel?
-    @State var showLedgerCSVImporter = false
+    @State var ledgerImportPreviewViewModel: LedgerImportPreviewViewModel?
+    @State var ledgerExportPreviewViewModel: LedgerExportPreviewViewModel?
+    @State var showLedgerXLSXImporter = false
     @State var showLedgerImportPreview = false
     @State var showLedgerExportPreview = false
     @State var ledgerShareURL: URL?
-    @State var ledgerCSVError: String?
-    @State var isPreparingLedgerCSV = false
+    @State var ledgerXLSXError: String?
+    @State var isPreparingLedgerXLSX = false
     @State var showLegacyAnomalyList = false
 
     var body: some View {
@@ -79,7 +79,7 @@ struct EventDetailView: View {
         }
         .navigationDestination(isPresented: $showLedgerImportPreview) {
             if let ledgerImportPreviewViewModel {
-                LedgerCSVImportPreviewView(viewModel: ledgerImportPreviewViewModel) { result in
+                LedgerImportPreviewView(viewModel: ledgerImportPreviewViewModel) { result in
                     handleCompletedLedgerImport(result)
                 }
             }
@@ -94,28 +94,28 @@ struct EventDetailView: View {
         }
         .navigationDestination(isPresented: $showLedgerExportPreview) {
             if let ledgerExportPreviewViewModel {
-                LedgerCSVExportPreviewView(viewModel: ledgerExportPreviewViewModel) { fileURL in
+                LedgerExportPreviewView(viewModel: ledgerExportPreviewViewModel) { fileURL in
                     handleConfirmedLedgerExport(fileURL: fileURL)
                 }
             }
         }
-        .alert(String(localized: "common.error"), isPresented: ledgerCSVErrorBinding) {
-            Button(String(localized: "common.ok"), action: clearLedgerCSVError)
+        .alert(String(localized: "common.error"), isPresented: ledgerXLSXErrorBinding) {
+            Button(String(localized: "common.ok"), action: clearLedgerXLSXError)
         } message: {
-            if let ledgerCSVError {
-                Text(ledgerCSVError)
+            if let ledgerXLSXError {
+                Text(ledgerXLSXError)
             }
         }
         .overlay {
-            if isPreparingLedgerCSV {
+            if isPreparingLedgerXLSX {
                 EventDetailLoadingOverlay()
             }
         }
         .fileImporter(
-            isPresented: $showLedgerCSVImporter,
-            allowedContentTypes: [.commaSeparatedText],
+            isPresented: $showLedgerXLSXImporter,
+            allowedContentTypes: [.xlsx],
             allowsMultipleSelection: false,
-            onCompletion: handleLedgerCSVImport
+            onCompletion: handleLedgerXLSXImport
         )
         .fullScreenCover(isPresented: $isShowingGiftReceivingMode, onDismiss: loadEvent) {
             GiftReceivingModeView(eventID: eventID)

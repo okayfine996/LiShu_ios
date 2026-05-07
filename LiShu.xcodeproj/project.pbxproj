@@ -7,13 +7,14 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		321829112FA4ACF8006BB5CE /* CoreXLSX in Frameworks */ = {isa = PBXBuildFile; productRef = 321829102FA4ACF8006BB5CE /* CoreXLSX */; };
+		321829142FA4AD7F006BB5CE /* xlsxwriter in Frameworks */ = {isa = PBXBuildFile; productRef = 321829132FA4AD7F006BB5CE /* xlsxwriter */; };
+		3218291E2FAB7546006BB5CE /* TelemetryDeck in Frameworks */ = {isa = PBXBuildFile; productRef = 3218291D2FAB7546006BB5CE /* TelemetryDeck */; };
 		32C8B56E2F822036002E6746 /* Pulse in Frameworks */ = {isa = PBXBuildFile; productRef = 9A934ECB2F54194E0063349A /* Pulse */; };
 		32C8B5702F822036002E6746 /* PulseUI in Frameworks */ = {isa = PBXBuildFile; productRef = 9A934ECD2F54194E0063349A /* PulseUI */; };
 		32C8B5712F822036002E6746 /* Logging in Frameworks */ = {isa = PBXBuildFile; productRef = 32C8B5812F822036002E6746 /* Logging */; };
 		32C8B5722F822036002E6746 /* PulseLogHandler in Frameworks */ = {isa = PBXBuildFile; productRef = 32C8B5822F822036002E6746 /* PulseLogHandler */; };
 		32C8B5732F822036002E6746 /* Logging in Frameworks */ = {isa = PBXBuildFile; productRef = 32C8B5832F822036002E6746 /* Logging */; };
-		B7A1000121C34D5600AA1101 /* ZipArchive in Frameworks */ = {isa = PBXBuildFile; productRef = B7A1000321C34D5600AA1101 /* ZipArchive */; };
-		B7A1000221C34D5600AA1101 /* ZipArchive in Frameworks */ = {isa = PBXBuildFile; productRef = B7A1000421C34D5600AA1101 /* ZipArchive */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -75,11 +76,13 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				321829112FA4ACF8006BB5CE /* CoreXLSX in Frameworks */,
+				321829142FA4AD7F006BB5CE /* xlsxwriter in Frameworks */,
 				32C8B5722F822036002E6746 /* PulseLogHandler in Frameworks */,
 				32C8B5712F822036002E6746 /* Logging in Frameworks */,
 				32C8B5702F822036002E6746 /* PulseUI in Frameworks */,
+				3218291E2FAB7546006BB5CE /* TelemetryDeck in Frameworks */,
 				32C8B56E2F822036002E6746 /* Pulse in Frameworks */,
-				B7A1000121C34D5600AA1101 /* ZipArchive in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -88,7 +91,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				32C8B5732F822036002E6746 /* Logging in Frameworks */,
-				B7A1000221C34D5600AA1101 /* ZipArchive in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -102,12 +104,20 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		321829152FA4EC53006BB5CE /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		9A934E912F54194D0063349A = {
 			isa = PBXGroup;
 			children = (
 				9A934E9C2F54194D0063349A /* LiShu */,
 				9A934EAE2F54194E0063349A /* LiShuTests */,
 				9A934EB82F54194E0063349A /* LiShuUITests */,
+				321829152FA4EC53006BB5CE /* Frameworks */,
 				9A934E9B2F54194D0063349A /* Products */,
 			);
 			sourceTree = "<group>";
@@ -149,7 +159,9 @@
 				9A934ECB2F54194E0063349A /* Pulse */,
 				32C8B5822F822036002E6746 /* PulseLogHandler */,
 				9A934ECD2F54194E0063349A /* PulseUI */,
-				B7A1000321C34D5600AA1101 /* ZipArchive */,
+				321829102FA4ACF8006BB5CE /* CoreXLSX */,
+				321829132FA4AD7F006BB5CE /* xlsxwriter */,
+				3218291D2FAB7546006BB5CE /* TelemetryDeck */,
 			);
 			productName = LiShu;
 			productReference = 9A934E9A2F54194D0063349A /* LiShu.app */;
@@ -174,7 +186,6 @@
 			name = LiShuTests;
 			packageProductDependencies = (
 				32C8B5832F822036002E6746 /* Logging */,
-				B7A1000421C34D5600AA1101 /* ZipArchive */,
 			);
 			productName = LiShuTests;
 			productReference = 9A934EAB2F54194E0063349A /* LiShuTests.xctest */;
@@ -240,7 +251,9 @@
 				9A934ECA2F54194E0063349A /* XCRemoteSwiftPackageReference "Pulse" */,
 				32C8B57F2F822036002E6746 /* XCRemoteSwiftPackageReference "swift-log" */,
 				32C8B5802F822036002E6746 /* XCRemoteSwiftPackageReference "PulseLogHandler" */,
-				B7A1000521C34D5600AA1101 /* XCRemoteSwiftPackageReference "ZipArchive" */,
+				3218290F2FA4ACF8006BB5CE /* XCRemoteSwiftPackageReference "CoreXLSX" */,
+				321829122FA4AD7F006BB5CE /* XCRemoteSwiftPackageReference "xlsxwriter" */,
+				3218291C2FAB7546006BB5CE /* XCRemoteSwiftPackageReference "SwiftSDK" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 9A934E9B2F54194D0063349A /* Products */;
@@ -405,7 +418,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.1.13;
+				MARKETING_VERSION = 1.1.14;
 				PRODUCT_BUNDLE_IDENTIFIER = com.finefine.LiShu;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -446,7 +459,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.1.13;
+				MARKETING_VERSION = 1.1.14;
 				PRODUCT_BUNDLE_IDENTIFIER = com.finefine.LiShu;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -712,6 +725,30 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		3218290F2FA4ACF8006BB5CE /* XCRemoteSwiftPackageReference "CoreXLSX" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/CoreOffice/CoreXLSX";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.14.2;
+			};
+		};
+		321829122FA4AD7F006BB5CE /* XCRemoteSwiftPackageReference "xlsxwriter" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/damuellen/xlsxwriter.swift";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
+		3218291C2FAB7546006BB5CE /* XCRemoteSwiftPackageReference "SwiftSDK" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/TelemetryDeck/SwiftSDK";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.12.0;
+			};
+		};
 		32C8B57F2F822036002E6746 /* XCRemoteSwiftPackageReference "swift-log" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/apple/swift-log.git";
@@ -736,17 +773,24 @@
 				minimumVersion = 5.0.0;
 			};
 		};
-		B7A1000521C34D5600AA1101 /* XCRemoteSwiftPackageReference "ZipArchive" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/ZipArchive/ZipArchive.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 2.5.0;
-			};
-		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		321829102FA4ACF8006BB5CE /* CoreXLSX */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3218290F2FA4ACF8006BB5CE /* XCRemoteSwiftPackageReference "CoreXLSX" */;
+			productName = CoreXLSX;
+		};
+		321829132FA4AD7F006BB5CE /* xlsxwriter */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 321829122FA4AD7F006BB5CE /* XCRemoteSwiftPackageReference "xlsxwriter" */;
+			productName = xlsxwriter;
+		};
+		3218291D2FAB7546006BB5CE /* TelemetryDeck */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3218291C2FAB7546006BB5CE /* XCRemoteSwiftPackageReference "SwiftSDK" */;
+			productName = TelemetryDeck;
+		};
 		32C8B5812F822036002E6746 /* Logging */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 32C8B57F2F822036002E6746 /* XCRemoteSwiftPackageReference "swift-log" */;
@@ -771,16 +815,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 9A934ECA2F54194E0063349A /* XCRemoteSwiftPackageReference "Pulse" */;
 			productName = PulseUI;
-		};
-		B7A1000321C34D5600AA1101 /* ZipArchive */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = B7A1000521C34D5600AA1101 /* XCRemoteSwiftPackageReference "ZipArchive" */;
-			productName = ZipArchive;
-		};
-		B7A1000421C34D5600AA1101 /* ZipArchive */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = B7A1000521C34D5600AA1101 /* XCRemoteSwiftPackageReference "ZipArchive" */;
-			productName = ZipArchive;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

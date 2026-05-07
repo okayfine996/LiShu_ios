@@ -315,6 +315,12 @@ nonisolated enum BusinessDataLogger {
             results: results.map { AnyEncodable($0) },
             error: error
         )
+
+        // Fan-out to TelemetryDeck: successful OCR imports only
+        if operation == "import", error?.isEmpty != false {
+            TelemetryDeckAnalytics.signal(TelemetryDeckAnalytics.Signal.ocrImported,
+                                          parameters: ["screen": screen])
+        }
     }
 
     private static func log(
@@ -350,6 +356,24 @@ nonisolated enum BusinessDataLogger {
             logger.error(message, metadata: metadata)
         } else {
             logger.notice(message, metadata: metadata)
+
+            // Fan-out to TelemetryDeck: successful creates/deletes only
+            switch (domain, operation) {
+            case ("record", "create"):
+                TelemetryDeckAnalytics.signal(TelemetryDeckAnalytics.Signal.recordCreated, parameters: ["screen": screen])
+            case ("record", "delete"):
+                TelemetryDeckAnalytics.signal(TelemetryDeckAnalytics.Signal.recordDeleted, parameters: ["screen": screen])
+            case ("contact", "create"):
+                TelemetryDeckAnalytics.signal(TelemetryDeckAnalytics.Signal.contactCreated, parameters: ["screen": screen])
+            case ("contact", "delete"):
+                TelemetryDeckAnalytics.signal(TelemetryDeckAnalytics.Signal.contactDeleted, parameters: ["screen": screen])
+            case ("event", "create"):
+                TelemetryDeckAnalytics.signal(TelemetryDeckAnalytics.Signal.eventCreated, parameters: ["screen": screen])
+            case ("event", "delete"):
+                TelemetryDeckAnalytics.signal(TelemetryDeckAnalytics.Signal.eventDeleted, parameters: ["screen": screen])
+            default:
+                break
+            }
         }
     }
 

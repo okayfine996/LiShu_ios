@@ -165,8 +165,8 @@ private struct ContactListRow<Content: View>: View {
 struct ContactListToolbarMenu: View {
     let onAddContact: () -> Void
     let onBatchImport: () -> Void
-    let onExportCSV: () -> Void
-    let onImportCSV: () -> Void
+    let onExportXLSX: () -> Void
+    let onImportXLSX: () -> Void
     let onDownloadTemplate: () -> Void
 
     var body: some View {
@@ -181,16 +181,16 @@ struct ContactListToolbarMenu: View {
 
             Divider()
 
-            Button(action: onExportCSV) {
-                Label(String(localized: "contact.csv.export"), systemImage: "square.and.arrow.up")
+            Button(action: onExportXLSX) {
+                Label(String(localized: "contact.excel.export"), systemImage: "square.and.arrow.up")
             }
 
-            Button(action: onImportCSV) {
-                Label(String(localized: "contact.csv.import"), systemImage: "square.and.arrow.down")
+            Button(action: onImportXLSX) {
+                Label(String(localized: "contact.excel.import"), systemImage: "square.and.arrow.down")
             }
 
             Button(action: onDownloadTemplate) {
-                Label(String(localized: "contact.csv.template"), systemImage: "doc.text")
+                Label(String(localized: "contact.excel.template"), systemImage: "doc.text")
             }
         } label: {
             Image(systemName: "plus")

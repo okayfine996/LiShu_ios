@@ -3,12 +3,12 @@ import Foundation
 import Testing
 
 @MainActor
-struct CSVImportPreviewViewModelTests {
+struct ImportPreviewViewModelTests {
     @Test func selectAllOnlySelectsImportableRows() {
-        let viewModel = CSVImportPreviewViewModel(previewResult: CSVImportPreviewResult(
-            sourceFileName: "preview.csv",
+        let viewModel = ImportPreviewViewModel(previewResult: ImportPreviewResult(
+            sourceFileName: "preview.xlsx",
             items: [
-                CSVImportPreviewItem(
+                ImportPreviewItem(
                     rowNumber: 2,
                     isSelected: true,
                     contactName: "张三",
@@ -24,7 +24,7 @@ struct CSVImportPreviewViewModelTests {
                     trailingText: "¥800",
                     detailText: "2026-04-09 · 送出 · 金额",
                     status: .ready,
-                    payload: CSVImportPayload(
+                    payload: ImportPayload(
                         contactName: "张三",
                         eventName: "婚礼",
                         eventType: .wedding,
@@ -38,7 +38,7 @@ struct CSVImportPreviewViewModelTests {
                         typeData: .monetary(MonetaryData(amount: 800, paymentMethod: PaymentMethod.cash.rawValue, returnedAmount: 0))
                     )
                 ),
-                CSVImportPreviewItem(
+                ImportPreviewItem(
                     rowNumber: 3,
                     isSelected: false,
                     contactName: "李四",
@@ -72,10 +72,10 @@ struct CSVImportPreviewViewModelTests {
     }
 
     @Test func importingDisablesFurtherSelectionAndConfirm() {
-        let viewModel = CSVImportPreviewViewModel(previewResult: CSVImportPreviewResult(
-            sourceFileName: "preview.csv",
+        let viewModel = ImportPreviewViewModel(previewResult: ImportPreviewResult(
+            sourceFileName: "preview.xlsx",
             items: [
-                CSVImportPreviewItem(
+                ImportPreviewItem(
                     rowNumber: 2,
                     isSelected: true,
                     contactName: "张三",
@@ -91,7 +91,7 @@ struct CSVImportPreviewViewModelTests {
                     trailingText: "¥800",
                     detailText: "2026-04-09 · 送出 · 金额",
                     status: .ready,
-                    payload: CSVImportPayload(
+                    payload: ImportPayload(
                         contactName: "张三",
                         eventName: "婚礼",
                         eventType: .wedding,

@@ -17,30 +17,30 @@ nonisolated struct ContactImportResult {
 
 // MARK: - Import Preview Results
 
-nonisolated struct CSVImportPreviewResult {
+nonisolated struct ImportPreviewResult {
     let sourceFileName: String
-    var items: [CSVImportPreviewItem]
+    var items: [ImportPreviewItem]
     var skipped: Int = 0
     var errors: Int = 0
 }
 
-nonisolated struct LedgerCSVImportPreviewResult {
+nonisolated struct LedgerImportPreviewResult {
     let sourceFileName: String
     let eventName: String
-    var items: [LedgerCSVImportPreviewItem]
+    var items: [LedgerImportPreviewItem]
     var skipped: Int = 0
     var errors: Int = 0
 }
 
-nonisolated struct ContactCSVPreviewResult {
+nonisolated struct ContactPreviewResult {
     let sourceFileName: String
-    var items: [ContactCSVPreviewItem]
+    var items: [ContactPreviewItem]
     var errors: Int = 0
 }
 
 // MARK: - Import Preview Items
 
-nonisolated struct CSVImportPreviewItem: Identifiable {
+nonisolated struct ImportPreviewItem: Identifiable {
     let id = UUID()
     let rowNumber: Int
     var isSelected: Bool
@@ -56,8 +56,8 @@ nonisolated struct CSVImportPreviewItem: Identifiable {
     let contextText: String
     let trailingText: String
     let detailText: String
-    let status: CSVImportPreviewStatus
-    let payload: CSVImportPayload?
+    let status: ImportPreviewStatus
+    let payload: ImportPayload?
 
     nonisolated var isImportable: Bool {
         switch status {
@@ -78,7 +78,7 @@ nonisolated struct CSVImportPreviewItem: Identifiable {
     }
 }
 
-nonisolated struct LedgerCSVImportPreviewItem: Identifiable {
+nonisolated struct LedgerImportPreviewItem: Identifiable {
     let id = UUID()
     let rowNumber: Int
     var isSelected: Bool
@@ -86,8 +86,8 @@ nonisolated struct LedgerCSVImportPreviewItem: Identifiable {
     let contextText: String
     let detailText: String
     let trailingText: String
-    let status: CSVImportPreviewStatus
-    let payload: LedgerCSVImportPayload?
+    let status: ImportPreviewStatus
+    let payload: LedgerImportPayload?
 
     nonisolated var isImportable: Bool {
         switch status {
@@ -108,22 +108,22 @@ nonisolated struct LedgerCSVImportPreviewItem: Identifiable {
     }
 }
 
-nonisolated struct ContactCSVPreviewItem: Identifiable {
+nonisolated struct ContactPreviewItem: Identifiable {
     let id = UUID()
     let rowNumber: Int
     var isSelected: Bool
     let name: String
     let detailText: String
-    let status: CSVImportPreviewStatus
-    let payload: ContactCSVPayload?
+    let status: ImportPreviewStatus
+    let payload: ContactPayload?
 
     init(
         rowNumber: Int,
         isSelected: Bool,
         name: String,
         detailText: String,
-        status: CSVImportPreviewStatus,
-        payload: ContactCSVPayload? = nil
+        status: ImportPreviewStatus,
+        payload: ContactPayload? = nil
     ) {
         self.rowNumber = rowNumber
         self.isSelected = isSelected
@@ -149,22 +149,22 @@ nonisolated struct ContactCSVPreviewItem: Identifiable {
 
 // MARK: - Export Preview Results
 
-nonisolated struct CSVExportPreviewResult {
+nonisolated struct ExportPreviewResult {
     let recordType: RecordType
-    var items: [CSVExportPreviewItem]
+    var items: [ExportPreviewItem]
     var skipped: Int = 0
 }
 
-nonisolated struct LedgerCSVExportPreviewResult {
+nonisolated struct LedgerExportPreviewResult {
     let eventID: PersistentIdentifier
     let eventName: String
-    var items: [LedgerCSVExportPreviewItem]
+    var items: [LedgerExportPreviewItem]
     var skipped: Int = 0
 }
 
 // MARK: - Export Preview Items
 
-nonisolated struct CSVExportPreviewItem: Identifiable {
+nonisolated struct ExportPreviewItem: Identifiable {
     let id = UUID()
     let rowNumber: Int
     var isSelected: Bool
@@ -172,8 +172,8 @@ nonisolated struct CSVExportPreviewItem: Identifiable {
     let contextText: String
     let detailText: String
     let trailingText: String
-    let status: CSVExportPreviewStatus
-    let payload: CSVExportPayload?
+    let status: ExportPreviewStatus
+    let payload: ExportPayload?
 
     nonisolated var isExportable: Bool {
         switch status {
@@ -194,7 +194,7 @@ nonisolated struct CSVExportPreviewItem: Identifiable {
     }
 }
 
-nonisolated struct LedgerCSVExportPreviewItem: Identifiable {
+nonisolated struct LedgerExportPreviewItem: Identifiable {
     let id = UUID()
     let rowNumber: Int
     var isSelected: Bool
@@ -202,8 +202,8 @@ nonisolated struct LedgerCSVExportPreviewItem: Identifiable {
     let contextText: String
     let detailText: String
     let trailingText: String
-    let status: CSVExportPreviewStatus
-    let payload: LedgerCSVExportPayload?
+    let status: ExportPreviewStatus
+    let payload: LedgerExportPayload?
 
     nonisolated var isExportable: Bool {
         switch status {
@@ -226,12 +226,12 @@ nonisolated struct LedgerCSVExportPreviewItem: Identifiable {
 
 // MARK: - Status Enums
 
-nonisolated enum CSVExportPreviewStatus: Equatable {
+nonisolated enum ExportPreviewStatus: Equatable {
     case ready
     case skipped(String)
 }
 
-nonisolated enum CSVImportPreviewStatus: Equatable {
+nonisolated enum ImportPreviewStatus: Equatable {
     case ready
     case skipped(String)
     case error(String)
@@ -239,15 +239,15 @@ nonisolated enum CSVImportPreviewStatus: Equatable {
 
 // MARK: - Payloads
 
-nonisolated struct CSVExportPayload {
-    let csvRow: String
+nonisolated struct ExportPayload {
+    let rowValues: [String: XLSXCellValue]
 }
 
-nonisolated struct LedgerCSVExportPayload {
-    let csvRow: String
+nonisolated struct LedgerExportPayload {
+    let rowValues: [String: XLSXCellValue]
 }
 
-nonisolated struct CSVImportPayload {
+nonisolated struct ImportPayload {
     let contactName: String
     let eventName: String
     let eventType: EventType
@@ -261,7 +261,7 @@ nonisolated struct CSVImportPayload {
     let typeData: RecordTypeData
 }
 
-nonisolated struct LedgerCSVImportPayload {
+nonisolated struct LedgerImportPayload {
     let contactName: String
     let date: Date
     let note: String
@@ -270,7 +270,7 @@ nonisolated struct LedgerCSVImportPayload {
     let paymentMethod: PaymentMethod
 }
 
-nonisolated struct ContactCSVPayload {
+nonisolated struct ContactPayload {
     let name: String
     var phone: String?
     var relation: String?
@@ -286,11 +286,13 @@ nonisolated struct ContactCSVPayload {
 nonisolated enum ImportError: LocalizedError {
     case accessDenied
     case invalidFormat
+    case tooManyRows
 
     var errorDescription: String? {
         switch self {
         case .accessDenied: String(localized: "import.error.accessDenied")
         case .invalidFormat: String(localized: "import.error.invalidFormat")
+        case .tooManyRows: String(localized: "import.error.tooManyRows")
         }
     }
 }

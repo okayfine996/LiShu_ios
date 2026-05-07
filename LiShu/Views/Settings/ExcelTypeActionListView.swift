@@ -1,7 +1,7 @@
 import SwiftData
 import SwiftUI
 
-enum CSVTypeActionMode {
+enum ExcelTypeActionMode {
     case templateDownload
     case typedExport
 
@@ -10,7 +10,7 @@ enum CSVTypeActionMode {
         case .templateDownload:
             String(localized: "settings.data.downloadTemplate")
         case .typedExport:
-            String(localized: "settings.data.exportCSV")
+            String(localized: "settings.data.exportExcel")
         }
     }
 
@@ -33,7 +33,7 @@ enum CSVTypeActionMode {
     }
 }
 
-struct CSVTypeActionListView: View {
+struct ExcelTypeActionListView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(SubscriptionManager.self) private var subscriptionManager
     @Environment(DebugOverrideManager.self) private var debugOverrides
@@ -42,12 +42,12 @@ struct CSVTypeActionListView: View {
     @State private var exportError: String?
     @State private var showProSheet = false
     @State private var showExportPreview = false
-    @State private var exportPreviewViewModel: CSVExportPreviewViewModel?
+    @State private var exportPreviewViewModel: ExportPreviewViewModel?
     @State private var isPreparingExportPreview = false
 
-    let mode: CSVTypeActionMode
+    let mode: ExcelTypeActionMode
 
-    private let csvTypes: [RecordType] = [.monetary, .gift, .favor, .banquet]
+    private let excelTypes: [RecordType] = [.monetary, .gift, .favor, .banquet]
 
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -55,7 +55,7 @@ struct CSVTypeActionListView: View {
                 sectionHeader(mode.title)
 
                 VStack(spacing: 0) {
-                    ForEach(Array(csvTypes.enumerated()), id: \.offset) { index, recordType in
+                    ForEach(Array(excelTypes.enumerated()), id: \.offset) { index, recordType in
                         if index > 0 {
                             Divider()
                                 .background(DesignSystem.Colors.separator)
@@ -87,7 +87,7 @@ struct CSVTypeActionListView: View {
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(isPresented: $showExportPreview) {
             if let exportPreviewViewModel {
-                CSVExportPreviewView(viewModel: exportPreviewViewModel) { fileURL in
+                ExportPreviewView(viewModel: exportPreviewViewModel) { fileURL in
                     handleConfirmedExport(fileURL: fileURL)
                 }
             }
@@ -98,17 +98,13 @@ struct CSVTypeActionListView: View {
             }
         }
         .sheet(item: Binding(
-            get: { shareURL.map { CSVTypeShareableFile(id: $0.absoluteString, url: $0) } },
-            set: {
-                if let url = shareURL, $0 == nil {
-                    try? FileManager.default.removeItem(at: url)
-                }
-                shareURL = $0?.url
-            }
+            get: { shareURL.map { ExcelTypeShareableFile(id: $0.absoluteString, url: $0) } },
+            set: { shareURL = $0?.url }
         )) { item in
             ShareSheet(url: item.url) {
+                let dir = item.url.deletingLastPathComponent()
                 shareURL = nil
-                try? FileManager.default.removeItem(at: item.url)
+                try? FileManager.default.removeItem(at: dir)
             }
         }
         .alert(String(localized: "common.error"), isPresented: Binding(
@@ -125,7 +121,7 @@ struct CSVTypeActionListView: View {
         }
         .overlay {
             if isPreparingExportPreview {
-                csvExportLoadingOverlay
+                excelExportLoadingOverlay
             }
         }
         .onChange(of: showExportPreview) { _, newValue in
@@ -200,11 +196,11 @@ struct CSVTypeActionListView: View {
         case .templateDownload:
             downloadTemplate(for: recordType)
         case .typedExport:
-            exportCSV(for: recordType)
+            exportExcel(for: recordType)
         }
     }
 
-    private func exportCSV(for recordType: RecordType) {
+    private func exportExcel(for recordType: RecordType) {
         guard effectiveProAccessEnabled else {
             showProSheet = true
             return
@@ -215,11 +211,11 @@ struct CSVTypeActionListView: View {
 
         Task {
             do {
-                let preview = try await ExportService.previewExportCSVAsync(
+                let preview = try await ExportService.previewExportXLSXAsync(
                     container: modelContext.container,
                     recordType: recordType
                 )
-                exportPreviewViewModel = CSVExportPreviewViewModel(previewResult: preview)
+                exportPreviewViewModel = ExportPreviewViewModel(previewResult: preview)
                 showExportPreview = true
             } catch {
                 exportError = error.localizedDescription
@@ -237,21 +233,13 @@ struct CSVTypeActionListView: View {
 
     private func downloadTemplate(for recordType: RecordType) {
         do {
-            let tempDir = FileManager.default.temporaryDirectory
-            let fileName = "lishu_\(recordType.rawValue)_template.csv"
-            guard let data = ExportService.templateCSV(for: recordType).data(using: .utf8) else {
-                exportError = String(localized: "settings.data.export_encoding_failed")
-                return
-            }
-            let fileURL = tempDir.appendingPathComponent(fileName)
-            try data.write(to: fileURL)
-            shareURL = fileURL
+            shareURL = try ExportService.templateXLSX(for: recordType)
         } catch {
             exportError = error.localizedDescription
         }
     }
 
-    private var csvExportLoadingOverlay: some View {
+    private var excelExportLoadingOverlay: some View {
         ZStack {
             DesignSystem.Colors.bgPage.opacity(0.7)
                 .ignoresSafeArea()
@@ -271,14 +259,14 @@ struct CSVTypeActionListView: View {
     }
 }
 
-private struct CSVTypeShareableFile: Identifiable {
+private struct ExcelTypeShareableFile: Identifiable {
     let id: String
     let url: URL
 }
 
 #Preview {
     NavigationStack {
-        CSVTypeActionListView(mode: .templateDownload)
+        ExcelTypeActionListView(mode: .templateDownload)
             .environment(SubscriptionManager.shared)
             .environment(DebugOverrideManager())
     }

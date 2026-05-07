@@ -12,6 +12,7 @@ class AppDelegate: NSObject, UIApplicationDelegate, @preconcurrency UNUserNotifi
         didFinishLaunchingWithOptions _: [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
         PulseDiagnostics.configureIfNeeded()
+        TelemetryDeckAnalytics.configureIfNeeded()
         UNUserNotificationCenter.current().delegate = self
         NotificationManager.shared.registerNotificationCategories()
         appLifecycleLogger.info("Application finished launching")

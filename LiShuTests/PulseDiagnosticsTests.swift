@@ -3,7 +3,7 @@ import Foundation
 import Logging
 import SwiftData
 import Testing
-import ZipArchive
+import ZIPFoundation
 
 private let pulseDiagnosticsLoggerStoreLock = NSLock()
 
@@ -426,13 +426,7 @@ struct PulseDiagnosticsTests {
         let destinationURL = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)
         try FileManager.default.createDirectory(at: destinationURL, withIntermediateDirectories: true)
-
-        try SSZipArchive.unzipFile(
-            atPath: archiveURL.path,
-            toDestination: destinationURL.path,
-            overwrite: true,
-            password: DiagnosticsExportConstants.archivePassword
-        )
+        try FileManager.default.unzipItem(at: archiveURL, to: destinationURL)
 
         let extractedFiles = try FileManager.default.contentsOfDirectory(
             at: destinationURL,

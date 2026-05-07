@@ -2,11 +2,33 @@ import Foundation
 import Logging
 import SwiftData
 
+/// Thread-safe DateFormatter wrapper.
+/// DateFormatter is not thread-safe per Apple docs; this wrapper serialises all
+/// access with NSLock so the formatter can be safely shared across Task.detached
+/// background threads used in XLSX export/import.
+final class ThreadSafeDateFormatter: @unchecked Sendable {
+    private let lock = NSLock()
+    private let formatter: DateFormatter
+
+    init(_ configure: (DateFormatter) -> Void) {
+        formatter = DateFormatter()
+        configure(formatter)
+    }
+
+    func string(from date: Date) -> String {
+        lock.withLock { formatter.string(from: date) }
+    }
+
+    func date(from string: String) -> Date? {
+        lock.withLock { formatter.date(from: string) }
+    }
+}
+
 enum ExportService {
     nonisolated static let exportLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.export)
     nonisolated static let importLogger = PulseDiagnostics.makeLogger(label: AppLogLabel.importFlow)
-    nonisolated static let csvDateFormat = "yyyy-MM-dd"
-    nonisolated static let csvLegacyDateFormat = "yyyy-MM-dd HH:mm"
+    nonisolated static let dateFormat = "yyyy-MM-dd"
+    nonisolated static let legacyDateFormat = "yyyy-MM-dd HH:mm"
     nonisolated static let commonColumns = ["联系人", "事件", "事件类型", "场景标签", "方向", "日期", "备注", "情分分量"]
     nonisolated static let ledgerColumns = ["联系人", "日期", "备注", "情分分量", "金额", "支付方式"]
     nonisolated static let typeSpecificColumns: [RecordType: [String]] = [
@@ -18,18 +40,17 @@ enum ExportService {
 
     nonisolated static let allowedColumns = Set(commonColumns + ledgerColumns + typeSpecificColumns.values.flatMap(\.self))
 
-    nonisolated static var csvDateFormatter: DateFormatter {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "zh_Hans")
-        formatter.dateFormat = csvDateFormat
-        return formatter
+    /// Maximum number of data rows accepted per import to prevent OOM on large files.
+    nonisolated static let maxImportRows = 5000
+
+    nonisolated static let dateFormatter = ThreadSafeDateFormatter {
+        $0.locale = Locale(identifier: "zh_Hans")
+        $0.dateFormat = dateFormat
     }
 
-    nonisolated static var csvLegacyDateFormatter: DateFormatter {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "zh_Hans")
-        formatter.dateFormat = csvLegacyDateFormat
-        return formatter
+    nonisolated static let legacyDateFormatter = ThreadSafeDateFormatter {
+        $0.locale = Locale(identifier: "zh_Hans")
+        $0.dateFormat = legacyDateFormat
     }
 
     nonisolated static func uiTestDelayNanoseconds(environmentKey: String) -> UInt64? {
