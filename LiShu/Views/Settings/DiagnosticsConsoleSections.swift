@@ -21,6 +21,10 @@ struct DiagnosticsConsoleContentView: View {
     let onResetOnboarding: () -> Void
     let onRefreshEntitlements: () -> Void
     let onReloadProducts: () -> Void
+    let onForceShowAd: () -> Void
+    let onResetAdFrequency: () -> Void
+    let onForcePreloadAd: () -> Void
+    let adStatusDescription: String
 
     var body: some View {
         VStack(spacing: 20) {
@@ -95,6 +99,31 @@ struct DiagnosticsConsoleContentView: View {
                         role: .destructive,
                         accessibilityIdentifier: "debug.notification.clearAll.button",
                         action: onClearAllNotifications
+                    ),
+                ]
+            )
+
+            DiagnosticsActionSection(
+                title: "广告调试",
+                rows: [
+                    .action(
+                        icon: "rectangle.inset.filled.and.person.filled",
+                        title: String(localized: "debug.ad.forceShow"),
+                        action: onForceShowAd
+                    ),
+                    .action(
+                        icon: "arrow.clockwise",
+                        title: String(localized: "debug.ad.resetFrequency"),
+                        action: onResetAdFrequency
+                    ),
+                    .action(
+                        icon: "arrow.down.circle.fill",
+                        title: String(localized: "debug.ad.forcePreload"),
+                        action: onForcePreloadAd
+                    ),
+                    .info(
+                        title: String(localized: "debug.ad.status"),
+                        value: adStatusDescription
                     ),
                 ]
             )

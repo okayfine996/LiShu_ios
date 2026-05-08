@@ -102,6 +102,50 @@ final class AdManager: NSObject {
             && Date().timeIntervalSince(lastNativeAdTime) > nativeAdCooldown
             && nativeAdShowCount < maxNativeAdPerSession
     }
+
+    // MARK: - 调试
+
+    /// 强制展示原生广告，绕过频控和 Pro 检查。返回 false 表示广告尚未加载。
+    @discardableResult
+    func forceShowNativeAd() -> Bool {
+        guard nativeAd != nil else {
+            preloadNativeAd()
+            adLogger.info("Force show: no ad loaded, preloading")
+            return false
+        }
+        showNativeAdOverlay = true
+        adLogger.info("Force show: presenting native ad")
+        return true
+    }
+
+    /// 重置频控计数器（冷却时间 + 会话展示次数）
+    func resetFrequencyControls() {
+        lastNativeAdTime = .distantPast
+        nativeAdShowCount = 0
+        adLogger.info("Frequency controls reset")
+    }
+
+    /// 当前广告状态描述，用于诊断面板
+    var nativeAdStatusDescription: String {
+        let loaded = nativeAd != nil ? "已加载" : "未加载"
+        let cooldownRemaining = max(0, nativeAdCooldown - Date().timeIntervalSince(lastNativeAdTime))
+        let cooldown = cooldownRemaining > 0 ? "\(Int(cooldownRemaining))s" : "无"
+        return "\(loaded) · 展示 \(nativeAdShowCount)/\(maxNativeAdPerSession) · 冷却 \(cooldown)"
+    }
+
+    /// 强制重新预加载广告（绕过 Pro 检查）
+    func forcePreloadNativeAd() {
+        let loader = AdLoader(
+            adUnitID: nativeAdUnitID,
+            rootViewController: nil,
+            adTypes: [.native],
+            options: [NativeAdMediaAdLoaderOptions()]
+        )
+        loader.delegate = self
+        loader.load(Request())
+        adLoader = loader
+        adLogger.info("Force preloading native ad")
+    }
 }
 
 // MARK: - AdLoaderDelegate + NativeAdLoaderDelegate (原生广告)

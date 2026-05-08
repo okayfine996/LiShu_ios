@@ -44,7 +44,11 @@ struct DiagnosticsConsoleContainerView: View {
                 onClearAllNotifications: promptClearAllNotifications,
                 onResetOnboarding: resetOnboarding,
                 onRefreshEntitlements: refreshEntitlements,
-                onReloadProducts: reloadProducts
+                onReloadProducts: reloadProducts,
+                onForceShowAd: forceShowAd,
+                onResetAdFrequency: resetAdFrequency,
+                onForcePreloadAd: forcePreloadAd,
+                adStatusDescription: AdManager.shared.nativeAdStatusDescription
             )
             .padding(16)
         }
@@ -211,6 +215,23 @@ struct DiagnosticsConsoleContainerView: View {
             await subscriptionManager.reloadProducts()
             statusMessage = "已重新拉取商品"
         }
+    }
+
+    private func forceShowAd() {
+        let success = DebugConsoleActions.forceShowNativeAd()
+        statusMessage = success
+            ? String(localized: "debug.ad.forceShow.success")
+            : String(localized: "debug.ad.forceShow.noAd")
+    }
+
+    private func resetAdFrequency() {
+        DebugConsoleActions.resetAdFrequency()
+        statusMessage = String(localized: "debug.ad.resetFrequency.result")
+    }
+
+    private func forcePreloadAd() {
+        DebugConsoleActions.forcePreloadAd()
+        statusMessage = String(localized: "debug.ad.forcePreload.result")
     }
 
     private func exportDiagnosticsLog(as format: DiagnosticsExportService.ExportFormat) {
