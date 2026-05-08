@@ -15,11 +15,11 @@ final class ThreadSafeDateFormatter: @unchecked Sendable {
         configure(formatter)
     }
 
-    func string(from date: Date) -> String {
+    nonisolated func string(from date: Date) -> String {
         lock.withLock { formatter.string(from: date) }
     }
 
-    func date(from string: String) -> Date? {
+    nonisolated func date(from string: String) -> Date? {
         lock.withLock { formatter.date(from: string) }
     }
 }

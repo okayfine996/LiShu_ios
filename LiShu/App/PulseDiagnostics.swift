@@ -165,8 +165,7 @@ nonisolated enum AppLogLabel {
         }
 
         nonisolated static func messageSnapshots(label: String) throws -> [PulseDiagnosticsMessageSnapshot] {
-            try LoggerStore.shared.allMessages()
-                .filter { $0.label == label }
+            try LoggerStore.shared.messages(predicate: NSPredicate(format: "label == %@", label))
                 .map {
                     PulseDiagnosticsMessageSnapshot(
                         text: $0.text,
