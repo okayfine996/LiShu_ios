@@ -5,7 +5,6 @@ import SwiftUI
 
 struct NativeAdOverlayModifier: ViewModifier {
     @Bindable var adManager: AdManager
-    var onDismiss: () -> Void
 
     func body(content: Content) -> some View {
         content
@@ -18,54 +17,55 @@ struct NativeAdOverlayModifier: ViewModifier {
                                 adManager.dismissNativeAd()
                             }
 
-                        VStack(spacing: 16) {
-                            NativeAdCardRepresentable(nativeAd: nativeAd)
-                                .frame(
-                                    width: UIScreen.main.bounds.width - 64,
-                                    height: 400
-                                )
-                                .clipShape(
-                                    RoundedRectangle(cornerRadius: 20)
-                                )
-                                .shadow(
-                                    color: .black.opacity(0.2),
-                                    radius: 20, y: 10
-                                )
-                                .overlay(alignment: .topTrailing) {
-                                    Button {
-                                        adManager.dismissNativeAd()
-                                    } label: {
-                                        Image(systemName: "xmark")
-                                            .font(.system(size: 11, weight: .bold))
-                                            .foregroundStyle(.white)
-                                            .frame(width: 26, height: 26)
-                                            .background(
-                                                Color.black.opacity(0.4),
-                                                in: Circle()
-                                            )
-                                    }
-                                    .padding(10)
-                                }
+                        GeometryReader { geo in
+                            let cardWidth = geo.size.width - 64
+                            let cardHeight = min(400, geo.size.height * 0.55)
 
-                            Button {
-                                adManager.dismissNativeAd()
-                            } label: {
-                                HStack(spacing: 6) {
-                                    Image(systemName: "sparkles")
-                                        .font(.system(size: 12))
-                                    Text(String(localized: "ad.upgradePro"))
-                                        .font(DesignSystem.Typography.caption)
+                            VStack(spacing: 16) {
+                                NativeAdCardRepresentable(nativeAd: nativeAd)
+                                    .frame(width: cardWidth, height: cardHeight)
+                                    .clipShape(RoundedRectangle(cornerRadius: 20))
+                                    .shadow(
+                                        color: .black.opacity(0.2),
+                                        radius: 20, y: 10
+                                    )
+                                    .overlay(alignment: .topLeading) {
+                                        Button {
+                                            adManager.dismissNativeAd()
+                                        } label: {
+                                            Image(systemName: "xmark")
+                                                .font(.system(size: 11, weight: .bold))
+                                                .foregroundStyle(.white)
+                                                .frame(width: 26, height: 26)
+                                                .background(
+                                                    Color.black.opacity(0.4),
+                                                    in: Circle()
+                                                )
+                                        }
+                                        .padding(10)
+                                    }
+
+                                Button {
+                                    adManager.dismissNativeAd()
+                                } label: {
+                                    HStack(spacing: 6) {
+                                        Image(systemName: "sparkles")
+                                            .font(.system(size: 12))
+                                        Text(String(localized: "ad.upgradePro"))
+                                            .font(DesignSystem.Typography.caption)
+                                    }
+                                    .foregroundStyle(.white)
+                                    .padding(.horizontal, 20)
+                                    .padding(.vertical, 10)
+                                    .background(
+                                        Color.white.opacity(0.2),
+                                        in: Capsule()
+                                    )
                                 }
-                                .foregroundStyle(.white)
-                                .padding(.horizontal, 20)
-                                .padding(.vertical, 10)
-                                .background(
-                                    Color.white.opacity(0.2),
-                                    in: Capsule()
-                                )
                             }
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .transition(.scale(scale: 0.9).combined(with: .opacity))
                         }
-                        .transition(.scale(scale: 0.9).combined(with: .opacity))
                     }
                     .animation(
                         .spring(duration: 0.35),
@@ -81,13 +81,8 @@ struct NativeAdOverlayModifier: ViewModifier {
 }
 
 extension View {
-    func nativeAdOverlay(
-        adManager: AdManager,
-        onDismiss: @escaping () -> Void
-    ) -> some View {
-        modifier(
-            NativeAdOverlayModifier(adManager: adManager, onDismiss: onDismiss)
-        )
+    func nativeAdOverlay(adManager: AdManager) -> some View {
+        modifier(NativeAdOverlayModifier(adManager: adManager))
     }
 }
 
@@ -147,7 +142,7 @@ private struct NativeAdCardRepresentable: UIViewRepresentable {
 
         // 广告标签
         let badge = UILabel()
-        badge.text = "Ad"
+        badge.text = String(localized: "ad.badge")
         badge.font = .systemFont(ofSize: 9, weight: .bold)
         badge.textColor = .white
         badge.textAlignment = .center

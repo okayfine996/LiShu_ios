@@ -113,16 +113,7 @@ struct LiShuApp: App {
             .onAppear {
                 InteractionLogger.screenView("app.splash")
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                    if settings.hasSeenOnboarding {
-                        AdManager.shared.showAppOpenAdIfAvailable {
-                            showSplash = false
-                        }
-                        if !AdManager.shared.isShowingAd {
-                            showSplash = false
-                        }
-                    } else {
-                        showSplash = false
-                    }
+                    showSplash = false
                 }
             }
             .onChange(of: showSplash) { _, newValue in
@@ -154,9 +145,6 @@ struct LiShuApp: App {
                 if newPhase == .active {
                     Task {
                         await subscriptionManager.checkEntitlements()
-                    }
-                    if !showSplash, settings.hasSeenOnboarding {
-                        AdManager.shared.showAppOpenAdIfAvailable()
                     }
                 }
             }

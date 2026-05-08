@@ -130,7 +130,9 @@ struct AddContactView: View {
                 result: "success",
                 metadata: ["contact_name": viewModel.name.trimmingCharacters(in: .whitespacesAndNewlines)]
             )
-            AdManager.shared.scheduleNativeAd()
+            if viewModel.editingContact == nil {
+                AdManager.shared.scheduleNativeAd()
+            }
             dismiss()
         } else if viewModel.needsProUpgrade {
             InteractionLogger.submit(
