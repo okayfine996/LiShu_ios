@@ -22,6 +22,10 @@ struct EventDetailView: View {
     @State var ledgerXLSXError: String?
     @State var isPreparingLedgerXLSX = false
     @State var showLegacyAnomalyList = false
+    @State var calendarSyncSuccess = false
+    @State var calendarSyncError: String?
+    @State var calendarPermissionDenied = false
+    @Environment(\.openURL) var openURL
 
     var body: some View {
         ZStack {
@@ -38,7 +42,8 @@ struct EventDetailView: View {
                         onShowLegacyAnomalies: { showLegacyAnomalyList = true },
                         onOpenGiftReceivingMode: { isShowingGiftReceivingMode = true },
                         onSmartReturnGift: smartReturnGiftCallback(for: event),
-                        smartReturnGiftBaseline: smartReturnGiftResult?.baselineAmount
+                        smartReturnGiftBaseline: smartReturnGiftResult?.baselineAmount,
+                        onAddToCalendar: syncToCalendar
                     )
                 } else {
                     ProgressView()
@@ -104,6 +109,26 @@ struct EventDetailView: View {
         } message: {
             if let ledgerXLSXError {
                 Text(ledgerXLSXError)
+            }
+        }
+        .alert(String(localized: "event.detail.calendar.successTitle"), isPresented: $calendarSyncSuccess) {
+            Button(String(localized: "common.ok")) {}
+        } message: {
+            Text(String(localized: "event.detail.calendar.successMessage"))
+        }
+        .alert(String(localized: "calendar.accessDenied.title"), isPresented: $calendarPermissionDenied) {
+            Button(String(localized: "common.cancel"), role: .cancel) {}
+            Button(String(localized: "common.openSettings")) {
+                if let url = URL(string: "app-settings:") { openURL(url) }
+            }
+        } message: {
+            Text(String(localized: "calendar.accessDenied.message"))
+        }
+        .alert(String(localized: "common.error"), isPresented: calendarSyncErrorBinding) {
+            Button(String(localized: "common.ok"), action: clearCalendarSyncError)
+        } message: {
+            if let calendarSyncError {
+                Text(calendarSyncError)
             }
         }
         .overlay {

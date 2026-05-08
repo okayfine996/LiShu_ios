@@ -35,6 +35,18 @@
         }
       }
     },
+    "NSCalendarsWriteOnlyAccessUsageDescription" : {
+      "comment" : "Privacy - Calendars Write Only Usage Description",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "用于将礼数事件添加到系统日历，方便提醒重要人情往来"
+          }
+        }
+      }
+    },
     "NSCameraUsageDescription" : {
       "comment" : "Privacy - Camera Usage Description",
       "localizations" : {

@@ -11,6 +11,7 @@ struct EventDetailStandardView: View {
     let onAddRecord: () -> Void
     var onSmartReturnGift: (() -> Void)?
     var smartReturnGiftBaseline: Double?
+    var onAddToCalendar: (() -> Void)?
 
     private let rowInsets = EdgeInsets(
         top: 0,
@@ -32,7 +33,8 @@ struct EventDetailStandardView: View {
                     event: event,
                     formattedDate: formattedDate,
                     isUpcoming: isUpcoming,
-                    daysUntilEvent: daysUntilEvent
+                    daysUntilEvent: daysUntilEvent,
+                    onAddToCalendar: onAddToCalendar
                 )
             }
 

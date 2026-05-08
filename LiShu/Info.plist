@@ -14,6 +14,8 @@
 	<false/>
 	<key>NSCameraUsageDescription</key>
 	<string>用于拍摄礼簿照片进行 OCR 识别导入</string>
+	<key>NSCalendarsWriteOnlyAccessUsageDescription</key>
+	<string>用于将礼数事件添加到系统日历，方便提醒重要人情往来</string>
 	<key>NSContactsUsageDescription</key>
 	<string>用于从通讯录选择联系人并填充姓名和手机号</string>
 	<key>UIBackgroundModes</key>

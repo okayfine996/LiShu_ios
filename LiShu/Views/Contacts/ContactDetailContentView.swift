@@ -5,6 +5,7 @@ struct ContactDetailContentView: View {
     let viewModel: ContactDetailViewModel
     @Binding var currentCardPage: Int
     let onAddRecord: () -> Void
+    var onAddBirthdayToCalendar: (() -> Void)?
 
     var body: some View {
         VStack(spacing: 20) {
@@ -14,7 +15,11 @@ struct ContactDetailContentView: View {
                 viewModel: viewModel,
                 currentCardPage: $currentCardPage
             )
-            ContactDetailPersonalInfoSection(contact: contact, viewModel: viewModel)
+            ContactDetailPersonalInfoSection(
+                contact: contact,
+                viewModel: viewModel,
+                onAddBirthdayToCalendar: onAddBirthdayToCalendar
+            )
             ContactDetailTimelineSection(
                 records: viewModel.sortedRecords,
                 viewModel: viewModel,

@@ -23,6 +23,13 @@ extension EventDetailView {
         )
     }
 
+    var calendarSyncErrorBinding: Binding<Bool> {
+        Binding(
+            get: { calendarSyncError != nil },
+            set: { if !$0 { calendarSyncError = nil } }
+        )
+    }
+
     var ledgerShareURLBinding: Binding<EventDetailShareableFile?> {
         Binding(
             get: { ledgerShareURL.map { EventDetailShareableFile(id: $0.absoluteString, url: $0) } },
@@ -205,6 +212,27 @@ extension EventDetailView {
 
     func editEvent() {
         sheetRoute = .editEvent(eventID)
+    }
+
+    func syncToCalendar() {
+        guard let event = viewModel.event else { return }
+        Task { @MainActor in
+            let granted = await CalendarSyncManager.shared.requestWriteAccess()
+            guard granted else {
+                calendarPermissionDenied = true
+                return
+            }
+            do {
+                try CalendarSyncManager.shared.addEvent(event)
+                calendarSyncSuccess = true
+            } catch {
+                calendarSyncError = error.localizedDescription
+            }
+        }
+    }
+
+    func clearCalendarSyncError() {
+        calendarSyncError = nil
     }
 
     @ViewBuilder

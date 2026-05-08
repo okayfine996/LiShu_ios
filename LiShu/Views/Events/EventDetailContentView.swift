@@ -10,6 +10,7 @@ struct EventDetailContentView: View {
     let onOpenGiftReceivingMode: () -> Void
     var onSmartReturnGift: (() -> Void)?
     var smartReturnGiftBaseline: Double?
+    var onAddToCalendar: (() -> Void)?
 
     var body: some View {
         Group {
@@ -32,7 +33,8 @@ struct EventDetailContentView: View {
                     pendingDeleteRecord: $pendingDeleteRecord,
                     onAddRecord: onAddRecord,
                     onSmartReturnGift: onSmartReturnGift,
-                    smartReturnGiftBaseline: smartReturnGiftBaseline
+                    smartReturnGiftBaseline: smartReturnGiftBaseline,
+                    onAddToCalendar: onAddToCalendar
                 )
             }
         }
@@ -44,6 +46,7 @@ struct EventDetailHeroCard: View {
     let formattedDate: String
     let isUpcoming: Bool
     let daysUntilEvent: Int?
+    var onAddToCalendar: (() -> Void)?
 
     var body: some View {
         VStack(spacing: 12) {
@@ -104,6 +107,20 @@ struct EventDetailHeroCard: View {
                     .padding(.vertical, 6)
                     .background(DesignSystem.Colors.primary.opacity(0.12))
                     .clipShape(Capsule())
+            }
+
+            if let onAddToCalendar {
+                Button(action: onAddToCalendar) {
+                    Label(String(localized: "event.detail.addToCalendar"), systemImage: "calendar.badge.plus")
+                        .font(DesignSystem.Typography.small)
+                        .foregroundStyle(DesignSystem.Colors.primary)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(DesignSystem.Colors.primary.opacity(0.08))
+                        .clipShape(Capsule())
+                        .overlay(Capsule().stroke(DesignSystem.Colors.primary.opacity(0.3), lineWidth: 1))
+                }
+                .buttonStyle(.plain)
             }
         }
         .padding(20)

@@ -53,6 +53,7 @@ struct ContactDetailProfileSection: View {
 struct ContactDetailPersonalInfoSection: View {
     let contact: Contact
     let viewModel: ContactDetailViewModel
+    var onAddBirthdayToCalendar: (() -> Void)?
     @Environment(\.modelContext) private var modelContext
 
     var body: some View {
@@ -77,6 +78,24 @@ struct ContactDetailPersonalInfoSection: View {
                             viewModel.toggleBirthdayReminder(contact: contact, context: modelContext)
                         }
                     )
+                    if let onAddBirthdayToCalendar {
+                        ContactDetailInfoDivider()
+                        Button(action: onAddBirthdayToCalendar) {
+                            HStack(spacing: 12) {
+                                Image(systemName: "calendar.badge.plus")
+                                    .font(DesignSystem.Typography.body)
+                                    .foregroundStyle(DesignSystem.Colors.primary)
+                                    .frame(width: 24, height: 24)
+                                Text(String(localized: "contact.detail.addBirthdayToCalendar"))
+                                    .font(DesignSystem.Typography.caption)
+                                    .foregroundStyle(DesignSystem.Colors.textSecondary)
+                                Spacer()
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 12)
+                        }
+                        .buttonStyle(.plain)
+                    }
                     ContactDetailInfoDivider()
                 }
 
