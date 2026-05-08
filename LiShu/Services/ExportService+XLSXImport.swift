@@ -4,10 +4,6 @@ import SwiftData
 
 // MARK: - XLSX Import
 
-// Strongly-typed cache key for event deduplication during import.
-// Using a struct avoids the ambiguity of a "|"-delimited string key
-// when event names contain that character.
-
 extension ExportService {
     nonisolated static func previewXLSXAsync(url: URL) async throws -> ImportPreviewResult {
         try await Task.detached(priority: .userInitiated) {
@@ -70,7 +66,7 @@ extension ExportService {
             if eventName.isEmpty {
                 event = nil
             } else {
-                let eventKey = "\(eventName)|\(payload.eventType.rawValue)"
+                let eventKey = "\(eventName)\u{001F}\(payload.eventType.rawValue)"
                 if let cachedEvent = eventCache[eventKey] {
                     event = cachedEvent
                 } else {
