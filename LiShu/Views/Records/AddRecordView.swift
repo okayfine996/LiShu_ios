@@ -163,6 +163,7 @@ struct AddRecordView: View {
 
         if viewModel.save(context: modelContext) {
             guard andContinue else {
+                AdManager.shared.scheduleNativeAd()
                 dismiss()
                 return
             }

@@ -13,6 +13,7 @@ class AppDelegate: NSObject, UIApplicationDelegate, @preconcurrency UNUserNotifi
     ) -> Bool {
         PulseDiagnostics.configureIfNeeded()
         TelemetryDeckAnalytics.configureIfNeeded()
+        AdManager.shared.configure()
         UNUserNotificationCenter.current().delegate = self
         NotificationManager.shared.registerNotificationCategories()
         appLifecycleLogger.info("Application finished launching")

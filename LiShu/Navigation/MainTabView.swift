@@ -149,6 +149,7 @@ struct MainTabView: View {
         .sheet(item: $sheetRoute) { route in
             sheetContent(for: route)
         }
+        .nativeAdOverlay(adManager: AdManager.shared, onDismiss: {})
         .trackScreen(selectedTab.screenName, metadata: ["presentation": UILogPresentation.tab.rawValue])
         .onChange(of: selectedTab) { oldValue, newValue in
             guard oldValue != newValue else { return }

@@ -88,6 +88,27 @@
     "Action" : {
 
     },
+    "ad.badge" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "广告"
+          }
+        }
+      }
+    },
+    "ad.upgradePro" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "升级 Pro · 永久去除广告"
+          }
+        }
+      }
+    },
     "app.name" : {
       "localizations" : {
         "zh-Hans" : {
@@ -110,6 +131,56 @@
     },
     "BUTTONS" : {
 
+    },
+    "calendar.accessDenied.message" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请前往「设置 → 隐私与安全性 → 日历」，允许礼数写入日历。"
+          }
+        }
+      }
+    },
+    "calendar.accessDenied.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "需要日历权限"
+          }
+        }
+      }
+    },
+    "calendar.error.lunarDateConversionFailed" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法计算农历生日对应的公历日期，请重试。"
+          }
+        }
+      }
+    },
+    "calendar.error.missingBirthday" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "该联系人未设置生日。"
+          }
+        }
+      }
+    },
+    "calendar.error.noDefaultCalendar" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法获取默认日历，请在系统设置中确认日历账户配置正常。"
+          }
+        }
+      }
     },
     "CAPTION" : {
       "comment" : "A label for a set of smaller text elements, such as footnotes or additional details.",
@@ -285,36 +356,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "总往来金额"
-          }
-        }
-      }
-    },
-    "calendar.error.lunarDateConversionFailed" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "无法计算农历生日对应的公历日期，请重试。"
-          }
-        }
-      }
-    },
-    "calendar.error.missingBirthday" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "该联系人未设置生日。"
-          }
-        }
-      }
-    },
-    "calendar.error.noDefaultCalendar" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "无法获取默认日历，请在系统设置中确认日历账户配置正常。"
           }
         }
       }
@@ -899,6 +940,16 @@
         }
       }
     },
+    "contact.detail.addBirthdayToCalendar" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加生日到系统日历"
+          }
+        }
+      }
+    },
     "contact.detail.assetOverview" : {
       "localizations" : {
         "zh-Hans" : {
@@ -995,6 +1046,46 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "互惠平衡指数"
+          }
+        }
+      }
+    },
+    "contact.detail.calendar.birthdaySuccessMessage" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "生日已添加到系统日历，届时将收到提醒。若多次添加，日历中可能出现重复条目。"
+          }
+        }
+      }
+    },
+    "contact.detail.calendar.birthdaySuccessTitle" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已添加到日历"
+          }
+        }
+      }
+    },
+    "contact.detail.calendar.birthdayTitle" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 的生日"
+          }
+        }
+      }
+    },
+    "contact.detail.calendar.lunarBirthdayNote" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ · 每年公历日期不同，请每年重新添加"
           }
         }
       }
@@ -1096,56 +1187,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "互动构成"
-          }
-        }
-      }
-    },
-    "contact.detail.addBirthdayToCalendar" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "添加生日到系统日历"
-          }
-        }
-      }
-    },
-    "contact.detail.calendar.birthdaySuccessMessage" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "生日已添加到系统日历，届时将收到提醒。若多次添加，日历中可能出现重复条目。"
-          }
-        }
-      }
-    },
-    "contact.detail.calendar.birthdaySuccessTitle" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "已添加到日历"
-          }
-        }
-      }
-    },
-    "contact.detail.calendar.birthdayTitle" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ 的生日"
-          }
-        }
-      }
-    },
-    "contact.detail.calendar.lunarBirthdayNote" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ · 每年公历日期不同，请每年重新添加"
           }
         }
       }
@@ -2563,42 +2604,12 @@
         }
       }
     },
-    "event.detail.countdown" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "还有%d天"
-          }
-        }
-      }
-    },
     "event.detail.addToCalendar" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "添加到系统日历"
-          }
-        }
-      }
-    },
-    "calendar.accessDenied.message" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "请前往「设置 → 隐私与安全性 → 日历」，允许礼数写入日历。"
-          }
-        }
-      }
-    },
-    "calendar.accessDenied.title" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "需要日历权限"
           }
         }
       }
@@ -2619,6 +2630,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已添加到日历"
+          }
+        }
+      }
+    },
+    "event.detail.countdown" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "还有%d天"
           }
         }
       }

@@ -104,6 +104,7 @@ struct AddEventView: View {
                 result: "success",
                 metadata: ["event_name": viewModel.name.trimmingCharacters(in: .whitespacesAndNewlines)]
             )
+            AdManager.shared.scheduleNativeAd()
             dismiss()
             return
         }

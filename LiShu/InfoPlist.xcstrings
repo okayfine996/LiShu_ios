@@ -80,6 +80,18 @@
           }
         }
       }
+    },
+    "NSUserTrackingUsageDescription" : {
+      "comment" : "Privacy - Tracking Usage Description",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "我们需要您的授权来为您展示更相关的广告内容"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
