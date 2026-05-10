@@ -34,18 +34,7 @@ private struct HomeSummarySection: View {
                     .padding(.vertical, 8)
             }
 
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(alignment: .top, spacing: 12) {
-                    HomeFinancialSummaryCard(snapshot: snapshot)
-                        .frame(width: HomeDashboardMetrics.summaryCardWidth, alignment: .top)
-
-                    HomeRelationshipSummaryCard(snapshot: snapshot)
-                        .frame(width: HomeDashboardMetrics.summaryCardWidth, alignment: .top)
-                }
-                .scrollTargetLayout()
-            }
-            .scrollTargetBehavior(.viewAligned)
-            .frame(height: 320)
+            HomeUnifiedSummaryCard(snapshot: snapshot)
         }
     }
 }

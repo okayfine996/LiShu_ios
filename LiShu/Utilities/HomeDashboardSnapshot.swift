@@ -14,6 +14,7 @@ struct HomeDashboardSnapshot {
     let favorCount: Int
     let banquetCount: Int
     let previousYearTotalExchangeAmount: Double
+    let pendingReturnCount: Int
     let mostActiveContactName: String?
     let mostActiveContactRecordCount: Int
     let recentRecords: [Record]
@@ -109,6 +110,14 @@ struct HomeDashboardSnapshot {
             .sorted { $0.date < $1.date }
             .prefix(5)
 
+        let pendingReturnCount = events
+            .filter { event in
+                event.date >= startOfYear && event.date < endOfYear &&
+                    event.hostMode == .guest &&
+                    !(event.records ?? []).contains { $0.direction == .given }
+            }
+            .count
+
         let hostLedgerEvents = events
             .filter { $0.hostMode == .host }
             .sorted { lhs, rhs in
@@ -136,6 +145,7 @@ struct HomeDashboardSnapshot {
             favorCount: currentYearRecords.filter { $0.recordType == .favor }.count,
             banquetCount: currentYearRecords.filter { $0.recordType == .banquet }.count,
             previousYearTotalExchangeAmount: previousYearMonetaryRecords.reduce(0.0) { $0 + $1.monetaryAmount },
+            pendingReturnCount: pendingReturnCount,
             mostActiveContactName: mostActiveContact?.name,
             mostActiveContactRecordCount: mostActiveContact?.count ?? 0,
             recentRecords: Array(records.sorted { $0.date > $1.date }.prefix(5)),
@@ -158,6 +168,7 @@ struct HomeDashboardSnapshot {
             favorCount: 0,
             banquetCount: 0,
             previousYearTotalExchangeAmount: 0,
+            pendingReturnCount: 0,
             mostActiveContactName: nil,
             mostActiveContactRecordCount: 0,
             recentRecords: [],

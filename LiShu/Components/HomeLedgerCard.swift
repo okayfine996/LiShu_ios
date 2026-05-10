@@ -59,137 +59,147 @@ struct HomeLedgerCard: View {
     }
 
     private var headerSection: some View {
-        HStack(alignment: .top, spacing: DesignSystem.Spacing.block) {
-            VStack(alignment: .leading, spacing: DesignSystem.Spacing.stackTight) {
-                Text(event.type.displayName)
-                    .font(DesignSystem.Typography.caption)
-                    .foregroundStyle(DesignSystem.Colors.accentGold)
-
-                Text(event.name)
-                    .font(DesignSystem.Typography.title1)
-                    .foregroundStyle(DesignSystem.Colors.primary)
-                    .lineLimit(2)
-
-                HStack(spacing: DesignSystem.Spacing.dense) {
-                    Image(systemName: "calendar")
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.inlineTight) {
+            HStack(alignment: .center) {
+                HStack(spacing: DesignSystem.Spacing.inlineTight) {
+                    Text(event.type.displayName)
                         .font(DesignSystem.Typography.small)
-                        .foregroundStyle(DesignSystem.Colors.textSecondary)
-
-                    Text(formattedDate(event.date) + " · " + locationText)
-                        .font(DesignSystem.Typography.caption)
-                        .foregroundStyle(DesignSystem.Colors.textSecondary)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.85)
-                }
-            }
-
-            Spacer(minLength: DesignSystem.Spacing.block)
-
-            // 右上角书本图标和整张卡片都进入详情，符合"看礼簿"的操作预期。
-            Button {
-                isShowingEventDetail = true
-            } label: {
-                VStack(spacing: 6) {
-                    Image(systemName: "book.closed")
-                        .font(DesignSystem.Typography.title3)
                         .foregroundStyle(DesignSystem.Colors.primary)
+                        .padding(.horizontal, DesignSystem.Spacing.inlineTight)
+                        .padding(.vertical, DesignSystem.Spacing.stackTight)
+                        .background(DesignSystem.Colors.primary.opacity(0.1))
+                        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.input))
 
-                    Text(String(localized: "common.viewAll"))
-                        .font(DesignSystem.Typography.small)
-                        .foregroundStyle(DesignSystem.Colors.textSecondary)
+                    Text(event.name)
+                        .font(DesignSystem.Typography.title2)
+                        .foregroundStyle(DesignSystem.Colors.textPrimary)
+                        .lineLimit(1)
                 }
-                .frame(
-                    width: DesignSystem.Layout.homeLedgerIconTileSize,
-                    height: DesignSystem.Layout.homeLedgerIconTileSize
-                )
-                .background(DesignSystem.Colors.bgIconSubtle)
-                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.smallCard))
+
+                Spacer(minLength: DesignSystem.Spacing.block)
+
+                Button {
+                    isShowingEventDetail = true
+                } label: {
+                    HStack(spacing: DesignSystem.Spacing.stackTight) {
+                        Text(String(localized: "common.viewAll"))
+                            .font(DesignSystem.Typography.caption)
+                            .foregroundStyle(DesignSystem.Colors.primary)
+
+                        Image(systemName: "book.closed")
+                            .font(DesignSystem.Typography.caption)
+                            .foregroundStyle(DesignSystem.Colors.primary)
+                    }
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
+
+            HStack(spacing: DesignSystem.Spacing.dense) {
+                Image(systemName: "calendar")
+                    .font(DesignSystem.Typography.small)
+                    .foregroundStyle(DesignSystem.Colors.textSecondary)
+
+                Text(formattedDate(event.date) + " · " + locationText)
+                    .font(DesignSystem.Typography.caption)
+                    .foregroundStyle(DesignSystem.Colors.textSecondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
+            }
         }
     }
 
     private var spotlightSection: some View {
-        VStack(alignment: .leading, spacing: DesignSystem.Spacing.inlineTight) {
-            Text(String(localized: "event.ledger.totalAmount"))
-                .font(DesignSystem.Typography.caption)
-                .foregroundStyle(DesignSystem.Colors.textSecondary)
-
+        HStack(alignment: .firstTextBaseline, spacing: DesignSystem.Spacing.inlineTight) {
             Text("¥" + formatAmount(totalReceived))
                 .font(DesignSystem.Typography.display)
                 .foregroundStyle(DesignSystem.Colors.primary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.72)
 
-            Capsule()
-                .fill(DesignSystem.Colors.primary.opacity(0.14))
-                .frame(width: 72, height: 6)
+            Text(String(localized: "event.ledger.totalAmount"))
+                .font(DesignSystem.Typography.caption)
+                .foregroundStyle(DesignSystem.Colors.textSecondary)
         }
     }
 
     private var quickStatsSection: some View {
-        HStack(spacing: DesignSystem.Spacing.block) {
+        HStack(spacing: 0) {
             compactMetric(
                 title: String(localized: "event.ledger.totalCount"),
                 value: String(format: String(localized: "event.ledger.countValue"), receivedCount)
             )
+
+            Divider()
+                .frame(height: 24)
+                .foregroundStyle(DesignSystem.Colors.separator)
 
             compactMetric(
                 title: String(localized: "event.ledger.todaySummary"),
                 value: String(format: String(localized: "event.ledger.countValue"), todayReceivedCount)
             )
         }
-    }
-
-    private var actionSection: some View {
-        HStack(spacing: DesignSystem.Spacing.inlineTight) {
-            Button(action: onPrimaryAction) {
-                HStack(spacing: DesignSystem.Spacing.dense) {
-                    Image(systemName: "plus.circle.fill")
-                    Text(String(localized: "event.ledger.primaryAction"))
-                        .fontWeight(.semibold)
-                }
-                .font(DesignSystem.Typography.caption)
-                .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(PrimaryButtonStyle())
-            .guideAnchor(id: "home.ledger.receiptButton")
-
-            Button(action: onGiftReceivingMode) {
-                HStack(spacing: DesignSystem.Spacing.dense) {
-                    Image(systemName: "hands.and.sparkles")
-                    Text(String(localized: "giftReceiving.nav.title"))
-                        .fontWeight(.semibold)
-                }
-                .font(DesignSystem.Typography.caption)
-                .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(SecondaryButtonStyle())
-        }
-    }
-
-    private func compactMetric(title: String, value: String) -> some View {
-        VStack(alignment: .leading, spacing: DesignSystem.Spacing.stackTight) {
-            Text(title)
-                .font(DesignSystem.Typography.small)
-                .foregroundStyle(DesignSystem.Colors.textSecondary)
-                .lineLimit(1)
-
-            Text(value)
-                .font(DesignSystem.Typography.title3)
-                .foregroundStyle(DesignSystem.Colors.primary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.82)
-        }
-        .padding(.horizontal, DesignSystem.Spacing.cardPaddingSmall)
-        .padding(.vertical, 14)
-        .frame(maxWidth: .infinity, alignment: .leading)
         .background(DesignSystem.Colors.bgPage)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.smallCard))
         .overlay(
             RoundedRectangle(cornerRadius: DesignSystem.Radius.smallCard)
                 .stroke(DesignSystem.Colors.primary.opacity(0.04), lineWidth: 1)
         )
+    }
+
+    private var actionSection: some View {
+        HStack(spacing: DesignSystem.Spacing.inlineTight) {
+            Button(action: onPrimaryAction) {
+                ledgerButtonLabel(
+                    icon: "plus.circle.fill",
+                    title: String(localized: "event.ledger.primaryAction")
+                )
+                .foregroundStyle(.white)
+                .background(DesignSystem.Colors.primary)
+                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.smallCard))
+            }
+            .buttonStyle(LedgerActionButtonStyle())
+            .guideAnchor(id: "home.ledger.receiptButton")
+
+            Button(action: onGiftReceivingMode) {
+                ledgerButtonLabel(
+                    icon: "lightbulb.min",
+                    title: String(localized: "giftReceiving.nav.title")
+                )
+                .foregroundStyle(DesignSystem.Colors.textPrimary)
+                .background(DesignSystem.Colors.bgPage)
+                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.smallCard))
+                .overlay(
+                    RoundedRectangle(cornerRadius: DesignSystem.Radius.smallCard)
+                        .stroke(DesignSystem.Colors.border, lineWidth: 1)
+                )
+            }
+            .buttonStyle(LedgerActionButtonStyle())
+        }
+    }
+
+    private func ledgerButtonLabel(icon: String, title: String) -> some View {
+        HStack(spacing: DesignSystem.Spacing.dense) {
+            Image(systemName: icon)
+            Text(title)
+                .fontWeight(.semibold)
+        }
+        .font(DesignSystem.Typography.caption)
+        .frame(maxWidth: .infinity, minHeight: 44)
+    }
+
+    private func compactMetric(title: String, value: String) -> some View {
+        HStack(spacing: DesignSystem.Spacing.dense) {
+            Text(title)
+                .font(DesignSystem.Typography.caption)
+                .foregroundStyle(DesignSystem.Colors.textSecondary)
+
+            Text(value)
+                .font(DesignSystem.Typography.title3)
+                .foregroundStyle(DesignSystem.Colors.primary)
+        }
+        .padding(.horizontal, DesignSystem.Spacing.cardPaddingSmall)
+        .padding(.vertical, 14)
+        .frame(maxWidth: .infinity)
     }
 
     private var locationText: String {
@@ -208,6 +218,14 @@ struct HomeLedgerCard: View {
         formatter.numberStyle = .decimal
         formatter.maximumFractionDigits = 0
         return formatter.string(from: NSNumber(value: amount)) ?? String(Int(amount))
+    }
+}
+
+private struct LedgerActionButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.95 : 1)
+            .animation(.easeOut(duration: 0.2), value: configuration.isPressed)
     }
 }
 

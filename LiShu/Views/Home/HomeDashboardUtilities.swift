@@ -1,11 +1,5 @@
 import SwiftUI
 
-enum HomeDashboardMetrics {
-    static var summaryCardWidth: CGFloat {
-        UIScreen.main.bounds.width - (DesignSystem.Spacing.pageHorizontal * 2) - 4
-    }
-}
-
 enum HomeDashboardFormatters {
     private static let eventDateFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -55,10 +49,6 @@ enum HomeDashboardFormatters {
         "¥" + compactNumber(snapshot.yearlyExpense)
     }
 
-    static func totalExchangeAmount(_ snapshot: HomeDashboardSnapshot) -> String {
-        "¥" + commaSeparated(snapshot.totalExchangeAmount)
-    }
-
     static func monetaryNet(_ snapshot: HomeDashboardSnapshot) -> String {
         netValue(snapshot.yearlyIncome - snapshot.yearlyExpense)
     }
@@ -70,17 +60,6 @@ enum HomeDashboardFormatters {
             format: String(localized: "statistics.hero.yoy"),
             sign,
             abs(rate) * 100
-        )
-    }
-
-    static func coreCircleSummary(_ snapshot: HomeDashboardSnapshot) -> String {
-        String(format: String(localized: "home.coreCircleShareFormat"), snapshot.coreCircleRatioPercent)
-    }
-
-    static func nonFinancialSummary(_ snapshot: HomeDashboardSnapshot) -> String {
-        String(
-            format: String(localized: "home.nonFinancialSummaryFormat"),
-            snapshot.nonFinancialInteractionCount
         )
     }
 

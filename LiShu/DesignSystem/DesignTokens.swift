@@ -102,7 +102,6 @@ public nonisolated enum DesignSystem {
             UIScreen.main.bounds.width - (DesignSystem.Spacing.pageHorizontal * 2) - DesignSystem.Spacing.stackTight
         }
 
-        public static let homeLedgerIconTileSize: CGFloat = 72
         public static let circleAnalysisCardWidth: CGFloat = 140
         /// 联系人详情时间轴右侧金额/状态锚点宽度
         public static let timelineMetaWidth: CGFloat = 112
