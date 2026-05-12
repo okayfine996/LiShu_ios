@@ -15,14 +15,6 @@ enum LunarCalendarHelper {
         return f
     }()
 
-    private static let dayFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.calendar = Calendar(identifier: .chinese)
-        f.locale = Locale(identifier: "zh_CN")
-        f.dateFormat = "d"
-        return f
-    }()
-
     // MARK: - Name helpers (via system API)
 
     /// 农历月名，如"正月"、"腊月"
@@ -33,22 +25,13 @@ enum LunarCalendarHelper {
 
     /// 农历日名，如"初一"、"三十"
     static func lunarDayName(day: Int) -> String {
-        // 农历日名本身不依赖月份（初一/十五/三十跨月通用），
-        // 但当年某些月可能是小月（29天），没有 day=30，所以遍历找第一个含该日数的月。
-        let now = Date()
-        let era = chineseCal.component(.era, from: now)
-        let year = chineseCal.component(.year, from: now)
-        for month in 1 ... 12 {
-            var comps = DateComponents()
-            comps.era = era
-            comps.year = year
-            comps.month = month
-            comps.day = day
-            if let date = chineseCal.date(from: comps) {
-                return dayFormatter.string(from: date)
-            }
-        }
-        return "\(day)日"
+        let names = [
+            "初一", "初二", "初三", "初四", "初五", "初六", "初七", "初八", "初九", "初十",
+            "十一", "十二", "十三", "十四", "十五", "十六", "十七", "十八", "十九", "二十",
+            "廿一", "廿二", "廿三", "廿四", "廿五", "廿六", "廿七", "廿八", "廿九", "三十",
+        ]
+        guard (1 ... names.count).contains(day) else { return "\(day)日" }
+        return names[day - 1]
     }
 
     // MARK: - Date construction

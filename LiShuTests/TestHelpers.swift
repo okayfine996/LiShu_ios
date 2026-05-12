@@ -11,7 +11,7 @@ struct TestDB {
 
     init() throws {
         let schema = Schema([Contact.self, Record.self, Event.self, RecordPhoto.self])
-        let config = ModelConfiguration(isStoredInMemoryOnly: true)
+        let config = ModelConfiguration(isStoredInMemoryOnly: true, cloudKitDatabase: .none)
         container = try ModelContainer(for: schema, configurations: [config])
         context = container.mainContext
     }

@@ -1,0 +1,214 @@
+{
+  "version": 1,
+  "active_feature_id": null,
+  "features": [
+    {
+      "id": "harness-001",
+      "name": "Agent harness foundation",
+      "module": "Harness",
+      "priority": "P0",
+      "status": "completed",
+      "dependencies": [],
+      "scope": [
+        "Create shared Codex/Claude harness docs",
+        "Add persistent feature/progress/handoff state",
+        "Add lifecycle and verification entrypoints",
+        "Rewrite AGENTS.md and CLAUDE.md as routing files"
+      ],
+      "acceptance": [
+        "A new agent can start from AGENTS.md or CLAUDE.md and find the correct project context",
+        "Feature status and next-session recovery are recorded in .harness",
+        "Verification commands are documented and wrapped by scripts/harness/verify.sh",
+        "Existing product and engineering rules remain discoverable without duplicating long files"
+      ],
+      "verification": {
+        "required_level": "full",
+        "last_run": "full passed",
+        "evidence": "./init.sh passed. scripts/harness/verify.sh quick passed after default simulator changed to iPhone 17 Pro Max. StatisticsViewModelTests was deleted per request and TestDB now disables CloudKit with cloudKitDatabase: .none. LunarCalendarHelperTests was fixed by replacing formatter-dependent numeric lunar day output with an explicit Chinese lunar day map. scripts/harness/verify.sh full passed SwiftFormat lint, SwiftLint, build, and 362 tests in 39 suites."
+      },
+      "notes": "Initial harness implementation requested after repo/business/architecture review."
+    },
+    {
+      "id": "core-home-dashboard",
+      "name": "Home dashboard and relationship summary",
+      "module": "Home",
+      "priority": "P0",
+      "status": "existing",
+      "dependencies": ["core-contacts", "core-records", "core-events"],
+      "scope": [
+        "Dashboard totals",
+        "Recent records",
+        "Upcoming events",
+        "Stale contacts",
+        "Host ledger events"
+      ],
+      "acceptance": [
+        "Dashboard data matches SwiftData records and event dates",
+        "Empty database states are handled"
+      ],
+      "verification": {
+        "required_level": "full",
+        "last_run": "covered by existing HomeViewModel and HomeDashboardSnapshot tests",
+        "evidence": ""
+      },
+      "notes": "See LiShuTests/HomeViewModelTests.swift and HomeDashboardSnapshotTests.swift."
+    },
+    {
+      "id": "core-contacts",
+      "name": "Contacts and relationship profiles",
+      "module": "Contacts",
+      "priority": "P0",
+      "status": "existing",
+      "dependencies": [],
+      "scope": [
+        "Contact CRUD",
+        "Relationship category and circle",
+        "Birthday and lunar birthday flags",
+        "Contact detail timeline",
+        "Contact import preview",
+        "Contact exchange summary"
+      ],
+      "acceptance": [
+        "Contact operations preserve linked record behavior",
+        "Relationship summaries only count relevant record types"
+      ],
+      "verification": {
+        "required_level": "full",
+        "last_run": "covered by existing Contact model/view model/UI tests",
+        "evidence": ""
+      },
+      "notes": ""
+    },
+    {
+      "id": "core-records",
+      "name": "Records and typed relationship interactions",
+      "module": "Records",
+      "priority": "P0",
+      "status": "existing",
+      "dependencies": ["core-contacts", "core-events"],
+      "scope": [
+        "Monetary records",
+        "Gift records",
+        "Favor records",
+        "Banquet records",
+        "Returned gift logic",
+        "Record photos",
+        "Daily interactions"
+      ],
+      "acceptance": [
+        "Record kvData remains source of truth for type-specific data",
+        "Legacy scalar fields remain fallback-compatible"
+      ],
+      "verification": {
+        "required_level": "full",
+        "last_run": "covered by existing Record model/view model/import-export tests",
+        "evidence": ""
+      },
+      "notes": "Schema and import/export changes are high risk."
+    },
+    {
+      "id": "core-events",
+      "name": "Events and host ledger workflows",
+      "module": "Events",
+      "priority": "P0",
+      "status": "existing",
+      "dependencies": ["core-contacts", "core-records"],
+      "scope": [
+        "Event CRUD",
+        "Event types",
+        "Host/guest mode",
+        "Primary contact",
+        "Gift receiving mode",
+        "Smart return gift entry points"
+      ],
+      "acceptance": [
+        "Host-mode event behavior does not regress guest-mode records",
+        "Event deletion and linked records follow intended cascade behavior"
+      ],
+      "verification": {
+        "required_level": "full",
+        "last_run": "covered by existing Event model/view model/UI tests",
+        "evidence": ""
+      },
+      "notes": ""
+    },
+    {
+      "id": "core-statistics",
+      "name": "Statistics and relationship analytics",
+      "module": "Statistics",
+      "priority": "P0",
+      "status": "existing",
+      "dependencies": ["core-contacts", "core-records", "core-events"],
+      "scope": [
+        "Overview",
+        "Monthly and period detail",
+        "Rankings",
+        "Circle detail",
+        "Composition detail",
+        "Heatmap detail"
+      ],
+      "acceptance": [
+        "Monetary statistics exclude non-monetary interactions unless explicitly intended",
+        "Ranking and net value calculations match model semantics"
+      ],
+      "verification": {
+        "required_level": "full",
+        "last_run": "covered by existing Statistics and detail view model tests",
+        "evidence": ""
+      },
+      "notes": ""
+    },
+    {
+      "id": "import-export",
+      "name": "Import, OCR, XLSX, and export workflows",
+      "module": "ImportExport",
+      "priority": "P0",
+      "status": "existing",
+      "dependencies": ["core-contacts", "core-records", "core-events"],
+      "scope": [
+        "OCR import",
+        "XLSX import/export",
+        "Contact import",
+        "Ledger import preview",
+        "Selection previews",
+        "Diagnostics export"
+      ],
+      "acceptance": [
+        "Round trips preserve typed record data",
+        "Old formats remain import-compatible"
+      ],
+      "verification": {
+        "required_level": "release",
+        "last_run": "covered by existing import/export and OCR tests",
+        "evidence": ""
+      },
+      "notes": "Wire-format changes require explicit compatibility tests."
+    },
+    {
+      "id": "settings-pro-diagnostics",
+      "name": "Settings, Pro, notifications, and diagnostics",
+      "module": "Settings",
+      "priority": "P1",
+      "status": "existing",
+      "dependencies": [],
+      "scope": [
+        "Subscription management",
+        "Appearance settings",
+        "Notification settings",
+        "Data management",
+        "Legal pages",
+        "Pulse diagnostics console"
+      ],
+      "acceptance": [
+        "UI-testing mode keeps hidden diagnostics behavior stable",
+        "Subscription code is isolated from unrelated settings"
+      ],
+      "verification": {
+        "required_level": "full",
+        "last_run": "covered by existing settings, subscription, and diagnostics tests",
+        "evidence": ""
+      },
+      "notes": ""
+    }
+  ]
+}
