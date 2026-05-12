@@ -65,13 +65,17 @@ struct AddRecordRecordTypeSection: View {
 
 struct AddRecordInteractionSection: View {
     let viewModel: AddRecordViewModel
+    let onOpenSmartReturnGift: () -> Void
 
     var body: some View {
         VStack(spacing: 16) {
             if !viewModel.isDirectionLockedBySelectedEvent {
                 AddRecordDirectionSection(viewModel: viewModel)
             }
-            AddRecordTypeSpecificSection(viewModel: viewModel)
+            AddRecordTypeSpecificSection(
+                viewModel: viewModel,
+                onOpenSmartReturnGift: onOpenSmartReturnGift
+            )
         }
     }
 }
@@ -134,6 +138,7 @@ private struct AddRecordDirectionSection: View {
 
 private struct AddRecordTypeSpecificSection: View {
     let viewModel: AddRecordViewModel
+    let onOpenSmartReturnGift: () -> Void
 
     var body: some View {
         Group {
@@ -144,6 +149,12 @@ private struct AddRecordTypeSpecificSection: View {
                         amount: monetaryAmountBinding,
                         fieldAccessibilityIdentifier: "record.add.amountField"
                     )
+                    if let suggestion = viewModel.smartReturnGiftSuggestion {
+                        SmartReturnGiftSuggestionCard(
+                            suggestion: suggestion,
+                            onTap: onOpenSmartReturnGift
+                        )
+                    }
                     PaymentMethodSelector(selectedMethod: paymentMethodBinding)
                 }
             case .gift:
@@ -320,4 +331,88 @@ private struct AddRecordTypeSpecificSection: View {
             )
         }
     }
+}
+
+private struct SmartReturnGiftSuggestionCard: View {
+    let suggestion: AddRecordViewModel.SmartReturnGiftSuggestionSummary
+    let onTap: () -> Void
+
+    var body: some View {
+        Button(action: onTap) {
+            HStack(alignment: .top, spacing: DesignSystem.Spacing.block) {
+                Image(systemName: "sparkles")
+                    .font(DesignSystem.Typography.caption)
+                    .foregroundStyle(DesignSystem.Colors.primary)
+                    .frame(width: DesignSystem.Layout.smartGiftIconSize, height: DesignSystem.Layout.smartGiftIconSize)
+                    .background(DesignSystem.Colors.bgIconSubtle)
+                    .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.input))
+
+                VStack(alignment: .leading, spacing: DesignSystem.Spacing.dense) {
+                    Text(String(localized: "record.add.smartGift.title"))
+                        .font(DesignSystem.Typography.caption)
+                        .foregroundStyle(DesignSystem.Colors.textPrimary)
+                        .fontWeight(.semibold)
+
+                    Text(
+                        String(
+                            format: String(localized: "record.add.smartGift.subtitle"),
+                            formattedAmount(suggestion.conservativeAmount),
+                            formattedAmount(suggestion.generousAmount)
+                        )
+                    )
+                    .font(DesignSystem.Typography.small)
+                    .foregroundStyle(DesignSystem.Colors.textSecondary)
+                    .multilineTextAlignment(.leading)
+
+                    Text(
+                        String(
+                            format: String(localized: "record.add.smartGift.reference"),
+                            formattedAmount(suggestion.receivedTotal),
+                            formattedAmount(suggestion.givenTotal)
+                        )
+                    )
+                    .font(DesignSystem.Typography.small)
+                    .foregroundStyle(DesignSystem.Colors.textTertiary)
+                }
+
+                Spacer()
+
+                VStack(alignment: .trailing, spacing: DesignSystem.Spacing.dense) {
+                    Text(
+                        String(
+                            format: String(localized: "record.add.smartGift.standard"),
+                            formattedAmount(suggestion.standardAmount)
+                        )
+                    )
+                    .font(DesignSystem.Typography.small)
+                    .foregroundStyle(DesignSystem.Colors.primary)
+                    .fontWeight(.semibold)
+
+                    Image(systemName: "chevron.right")
+                        .font(DesignSystem.Typography.small)
+                        .foregroundStyle(DesignSystem.Colors.textTertiary)
+                }
+            }
+            .padding(DesignSystem.Spacing.pageHorizontal)
+            .background(DesignSystem.Colors.bgSurface)
+            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+            .overlay(
+                RoundedRectangle(cornerRadius: DesignSystem.Radius.card)
+                    .stroke(DesignSystem.Colors.border.opacity(0.7), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("record.add.smartGiftSuggestion")
+    }
+
+    private func formattedAmount(_ amount: Double) -> String {
+        "¥" + (Self.numberFormatter.string(from: NSNumber(value: amount)) ?? String(format: "%.0f", amount))
+    }
+
+    private static let numberFormatter: NumberFormatter = {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.maximumFractionDigits = 0
+        return formatter
+    }()
 }

@@ -84,6 +84,20 @@ public nonisolated enum DesignSystem {
         public static let heroCardPadding: CGFloat = 24
         /// 横向滑动小卡、紧凑信息块内边距
         public static let cardPaddingSmall: CGFloat = 16
+        /// 紧凑卡片列表行上下内边距（如关系健康度卡片）
+        public static let listRowVertical: CGFloat = 14
+        /// 卡片组内各项间距（比 block 更紧凑）
+        public static let blockTight: CGFloat = 10
+        /// 徽章水平内边距
+        public static let badgePaddingH: CGFloat = 10
+        /// 极小元素（子标签内双行）内部间距
+        public static let insetXS: CGFloat = 2
+        /// 小 badge 竖向内边距（细胶囊形徽章）
+        public static let insetTight: CGFloat = 3
+        /// 紧凑 badge 竖向内边距（档位选择等中等徽章）
+        public static let insetSmall: CGFloat = 5
+        /// 图标 + 文本并排行间距（推理卡片、时间轴行）
+        public static let contentRowSpacing: CGFloat = 14
     }
 
     // MARK: - Layout（常用固定尺寸，避免视图内魔法数）
@@ -112,6 +126,28 @@ public nonisolated enum DesignSystem {
         public static let heatmapLegendSwatchHeight: CGFloat = 8
         /// 导入导出预览页底部主操作按钮宽度
         public static let selectionPreviewActionWidth: CGFloat = 220
+        /// 关系健康度状态圆点直径
+        public static let healthDotSize: CGFloat = 12
+        /// 关系健康度徽章内小圆点直径
+        public static let healthBadgeDotSize: CGFloat = 8
+        /// 关系健康度圆点描边宽度
+        public static let healthDotStrokeWidth: CGFloat = 2
+        /// 智能回礼卡片图标背景块边长
+        public static let smartGiftIconSize: CGFloat = 36
+        /// 智能回礼时间轴金色圆点直径
+        public static let timelineDotSize: CGFloat = 10
+        /// 时间轴竖向连接线宽度（及档位节点描边宽度）
+        public static let timelineConnectorWidth: CGFloat = 1.5
+        /// 时间轴连接线最小高度
+        public static let timelineConnectorMinHeight: CGFloat = 32
+        /// 智能回礼推理卡片图标背景框边长
+        public static let reasoningIconSize: CGFloat = 40
+        /// 档位选择器轨道高度
+        public static let tierTrackHeight: CGFloat = 2
+        /// 档位选中节点直径
+        public static let tierNodeSizeSelected: CGFloat = 22
+        /// 档位未选中节点直径
+        public static let tierNodeSizeDefault: CGFloat = 10
     }
 
     // MARK: - Effects

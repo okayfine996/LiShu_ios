@@ -44,6 +44,7 @@ class ContactListViewModel {
     }
 
     var state: LoadingState<[Contact]> = .idle
+    var relationshipHealthResults: [PersistentIdentifier: RelationshipHealthResult] = [:]
     var selectedFilter: ContactCircleFilter = .all {
         didSet {
             cancelPendingSearchLog()
@@ -136,6 +137,7 @@ class ContactListViewModel {
             let contacts = try context.fetch(descriptor)
             allContacts = contacts
             state = .loaded(contacts)
+            relationshipHealthResults = RelationshipHealthCalculator.evaluateAll(contacts: contacts)
             cancelPendingSearchLog()
             logCurrentQueryIfAvailable(operation: "load")
             contactListLogger.notice("Loaded contacts", metadata: [

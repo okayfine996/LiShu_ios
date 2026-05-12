@@ -5,10 +5,16 @@ struct ContactRow: View {
     let name: String
     let relation: String
     let netValue: Double
+    let relationshipHealth: RelationshipHealthResult?
 
     var body: some View {
         HStack(spacing: 12) {
             AvatarView(imageData: avatar, name: name)
+                .overlay(alignment: .bottomTrailing) {
+                    if let relationshipHealth, relationshipHealth.hasRecords {
+                        RelationshipHealthDot(result: relationshipHealth)
+                    }
+                }
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(name)

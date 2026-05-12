@@ -13,6 +13,7 @@ struct TypeCountItem: Identifiable {
 @Observable
 class ContactDetailViewModel {
     var contact: Contact?
+    var relationshipHealth: RelationshipHealthResult?
     var isLoading: Bool = true
     var isShowingDeleteAlert: Bool = false
     var showNotificationPermissionAlert: Bool = false
@@ -60,6 +61,7 @@ class ContactDetailViewModel {
     func load(id: PersistentIdentifier, context: ModelContext) {
         isLoading = true
         contact = context.model(for: id) as? Contact
+        if let contact { relationshipHealth = RelationshipHealthCalculator.evaluate(contact: contact) }
         isLoading = false
     }
 
@@ -67,6 +69,9 @@ class ContactDetailViewModel {
     func reload(context: ModelContext) {
         guard let contact else { return }
         self.contact = context.model(for: contact.persistentModelID) as? Contact
+        if let contact = self.contact {
+            relationshipHealth = RelationshipHealthCalculator.evaluate(contact: contact)
+        }
     }
 
     /// Toggle birthday reminder for the contact and reschedule/cancel notifications.

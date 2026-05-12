@@ -7,6 +7,8 @@ struct SmartReturnGiftView: View {
 
     let eventID: PersistentIdentifier
     let contactID: PersistentIdentifier
+    let initialPaymentMethod: PaymentMethod
+    let onSelectSuggestedAmount: (@MainActor (Double, PaymentMethod) -> Void)?
 
     @State private var result: SmartReturnGiftResult?
     @State private var selectedTier: GiftTier = .standard
@@ -17,6 +19,19 @@ struct SmartReturnGiftView: View {
 
     enum GiftTier {
         case conservative, standard, generous
+    }
+
+    init(
+        eventID: PersistentIdentifier,
+        contactID: PersistentIdentifier,
+        initialPaymentMethod: PaymentMethod = .cash,
+        onSelectSuggestedAmount: (@MainActor (Double, PaymentMethod) -> Void)? = nil
+    ) {
+        self.eventID = eventID
+        self.contactID = contactID
+        self.initialPaymentMethod = initialPaymentMethod
+        self.onSelectSuggestedAmount = onSelectSuggestedAmount
+        _selectedPaymentMethod = State(initialValue: initialPaymentMethod)
     }
 
     var body: some View {
@@ -72,8 +87,8 @@ struct SmartReturnGiftView: View {
                         Text(result.contact.relation)
                             .font(DesignSystem.Typography.small)
                             .foregroundStyle(DesignSystem.Colors.textSecondary)
-                        Text("·")
-                            .font(DesignSystem.Typography.small)
+                        Image(systemName: "circle.fill")
+                            .font(.system(size: 3))
                             .foregroundStyle(DesignSystem.Colors.textTertiary)
                     }
                     Text(result.event.name)
@@ -81,8 +96,8 @@ struct SmartReturnGiftView: View {
                         .foregroundStyle(DesignSystem.Colors.textSecondary)
 
                     if let days = daysUntil(result.event.date), days >= 0 {
-                        Text("·")
-                            .font(DesignSystem.Typography.small)
+                        Image(systemName: "circle.fill")
+                            .font(.system(size: 3))
                             .foregroundStyle(DesignSystem.Colors.textTertiary)
                         Text(countdownText(days: days))
                             .font(DesignSystem.Typography.small)
@@ -92,7 +107,7 @@ struct SmartReturnGiftView: View {
             }
             Spacer()
         }
-        .padding(16)
+        .padding(DesignSystem.Spacing.pageHorizontal)
         .background(DesignSystem.Colors.bgSurface)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
     }
@@ -109,7 +124,7 @@ struct SmartReturnGiftView: View {
     // MARK: - Timeline
 
     private func timelineSection(_ result: SmartReturnGiftResult) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.inlineTight) {
             sectionHeader(String(localized: "event.smartGift.timeline.title"))
 
             VStack(alignment: .leading, spacing: 0) {
@@ -121,7 +136,7 @@ struct SmartReturnGiftView: View {
                     Text(String(format: String(localized: "event.smartGift.timeline.more"), hiddenCount))
                         .font(DesignSystem.Typography.small)
                         .foregroundStyle(DesignSystem.Colors.textTertiary)
-                        .padding(.bottom, 8)
+                        .padding(.bottom, DesignSystem.Spacing.inlineTight)
                 }
 
                 ForEach(Array(displayed.enumerated()), id: \.offset) { index, record in
@@ -130,36 +145,36 @@ struct SmartReturnGiftView: View {
 
                 Divider()
                     .foregroundStyle(DesignSystem.Colors.separator)
-                    .padding(.top, 4)
+                    .padding(.top, DesignSystem.Spacing.stackTight)
 
                 balanceSummaryRow(result)
             }
-            .padding(16)
+            .padding(DesignSystem.Spacing.pageHorizontal)
             .background(DesignSystem.Colors.bgSurface)
             .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
         }
     }
 
     private func timelineRow(record: Record, isLast: Bool) -> some View {
-        HStack(alignment: .top, spacing: 14) {
+        HStack(alignment: .top, spacing: DesignSystem.Spacing.contentRowSpacing) {
             // Dot + connector line
             VStack(spacing: 0) {
                 Circle()
                     .fill(DesignSystem.Colors.accentGold)
-                    .frame(width: 10, height: 10)
-                    .padding(.top, 4)
+                    .frame(width: DesignSystem.Layout.timelineDotSize, height: DesignSystem.Layout.timelineDotSize)
+                    .padding(.top, DesignSystem.Spacing.stackTight)
 
                 if !isLast {
                     Rectangle()
                         .fill(DesignSystem.Colors.separator)
-                        .frame(width: 1.5)
-                        .frame(minHeight: 32)
+                        .frame(width: DesignSystem.Layout.timelineConnectorWidth)
+                        .frame(minHeight: DesignSystem.Layout.timelineConnectorMinHeight)
                 }
             }
-            .frame(width: 10)
+            .frame(width: DesignSystem.Layout.timelineDotSize)
 
             // Date + name + amount pill
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.dense) {
                 Text(shortDate(record.date))
                     .font(DesignSystem.Typography.small)
                     .foregroundStyle(DesignSystem.Colors.textTertiary)
@@ -176,19 +191,19 @@ struct SmartReturnGiftView: View {
                 Text("\(prefix) \(formatAmount(record.resolvedDisplayAmount))")
                     .font(DesignSystem.Typography.caption)
                     .foregroundStyle(DesignSystem.Colors.textPrimary)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 6)
+                    .padding(.horizontal, DesignSystem.Spacing.badgePaddingH)
+                    .padding(.vertical, DesignSystem.Spacing.dense)
                     .background(DesignSystem.Colors.bgInput)
                     .clipShape(Capsule())
             }
-            .padding(.bottom, isLast ? 4 : 16)
+            .padding(.bottom, isLast ? DesignSystem.Spacing.stackTight : DesignSystem.Spacing.pageHorizontal)
 
             Spacer()
         }
     }
 
     private func balanceSummaryRow(_ result: SmartReturnGiftResult) -> some View {
-        VStack(alignment: .trailing, spacing: 6) {
+        VStack(alignment: .trailing, spacing: DesignSystem.Spacing.dense) {
             // Summary line: "TA 累计送你 ¥X | 你累计送TA ¥Y"
             HStack(spacing: 0) {
                 Spacer()
@@ -207,17 +222,17 @@ struct SmartReturnGiftView: View {
                     .foregroundStyle(DesignSystem.Colors.textSecondary)
 
                 Text(formatAmount(result.netReceivedBalance))
-                    .font(.system(size: 28, weight: .bold))
+                    .font(DesignSystem.Typography.title1)
                     .foregroundStyle(DesignSystem.Colors.primary)
             }
         }
-        .padding(.top, 10)
+        .padding(.top, DesignSystem.Spacing.blockTight)
     }
 
     // MARK: - Reasoning
 
     private func reasoningSection(_ result: SmartReturnGiftResult) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.inlineTight) {
             sectionHeader(String(localized: "event.smartGift.reasoning.title"))
 
             ForEach(result.reasoningCards) { card in
@@ -333,15 +348,15 @@ struct SmartReturnGiftView: View {
     }
 
     private func reasoningCard(iconName: String, title: String, body: String, badge: String?) -> some View {
-        HStack(alignment: .top, spacing: 14) {
+        HStack(alignment: .top, spacing: DesignSystem.Spacing.contentRowSpacing) {
             Image(systemName: iconName)
-                .font(.system(size: 18, weight: .medium))
+                .font(DesignSystem.Typography.title3)
                 .foregroundStyle(DesignSystem.Colors.primary)
-                .frame(width: 40, height: 40)
+                .frame(width: DesignSystem.Layout.reasoningIconSize, height: DesignSystem.Layout.reasoningIconSize)
                 .background(DesignSystem.Colors.bgIconSubtle)
                 .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.input))
 
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.dense) {
                 HStack(alignment: .center) {
                     Text(title)
                         .font(DesignSystem.Typography.body)
@@ -352,8 +367,8 @@ struct SmartReturnGiftView: View {
                         Text(badge)
                             .font(DesignSystem.Typography.small)
                             .foregroundStyle(DesignSystem.Colors.textSecondary)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 3)
+                            .padding(.horizontal, DesignSystem.Spacing.badgePaddingH)
+                            .padding(.vertical, DesignSystem.Spacing.insetTight)
                             .background(DesignSystem.Colors.bgCard)
                             .clipShape(Capsule())
                     }
@@ -366,7 +381,7 @@ struct SmartReturnGiftView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .padding(16)
+        .padding(DesignSystem.Spacing.pageHorizontal)
         .background(DesignSystem.Colors.bgSurface)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
     }
@@ -374,25 +389,25 @@ struct SmartReturnGiftView: View {
     // MARK: - Tier Selector
 
     private func tierSelector(_ result: SmartReturnGiftResult) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.inlineTight) {
             HStack {
                 sectionHeader(String(localized: "event.smartGift.tier.title"))
                 Spacer()
                 Text(tierName(selectedTier))
                     .font(DesignSystem.Typography.small)
                     .foregroundStyle(DesignSystem.Colors.primary)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 5)
+                    .padding(.horizontal, DesignSystem.Spacing.block)
+                    .padding(.vertical, DesignSystem.Spacing.insetSmall)
                     .background(DesignSystem.Colors.primary.opacity(0.1))
                     .clipShape(Capsule())
             }
 
-            VStack(spacing: 14) {
+            VStack(spacing: DesignSystem.Spacing.contentRowSpacing) {
                 // Track + nodes
                 ZStack {
                     Capsule()
                         .fill(DesignSystem.Colors.separator)
-                        .frame(height: 2)
+                        .frame(height: DesignSystem.Layout.tierTrackHeight)
 
                     HStack {
                         tierNode(.conservative, amount: result.conservativeAmount)
@@ -410,7 +425,7 @@ struct SmartReturnGiftView: View {
                     tierLabel(.generous, amount: result.generousAmount, alignment: .trailing, plusSuffix: true)
                 }
             }
-            .padding(16)
+            .padding(DesignSystem.Spacing.pageHorizontal)
             .background(DesignSystem.Colors.bgSurface)
             .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
         }
@@ -424,10 +439,13 @@ struct SmartReturnGiftView: View {
         } label: {
             Circle()
                 .fill(isSelected ? DesignSystem.Colors.primary : DesignSystem.Colors.bgCard)
-                .frame(width: isSelected ? 22 : 10, height: isSelected ? 22 : 10)
+                .frame(
+                    width: isSelected ? DesignSystem.Layout.tierNodeSizeSelected : DesignSystem.Layout.tierNodeSizeDefault,
+                    height: isSelected ? DesignSystem.Layout.tierNodeSizeSelected : DesignSystem.Layout.tierNodeSizeDefault
+                )
                 .overlay(
                     Circle()
-                        .stroke(isSelected ? .clear : DesignSystem.Colors.separator, lineWidth: 1.5)
+                        .stroke(isSelected ? .clear : DesignSystem.Colors.separator, lineWidth: DesignSystem.Layout.timelineConnectorWidth)
                 )
                 .shadow(
                     color: isSelected ? DesignSystem.Colors.primary.opacity(0.30) : .clear,
@@ -447,7 +465,7 @@ struct SmartReturnGiftView: View {
             selectedTier = tier
             amountText = formatRawAmount(amount)
         } label: {
-            VStack(alignment: alignment, spacing: 2) {
+            VStack(alignment: alignment, spacing: DesignSystem.Spacing.insetXS) {
                 Text(isSelected ? "\(name) (\(amountStr))" : name)
                     .font(DesignSystem.Typography.caption)
                     .fontWeight(isSelected ? .semibold : .regular)
@@ -500,7 +518,7 @@ struct SmartReturnGiftView: View {
             Button {
                 confirmGift(result)
             } label: {
-                Text(String(localized: "event.smartGift.confirm"))
+                Text(confirmButtonTitle)
             }
             .buttonStyle(PrimaryButtonStyle())
             .disabled(!isConfirmEnabled)
@@ -519,6 +537,13 @@ struct SmartReturnGiftView: View {
     private var isConfirmEnabled: Bool {
         guard let value = UserEnteredDecimal.parse(amountText) else { return false }
         return value > 0
+    }
+
+    private var confirmButtonTitle: String {
+        if onSelectSuggestedAmount != nil {
+            return String(localized: "event.smartGift.confirm.useAmount")
+        }
+        return String(localized: "event.smartGift.confirm")
     }
 
     private func loadResult() {
@@ -544,6 +569,12 @@ struct SmartReturnGiftView: View {
         guard let amount = UserEnteredDecimal.parse(amountText), amount > 0 else {
             errorMessage = String(localized: "record.returnGift.amountRequired")
             isShowingErrorAlert = true
+            return
+        }
+
+        if let onSelectSuggestedAmount {
+            onSelectSuggestedAmount(amount, selectedPaymentMethod)
+            dismiss()
             return
         }
 

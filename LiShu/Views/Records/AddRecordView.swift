@@ -14,6 +14,7 @@ struct AddRecordView: View {
     @State private var eventIDsBeforeCreation: Set<PersistentIdentifier> = []
     @State private var selectedPhotoItems: [PhotosPickerItem] = []
     @State private var continuousSaveMessage: String?
+    @State private var smartReturnGiftPresentation: SmartReturnGiftPresentation?
 
     let direction: RecordDirection?
     let contactID: PersistentIdentifier?
@@ -44,6 +45,7 @@ struct AddRecordView: View {
             continuousSaveMessage: continuousSaveMessage,
             onCreateContact: openAddContact,
             onCreateEvent: openAddEvent,
+            onOpenSmartReturnGift: openSmartReturnGiftSuggestion,
             onSave: { saveRecord(andContinue: false) }
         )
         .background(DesignSystem.Colors.bgPage)
@@ -57,6 +59,7 @@ struct AddRecordView: View {
         .sheet(isPresented: $showProSheet, content: makeProSheet)
         .sheet(isPresented: $showAddEventSheet, onDismiss: refreshEventsAfterCreation, content: makeAddEventSheet)
         .sheet(isPresented: $showAddContactSheet, onDismiss: refreshContactsAfterAddSheet, content: makeAddContactSheet)
+        .sheet(item: $smartReturnGiftPresentation, content: makeSmartReturnGiftSheet)
     }
 
     private var navigationTitle: String {
@@ -183,6 +186,36 @@ struct AddRecordView: View {
                 continuousSaveMessage = nil
             }
         }
+    }
+
+    private func openSmartReturnGiftSuggestion() {
+        guard let suggestion = viewModel.smartReturnGiftSuggestion else { return }
+        smartReturnGiftPresentation = SmartReturnGiftPresentation(
+            eventID: suggestion.eventID,
+            contactID: suggestion.contactID
+        )
+    }
+
+    private func makeSmartReturnGiftSheet(_ presentation: SmartReturnGiftPresentation) -> some View {
+        NavigationStack {
+            SmartReturnGiftView(
+                eventID: presentation.eventID,
+                contactID: presentation.contactID,
+                initialPaymentMethod: viewModel.monetaryPaymentMethod,
+                onSelectSuggestedAmount: { amount, paymentMethod in
+                    viewModel.applySuggestedAmount(amount, paymentMethod: paymentMethod)
+                }
+            )
+        }
+    }
+}
+
+private struct SmartReturnGiftPresentation: Identifiable {
+    let eventID: PersistentIdentifier
+    let contactID: PersistentIdentifier
+
+    var id: String {
+        "smart-gift-\(eventID)-\(contactID)"
     }
 }
 

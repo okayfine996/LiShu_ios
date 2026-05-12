@@ -3,6 +3,7 @@ import SwiftUI
 
 struct ContactDetailProfileSection: View {
     let contact: Contact
+    let relationshipHealth: RelationshipHealthResult?
 
     var body: some View {
         VStack(spacing: 8) {
@@ -15,6 +16,13 @@ struct ContactDetailProfileSection: View {
             Text(contact.name)
                 .font(DesignSystem.Typography.title2)
                 .foregroundStyle(DesignSystem.Colors.textPrimary)
+
+            if let health = relationshipHealth, health.hasRecords {
+                RelationshipHealthBadge(
+                    result: health,
+                    text: relationshipHealthText(for: health)
+                )
+            }
 
             if !contact.category.isEmpty || !contact.relation.isEmpty {
                 HStack(spacing: 6) {
@@ -47,6 +55,21 @@ struct ContactDetailProfileSection: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.top, 16)
+    }
+
+    private func relationshipHealthText(for result: RelationshipHealthResult) -> String {
+        if result.daysSinceLastInteraction == 0 {
+            return String(
+                format: String(localized: "contact.detail.relationshipHealth.today"),
+                result.level.localizedTitle
+            )
+        }
+
+        return String(
+            format: String(localized: "contact.detail.relationshipHealth.daysAgo"),
+            result.level.localizedTitle,
+            result.daysSinceLastInteraction
+        )
     }
 }
 

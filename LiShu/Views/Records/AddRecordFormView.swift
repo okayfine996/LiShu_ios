@@ -9,6 +9,7 @@ struct AddRecordFormView: View {
     let continuousSaveMessage: String?
     let onCreateContact: () -> Void
     let onCreateEvent: () -> Void
+    let onOpenSmartReturnGift: () -> Void
     let onSave: () -> Void
 
     var body: some View {
@@ -32,7 +33,10 @@ struct AddRecordFormView: View {
                 } else {
                     AddRecordDailyTagSection(viewModel: viewModel)
                 }
-                AddRecordInteractionSection(viewModel: viewModel)
+                AddRecordInteractionSection(
+                    viewModel: viewModel,
+                    onOpenSmartReturnGift: onOpenSmartReturnGift
+                )
                 RelationshipWeightSelector(selectedWeight: relationshipWeightBinding)
                 RecordDateSection(date: dateBinding)
                 RecordPhotosSection(existingPhotoData: photoDataItems, selectedPhotoItems: $selectedPhotoItems)

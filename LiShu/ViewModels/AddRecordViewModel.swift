@@ -22,10 +22,22 @@ enum RecordContextSelection: String, CaseIterable {
 @Observable
 class AddRecordViewModel {
     var editingRecord: Record?
-    var direction: RecordDirection = .given
-    var selectedContact: Contact?
-    var selectedEvent: Event?
-    var contextSelection: RecordContextSelection = .event
+    var direction: RecordDirection = .given {
+        didSet { refreshSmartReturnGiftSuggestion() }
+    }
+
+    var selectedContact: Contact? {
+        didSet { refreshSmartReturnGiftSuggestion() }
+    }
+
+    var selectedEvent: Event? {
+        didSet { refreshSmartReturnGiftSuggestion() }
+    }
+
+    var contextSelection: RecordContextSelection = .event {
+        didSet { refreshSmartReturnGiftSuggestion() }
+    }
+
     var date: Date = .now
     var note: String = ""
     var contactSearchText: String = ""
@@ -33,8 +45,27 @@ class AddRecordViewModel {
     /// Pending photo data from PhotosPicker, converted to RecordPhoto on save
     var newPhotoItems: [NewRecordPhotoItem] = []
 
-    var recordType: RecordType = .monetary
+    var recordType: RecordType = .monetary {
+        didSet { refreshSmartReturnGiftSuggestion() }
+    }
+
     var relationshipWeight: RelationshipWeight = .reciprocal
+
+    struct SmartReturnGiftSuggestionSummary: Equatable {
+        let contactID: PersistentIdentifier
+        let eventID: PersistentIdentifier
+        let baselineAmount: Double
+        let conservativeAmount: Double
+        let standardAmount: Double
+        let generousAmount: Double
+        let receivedTotal: Double
+        let givenTotal: Double
+        let outstandingBalance: Double
+        let historicalRecordCount: Int
+    }
+
+    var smartReturnGiftSuggestion: SmartReturnGiftSuggestionSummary?
+    private var isConfiguringBatch = false
 
     // 类型专属表单状态
     var monetaryAmount: String = ""
@@ -197,6 +228,11 @@ class AddRecordViewModel {
     }
 
     func configure(direction: RecordDirection?, contactID: PersistentIdentifier?, eventID: PersistentIdentifier?, context: ModelContext) {
+        isConfiguringBatch = true
+        defer {
+            isConfiguringBatch = false
+            refreshSmartReturnGiftSuggestion()
+        }
         if let dir = direction {
             self.direction = dir
         }
@@ -223,6 +259,11 @@ class AddRecordViewModel {
             "step": .string("configure"),
             "record_id": .string(String(describing: record.persistentModelID)),
         ])
+        isConfiguringBatch = true
+        defer {
+            isConfiguringBatch = false
+            refreshSmartReturnGiftSuggestion()
+        }
         editingRecord = record
         direction = record.direction
         selectedContact = record.contact
@@ -394,7 +435,8 @@ class AddRecordViewModel {
             existing.applyTypeData(typeData)
 
             for item in newPhotoItems {
-                let photo = RecordPhoto(record: existing, imageData: item.data)
+                let imageData = Self.compressedPhotoData(item.data)
+                let photo = RecordPhoto(record: existing, imageData: imageData)
                 context.insert(photo)
             }
             newPhotoItems = []
@@ -453,7 +495,8 @@ class AddRecordViewModel {
             context.insert(record)
 
             for item in newPhotoItems {
-                let photo = RecordPhoto(record: record, imageData: item.data)
+                let imageData = Self.compressedPhotoData(item.data)
+                let photo = RecordPhoto(record: record, imageData: imageData)
                 context.insert(photo)
             }
             newPhotoItems = []
@@ -499,6 +542,11 @@ class AddRecordViewModel {
         let preservedPaymentMethod = monetaryPaymentMethod
         let preservedDate = Calendar.current.startOfDay(for: date)
 
+        isConfiguringBatch = true
+        defer {
+            isConfiguringBatch = false
+            refreshSmartReturnGiftSuggestion()
+        }
         selectedContact = nil
         selectedEvent = preservedEvent
         contextSelection = preservedEvent == nil ? .daily : .event
@@ -519,6 +567,11 @@ class AddRecordViewModel {
         direction = preservedDirection
     }
 
+    func applySuggestedAmount(_ amount: Double, paymentMethod: PaymentMethod) {
+        monetaryAmount = Self.formatSuggestedAmount(amount)
+        monetaryPaymentMethod = paymentMethod
+    }
+
     /// 事件相关记录的方向由事件身份推导；只有脱离事件时才保留用户当前选择。
     private func resolvedDirection(for event: Event?) -> RecordDirection {
         guard contextSelection == .event, let event else { return direction }
@@ -535,5 +588,60 @@ class AddRecordViewModel {
             return record.direction
         }
         return resolvedDirection(for: event)
+    }
+
+    private func refreshSmartReturnGiftSuggestion() {
+        guard !isConfiguringBatch else { return }
+        guard
+            contextSelection == .event,
+            recordType == .monetary,
+            direction == .given,
+            let contact = selectedContact,
+            let event = selectedEvent
+        else {
+            smartReturnGiftSuggestion = nil
+            return
+        }
+
+        let allContactRecords = contact.records ?? []
+        let historicalMonetaryCount = allContactRecords.filter { $0.recordType == .monetary }.count
+        guard historicalMonetaryCount > 0 else {
+            smartReturnGiftSuggestion = nil
+            return
+        }
+
+        let result = SmartReturnGiftEngine.calculate(
+            contact: contact,
+            event: event,
+            allContactRecords: allContactRecords
+        )
+
+        smartReturnGiftSuggestion = SmartReturnGiftSuggestionSummary(
+            contactID: contact.persistentModelID,
+            eventID: event.persistentModelID,
+            baselineAmount: result.baselineAmount,
+            conservativeAmount: result.conservativeAmount,
+            standardAmount: result.standardAmount,
+            generousAmount: result.generousAmount,
+            receivedTotal: result.receivedTotal,
+            givenTotal: result.givenTotal,
+            outstandingBalance: result.netReceivedBalance,
+            historicalRecordCount: historicalMonetaryCount
+        )
+    }
+
+    private static func formatSuggestedAmount(_ amount: Double) -> String {
+        if amount == Double(Int(amount)) {
+            return String(Int(amount))
+        }
+        return String(format: "%.2f", amount)
+    }
+
+    private static func compressedPhotoData(_ data: Data) -> Data {
+        ImagePipeline.optimizedJPEGData(
+            from: data,
+            maxPixelSize: ImagePipeline.Preset.recordPhotoMaxPixelSize,
+            compressionQuality: 0.84
+        ) ?? data
     }
 }

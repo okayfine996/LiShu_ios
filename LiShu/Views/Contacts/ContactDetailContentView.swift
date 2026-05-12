@@ -9,7 +9,7 @@ struct ContactDetailContentView: View {
 
     var body: some View {
         VStack(spacing: 20) {
-            ContactDetailProfileSection(contact: contact)
+            ContactDetailProfileSection(contact: contact, relationshipHealth: viewModel.relationshipHealth)
             ContactDetailSummaryCardsSection(
                 contact: contact,
                 viewModel: viewModel,

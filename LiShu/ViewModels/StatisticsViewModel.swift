@@ -33,13 +33,6 @@ struct CircleAnalysisItem: Identifiable {
 
 @Observable
 class StatisticsViewModel {
-    struct RelationshipHealthSummary {
-        var close: Int = 0
-        var stable: Int = 0
-        var distant: Int = 0
-        var needsAttention: Int = 0
-    }
-
     var selectedYear: Int = Calendar.current.component(.year, from: Date())
     var availableYears: [Int] = []
     var totalIncome: Double = 0
@@ -55,6 +48,7 @@ class StatisticsViewModel {
     var recordTypeDistribution: [(type: RecordType, count: Int, percentage: Double)] = []
     var yearOverYearChangeRate: Double?
     var relationshipHealthSummary = RelationshipHealthSummary()
+    var relationshipHealthResults: [PersistentIdentifier: RelationshipHealthResult] = [:]
     var state: LoadingState<Bool> = .idle
 
     private var loadTask: Task<Void, Never>?
@@ -74,11 +68,12 @@ class StatisticsViewModel {
         loadTask = Task { @MainActor in
             do {
                 let allRecords = try context.fetch(FetchDescriptor<Record>())
+                let allContacts = try context.fetch(FetchDescriptor<Contact>())
                 guard !Task.isCancelled else { return }
                 computeAvailableYears(from: allRecords)
                 await Task.yield()
                 guard !Task.isCancelled else { return }
-                let normalizedYear = selectedYear
+                let normalizedYear = selectedYear // 捕获修正后的值（computeAvailableYears 可能已调整）
                 computeYearlyStats(from: allRecords)
                 await Task.yield()
                 guard !Task.isCancelled else { return }
@@ -101,7 +96,7 @@ class StatisticsViewModel {
                 await Task.yield()
                 guard !Task.isCancelled else { return }
                 computeYearOverYearChange(from: allRecords)
-                computeRelationshipHealthSummary()
+                computeRelationshipHealth(from: allContacts)
                 state = .loaded(true)
                 let yearRecords = allRecords.filter {
                     Calendar.current.component(.year, from: $0.date) == normalizedYear
@@ -352,23 +347,16 @@ class StatisticsViewModel {
         yearOverYearChangeRate = (currentTotal - previousTotal) / previousTotal
     }
 
-    private func computeRelationshipHealthSummary() {
-        let today = Date()
+    private func computeRelationshipHealth(from contacts: [Contact]) {
+        let results = RelationshipHealthCalculator.evaluateAll(contacts: contacts)
+        relationshipHealthResults = results
         var summary = RelationshipHealthSummary()
-        let calendar = Calendar.current
-
-        for item in allRankedContacts {
-            guard let lastDate = item.lastRecordDate else { continue }
-            let days = calendar.dateComponents([.day], from: lastDate, to: today).day ?? 0
-            switch days {
-            case ...90:
-                summary.close += 1
-            case 91 ... 180:
-                summary.stable += 1
-            case 181 ... 365:
-                summary.distant += 1
-            default:
-                summary.needsAttention += 1
+        for result in results.values where result.hasRecords {
+            switch result.level {
+            case .close: summary.close += 1
+            case .stable: summary.stable += 1
+            case .distant: summary.distant += 1
+            case .needsAttention: summary.needsAttention += 1
             }
         }
         relationshipHealthSummary = summary

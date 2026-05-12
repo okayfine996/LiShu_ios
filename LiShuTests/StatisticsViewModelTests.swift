@@ -9,7 +9,7 @@ struct StatisticsViewModelTests {
     func loadEmptyDatabase() throws {
         let db = try TestDB()
         let vm = StatisticsViewModel()
-        vm.loadData(context: db.context)
+        loadStatistics(vm, context: db.context)
 
         #expect(vm.hasData == false)
         #expect(vm.totalIncome == 0)
@@ -39,7 +39,7 @@ struct StatisticsViewModelTests {
         try db.context.save()
 
         let vm = StatisticsViewModel()
-        vm.loadData(context: db.context)
+        loadStatistics(vm, context: db.context)
 
         #expect(vm.totalIncome == 500)
         #expect(vm.totalExpense == 1000)
@@ -73,7 +73,7 @@ struct StatisticsViewModelTests {
         try db.context.save()
 
         let vm = StatisticsViewModel()
-        vm.loadData(context: db.context)
+        loadStatistics(vm, context: db.context)
 
         #expect(vm.monthlyData.count == 12)
         let march = vm.monthlyData[2]
@@ -112,7 +112,7 @@ struct StatisticsViewModelTests {
         try db.context.save()
 
         let vm = StatisticsViewModel()
-        vm.loadData(context: db.context)
+        loadStatistics(vm, context: db.context)
 
         let dist = vm.eventTypeDistribution
         #expect(dist.count == 2)
@@ -154,7 +154,7 @@ struct StatisticsViewModelTests {
         try db.context.save()
 
         let vm = StatisticsViewModel()
-        vm.loadData(context: db.context)
+        loadStatistics(vm, context: db.context)
 
         #expect(vm.topContacts.count == 5)
         #expect(vm.allRankedContacts.count == 5)
@@ -186,14 +186,16 @@ struct StatisticsViewModelTests {
         try db.context.save()
 
         let vm = StatisticsViewModel()
-        vm.loadData(context: db.context)
+        loadStatistics(vm, context: db.context)
         let initialYear = vm.selectedYear
 
         vm.selectYear(2025, context: db.context)
+        waitForStatisticsLoad(vm)
         #expect(vm.selectedYear == 2025)
         #expect(vm.totalExpense == 1000)
 
         vm.selectYear(2026, context: db.context)
+        waitForStatisticsLoad(vm)
         #expect(vm.selectedYear == 2026)
         #expect(vm.totalExpense == 2000)
     }
@@ -246,7 +248,7 @@ struct StatisticsViewModelTests {
         try db.context.save()
 
         let vm = StatisticsViewModel()
-        vm.loadData(context: db.context)
+        loadStatistics(vm, context: db.context)
         let sorted = vm.contactsSortedByIncome()
         #expect(sorted.count == 3)
         #expect(sorted[0].contact.name == "高")
@@ -259,7 +261,7 @@ struct StatisticsViewModelTests {
         let db = try TestDB()
 
         let vm = StatisticsViewModel()
-        vm.loadData(context: db.context)
+        loadStatistics(vm, context: db.context)
         #expect(vm.hasData == false)
 
         let c = SampleData.contact(name: "张三")
@@ -270,7 +272,7 @@ struct StatisticsViewModelTests {
         db.context.insert(r)
         try db.context.save()
 
-        vm.loadData(context: db.context)
+        loadStatistics(vm, context: db.context)
         #expect(vm.hasData == true)
     }
 
@@ -286,7 +288,7 @@ struct StatisticsViewModelTests {
         try db.context.save()
 
         let vm = StatisticsViewModel()
-        vm.loadData(context: db.context)
+        loadStatistics(vm, context: db.context)
         #expect(vm.hasData == true)
         #expect(vm.nonFinancialInteractionCount == 1)
         #expect(vm.totalIncome == 0)
@@ -299,12 +301,81 @@ struct StatisticsViewModelTests {
         DebugDataGenerator.generateSampleData(context: db.context)
 
         let vm = StatisticsViewModel()
-        vm.loadData(context: db.context)
+        loadStatistics(vm, context: db.context)
 
         let distributionTypes = Set(vm.recordTypeDistribution.map(\.type))
         #expect(distributionTypes.contains(.monetary))
         #expect(distributionTypes.contains(.gift))
         #expect(distributionTypes.contains(.favor))
         #expect(distributionTypes.contains(.banquet))
+    }
+
+    @Test("relationship health summary reuses shared calculator results")
+    func relationshipHealthSummaryUsesSharedCalculator() throws {
+        let db = try TestDB()
+        let closeContact = SampleData.contact(name: "常联系")
+        let overdueContact = SampleData.contact(name: "久未联系")
+        let event = SampleData.event()
+        db.context.insert(closeContact)
+        db.context.insert(overdueContact)
+        db.context.insert(event)
+
+        let calendar = Calendar.current
+        let recentOffsets = [-10, -20, -35, -50]
+        for (index, offset) in recentOffsets.enumerated() {
+            db.context.insert(
+                SampleData.record(
+                    contact: closeContact,
+                    event: event,
+                    amount: 300,
+                    direction: index.isMultiple(of: 2) ? .given : .received,
+                    date: calendar.date(byAdding: .day, value: offset, to: .now) ?? .now
+                )
+            )
+        }
+        db.context.insert(
+            SampleData.recordGift(
+                contact: closeContact,
+                event: event,
+                direction: .given,
+                date: calendar.date(byAdding: .day, value: -15, to: .now) ?? .now
+            )
+        )
+        db.context.insert(
+            SampleData.record(
+                contact: overdueContact,
+                event: event,
+                amount: 1200,
+                direction: .received,
+                date: calendar.date(byAdding: .day, value: -420, to: .now) ?? .now
+            )
+        )
+        try db.context.save()
+
+        let vm = StatisticsViewModel()
+        loadStatistics(vm, context: db.context)
+
+        #expect(vm.relationshipHealthSummary.close == 1)
+        #expect(vm.relationshipHealthSummary.needsAttention == 1)
+        #expect(vm.relationshipHealthSummary.stable == 0)
+        #expect(vm.relationshipHealthSummary.distant == 0)
+        #expect(vm.relationshipHealthResults[closeContact.persistentModelID]?.level == .close)
+        #expect(vm.relationshipHealthResults[overdueContact.persistentModelID]?.level == .needsAttention)
+    }
+
+    private func loadStatistics(_ viewModel: StatisticsViewModel, context: ModelContext) {
+        viewModel.loadData(context: context)
+        waitForStatisticsLoad(viewModel)
+    }
+
+    private func waitForStatisticsLoad(_ viewModel: StatisticsViewModel) {
+        let timeout = Date().addingTimeInterval(2)
+        while Date() < timeout {
+            if case .loaded = viewModel.state {
+                return
+            }
+            RunLoop.current.run(mode: .default, before: Date().addingTimeInterval(0.01))
+        }
+        Issue.record("StatisticsViewModel 在 2 秒内未进入 .loaded 状态")
     }
 }

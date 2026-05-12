@@ -1,6 +1,15 @@
 import Foundation
 import SwiftData
 
+struct HomeRelationshipHealthItem: Identifiable {
+    let contact: Contact
+    let relationshipHealth: RelationshipHealthResult
+
+    var id: PersistentIdentifier {
+        contact.persistentModelID
+    }
+}
+
 struct HomeDashboardSnapshot {
     let currentYear: Int
     let yearlyIncome: Double
@@ -20,6 +29,7 @@ struct HomeDashboardSnapshot {
     let recentRecords: [Record]
     let upcomingEvents: [Event]
     let hostLedgerEvents: [Event]
+    let staleContacts: [HomeRelationshipHealthItem]
 
     var totalExchangeAmount: Double {
         yearlyIncome + yearlyExpense
@@ -131,6 +141,24 @@ struct HomeDashboardSnapshot {
                 }
                 return lhs.date > rhs.date
             }
+            .prefix(20)
+
+        let healthResults = RelationshipHealthCalculator.evaluateAll(contacts: contacts, now: now, calendar: calendar)
+        let staleContacts = contacts
+            .compactMap { contact -> HomeRelationshipHealthItem? in
+                guard let result = healthResults[contact.persistentModelID],
+                      result.hasRecords,
+                      result.level == .distant || result.level == .needsAttention
+                else { return nil }
+                return HomeRelationshipHealthItem(contact: contact, relationshipHealth: result)
+            }
+            .sorted { lhs, rhs in
+                if lhs.relationshipHealth.daysSinceLastInteraction == rhs.relationshipHealth.daysSinceLastInteraction {
+                    return lhs.contact.name < rhs.contact.name
+                }
+                return lhs.relationshipHealth.daysSinceLastInteraction > rhs.relationshipHealth.daysSinceLastInteraction
+            }
+            .prefix(3)
 
         return HomeDashboardSnapshot(
             currentYear: currentYear,
@@ -150,7 +178,8 @@ struct HomeDashboardSnapshot {
             mostActiveContactRecordCount: mostActiveContact?.count ?? 0,
             recentRecords: Array(records.sorted { $0.date > $1.date }.prefix(5)),
             upcomingEvents: Array(upcomingEvents),
-            hostLedgerEvents: hostLedgerEvents
+            hostLedgerEvents: Array(hostLedgerEvents),
+            staleContacts: Array(staleContacts)
         )
     }
 
@@ -173,7 +202,8 @@ struct HomeDashboardSnapshot {
             mostActiveContactRecordCount: 0,
             recentRecords: [],
             upcomingEvents: [],
-            hostLedgerEvents: []
+            hostLedgerEvents: [],
+            staleContacts: []
         )
     }
 }

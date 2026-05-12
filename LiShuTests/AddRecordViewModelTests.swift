@@ -413,4 +413,96 @@ struct AddRecordViewModelTests {
         #expect(dimensions.width <= CGFloat(ImagePipeline.Preset.recordPhotoMaxPixelSize))
         #expect(dimensions.height <= CGFloat(ImagePipeline.Preset.recordPhotoMaxPixelSize))
     }
+
+    @Test func smartReturnGiftSuggestionAppearsForGivenMonetaryEventRecord() throws {
+        let db = try TestDB()
+        let contact = SampleData.contact()
+        let historicalEvent = SampleData.event(name: "去年的婚礼")
+        let currentEvent = SampleData.event(name: "今年的婚礼")
+        db.context.insert(contact)
+        db.context.insert(historicalEvent)
+        db.context.insert(currentEvent)
+        db.context.insert(
+            SampleData.record(
+                contact: contact,
+                event: historicalEvent,
+                amount: 800,
+                direction: .received,
+                date: Calendar.current.date(byAdding: .day, value: -240, to: .now) ?? .now
+            )
+        )
+        try db.context.save()
+
+        let vm = AddRecordViewModel()
+        vm.loadData(context: db.context)
+        vm.selectedContact = contact
+        vm.selectEvent(currentEvent)
+
+        let suggestion = try #require(vm.smartReturnGiftSuggestion)
+        #expect(suggestion.contactID == contact.persistentModelID)
+        #expect(suggestion.eventID == currentEvent.persistentModelID)
+        #expect(suggestion.historicalRecordCount == 1)
+        #expect(suggestion.standardAmount > 0)
+    }
+
+    @Test func smartReturnGiftSuggestionHidesOutsideEligibleContext() throws {
+        let db = try TestDB()
+        let contact = SampleData.contact()
+        let event = SampleData.event()
+        db.context.insert(contact)
+        db.context.insert(event)
+        db.context.insert(
+            SampleData.record(
+                contact: contact,
+                event: event,
+                amount: 600,
+                direction: .received,
+                date: Calendar.current.date(byAdding: .day, value: -120, to: .now) ?? .now
+            )
+        )
+        try db.context.save()
+
+        let vm = AddRecordViewModel()
+        vm.loadData(context: db.context)
+        vm.selectedContact = contact
+        vm.selectEvent(event)
+        #expect(vm.smartReturnGiftSuggestion != nil)
+
+        vm.setContextSelection(.daily)
+        #expect(vm.smartReturnGiftSuggestion == nil)
+    }
+
+    @Test func applySuggestedAmountUpdatesAmountAndPaymentMethod() {
+        let vm = AddRecordViewModel()
+
+        vm.applySuggestedAmount(888, paymentMethod: .wechat)
+
+        #expect(vm.monetaryAmount == "888")
+        #expect(vm.monetaryPaymentMethod == .wechat)
+    }
+
+    @Test func smartReturnGiftSuggestionHidesWhenNoMonetaryHistory() throws {
+        let db = try TestDB()
+        let contact = SampleData.contact()
+        let event = SampleData.event()
+        db.context.insert(contact)
+        db.context.insert(event)
+        db.context.insert(
+            SampleData.recordGift(
+                contact: contact,
+                event: event,
+                giftName: "茶叶",
+                direction: .received,
+                date: Calendar.current.date(byAdding: .day, value: -60, to: .now) ?? .now
+            )
+        )
+        try db.context.save()
+
+        let vm = AddRecordViewModel()
+        vm.loadData(context: db.context)
+        vm.selectedContact = contact
+        vm.selectEvent(event)
+
+        #expect(vm.smartReturnGiftSuggestion == nil)
+    }
 }

@@ -10,6 +10,7 @@ struct HomeDashboardContentView: View {
             HomeSummarySection(snapshot: snapshot)
             HomeLedgerSection(snapshot: snapshot, sheetRoute: $sheetRoute)
             HomeUpcomingSection(snapshot: snapshot)
+            HomeRelationshipHealthSection(snapshot: snapshot)
             HomeRecentRecordsSection(snapshot: snapshot, sheetRoute: $sheetRoute)
         }
     }
@@ -180,5 +181,81 @@ private struct HomeRecentRecordsSection: View {
                 }
             }
         }
+    }
+}
+
+private struct HomeRelationshipHealthSection: View {
+    let snapshot: HomeDashboardSnapshot
+
+    var body: some View {
+        if !snapshot.staleContacts.isEmpty {
+            VStack(spacing: DesignSystem.Spacing.block) {
+                HomeSectionHeader(title: String(localized: "home.relationshipHealth.title"))
+
+                VStack(spacing: DesignSystem.Spacing.blockTight) {
+                    ForEach(snapshot.staleContacts) { item in
+                        NavigationLink(value: AppRoute.contactDetail(item.contact.persistentModelID)) {
+                            HomeRelationshipHealthCard(item: item)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+        }
+    }
+}
+
+private struct HomeRelationshipHealthCard: View {
+    let item: HomeRelationshipHealthItem
+
+    var body: some View {
+        HStack(spacing: DesignSystem.Spacing.inlineTight) {
+            AvatarView(imageData: item.contact.avatar, name: item.contact.name)
+                .overlay(alignment: .bottomTrailing) {
+                    RelationshipHealthDot(result: item.relationshipHealth)
+                }
+
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.dense) {
+                Text(item.contact.name)
+                    .font(DesignSystem.Typography.body)
+                    .foregroundStyle(DesignSystem.Colors.textPrimary)
+                    .fontWeight(.semibold)
+
+                HStack(spacing: DesignSystem.Spacing.dense) {
+                    Text(item.relationshipHealth.level.localizedTitle)
+                        .font(DesignSystem.Typography.small)
+                        .foregroundStyle(RelationshipHealthStyle.color(for: item.relationshipHealth.level))
+
+                    Image(systemName: "circle.fill")
+                        .font(.system(size: 3))
+                        .foregroundStyle(DesignSystem.Colors.textTertiary)
+
+                    Text(daysText)
+                        .font(DesignSystem.Typography.small)
+                        .foregroundStyle(DesignSystem.Colors.textSecondary)
+                }
+            }
+
+            Spacer()
+
+            Image(systemName: "chevron.right")
+                .font(DesignSystem.Typography.small)
+                .foregroundStyle(DesignSystem.Colors.textTertiary)
+        }
+        .padding(.horizontal, DesignSystem.Spacing.pageHorizontal)
+        .padding(.vertical, DesignSystem.Spacing.listRowVertical)
+        .background(DesignSystem.Colors.bgSurface)
+        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
+    }
+
+    private var daysText: String {
+        if item.relationshipHealth.daysSinceLastInteraction == 0 {
+            return String(localized: "home.relationshipHealth.today")
+        }
+
+        return String(
+            format: String(localized: "home.relationshipHealth.daysIdle"),
+            item.relationshipHealth.daysSinceLastInteraction
+        )
     }
 }

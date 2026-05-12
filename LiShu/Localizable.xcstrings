@@ -1398,6 +1398,26 @@
         }
       }
     },
+    "contact.detail.relationshipHealth.daysAgo" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ · %d天前互动"
+          }
+        }
+      }
+    },
+    "contact.detail.relationshipHealth.today" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ · 今天互动"
+          }
+        }
+      }
+    },
     "contact.detail.relationshipInsight" : {
       "localizations" : {
         "zh-Hans" : {
@@ -3285,6 +3305,16 @@
         }
       }
     },
+    "event.smartGift.confirm.useAmount" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用此金额"
+          }
+        }
+      }
+    },
     "event.smartGift.disclaimer" : {
       "localizations" : {
         "zh-Hans" : {
@@ -4822,6 +4852,36 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "人情关系 · 往来活跃"
+          }
+        }
+      }
+    },
+    "home.relationshipHealth.daysIdle" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%d天未互动"
+          }
+        }
+      }
+    },
+    "home.relationshipHealth.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "久未联系"
+          }
+        }
+      }
+    },
+    "home.relationshipHealth.today" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今天互动"
           }
         }
       }
@@ -7704,6 +7764,46 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "赠予"
+          }
+        }
+      }
+    },
+    "record.add.smartGift.reference" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "历史收到 %@ · 已回出 %@"
+          }
+        }
+      }
+    },
+    "record.add.smartGift.standard" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "标准档 %@"
+          }
+        }
+      }
+    },
+    "record.add.smartGift.subtitle" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "根据历史往来，建议回礼 %@ 至 %@"
+          }
+        }
+      }
+    },
+    "record.add.smartGift.title" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "智能回礼建议"
           }
         }
       }

@@ -253,7 +253,8 @@ struct ExportServiceTests {
 
         let preview = try ExportService.previewContactXLSX(url: url)
         #expect(preview.items.count == 2)
-        #expect(preview.items.allSatisfy(\.isImportable))
+        let allItemsImportable = preview.items.allSatisfy(\.isImportable)
+        #expect(allItemsImportable)
     }
 
     @Test func previewContactXLSXMissingNameHeaderReturnsNoImportable() throws {

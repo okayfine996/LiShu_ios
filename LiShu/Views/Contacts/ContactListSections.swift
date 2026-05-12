@@ -1,3 +1,4 @@
+import SwiftData
 import SwiftUI
 
 struct ContactListStateContainer: View {
@@ -65,6 +66,7 @@ private struct ContactListLoadedContent: View {
                 ForEach(viewModel.groupedContacts) { group in
                     ContactGroupSection(
                         group: group,
+                        healthResults: viewModel.relationshipHealthResults,
                         onSelectContact: onSelectContact,
                         onDeleteContact: onDeleteContact,
                         onEditContact: onEditContact
@@ -80,6 +82,7 @@ private struct ContactListLoadedContent: View {
 
 private struct ContactGroupSection: View {
     let group: ContactGroup
+    let healthResults: [PersistentIdentifier: RelationshipHealthResult]
     let onSelectContact: (Contact) -> Void
     let onDeleteContact: (Contact) -> Void
     let onEditContact: (Contact) -> Void
@@ -89,6 +92,7 @@ private struct ContactGroupSection: View {
             ForEach(group.contacts) { contact in
                 ContactListItemRow(
                     contact: contact,
+                    relationshipHealth: healthResults[contact.persistentModelID],
                     onSelect: { onSelectContact(contact) },
                     onDelete: { onDeleteContact(contact) },
                     onEdit: { onEditContact(contact) }
@@ -107,6 +111,7 @@ private struct ContactGroupSection: View {
 
 private struct ContactListItemRow: View {
     let contact: Contact
+    let relationshipHealth: RelationshipHealthResult?
     let onSelect: () -> Void
     let onDelete: () -> Void
     let onEdit: () -> Void
@@ -117,7 +122,8 @@ private struct ContactListItemRow: View {
                 avatar: contact.avatar,
                 name: contact.name,
                 relation: contact.relation,
-                netValue: contact.netValue
+                netValue: contact.netValue,
+                relationshipHealth: relationshipHealth
             )
             .background(DesignSystem.Colors.bgSurface)
             .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.card))
