@@ -15,6 +15,8 @@
 		32C8B5712F822036002E6746 /* Logging in Frameworks */ = {isa = PBXBuildFile; productRef = 32C8B5812F822036002E6746 /* Logging */; };
 		32C8B5722F822036002E6746 /* PulseLogHandler in Frameworks */ = {isa = PBXBuildFile; productRef = 32C8B5822F822036002E6746 /* PulseLogHandler */; };
 		32C8B5732F822036002E6746 /* Logging in Frameworks */ = {isa = PBXBuildFile; productRef = 32C8B5832F822036002E6746 /* Logging */; };
+		ABCD000D0000000000000001 /* LiShuWidget.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = ABCD00010000000000000001 /* LiShuWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		ABCD000F0000000000000001 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = ABCD000E0000000000000001 /* Localizable.xcstrings */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -32,12 +34,35 @@
 			remoteGlobalIDString = 9A934E992F54194D0063349A;
 			remoteInfo = LiShu;
 		};
+		ABCD000B0000000000000001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9A934E922F54194D0063349A /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = ABCD00060000000000000001;
+			remoteInfo = LiShuWidget;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		ABCD000C0000000000000001 /* Embed App Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				ABCD000D0000000000000001 /* LiShuWidget.appex in Embed App Extensions */,
+			);
+			name = "Embed App Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		9A934E9A2F54194D0063349A /* LiShu.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LiShu.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9A934EAB2F54194E0063349A /* LiShuTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LiShuTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		9A934EB52F54194E0063349A /* LiShuUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LiShuUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		ABCD00010000000000000001 /* LiShuWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = LiShuWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		ABCD000E0000000000000001 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = Localizable.xcstrings; path = LiShu/Localizable.xcstrings; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -47,6 +72,13 @@
 				Info.plist,
 			);
 			target = 9A934E992F54194D0063349A /* LiShu */;
+		};
+		ABCD00100000000000000001 /* Exceptions for "LiShuWidget" folder in "LiShuWidget" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = ABCD00060000000000000001 /* LiShuWidget */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -67,6 +99,14 @@
 		9A934EB82F54194E0063349A /* LiShuUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = LiShuUITests;
+			sourceTree = "<group>";
+		};
+		ABCD00050000000000000001 /* LiShuWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				ABCD00100000000000000001 /* Exceptions for "LiShuWidget" folder in "LiShuWidget" target */,
+			);
+			path = LiShuWidget;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -101,6 +141,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		ABCD00030000000000000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -111,14 +158,24 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
+		321842792FB5AA5E006BB5CE /* Recovered References */ = {
+			isa = PBXGroup;
+			children = (
+				ABCD000E0000000000000001 /* Localizable.xcstrings */,
+			);
+			name = "Recovered References";
+			sourceTree = "<group>";
+		};
 		9A934E912F54194D0063349A = {
 			isa = PBXGroup;
 			children = (
 				9A934E9C2F54194D0063349A /* LiShu */,
 				9A934EAE2F54194E0063349A /* LiShuTests */,
 				9A934EB82F54194E0063349A /* LiShuUITests */,
+				ABCD00050000000000000001 /* LiShuWidget */,
 				321829152FA4EC53006BB5CE /* Frameworks */,
 				9A934E9B2F54194D0063349A /* Products */,
+				321842792FB5AA5E006BB5CE /* Recovered References */,
 			);
 			sourceTree = "<group>";
 		};
@@ -128,6 +185,7 @@
 				9A934E9A2F54194D0063349A /* LiShu.app */,
 				9A934EAB2F54194E0063349A /* LiShuTests.xctest */,
 				9A934EB52F54194E0063349A /* LiShuUITests.xctest */,
+				ABCD00010000000000000001 /* LiShuWidget.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -145,10 +203,12 @@
 				9A934E982F54194D0063349A /* Resources */,
 				F0C0A1B22D3E4F5600010001 /* Embed Git Commit Info */,
 				9A934EC92F54194E0063349A /* Strip ScreenshotDemo for Release */,
+				ABCD000C0000000000000001 /* Embed App Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				ABCD000A0000000000000001 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				9A934E9C2F54194D0063349A /* LiShu */,
@@ -214,6 +274,28 @@
 			productReference = 9A934EB52F54194E0063349A /* LiShuUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		ABCD00060000000000000001 /* LiShuWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = ABCD00070000000000000001 /* Build configuration list for PBXNativeTarget "LiShuWidget" */;
+			buildPhases = (
+				ABCD00020000000000000001 /* Sources */,
+				ABCD00030000000000000001 /* Frameworks */,
+				ABCD00040000000000000001 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				ABCD00050000000000000001 /* LiShuWidget */,
+			);
+			name = LiShuWidget;
+			packageProductDependencies = (
+			);
+			productName = LiShuWidget;
+			productReference = ABCD00010000000000000001 /* LiShuWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -234,6 +316,9 @@
 					9A934EB42F54194E0063349A = {
 						CreatedOnToolsVersion = 26.3;
 						TestTargetID = 9A934E992F54194D0063349A;
+					};
+					ABCD00060000000000000001 = {
+						CreatedOnToolsVersion = 26.3;
 					};
 				};
 			};
@@ -263,6 +348,7 @@
 				9A934E992F54194D0063349A /* LiShu */,
 				9A934EAA2F54194E0063349A /* LiShuTests */,
 				9A934EB42F54194E0063349A /* LiShuUITests */,
+				ABCD00060000000000000001 /* LiShuWidget */,
 			);
 		};
 /* End PBXProject section */
@@ -286,6 +372,14 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		ABCD00040000000000000001 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				ABCD000F0000000000000001 /* Localizable.xcstrings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -378,6 +472,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		ABCD00020000000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -391,6 +492,11 @@
 			target = 9A934E992F54194D0063349A /* LiShu */;
 			targetProxy = 9A934EB62F54194E0063349A /* PBXContainerItemProxy */;
 		};
+		ABCD000A0000000000000001 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = ABCD00060000000000000001 /* LiShuWidget */;
+			targetProxy = ABCD000B0000000000000001 /* PBXContainerItemProxy */;
+		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
@@ -401,7 +507,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = LiShu/LiShu.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 12;
 				DEVELOPMENT_TEAM = QFNEHUV3DG;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
@@ -418,7 +524,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.1.15;
+				MARKETING_VERSION = 1.1.16;
 				PRODUCT_BUNDLE_IDENTIFIER = com.finefine.LiShu;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -442,7 +548,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = LiShu/LiShu.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 12;
 				DEVELOPMENT_TEAM = QFNEHUV3DG;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
@@ -459,7 +565,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.1.15;
+				MARKETING_VERSION = 1.1.16;
 				PRODUCT_BUNDLE_IDENTIFIER = com.finefine.LiShu;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -604,7 +710,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 12;
 				DEVELOPMENT_TEAM = QFNEHUV3DG;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
@@ -626,7 +732,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 12;
 				DEVELOPMENT_TEAM = QFNEHUV3DG;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
@@ -647,7 +753,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 12;
 				DEVELOPMENT_TEAM = QFNEHUV3DG;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
@@ -667,7 +773,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 12;
 				DEVELOPMENT_TEAM = QFNEHUV3DG;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
@@ -680,6 +786,64 @@
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_TARGET_NAME = LiShu;
+			};
+			name = Release;
+		};
+		ABCD00080000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = LiShuWidget/LiShuWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 12;
+				DEVELOPMENT_TEAM = QFNEHUV3DG;
+				INFOPLIST_FILE = LiShuWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.1.16;
+				PRODUCT_BUNDLE_IDENTIFIER = com.finefine.LiShu.widget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		ABCD00090000000000000001 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = LiShuWidget/LiShuWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 12;
+				DEVELOPMENT_TEAM = QFNEHUV3DG;
+				INFOPLIST_FILE = LiShuWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.1.16;
+				PRODUCT_BUNDLE_IDENTIFIER = com.finefine.LiShu.widget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};
@@ -718,6 +882,15 @@
 			buildConfigurations = (
 				9A934EC72F54194E0063349A /* Debug */,
 				9A934EC82F54194E0063349A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		ABCD00070000000000000001 /* Build configuration list for PBXNativeTarget "LiShuWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				ABCD00080000000000000001 /* Debug */,
+				ABCD00090000000000000001 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

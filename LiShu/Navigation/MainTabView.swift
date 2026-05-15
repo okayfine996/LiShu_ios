@@ -24,14 +24,43 @@ enum AppTab: String, CaseIterable {
 struct MainTabView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(AppSettings.self) private var settings
+    @Environment(DeepLinkCoordinator.self) private var deepLinkCoordinator
     @State private var selectedTab: AppTab = .home
     @State private var sheetRoute: SheetRoute?
     @State private var guideMask = GuideMaskViewModel()
     @State private var suiLiGuideActive = false
+    @State private var eventsPath = NavigationPath()
+    @State private var contactsPath = NavigationPath()
 
     @Query private var allEvents: [Event]
     @Query private var allContacts: [Contact]
     @Query private var allRecords: [Record]
+
+    private var widgetDataSignature: Int {
+        var h = Hasher()
+        for r in allRecords {
+            h.combine(r.amount); h.combine(r.directionRaw)
+            h.combine(r.date.timeIntervalSince1970); h.combine(r.recordTypeRaw)
+            h.combine(r.kvData) // captures monetaryAmount and type-specific fields stored in kvData
+            h.combine(r.contact?.persistentModelID.hashValue ?? 0)
+            h.combine(r.event?.persistentModelID.hashValue ?? 0)
+        }
+        for e in allEvents {
+            h.combine(e.date.timeIntervalSince1970); h.combine(e.hostModeRaw)
+            h.combine(e.name); h.combine(e.typeRaw); h.combine(e.location)
+            h.combine(e.primaryContact?.persistentModelID.hashValue ?? 0)
+        }
+        for c in allContacts {
+            h.combine(c.birthday?.timeIntervalSince1970 ?? 0)
+            h.combine(c.birthdayIsLunar); h.combine(c.birthdayReminderEnabled); h.combine(c.name)
+        }
+        return h.finalize()
+    }
+
+    // Debug probes — only written in --uitesting mode, read by WidgetEntityDeepLinkTests
+    @State private var _dbgDeepLinkCalled = false
+    @State private var _dbgDeepLinkResolved = false
+    @State private var _dbgAllEventsCountAtDeepLink = -1
 
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -59,7 +88,7 @@ struct MainTabView: View {
             }
             .tag(AppTab.records)
 
-            NavigationStack {
+            NavigationStack(path: $contactsPath) {
                 ContactListView()
                     .navigationDestination(for: AppRoute.self) { route in
                         routeDestination(route)
@@ -71,7 +100,7 @@ struct MainTabView: View {
             }
             .tag(AppTab.contacts)
 
-            NavigationStack {
+            NavigationStack(path: $eventsPath) {
                 EventListView()
                     .navigationDestination(for: AppRoute.self) { route in
                         routeDestination(route)
@@ -139,12 +168,26 @@ struct MainTabView: View {
         }
         .onChange(of: allEvents.count) { _, newCount in
             guideMask.notifyDataChanged(eventCount: newCount, contactCount: allContacts.count, recordCount: allRecords.count)
+            WidgetDataWriter.write(records: allRecords, events: allEvents, contacts: allContacts)
+            retryPendingDeepLink()
         }
         .onChange(of: allContacts.count) { _, newCount in
             guideMask.notifyDataChanged(eventCount: allEvents.count, contactCount: newCount, recordCount: allRecords.count)
+            WidgetDataWriter.write(records: allRecords, events: allEvents, contacts: allContacts)
+            retryPendingDeepLink()
         }
         .onChange(of: allRecords.count) { _, newCount in
             guideMask.notifyDataChanged(eventCount: allEvents.count, contactCount: allContacts.count, recordCount: newCount)
+            WidgetDataWriter.write(records: allRecords, events: allEvents, contacts: allContacts)
+        }
+        .onChange(of: widgetDataSignature) { _, _ in
+            WidgetDataWriter.write(records: allRecords, events: allEvents, contacts: allContacts)
+        }
+        .onChange(of: deepLinkCoordinator.pending) { _, link in
+            guard let link else { return }
+            if handleDeepLink(link) {
+                deepLinkCoordinator.pending = nil
+            }
         }
         .sheet(item: $sheetRoute) { route in
             sheetContent(for: route)
@@ -175,6 +218,9 @@ struct MainTabView: View {
             }
         }
         .onAppear {
+            if let link = deepLinkCoordinator.pending, handleDeepLink(link) {
+                deepLinkCoordinator.pending = nil
+            }
             if CommandLine.arguments.contains("--uitest-open-ocr") {
                 let descriptor = FetchDescriptor<Event>()
                 if let event = try? modelContext.fetch(descriptor).first(where: { $0.hostMode == .host }) {
@@ -206,6 +252,100 @@ struct MainTabView: View {
                     )
                 }
             }
+        }
+        .overlay(alignment: .topLeading) {
+            if CommandLine.arguments.contains("--uitesting") {
+                Group {
+                    Color.clear.frame(width: 0, height: 0)
+                        .accessibilityIdentifier("debug.tab.\(selectedTab.rawValue)")
+                        .accessibilityHidden(false)
+                    // Expose stableID for every event in allEvents so tests can read
+                    // the same stableID that handleDeepLink uses for matching.
+                    ForEach(allEvents, id: \.persistentModelID) { event in
+                        Color.clear.frame(width: 0, height: 0)
+                            .accessibilityIdentifier(
+                                "debug.event.sid.\(WidgetDataWriter.stableID(for: event.persistentModelID)).\(event.name)"
+                            )
+                            .accessibilityHidden(false)
+                    }
+                    ForEach(allContacts, id: \.persistentModelID) { contact in
+                        Color.clear.frame(width: 0, height: 0)
+                            .accessibilityIdentifier(
+                                "debug.contact.sid.\(WidgetDataWriter.stableID(for: contact.persistentModelID)).\(contact.name)"
+                            )
+                            .accessibilityHidden(false)
+                    }
+                    if _dbgDeepLinkCalled {
+                        let status = _dbgDeepLinkResolved ? "resolved" : "notfound"
+                        Color.clear.frame(width: 0, height: 0)
+                            .accessibilityIdentifier("debug.deeplink.\(status).\(_dbgAllEventsCountAtDeepLink)")
+                            .accessibilityHidden(false)
+                    }
+                }
+            }
+        }
+    }
+
+    // MARK: - Deep Link
+
+    private func retryPendingDeepLink() {
+        guard let link = deepLinkCoordinator.pending else { return }
+        if handleDeepLink(link) {
+            deepLinkCoordinator.pending = nil
+        }
+    }
+
+    @discardableResult
+    private func handleDeepLink(_ link: DeepLink) -> Bool {
+        switch link {
+        case .home:
+            selectedTab = .home
+            eventsPath = NavigationPath()
+            contactsPath = NavigationPath()
+            return true
+        case .addRecord:
+            sheetRoute = .addRecord(direction: nil, contactID: nil, eventID: nil)
+            return true
+        case let .addRecordForEvent(stableID):
+            guard let event = allEvents.first(where: {
+                WidgetDataWriter.stableID(for: $0.persistentModelID) == stableID
+            }) else { return false }
+            selectedTab = .events
+            sheetRoute = .addRecord(direction: .received, contactID: nil, eventID: event.persistentModelID)
+            return true
+        case let .giveGiftForEvent(stableID):
+            guard let event = allEvents.first(where: {
+                WidgetDataWriter.stableID(for: $0.persistentModelID) == stableID
+            }) else { return false }
+            selectedTab = .events
+            sheetRoute = .addRecord(direction: .given, contactID: nil, eventID: event.persistentModelID)
+            return true
+        case let .eventDetail(stableID):
+            let isTesting = CommandLine.arguments.contains("--uitesting")
+            if isTesting { _dbgDeepLinkCalled = true; _dbgAllEventsCountAtDeepLink = allEvents.count }
+            guard let event = allEvents.first(where: {
+                WidgetDataWriter.stableID(for: $0.persistentModelID) == stableID
+            }) else {
+                if isTesting { _dbgDeepLinkResolved = false }
+                return false
+            }
+            if isTesting { _dbgDeepLinkResolved = true }
+            selectedTab = .events
+            eventsPath.append(AppRoute.eventDetail(event.persistentModelID))
+            return true
+        case let .contactDetail(stableID):
+            let isTesting = CommandLine.arguments.contains("--uitesting")
+            if isTesting { _dbgDeepLinkCalled = true; _dbgAllEventsCountAtDeepLink = allContacts.count }
+            guard let contact = allContacts.first(where: {
+                WidgetDataWriter.stableID(for: $0.persistentModelID) == stableID
+            }) else {
+                if isTesting { _dbgDeepLinkResolved = false }
+                return false
+            }
+            if isTesting { _dbgDeepLinkResolved = true }
+            selectedTab = .contacts
+            contactsPath.append(AppRoute.contactDetail(contact.persistentModelID))
+            return true
         }
     }
 
@@ -248,6 +388,8 @@ struct MainTabView: View {
             CompositionDetailView(mode: .recordTypes(year: year))
         case let .heatmapDetail(year):
             HeatmapDetailView(year: year)
+        case .widgetGallery:
+            WidgetGalleryView()
         case .proMembership:
             ProMembershipView()
         case .appearanceSettings:
@@ -323,4 +465,5 @@ struct MainTabView: View {
         .modelContainer(for: [Contact.self, Record.self, Event.self], inMemory: true)
         .environment(SubscriptionManager.shared)
         .environment(AppSettings.shared)
+        .environment(DeepLinkCoordinator())
 }

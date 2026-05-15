@@ -29,7 +29,8 @@ LiShu is an iPhone-first relationship ledger for Chinese gift, favor, event, and
 
 ## Active Roadmap Sources
 
-- `PRD-v1.1.md`: P0 product requirements and acceptance criteria.
+- `PRD-v1.1.md`: P0 product requirements and acceptance criteria (农历/非金额记录/智能回礼/RHI).
+- `PRD-v1.2.md`: v1.2 feature requirements (年度报告/礼簿PDF/收礼QR码/Widget/礼仪助手/预算/家庭核算/地区基准/关系图谱).
 - `IMPLEMENTATION_PLAN.md`: staged engineering roadmap and proposed version sequencing.
 - `.harness/feature_list.json`: active execution state. This is the source of truth for current feature status, not the PRD.
 

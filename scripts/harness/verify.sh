@@ -7,7 +7,26 @@ cd "$ROOT_DIR"
 MODE="${1:-full}"
 PROJECT="LiShu.xcodeproj"
 SCHEME="LiShu"
-DESTINATION="${LISHU_XCODE_DESTINATION:-platform=iOS Simulator,name=iPhone 17 Pro Max}"
+
+resolve_destination() {
+  if [[ -n "${LISHU_XCODE_DESTINATION:-}" ]]; then
+    echo "$LISHU_XCODE_DESTINATION"
+    return
+  fi
+
+  local preferred_name id
+  for preferred_name in "iPhone 17 Pro" "iPhone 17" "iPhone 17 Pro Max" "iPhone 16 Pro"; do
+    id="$(xcrun simctl list devices available 2>/dev/null | awk -v name="$preferred_name" 'index($0, "    " name " (") == 1 { if (match($0, /\([A-F0-9-]+\)/)) { print substr($0, RSTART + 1, RLENGTH - 2); exit } }')"
+    if [[ -n "$id" ]]; then
+      echo "platform=iOS Simulator,id=$id"
+      return
+    fi
+  done
+
+  echo "generic/platform=iOS Simulator"
+}
+
+DESTINATION="$(resolve_destination)"
 
 usage() {
   cat <<'USAGE'
@@ -19,7 +38,7 @@ Environment:
 Modes:
   quick    SwiftFormat lint, SwiftLint, and xcodebuild build.
   full     quick plus all LiShuTests.
-  ui       all LiShuUITests.
+  ui       build-for-testing, then all LiShuUITests.
   release  full plus ui and fastlane environment notes.
 USAGE
 }
@@ -43,15 +62,20 @@ run_swiftlint() {
 }
 
 run_build() {
-  xcodebuild -project "$PROJECT" -scheme "$SCHEME" -destination "$DESTINATION" build
+  xcodebuild -project "$PROJECT" -scheme "$SCHEME" -destination "$DESTINATION" build-for-testing
 }
 
 run_unit_tests() {
-  xcodebuild -project "$PROJECT" -scheme "$SCHEME" -destination "$DESTINATION" -parallel-testing-enabled NO test -only-testing:LiShuTests
+  xcodebuild -project "$PROJECT" -scheme "$SCHEME" -destination "$DESTINATION" -parallel-testing-enabled NO test-without-building -skip-testing:LiShuUITests
 }
 
 run_ui_tests() {
-  xcodebuild -project "$PROJECT" -scheme "$SCHEME" -destination "$DESTINATION" -parallel-testing-enabled NO test -only-testing:LiShuUITests
+  xcodebuild -project "$PROJECT" -scheme "$SCHEME" -destination "$DESTINATION" -parallel-testing-enabled NO test-without-building -only-testing:LiShuUITests
+}
+
+run_ui() {
+  run_build
+  run_ui_tests
 }
 
 run_quick() {
@@ -73,7 +97,7 @@ case "$MODE" in
     run_full
     ;;
   ui)
-    run_ui_tests
+    run_ui
     ;;
   release)
     run_full

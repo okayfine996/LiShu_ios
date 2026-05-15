@@ -18,6 +18,7 @@ struct LiShuApp: App {
     @State private var showSplash = true
     @State private var subscriptionManager = SubscriptionManager.shared
     @State private var debugOverrideManager = DebugOverrideManager.shared
+    @State private var deepLinkCoordinator = DeepLinkCoordinator()
     @Environment(\.scenePhase) private var scenePhase
 
     private var resolvedColorScheme: ColorScheme? {
@@ -126,6 +127,15 @@ struct LiShuApp: App {
             }
             .task {
                 appBootstrapLogger.notice("Starting application tasks", metadata: ["step": .string("startup_tasks")])
+                if CommandLine.arguments.contains("--uitesting"),
+                   let arg = CommandLine.arguments.first(where: { $0.hasPrefix("--open-url=") })
+                {
+                    let urlStr = String(arg.dropFirst("--open-url=".count))
+                    if let url = URL(string: urlStr), let link = DeepLink.from(url) {
+                        try? await Task.sleep(for: .seconds(2.5))
+                        deepLinkCoordinator.pending = link
+                    }
+                }
                 await subscriptionManager.loadProducts()
                 await subscriptionManager.checkEntitlements()
                 if settings.notificationEnabled {
@@ -146,12 +156,23 @@ struct LiShuApp: App {
                     Task {
                         await subscriptionManager.checkEntitlements()
                     }
+                    let ctx = sharedModelContainer.mainContext
+                    let records = (try? ctx.fetch(FetchDescriptor<Record>())) ?? []
+                    let events = (try? ctx.fetch(FetchDescriptor<Event>())) ?? []
+                    let contacts = (try? ctx.fetch(FetchDescriptor<Contact>())) ?? []
+                    WidgetDataWriter.write(records: records, events: events, contacts: contacts)
+                }
+            }
+            .onOpenURL { url in
+                if let link = DeepLink.from(url) {
+                    deepLinkCoordinator.pending = link
                 }
             }
             .environment(\.locale, Locale(identifier: "zh-Hans"))
             .environment(settings)
             .environment(subscriptionManager)
             .environment(debugOverrideManager)
+            .environment(deepLinkCoordinator)
         }
         .modelContainer(sharedModelContainer)
     }

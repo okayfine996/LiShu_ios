@@ -68,6 +68,18 @@ struct ContactDetailView: View {
             }
         }
         .onAppear(perform: loadContact)
+        .overlay(alignment: .topLeading) {
+            Group {
+                if CommandLine.arguments.contains("--uitesting") {
+                    if let contact = viewModel.contact {
+                        Color.clear
+                            .frame(width: 0, height: 0)
+                            .accessibilityIdentifier("contact.detail.stableID.\(WidgetDataWriter.stableID(for: contact.persistentModelID))")
+                            .accessibilityHidden(false)
+                    }
+                }
+            }
+        }
     }
 }
 
