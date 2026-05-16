@@ -5,6 +5,7 @@ import Testing
 
 // MARK: - WidgetDataWriterTests
 
+@Suite(.serialized)
 struct WidgetDataWriterTests {
     /// Jan 1 2026 00:00 UTC+8 reference
     private static let jan1: Date = {
@@ -661,5 +662,17 @@ struct WidgetDataWriterTests {
         #expect(events.count == 3)
         let sids = events.map { WidgetDataWriter.stableID(for: $0.persistentModelID) }
         #expect(Set(sids).count == 3, "stableIDs must be distinct, got: \(sids)")
+    }
+
+    /// 47. nextHostingEvent cover image is written to the App Group file path.
+    @Test func nextHostingEventCoverImagePathIsWritten() throws {
+        let event = makeEvent(name: "带封面主办", hostMode: .host, daysFromNow: 2)
+        event.coverImage = SampleImages.makePNGData(width: 64, height: 64)
+
+        let snapshot = WidgetDataWriter.buildSnapshot(records: [], events: [event], contacts: [], now: Self.jan1)
+        let path = try #require(snapshot.nextHostingEvent?.coverImagePath)
+
+        #expect(!path.isEmpty)
+        #expect(FileManager.default.fileExists(atPath: path))
     }
 }

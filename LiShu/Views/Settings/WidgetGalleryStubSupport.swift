@@ -35,7 +35,7 @@ struct GalleryMark: View {
                 colors: [DesignSystem.Colors.primary, DesignSystem.Colors.primaryDark],
                 startPoint: .topLeading, endPoint: .bottomTrailing
             )
-            Text("礼").font(.system(size: size * 0.62, weight: .heavy)).foregroundStyle(.white)
+            Text("礼").font(DesignSystem.Typography.widgetTinyBold).foregroundStyle(DesignSystem.Colors.textOnPrimary)
         }
         .frame(width: size, height: size)
         .clipShape(RoundedRectangle(cornerRadius: size * 0.22, style: .continuous))
@@ -47,12 +47,12 @@ struct GalleryWidgetBg: View {
     var body: some View {
         if cs == .dark {
             LinearGradient(
-                colors: [Color(red: 0.110, green: 0.106, blue: 0.098), Color(red: 0.055, green: 0.047, blue: 0.039)],
+                colors: [DesignSystem.Colors.widgetGalleryBgStart, DesignSystem.Colors.widgetGalleryBgEnd],
                 startPoint: .topLeading, endPoint: .bottomTrailing
             )
         } else {
             LinearGradient(
-                colors: [Color(red: 0.984, green: 0.965, blue: 0.933), Color(red: 0.945, green: 0.898, blue: 0.831)],
+                colors: [DesignSystem.Colors.widgetGalleryBgStart, DesignSystem.Colors.widgetGalleryBgEnd],
                 startPoint: .topLeading, endPoint: .bottomTrailing
             )
         }

@@ -131,7 +131,7 @@ enum WidgetDataWriter {
                     guestCount: guests > 0 ? guests : nil,
                     eventDate: event.date,
                     addRecordURL: addRecordDeepLink(eventStableID: sid),
-                    coverImagePath: saveEventCoverImage(event.coverImage)
+                    coverImagePath: saveEventCoverImage(event.coverImage, stableID: sid)
                 )
             }
 
@@ -163,13 +163,12 @@ enum WidgetDataWriter {
     // MARK: - Helpers
 
     /// Saves cover image data to the App Group container so the widget extension can read it.
-    /// Returns the file path, or nil if no data or container is unavailable.
-    /// When data is nil, removes any previously saved file so stale images don't persist.
-    private static func saveEventCoverImage(_ data: Data?) -> String? {
+    /// The path is scoped by stable event ID so tests and refreshes do not fight over one global file.
+    private static func saveEventCoverImage(_ data: Data?, stableID: String) -> String? {
         guard let container = FileManager.default.containerURL(
             forSecurityApplicationGroupIdentifier: WidgetSnapshotStore.appGroupID
         ) else { return nil }
-        let url = container.appendingPathComponent("widget_event_cover")
+        let url = container.appendingPathComponent("widget_event_cover_\(stableID)")
         guard let data else {
             try? FileManager.default.removeItem(at: url)
             return nil

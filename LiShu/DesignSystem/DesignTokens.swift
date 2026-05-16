@@ -37,6 +37,23 @@ public nonisolated enum DesignSystem {
         public static let info = Color(hexLight: "#5A8AB7", hexDark: "#ABCCE8")
         /// 全屏遮罩背景（如图片查看器）
         public static let overlayDark = Color(hexLight: "#000000", hexDark: "#000000")
+
+        // Widget Gallery preview surfaces
+        public static let widgetGalleryBgStart = Color(hexLight: "#FBF6EE", hexDark: "#1C1B19")
+        public static let widgetGalleryBgEnd = Color(hexLight: "#F1E4D3", hexDark: "#0E0C0A")
+        public static let widgetGalleryStageStart = Color(hexLight: "#FBF6EE", hexDark: "#2A2018")
+        public static let widgetGalleryStageMid = Color(hexLight: "#F0E0C9", hexDark: "#1F1812")
+        public static let widgetGalleryStageEnd = Color(hexLight: "#E8D4B2", hexDark: "#2A1F17")
+        public static let widgetGalleryLockStart = Color(hexLight: "#3A4A78", hexDark: "#3A4A78")
+        public static let widgetGalleryLockMid = Color(hexLight: "#1F2A4A", hexDark: "#1F2A4A")
+        public static let widgetGalleryLockEnd = Color(hexLight: "#0A0E1F", hexDark: "#0A0E1F")
+        public static let widgetGalleryDuskStart = Color(hexLight: "#FFD8B0", hexDark: "#FFD8B0")
+        public static let widgetGalleryDuskMid = Color(hexLight: "#E89A85", hexDark: "#E89A85")
+        public static let widgetGalleryDuskEnd = Color(hexLight: "#3A1D18", hexDark: "#3A1D18")
+        public static let widgetGalleryPhotoSky = Color(hexLight: "#F5C5B0", hexDark: "#F5C5B0")
+        public static let widgetGalleryPhotoSun = Color(hexLight: "#FFF3D7", hexDark: "#FFF3D7")
+        public static let widgetGalleryPhotoHill = Color(hexLight: "#8B4A3F", hexDark: "#8B4A3F")
+        public static let widgetGalleryPhotoHillDeep = Color(hexLight: "#5C2E28", hexDark: "#5C2E28")
     }
 
     // MARK: - Typography
@@ -49,6 +66,16 @@ public nonisolated enum DesignSystem {
         public static let caption = Font.system(size: 14, weight: .medium, design: .default)
         public static let small = Font.system(size: 11, weight: .medium, design: .default)
         public static let display = Font.system(size: 48, weight: .bold, design: .default)
+        public static let widgetTiny = Font.system(size: 9, weight: .medium, design: .default)
+        public static let widgetTinyBold = Font.system(size: 9, weight: .bold, design: .default)
+        public static let widgetMeta = Font.system(size: 10, weight: .medium, design: .default)
+        public static let widgetMetaBold = Font.system(size: 10, weight: .bold, design: .default)
+        public static let widgetBody = Font.system(size: 12, weight: .medium, design: .default)
+        public static let widgetBodyBold = Font.system(size: 12, weight: .bold, design: .default)
+        public static let widgetTitle = Font.system(size: 16, weight: .heavy, design: .default)
+        public static let widgetTitleLarge = Font.system(size: 18, weight: .heavy, design: .default)
+        public static let widgetMetric = Font.system(size: 30, weight: .heavy, design: .default)
+        public static let widgetCountdown = Font.system(size: 42, weight: .heavy, design: .default)
     }
 
     // MARK: - Radius

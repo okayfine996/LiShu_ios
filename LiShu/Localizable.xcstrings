@@ -11508,6 +11508,126 @@
         }
       }
     },
+    "widget.gallery.size.circular" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Circular"
+          }
+        }
+      }
+    },
+    "widget.gallery.size.inline" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inline"
+          }
+        }
+      }
+    },
+    "widget.gallery.size.large" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Large"
+          }
+        }
+      }
+    },
+    "widget.gallery.size.medium" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Medium"
+          }
+        }
+      }
+    },
+    "widget.gallery.size.rectangular" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rectangular"
+          }
+        }
+      }
+    },
+    "widget.gallery.size.small" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Small"
+          }
+        }
+      }
+    },
+    "widget.gallery.spec.accessoryCircular" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "accessoryCircular · 76pt"
+          }
+        }
+      }
+    },
+    "widget.gallery.spec.accessoryInline" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "accessoryInline · 257×16pt"
+          }
+        }
+      }
+    },
+    "widget.gallery.spec.accessoryRectangular" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "accessoryRectangular · 172×76pt"
+          }
+        }
+      }
+    },
+    "widget.gallery.spec.systemLarge" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "systemLarge · 338×354"
+          }
+        }
+      }
+    },
+    "widget.gallery.spec.systemMedium" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "systemMedium · 338×158"
+          }
+        }
+      }
+    },
+    "widget.gallery.spec.systemSmall" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "systemSmall · 158×158"
+          }
+        }
+      }
+    },
     "widget.gallery.variantCount" : {
       "localizations" : {
         "zh-Hans" : {

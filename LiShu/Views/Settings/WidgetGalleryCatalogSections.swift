@@ -1,5 +1,33 @@
 import SwiftUI
 
+private enum GalleryPreviewSize {
+    case small
+    case medium
+    case large
+
+    var label: String {
+        switch self {
+        case .small: String(localized: "widget.gallery.size.small")
+        case .medium: String(localized: "widget.gallery.size.medium")
+        case .large: String(localized: "widget.gallery.size.large")
+        }
+    }
+
+    var previewWidth: CGFloat {
+        switch self {
+        case .small: 158
+        case .medium, .large: 338
+        }
+    }
+
+    var previewHeight: CGFloat {
+        switch self {
+        case .small, .medium: 158
+        case .large: 354
+        }
+    }
+}
+
 struct WidgetGallerySegmentedControl: View {
     @Binding var section: WidgetGallerySection
     @Environment(\.colorScheme) private var colorScheme
@@ -12,11 +40,12 @@ struct WidgetGallerySegmentedControl: View {
         .padding(4)
         .background(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(colorScheme == .dark ? Color.white.opacity(0.06) : Color(red: 0.47, green: 0.35, blue: 0.24).opacity(0.06))
+                .fill(colorScheme == .dark ? DesignSystem.Colors.textOnPrimary.opacity(0.06) : DesignSystem.Colors.bgCard.opacity(0.06))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
                         .strokeBorder(
-                            colorScheme == .dark ? Color.white.opacity(0.06) : Color(red: 0.47, green: 0.35, blue: 0.24).opacity(0.08),
+                            colorScheme == .dark ? DesignSystem.Colors.textOnPrimary.opacity(0.06) : DesignSystem.Colors.bgCard
+                                .opacity(0.08),
                             lineWidth: 0.5
                         )
                 )
@@ -31,10 +60,10 @@ struct WidgetGallerySegmentedControl: View {
         return Button { withAnimation(.easeInOut(duration: 0.2)) { section = tab } } label: {
             HStack(spacing: 4) {
                 Text(label)
-                    .font(.system(size: 13, weight: active ? .bold : .semibold))
+                    .font(DesignSystem.Typography.caption)
                     .foregroundStyle(active ? DesignSystem.Colors.textPrimary : DesignSystem.Colors.textSecondary)
                 Text(count)
-                    .font(.system(size: 11, weight: .bold))
+                    .font(DesignSystem.Typography.caption)
                     .foregroundStyle(active ? DesignSystem.Colors.primary : DesignSystem.Colors.textTertiary)
             }
             .frame(maxWidth: .infinity)
@@ -42,10 +71,10 @@ struct WidgetGallerySegmentedControl: View {
             .background(
                 RoundedRectangle(cornerRadius: 9, style: .continuous)
                     .fill(active
-                        ? (colorScheme == .dark ? Color(red: 0.149, green: 0.118, blue: 0.094).opacity(0.80) : Color.white)
+                        ? (colorScheme == .dark ? DesignSystem.Colors.bgCard.opacity(0.80) : DesignSystem.Colors.textOnPrimary)
                         : Color.clear)
                     .shadow(
-                        color: active ? Color(red: 0.47, green: 0.35, blue: 0.24).opacity(colorScheme == .dark ? 0 : 0.10) : .clear,
+                        color: active ? DesignSystem.Colors.bgCard.opacity(colorScheme == .dark ? 0 : 0.10) : .clear,
                         radius: 6,
                         x: 0,
                         y: 3
@@ -64,9 +93,9 @@ struct WidgetGalleryHomeWidgets: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            GallerySectionTitle(label: "systemSmall · 158×158", count: 3)
+            GallerySectionTitle(label: String(localized: "widget.gallery.spec.systemSmall"), count: 3)
             widgetCard(
-                size: "Small",
+                size: .small,
                 name: String(localized: "widget.gallery.small.reminder.name"),
                 desc: String(localized: "widget.gallery.small.reminder.desc"),
                 scenarios: [
@@ -77,7 +106,7 @@ struct WidgetGalleryHomeWidgets: View {
                 GallerySmallStub(snapshot: snapshot, variant: .reminder)
             }
             widgetCard(
-                size: "Small",
+                size: .small,
                 name: String(localized: "widget.countdown.displayName"),
                 desc: String(localized: "widget.gallery.small.countdown.desc"),
                 scenarios: [
@@ -88,7 +117,7 @@ struct WidgetGalleryHomeWidgets: View {
                 GallerySmallStub(snapshot: snapshot, variant: .countdown)
             }
             widgetCard(
-                size: "Small",
+                size: .small,
                 name: String(localized: "widget.financial.displayName"),
                 desc: String(localized: "widget.gallery.small.financial.desc"),
                 scenarios: [
@@ -100,9 +129,9 @@ struct WidgetGalleryHomeWidgets: View {
                 GallerySmallStub(snapshot: snapshot, variant: .financial)
             }
 
-            GallerySectionTitle(label: "systemMedium · 338×158", count: 3)
+            GallerySectionTitle(label: String(localized: "widget.gallery.spec.systemMedium"), count: 3)
             widgetCard(
-                size: "Medium",
+                size: .medium,
                 name: String(localized: "widget.gallery.medium.reminder.name"),
                 desc: String(localized: "widget.gallery.medium.reminder.desc"),
                 scenarios: [
@@ -113,7 +142,7 @@ struct WidgetGalleryHomeWidgets: View {
                 GalleryMediumStub(snapshot: snapshot, variant: .reminder)
             }
             widgetCard(
-                size: "Medium",
+                size: .medium,
                 name: String(localized: "widget.gallery.medium.event.name"),
                 desc: String(localized: "widget.mediumEvent.description"),
                 scenarios: [
@@ -124,7 +153,7 @@ struct WidgetGalleryHomeWidgets: View {
                 GalleryMediumStub(snapshot: snapshot, variant: .event)
             }
             widgetCard(
-                size: "Medium",
+                size: .medium,
                 name: String(localized: "widget.mediumFinancial.displayName"),
                 desc: String(localized: "widget.mediumFinancial.description"),
                 scenarios: [
@@ -136,9 +165,9 @@ struct WidgetGalleryHomeWidgets: View {
                 GalleryMediumStub(snapshot: snapshot, variant: .financial)
             }
 
-            GallerySectionTitle(label: "systemLarge · 338×354", count: 1)
+            GallerySectionTitle(label: String(localized: "widget.gallery.spec.systemLarge"), count: 1)
             widgetCard(
-                size: "Large",
+                size: .large,
                 name: String(localized: "widget.gallery.large.name"),
                 desc: String(localized: "widget.gallery.large.desc"),
                 scenarios: [
@@ -152,30 +181,14 @@ struct WidgetGalleryHomeWidgets: View {
     }
 
     private func widgetCard(
-        size: String, name: String, desc: String,
+        size: GalleryPreviewSize, name: String, desc: String,
         scenarios: [(String, Color)], dotColor: Color = DesignSystem.Colors.primary,
         @ViewBuilder content: @escaping () -> some View
     ) -> some View {
         GalleryWidgetCard(
-            size: size, name: name, desc: desc, scenarios: scenarios, dotColor: dotColor,
+            size: size.label, name: name, desc: desc, scenarios: scenarios, dotColor: dotColor,
             isLock: false, lockBg: .lock
-        ) { AnyView(WidgetPreviewShell(width: previewWidth(size), height: previewHeight(size)) { content() }) }
-    }
-
-    private func previewWidth(_ size: String) -> CGFloat {
-        switch size {
-        case "Medium": 338
-        case "Large": 338
-        default: 158
-        }
-    }
-
-    private func previewHeight(_ size: String) -> CGFloat {
-        switch size {
-        case "Medium": 158
-        case "Large": 354
-        default: 158
-        }
+        ) { AnyView(WidgetPreviewShell(width: size.previewWidth, height: size.previewHeight) { content() }) }
     }
 }
 
@@ -186,10 +199,10 @@ struct WidgetGalleryLockWidgets: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            GallerySectionTitle(label: "accessoryCircular · 76pt", count: 2)
+            GallerySectionTitle(label: String(localized: "widget.gallery.spec.accessoryCircular"), count: 2)
             lockWidgetCard(
                 bg: .lock,
-                size: "Circular",
+                size: String(localized: "widget.gallery.size.circular"),
                 name: String(localized: "widget.gallery.circular.name"),
                 desc: String(localized: "widget.gallery.circular.desc"),
                 scenarios: [
@@ -202,7 +215,7 @@ struct WidgetGalleryLockWidgets: View {
             }
             lockWidgetCard(
                 bg: .dusk,
-                size: "Circular",
+                size: String(localized: "widget.gallery.size.circular"),
                 name: String(localized: "widget.countdownRing.displayName"),
                 desc: String(localized: "widget.countdownRing.description"),
                 scenarios: [
@@ -213,10 +226,10 @@ struct WidgetGalleryLockWidgets: View {
                 GalleryCircularCountdownStub(daysUntil: snapshot.nextHostingEvent?.daysUntil ?? 7)
             }
 
-            GallerySectionTitle(label: "accessoryRectangular · 172×76pt", count: 1)
+            GallerySectionTitle(label: String(localized: "widget.gallery.spec.accessoryRectangular"), count: 1)
             lockWidgetCard(
                 bg: .lock,
-                size: "Rectangular",
+                size: String(localized: "widget.gallery.size.rectangular"),
                 name: String(localized: "widget.gallery.rectangular.name"),
                 desc: String(localized: "widget.gallery.rectangular.desc"),
                 scenarios: [
@@ -227,10 +240,10 @@ struct WidgetGalleryLockWidgets: View {
                 GalleryRectangularStub(snapshot: snapshot)
             }
 
-            GallerySectionTitle(label: "accessoryInline · 257×16pt", count: 1)
+            GallerySectionTitle(label: String(localized: "widget.gallery.spec.accessoryInline"), count: 1)
             lockWidgetCard(
                 bg: .lock,
-                size: "Inline",
+                size: String(localized: "widget.gallery.size.inline"),
                 name: String(localized: "widget.gallery.inline.name"),
                 desc: String(localized: "widget.gallery.inline.desc"),
                 scenarios: [(String(localized: "widget.gallery.scenario.minimalist"), DesignSystem.Colors.accentGold)],

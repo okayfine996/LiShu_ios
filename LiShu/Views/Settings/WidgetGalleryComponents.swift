@@ -56,12 +56,12 @@ struct WidgetGalleryBackground: View {
     var body: some View {
         if colorScheme == .dark {
             LinearGradient(
-                colors: [Color(red: 0.110, green: 0.106, blue: 0.098), Color(red: 0.055, green: 0.047, blue: 0.039)],
+                colors: [DesignSystem.Colors.widgetGalleryBgStart, DesignSystem.Colors.widgetGalleryBgEnd],
                 startPoint: .topLeading, endPoint: .bottomTrailing
             )
         } else {
             LinearGradient(
-                colors: [Color(red: 0.984, green: 0.965, blue: 0.933), Color(red: 0.945, green: 0.898, blue: 0.831)],
+                colors: [DesignSystem.Colors.widgetGalleryBgStart, DesignSystem.Colors.widgetGalleryBgEnd],
                 startPoint: .topLeading, endPoint: .bottomTrailing
             )
         }
@@ -78,8 +78,8 @@ struct LiShuGalleryMark: View {
                 startPoint: .topLeading, endPoint: .bottomTrailing
             )
             Text("礼")
-                .font(.system(size: 11 * 0.62, weight: .heavy))
-                .foregroundStyle(.white)
+                .font(DesignSystem.Typography.widgetTinyBold)
+                .foregroundStyle(DesignSystem.Colors.textOnPrimary)
         }
         .frame(width: 11, height: 11)
         .clipShape(RoundedRectangle(cornerRadius: 11 * 0.22, style: .continuous))
@@ -96,10 +96,10 @@ struct GallerySectionTitle: View {
     var body: some View {
         HStack(alignment: .lastTextBaseline, spacing: 8) {
             Text(label.uppercased())
-                .font(.system(size: 13, weight: .heavy, design: .monospaced))
+                .font(DesignSystem.Typography.widgetBodyBold)
                 .foregroundStyle(DesignSystem.Colors.textSecondary)
             Text(String(format: String(localized: "widget.gallery.variantCount"), count))
-                .font(.system(size: 11, weight: .bold))
+                .font(DesignSystem.Typography.small)
                 .foregroundStyle(DesignSystem.Colors.textTertiary)
             Spacer()
         }
@@ -130,17 +130,17 @@ struct GalleryWidgetCard: View {
             stageArea
             metaArea
         }
-        .background(colorScheme == .dark ? Color(red: 0.149, green: 0.118, blue: 0.094).opacity(0.55) : Color.white)
+        .background(colorScheme == .dark ? DesignSystem.Colors.bgCard.opacity(0.55) : DesignSystem.Colors.textOnPrimary)
         .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 22, style: .continuous)
                 .strokeBorder(
-                    colorScheme == .dark ? Color.white.opacity(0.06) : Color(red: 0.47, green: 0.35, blue: 0.24).opacity(0.10),
+                    colorScheme == .dark ? DesignSystem.Colors.textOnPrimary.opacity(0.06) : DesignSystem.Colors.bgCard.opacity(0.10),
                     lineWidth: 0.5
                 )
         )
         .shadow(
-            color: colorScheme == .dark ? Color.black.opacity(0.32) : Color(red: 0.47, green: 0.35, blue: 0.24).opacity(0.10),
+            color: colorScheme == .dark ? DesignSystem.Colors.overlayDark.opacity(0.32) : DesignSystem.Colors.bgCard.opacity(0.10),
             radius: 22,
             x: 0,
             y: 8
@@ -167,13 +167,13 @@ struct GalleryWidgetCard: View {
             let w = geo.size.width
             let h = geo.size.height
             ZStack {
-                Circle().fill(Color.white.opacity(0.50)).frame(width: 2, height: 2)
+                Circle().fill(DesignSystem.Colors.textOnPrimary.opacity(0.50)).frame(width: 2, height: 2)
                     .position(x: w * 0.09, y: h * 0.38)
-                Circle().fill(Color.white.opacity(0.60)).frame(width: 3, height: 3)
+                Circle().fill(DesignSystem.Colors.textOnPrimary.opacity(0.60)).frame(width: 3, height: 3)
                     .position(x: w * 0.28, y: h * 0.62)
-                Circle().fill(Color.white.opacity(0.55)).frame(width: 2, height: 2)
+                Circle().fill(DesignSystem.Colors.textOnPrimary.opacity(0.55)).frame(width: 2, height: 2)
                     .position(x: w * 0.62, y: h * 0.28)
-                Circle().fill(Color.white.opacity(0.45)).frame(width: 2, height: 2)
+                Circle().fill(DesignSystem.Colors.textOnPrimary.opacity(0.45)).frame(width: 2, height: 2)
                     .position(x: w * 0.87, y: h * 0.52)
             }
             .opacity(0.7)
@@ -186,33 +186,33 @@ struct GalleryWidgetCard: View {
         if isLock {
             if lockBg == .lock {
                 RadialGradient(
-                    colors: [Color(red: 0.227, green: 0.290, blue: 0.471),
-                             Color(red: 0.122, green: 0.165, blue: 0.290),
-                             Color(red: 0.039, green: 0.055, blue: 0.122)],
+                    colors: [DesignSystem.Colors.widgetGalleryLockStart,
+                             DesignSystem.Colors.widgetGalleryLockMid,
+                             DesignSystem.Colors.widgetGalleryLockEnd],
                     center: UnitPoint(x: 0.3, y: 0.3), startRadius: 0, endRadius: 250
                 )
             } else {
                 RadialGradient(
-                    colors: [Color(red: 1.0, green: 0.847, blue: 0.690),
-                             Color(red: 0.910, green: 0.604, blue: 0.522),
+                    colors: [DesignSystem.Colors.widgetGalleryDuskStart,
+                             DesignSystem.Colors.widgetGalleryDuskMid,
                              DesignSystem.Colors.primary,
-                             Color(red: 0.227, green: 0.114, blue: 0.094)],
+                             DesignSystem.Colors.widgetGalleryDuskEnd],
                     center: UnitPoint(x: 0.7, y: 0.25), startRadius: 0, endRadius: 280
                 )
             }
         } else {
             if colorScheme == .dark {
                 LinearGradient(
-                    colors: [Color(red: 0.165, green: 0.125, blue: 0.094),
-                             Color(red: 0.122, green: 0.094, blue: 0.071),
-                             Color(red: 0.165, green: 0.122, blue: 0.090)],
+                    colors: [DesignSystem.Colors.widgetGalleryStageStart,
+                             DesignSystem.Colors.widgetGalleryStageMid,
+                             DesignSystem.Colors.widgetGalleryStageEnd],
                     startPoint: .topLeading, endPoint: .bottomTrailing
                 )
             } else {
                 LinearGradient(
-                    colors: [Color(red: 0.984, green: 0.965, blue: 0.933),
-                             Color(red: 0.941, green: 0.878, blue: 0.800),
-                             Color(red: 0.910, green: 0.831, blue: 0.698)],
+                    colors: [DesignSystem.Colors.widgetGalleryStageStart,
+                             DesignSystem.Colors.widgetGalleryStageMid,
+                             DesignSystem.Colors.widgetGalleryStageEnd],
                     startPoint: .topLeading, endPoint: .bottomTrailing
                 )
             }
@@ -223,12 +223,12 @@ struct GalleryWidgetCard: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .center, spacing: 8) {
                 Text(size.uppercased())
-                    .font(.system(size: 10, weight: .heavy, design: .monospaced))
+                    .font(DesignSystem.Typography.widgetMetaBold)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 3)
                     .background(
                         RoundedRectangle(cornerRadius: 4, style: .continuous)
-                            .fill(colorScheme == .dark ? Color.white.opacity(0.10) : Color(red: 0.47, green: 0.35, blue: 0.24)
+                            .fill(colorScheme == .dark ? DesignSystem.Colors.textOnPrimary.opacity(0.10) : DesignSystem.Colors.bgCard
                                 .opacity(0.10))
                     )
                     .foregroundStyle(DesignSystem.Colors.textSecondary)
@@ -238,12 +238,12 @@ struct GalleryWidgetCard: View {
             .padding(.bottom, 6)
 
             Text(name)
-                .font(.system(size: 16, weight: .heavy))
+                .font(DesignSystem.Typography.widgetTitle)
                 .kerning(-0.3)
                 .foregroundStyle(DesignSystem.Colors.textPrimary)
 
             Text(desc)
-                .font(.system(size: 12.5))
+                .font(DesignSystem.Typography.widgetBody)
                 .lineSpacing(4)
                 .foregroundStyle(DesignSystem.Colors.textSecondary)
                 .padding(.top, 4)
@@ -253,7 +253,7 @@ struct GalleryWidgetCard: View {
                     ForEach(scenarios.indices, id: \.self) { i in
                         let (label, color) = scenarios[i]
                         Text(label)
-                            .font(.system(size: 10.5, weight: .semibold))
+                            .font(DesignSystem.Typography.widgetMetaBold)
                             .padding(.horizontal, 9)
                             .padding(.vertical, 4)
                             .background(
@@ -261,7 +261,7 @@ struct GalleryWidgetCard: View {
                                     .fill(colorScheme == .dark ? color.opacity(0.30) : color.opacity(0.18))
                                     .overlay(Capsule().strokeBorder(color.opacity(colorScheme == .dark ? 0.40 : 0.30), lineWidth: 0.5))
                             )
-                            .foregroundStyle(colorScheme == .dark ? Color.white : color)
+                            .foregroundStyle(colorScheme == .dark ? DesignSystem.Colors.textOnPrimary : color)
                     }
                 }
                 .padding(.top, 10)
@@ -314,23 +314,23 @@ struct HowToAddAccordion: View {
                             ))
                             .shadow(color: DesignSystem.Colors.primary.opacity(0.55), radius: 8, x: 0, y: 3)
                         Image(systemName: "info.circle")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(.white)
+                            .font(DesignSystem.Typography.caption)
+                            .foregroundStyle(DesignSystem.Colors.textOnPrimary)
                     }
                     .frame(width: 32, height: 32)
 
                     VStack(alignment: .leading, spacing: 2) {
                         Text(isLock ? String(localized: "widget.gallery.howToAdd.lock.title") :
                             String(localized: "widget.gallery.howToAdd.home.title"))
-                            .font(.system(size: 14, weight: .bold))
+                            .font(DesignSystem.Typography.caption)
                             .foregroundStyle(DesignSystem.Colors.textPrimary)
                         Text(String(localized: "widget.gallery.howto.tagline"))
-                            .font(.system(size: 11.5))
+                            .font(DesignSystem.Typography.caption)
                             .foregroundStyle(DesignSystem.Colors.textSecondary)
                     }
                     Spacer()
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(DesignSystem.Typography.caption)
                         .foregroundStyle(DesignSystem.Colors.textSecondary)
                         .rotationEffect(.degrees(isExpanded ? 90 : 0))
                 }
@@ -341,7 +341,8 @@ struct HowToAddAccordion: View {
             if isExpanded {
                 VStack(spacing: 0) {
                     Rectangle()
-                        .fill(colorScheme == .dark ? Color.white.opacity(0.06) : Color(red: 0.47, green: 0.35, blue: 0.24).opacity(0.08))
+                        .fill(colorScheme == .dark ? DesignSystem.Colors.textOnPrimary.opacity(0.06) : DesignSystem.Colors.bgCard
+                            .opacity(0.08))
                         .frame(height: 0.5)
                     ForEach(steps.indices, id: \.self) { i in
                         HStack(alignment: .top, spacing: 12) {
@@ -351,16 +352,16 @@ struct HowToAddAccordion: View {
                                         .opacity(0.14))
                                     .overlay(Circle().strokeBorder(DesignSystem.Colors.primary.opacity(0.30), lineWidth: 0.5))
                                 Text("\(i + 1)")
-                                    .font(.system(size: 11, weight: .heavy))
+                                    .font(DesignSystem.Typography.caption)
                                     .foregroundStyle(DesignSystem.Colors.primary)
                             }
                             .frame(width: 24, height: 24)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(steps[i].0)
-                                    .font(.system(size: 13, weight: .bold))
+                                    .font(DesignSystem.Typography.caption)
                                     .foregroundStyle(DesignSystem.Colors.textPrimary)
                                 Text(steps[i].1)
-                                    .font(.system(size: 12))
+                                    .font(DesignSystem.Typography.caption)
                                     .lineSpacing(3)
                                     .foregroundStyle(DesignSystem.Colors.textSecondary)
                             }
@@ -370,7 +371,7 @@ struct HowToAddAccordion: View {
                         .padding(.vertical, 12)
                         if i < steps.count - 1 {
                             Rectangle()
-                                .fill(colorScheme == .dark ? Color.white.opacity(0.05) : Color(red: 0.47, green: 0.35, blue: 0.24)
+                                .fill(colorScheme == .dark ? DesignSystem.Colors.textOnPrimary.opacity(0.05) : DesignSystem.Colors.bgCard
                                     .opacity(0.06))
                                 .frame(height: 0.5)
                                 .padding(.leading, 52)
@@ -383,17 +384,17 @@ struct HowToAddAccordion: View {
                 }
             }
         }
-        .background(colorScheme == .dark ? Color(red: 0.149, green: 0.118, blue: 0.094).opacity(0.60) : Color.white)
+        .background(colorScheme == .dark ? DesignSystem.Colors.bgCard.opacity(0.60) : DesignSystem.Colors.textOnPrimary)
         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
                 .strokeBorder(
-                    colorScheme == .dark ? Color.white.opacity(0.06) : Color(red: 0.47, green: 0.35, blue: 0.24).opacity(0.10),
+                    colorScheme == .dark ? DesignSystem.Colors.textOnPrimary.opacity(0.06) : DesignSystem.Colors.bgCard.opacity(0.10),
                     lineWidth: 0.5
                 )
         )
         .shadow(
-            color: colorScheme == .dark ? Color.black.opacity(0.32) : Color(red: 0.47, green: 0.35, blue: 0.24).opacity(0.08),
+            color: colorScheme == .dark ? DesignSystem.Colors.overlayDark.opacity(0.32) : DesignSystem.Colors.bgCard.opacity(0.08),
             radius: 18,
             x: 0,
             y: 6
@@ -403,10 +404,10 @@ struct HowToAddAccordion: View {
     private var tipBox: some View {
         HStack(alignment: .top, spacing: 8) {
             Image(systemName: "bolt.fill")
-                .font(.system(size: 12))
+                .font(DesignSystem.Typography.caption)
                 .foregroundStyle(DesignSystem.Colors.accentGold)
             Text(String(localized: "widget.gallery.editTip"))
-                .font(.system(size: 11.5))
+                .font(DesignSystem.Typography.caption)
                 .lineSpacing(3)
                 .foregroundStyle(DesignSystem.Colors.textSecondary)
         }
@@ -438,14 +439,14 @@ struct WidgetGalleryFooter: View {
                     HStack(spacing: 5) {
                         Text(String(localized: "widget.gallery.footer.tutorial"))
                         Image(systemName: "arrow.right")
-                            .font(.system(size: 11, weight: .semibold))
+                            .font(DesignSystem.Typography.caption)
                     }
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(DesignSystem.Typography.caption)
                     .foregroundStyle(DesignSystem.Colors.primary)
                 }
             }
             Text(String(localized: "widget.gallery.footer"))
-                .font(.caption)
+                .font(DesignSystem.Typography.small)
                 .foregroundStyle(DesignSystem.Colors.textSecondary)
         }
         .padding(.top, 20)
@@ -455,9 +456,9 @@ struct WidgetGalleryFooter: View {
 
 #Preview("Widget Gallery Components") {
     ScrollView {
-        GallerySectionTitle(label: "systemSmall · 158×158", count: 3)
+        GallerySectionTitle(label: String(localized: "widget.gallery.spec.systemSmall"), count: 3)
         GalleryWidgetCard(
-            size: "Small",
+            size: String(localized: "widget.gallery.size.small"),
             name: String(localized: "widget.gallery.small.reminder.name"),
             desc: String(localized: "widget.gallery.small.reminder.desc"),
             scenarios: [(String(localized: "widget.gallery.scenario.dailyManager"), DesignSystem.Colors.primary)],

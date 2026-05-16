@@ -5,9 +5,9 @@ struct WidgetGalleryHeroView: View {
     @Environment(\.colorScheme) private var colorScheme
 
     private var heroHeadline: some View {
-        (Text(String(localized: "widget.gallery.hero.headline")).foregroundColor(DesignSystem.Colors.textPrimary)
-            + Text(String(localized: "widget.gallery.hero.emphasis")).foregroundColor(DesignSystem.Colors.primary))
-            .font(.system(size: 22, weight: .heavy))
+        (Text(String(localized: "widget.gallery.hero.headline")).foregroundStyle(DesignSystem.Colors.textPrimary)
+            + Text(String(localized: "widget.gallery.hero.emphasis")).foregroundStyle(DesignSystem.Colors.primary))
+            .font(DesignSystem.Typography.title2)
             .kerning(-0.5)
             .padding(.top, 10)
     }
@@ -19,16 +19,16 @@ struct WidgetGalleryHeroView: View {
             ZStack {
                 if colorScheme == .dark {
                     LinearGradient(
-                        colors: [Color(red: 0.165, green: 0.114, blue: 0.094),
-                                 Color(red: 0.102, green: 0.078, blue: 0.063),
-                                 Color(red: 0.149, green: 0.106, blue: 0.086)],
+                        colors: [DesignSystem.Colors.widgetGalleryStageStart,
+                                 DesignSystem.Colors.widgetGalleryStageMid,
+                                 DesignSystem.Colors.widgetGalleryStageEnd],
                         startPoint: .topLeading, endPoint: .bottomTrailing
                     )
                 } else {
                     LinearGradient(
-                        colors: [Color(red: 1.0, green: 0.914, blue: 0.839),
-                                 Color(red: 0.961, green: 0.835, blue: 0.710),
-                                 Color(red: 0.910, green: 0.722, blue: 0.604)],
+                        colors: [DesignSystem.Colors.widgetGalleryStageStart,
+                                 DesignSystem.Colors.widgetGalleryStageMid,
+                                 DesignSystem.Colors.widgetGalleryStageEnd],
                         startPoint: .topLeading, endPoint: .bottomTrailing
                     )
                 }
@@ -50,16 +50,18 @@ struct WidgetGalleryHeroView: View {
                         HStack(spacing: 5) {
                             LiShuGalleryMark()
                             Text(String(localized: "widget.displayName") + " · Widget")
-                                .font(.system(size: 10, weight: .heavy))
+                                .font(DesignSystem.Typography.widgetTinyBold)
                                 .kerning(0.8)
                                 .textCase(.uppercase)
-                                .foregroundStyle(colorScheme == .dark ? Color(red: 0.961, green: 0.835, blue: 0.710) : DesignSystem.Colors
+                                .foregroundStyle(colorScheme == .dark ? DesignSystem.Colors.bgCard : DesignSystem.Colors
                                     .primary)
                         }
                         .padding(.horizontal, 9)
                         .padding(.vertical, 3)
                         .background(
-                            Capsule().fill(colorScheme == .dark ? DesignSystem.Colors.primary.opacity(0.30) : Color.white.opacity(0.55))
+                            Capsule()
+                                .fill(colorScheme == .dark ? DesignSystem.Colors.primary.opacity(0.30) : DesignSystem.Colors.textOnPrimary
+                                    .opacity(0.55))
                                 .overlay(Capsule().strokeBorder(
                                     DesignSystem.Colors.primary.opacity(colorScheme == .dark ? 0.40 : 0.30),
                                     lineWidth: 0.5
@@ -69,7 +71,7 @@ struct WidgetGalleryHeroView: View {
                         heroHeadline
 
                         Text(String(localized: "widget.gallery.hero.subtitle"))
-                            .font(.system(size: 12.5))
+                            .font(DesignSystem.Typography.widgetBody)
                             .foregroundStyle(DesignSystem.Colors.textSecondary)
                             .lineSpacing(4)
                             .padding(.top, 8)
@@ -81,7 +83,7 @@ struct WidgetGalleryHeroView: View {
                         .allowsHitTesting(false)
                         .rotationEffect(.degrees(-5))
                         .offset(y: -4)
-                        .shadow(color: Color(red: 0.235, green: 0.118, blue: 0.078).opacity(0.30), radius: 24, x: 0, y: 18)
+                        .shadow(color: DesignSystem.Colors.bgCard.opacity(0.30), radius: 24, x: 0, y: 18)
                 }
                 .padding(22)
             }
@@ -89,7 +91,8 @@ struct WidgetGalleryHeroView: View {
             .overlay(
                 RoundedRectangle(cornerRadius: 24, style: .continuous)
                     .strokeBorder(
-                        colorScheme == .dark ? Color.white.opacity(0.08) : Color.white.opacity(0.6),
+                        colorScheme == .dark ? DesignSystem.Colors.textOnPrimary.opacity(0.08) : DesignSystem.Colors.textOnPrimary
+                            .opacity(0.6),
                         lineWidth: 0.5
                     )
             )

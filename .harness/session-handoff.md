@@ -4,6 +4,8 @@
 None — `feat-widget-view-refactor` marked **done**.
 
 ## Last Verified State
+Widget review fixes complete (2026-05-16). `scripts/harness/verify.sh quick` passed: SwiftFormat 0, SwiftLint 0, TEST BUILD SUCCEEDED. Targeted `WidgetDataWriterTests` passed 49 Swift Testing tests. Latest fixes cover cover-image driven widget refresh, DesignSystem compliance in main-app Widget Gallery files, and localization of Widget Gallery size/spec labels.
+
 Widget view decomposition complete (2026-05-15). `scripts/harness/verify.sh quick` passed: SwiftFormat 0, SwiftLint 0, TEST BUILD SUCCEEDED. Targeted `WidgetGalleryUITests` passed 3/3 with `test-without-building`. The widget extension views and in-app widget gallery were split into focused reusable files, and every newly created View file includes a `#Preview`.
 
 Widget follow-up review fixes complete (2026-05-15). `scripts/harness/verify.sh full` → SwiftFormat 0, SwiftLint 0, TEST BUILD SUCCEEDED, **426 tests in 42 suites, 0 failures**. Latest fixes cover future reminder persistence while the app is closed, independent nested widget links, and `MainTabView` preview environment injection.
@@ -200,6 +202,13 @@ Design decorations without live data ("同比" YoY badge, "3 日内 N 项" sub-c
 - Design-spec alignment: small widget kind label, date+subtitle line; medium financial 3rd footer stat
 
 ## Completed Feature: feat-widget
+
+## What Was Done This Session (Widget review follow-up — 2026-05-16)
+
+- Fixed App Group cover image contention: `WidgetDataWriter` now scopes cover files by event stableID (`widget_event_cover_<stableID>`), and `WidgetDataWriterTests` runs serialized because it validates file side effects.
+- Fixed Widget Gallery preview sizing: `WidgetGalleryCatalogSections` uses `GalleryPreviewSize` enum dimensions instead of switching on localized display strings.
+- Restored Widget Gallery visual hierarchy under DesignSystem rules: added widget-gallery preview color/typography tokens and applied them to gallery backgrounds, hero/card text, lock stubs, and key home preview stubs.
+- Verification: `scripts/harness/verify.sh quick` passed; targeted `WidgetDataWriterTests` passed 49 tests. StoreKit "No active account" simulator logs were observed during tests and did not fail the run.
 
 ### Widget Extension files (`LiShuWidget/`)
 - `LiShuWidgetBundle.swift` — @main WidgetBundle with 6 widgets

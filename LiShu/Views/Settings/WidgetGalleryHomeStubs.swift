@@ -19,11 +19,11 @@ struct GallerySmallStub: View {
             VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: 6) {
                     GalleryMark(size: 14)
-                    Text(String(localized: "widget.displayName")).font(.system(size: 11, weight: .bold)).foregroundStyle(ink)
+                    Text(String(localized: "widget.displayName")).font(DesignSystem.Typography.widgetBodyBold).foregroundStyle(ink)
                     Spacer()
                     if variant == .reminder, snapshot.reminderCount > 0 {
                         Text(String(format: String(localized: "widget.reminderCount"), snapshot.reminderCount))
-                            .font(.system(size: 10, weight: .bold))
+                            .font(DesignSystem.Typography.widgetMetaBold)
                             .padding(.horizontal, 7).padding(.vertical, 2)
                             .background(Capsule().fill(DesignSystem.Colors.primary.opacity(cs == .dark ? 0.28 : 0.14)))
                             .foregroundStyle(ink)
@@ -45,27 +45,27 @@ struct GallerySmallStub: View {
         if let item = snapshot.reminders.first {
             let color = galleryKindColor(item.kind)
             Text("\(String(localized: "widget.small.nextItem")) · \(galleryKindName(item.kind))")
-                .font(.system(size: 9, weight: .bold)).kerning(0.8)
+                .font(DesignSystem.Typography.widgetTinyBold).kerning(0.8)
                 .foregroundStyle(color)
                 .textCase(.uppercase)
                 .lineLimit(1)
                 .padding(.bottom, 4)
             Text(item.title)
-                .font(.system(size: 17, weight: .heavy)).kerning(-0.3)
+                .font(DesignSystem.Typography.widgetTitle).kerning(-0.3)
                 .foregroundStyle(ink).lineLimit(2)
             if let eventDate = item.eventDateLabel {
                 Text("\(eventDate) · \(item.subtitle)")
-                    .font(.system(size: 10)).foregroundStyle(inkSub)
+                    .font(DesignSystem.Typography.widgetMeta).foregroundStyle(inkSub)
                     .lineLimit(1).padding(.top, 2)
             }
             HStack(spacing: 6) {
                 Text(item.dateLabel)
-                    .font(.system(size: 11, weight: .heavy)).foregroundStyle(.white)
+                    .font(DesignSystem.Typography.widgetMetaBold).foregroundStyle(DesignSystem.Colors.textOnPrimary)
                     .padding(.horizontal, 10).padding(.vertical, 4)
                     .background(Capsule().fill(color))
                 if snapshot.reminderCount > 1 {
                     Text(String(format: String(localized: "widget.more.items"), snapshot.reminderCount - 1))
-                        .font(.system(size: 10)).foregroundStyle(inkSub)
+                        .font(DesignSystem.Typography.widgetMeta).foregroundStyle(inkSub)
                 }
             }
             .padding(.top, 10)
@@ -75,24 +75,24 @@ struct GallerySmallStub: View {
     @ViewBuilder private var countdownContent: some View {
         if let ev = snapshot.nextHostingEvent {
             Text(String(format: String(localized: "widget.hosting.status"), ev.typeName))
-                .font(.system(size: 9, weight: .bold)).kerning(0.8)
+                .font(DesignSystem.Typography.widgetTinyBold).kerning(0.8)
                 .foregroundStyle(DesignSystem.Colors.accentGold)
                 .textCase(.uppercase)
                 .lineLimit(1)
                 .padding(.bottom, 4)
-            Text(ev.name).font(.system(size: 16, weight: .heavy)).foregroundStyle(ink).lineLimit(1)
+            Text(ev.name).font(DesignSystem.Typography.widgetTitle).foregroundStyle(ink).lineLimit(1)
             HStack(alignment: .firstTextBaseline, spacing: 0) {
                 Text("D–")
-                    .font(.system(size: 13, weight: .heavy))
+                    .font(DesignSystem.Typography.widgetBodyBold)
                     .foregroundStyle(ink)
                     .padding(.bottom, 2)
                 Text("\(ev.daysUntil)")
-                    .font(.system(size: 42, weight: .heavy)).kerning(-2.5)
+                    .font(DesignSystem.Typography.widgetCountdown).kerning(-2.5)
                     .foregroundStyle(ink)
                     .lineLimit(1)
             }
             .padding(.top, 4)
-            Text(ev.dateLine).font(.system(size: 10)).foregroundStyle(inkSub).lineLimit(1)
+            Text(ev.dateLine).font(DesignSystem.Typography.widgetMeta).foregroundStyle(inkSub).lineLimit(1)
         }
     }
 
@@ -105,16 +105,16 @@ struct GallerySmallStub: View {
         let expenseRatio = total > 0 ? CGFloat(snapshot.yearlyExpense / total) : 0
 
         Text("\(String(localized: "widget.netAmount")) · \(chineseYear(snapshot.currentYear))")
-            .font(.system(size: 9, weight: .bold)).kerning(0.8)
+            .font(DesignSystem.Typography.widgetTinyBold).kerning(0.8)
             .foregroundStyle(inkSub)
             .textCase(.uppercase)
             .padding(.bottom, 2)
         HStack(alignment: .firstTextBaseline, spacing: 2) {
             Text(net >= 0 ? "+¥" : "-¥")
-                .font(.system(size: 11, weight: .heavy))
+                .font(DesignSystem.Typography.widgetBodyBold)
                 .foregroundStyle(ink)
             Text(abs(net), format: .number.precision(.fractionLength(0)))
-                .font(.system(size: 26, weight: .heavy)).kerning(-1.2)
+                .font(DesignSystem.Typography.widgetMetric).kerning(-1.2)
                 .foregroundStyle(ink)
         }
         VStack(alignment: .leading, spacing: 6) {
@@ -131,7 +131,7 @@ struct GallerySmallStub: View {
         }
         .padding(.top, 12)
         Text(String(format: String(localized: "widget.stats.footer"), snapshot.yearlyRecordCount, snapshot.yearlyContactCount))
-            .font(.system(size: 10, weight: .semibold))
+            .font(DesignSystem.Typography.widgetMeta)
             .foregroundStyle(inkSub)
             .padding(.top, 8)
     }
@@ -140,14 +140,14 @@ struct GallerySmallStub: View {
         VStack(alignment: .leading, spacing: 2) {
             HStack {
                 Text(label)
-                    .font(.system(size: 9, weight: .semibold)).foregroundStyle(inkSub)
+                    .font(DesignSystem.Typography.widgetMeta).foregroundStyle(inkSub)
                 Spacer(minLength: 0)
                 Text("¥\(value, format: .number.notation(.compactName).precision(.significantDigits(2)))")
-                    .font(.system(size: 9, weight: .semibold)).foregroundStyle(inkSub)
+                    .font(DesignSystem.Typography.widgetMeta).foregroundStyle(inkSub)
             }
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
-                    Capsule().fill(cs == .dark ? Color.white.opacity(0.08) : Color(red: 0.47, green: 0.35, blue: 0.24).opacity(0.10))
+                    Capsule().fill(cs == .dark ? DesignSystem.Colors.textOnPrimary.opacity(0.08) : DesignSystem.Colors.bgCard.opacity(0.10))
                     Capsule().fill(color).frame(width: geo.size.width * ratio)
                 }
             }
@@ -195,10 +195,10 @@ struct GalleryMediumStub: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 6) {
                 GalleryMark(size: 16)
-                Text(String(localized: "widget.displayName")).font(.system(size: 12, weight: .bold)).foregroundStyle(ink)
+                Text(String(localized: "widget.displayName")).font(DesignSystem.Typography.widgetBodyBold).foregroundStyle(ink)
                 Spacer()
                 Text(String(format: String(localized: "widget.reminderCount"), snapshot.reminderCount))
-                    .font(.system(size: 10, weight: .bold))
+                    .font(DesignSystem.Typography.widgetMetaBold)
                     .padding(.horizontal, 7).padding(.vertical, 2)
                     .background(
                         Capsule().fill(DesignSystem.Colors.primary.opacity(cs == .dark ? 0.28 : 0.14))
@@ -212,13 +212,13 @@ struct GalleryMediumStub: View {
                         Circle().fill(color).frame(width: 6, height: 6)
                         VStack(alignment: .leading, spacing: 1) {
                             Text(item.title)
-                                .font(.system(size: 12, weight: .semibold)).foregroundStyle(ink).lineLimit(1)
+                                .font(DesignSystem.Typography.widgetBodyBold).foregroundStyle(ink).lineLimit(1)
                             Text(item.subtitle)
-                                .font(.system(size: 10, weight: .medium)).foregroundStyle(inkSub).lineLimit(1)
+                                .font(DesignSystem.Typography.widgetMeta).foregroundStyle(inkSub).lineLimit(1)
                         }
                         Spacer(minLength: 0)
                         Text(item.dateLabel)
-                            .font(.system(size: 10, weight: .bold)).foregroundStyle(color)
+                            .font(DesignSystem.Typography.widgetMetaBold).foregroundStyle(color)
                             .padding(.horizontal, 7).padding(.vertical, 2)
                             .background(Capsule().fill(color.opacity(cs == .dark ? 0.30 : 0.18)))
                     }
@@ -227,10 +227,10 @@ struct GalleryMediumStub: View {
             .padding(.top, 8)
             Spacer(minLength: 0)
             Rectangle()
-                .fill(cs == .dark ? Color.white.opacity(0.08) : Color(red: 0.47, green: 0.35, blue: 0.24).opacity(0.12))
+                .fill(cs == .dark ? DesignSystem.Colors.textOnPrimary.opacity(0.08) : DesignSystem.Colors.bgCard.opacity(0.12))
                 .frame(height: 0.5)
             HStack(spacing: 6) {
-                Image(systemName: "plus").font(.system(size: 11, weight: .bold)).foregroundStyle(.white)
+                Image(systemName: "plus").font(DesignSystem.Typography.widgetMetaBold).foregroundStyle(DesignSystem.Colors.textOnPrimary)
                     .frame(width: 22, height: 22)
                     .background(RoundedRectangle(cornerRadius: 7).fill(
                         LinearGradient(
@@ -238,7 +238,7 @@ struct GalleryMediumStub: View {
                             startPoint: .topLeading, endPoint: .bottomTrailing
                         )
                     ))
-                Text(String(localized: "widget.quickAdd")).font(.system(size: 11, weight: .bold)).foregroundStyle(ink)
+                Text(String(localized: "widget.quickAdd")).font(DesignSystem.Typography.widgetMetaBold).foregroundStyle(ink)
                 Spacer(minLength: 0)
             }
             .padding(.top, 6)
@@ -251,16 +251,16 @@ struct GalleryMediumStub: View {
             ZStack(alignment: .topLeading) {
                 LinearGradient(
                     colors: [
-                        Color(red: 0.961, green: 0.773, blue: 0.690),
-                        Color(red: 0.910, green: 0.604, blue: 0.522),
+                        DesignSystem.Colors.widgetGalleryPhotoSky,
+                        DesignSystem.Colors.widgetGalleryDuskMid,
                         DesignSystem.Colors.primary,
                     ],
                     startPoint: .top, endPoint: .bottom
                 )
                 Circle()
-                    .fill(Color(red: 1.0, green: 0.953, blue: 0.843))
+                    .fill(DesignSystem.Colors.bgCard)
                     .frame(width: 22, height: 22)
-                    .shadow(color: Color(red: 1.0, green: 0.953, blue: 0.843).opacity(0.7), radius: 9)
+                    .shadow(color: DesignSystem.Colors.bgCard.opacity(0.7), radius: 9)
                     .offset(x: 62, y: 16)
                 GeometryReader { geo in
                     let w = geo.size.width, h = geo.size.height
@@ -275,7 +275,7 @@ struct GalleryMediumStub: View {
                         p.addLine(to: .init(x: 0, y: h))
                         p.closeSubpath()
                     }
-                    .fill(Color(red: 0.545, green: 0.290, blue: 0.247).opacity(0.55))
+                    .fill(DesignSystem.Colors.widgetGalleryPhotoHill.opacity(0.55))
                     Path { p in
                         p.move(to: .init(x: 0, y: h * 0.769))
                         p.addLine(to: .init(x: w * 0.20, y: h * 0.615))
@@ -287,16 +287,16 @@ struct GalleryMediumStub: View {
                         p.addLine(to: .init(x: 0, y: h))
                         p.closeSubpath()
                     }
-                    .fill(Color(red: 0.361, green: 0.180, blue: 0.157).opacity(0.65))
+                    .fill(DesignSystem.Colors.widgetGalleryPhotoHillDeep.opacity(0.65))
                 }
                 if let ev = snapshot.nextHostingEvent {
                     Text("D–\(ev.daysUntil)")
-                        .font(.system(size: 10, weight: .heavy))
-                        .foregroundStyle(.white)
+                        .font(DesignSystem.Typography.widgetTinyBold)
+                        .foregroundStyle(DesignSystem.Colors.textOnPrimary)
                         .padding(.horizontal, 8).padding(.vertical, 3)
                         .background(
-                            Capsule().fill(Color.black.opacity(0.30))
-                                .overlay(Capsule().strokeBorder(Color.white.opacity(0.35), lineWidth: 0.5))
+                            Capsule().fill(DesignSystem.Colors.overlayDark.opacity(0.30))
+                                .overlay(Capsule().strokeBorder(DesignSystem.Colors.textOnPrimary.opacity(0.35), lineWidth: 0.5))
                         )
                         .padding(8)
                 }
@@ -306,37 +306,37 @@ struct GalleryMediumStub: View {
             VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: 6) {
                     GalleryMark(size: 14)
-                    Text(String(localized: "widget.displayName")).font(.system(size: 11, weight: .bold)).foregroundStyle(ink)
+                    Text(String(localized: "widget.displayName")).font(DesignSystem.Typography.widgetBodyBold).foregroundStyle(ink)
                 }
                 if let ev = snapshot.nextHostingEvent {
                     Text(String(format: String(localized: "widget.hosting.status"), ev.typeName))
-                        .font(.system(size: 9.5, weight: .bold)).kerning(0.8)
+                        .font(DesignSystem.Typography.widgetTinyBold).kerning(0.8)
                         .foregroundStyle(DesignSystem.Colors.accentGold)
                         .textCase(.uppercase).padding(.top, 6)
-                    Text(ev.name).font(.system(size: 16, weight: .heavy)).foregroundStyle(ink).lineLimit(1).padding(.top, 1)
-                    Text(ev.dateLine).font(.system(size: 10, weight: .medium)).foregroundStyle(inkSub).lineLimit(1).padding(.top, 2)
+                    Text(ev.name).font(DesignSystem.Typography.widgetTitleLarge).foregroundStyle(ink).lineLimit(1).padding(.top, 1)
+                    Text(ev.dateLine).font(DesignSystem.Typography.widgetMeta).foregroundStyle(inkSub).lineLimit(1).padding(.top, 2)
                     Spacer(minLength: 0)
                     if let total = ev.giftReceivedTotal {
                         HStack(spacing: 0) {
                             VStack(alignment: .leading, spacing: 1) {
-                                Text(String(localized: "widget.event.giftReceived")).font(.system(size: 9, weight: .bold))
+                                Text(String(localized: "widget.event.giftReceived")).font(DesignSystem.Typography.widgetTiny)
                                     .foregroundStyle(inkSub)
                                 Text("¥\(total, format: .number.precision(.fractionLength(0)))")
-                                    .font(.system(size: 18, weight: .heavy)).kerning(-0.6)
+                                    .font(DesignSystem.Typography.caption).kerning(-0.6)
                                     .foregroundStyle(ink)
                             }
                             if let g = ev.guestCount {
                                 Rectangle().fill(inkSub.opacity(0.20)).frame(width: 0.5, height: 28).padding(.horizontal, 10)
                                 VStack(alignment: .leading, spacing: 1) {
-                                    Text(String(localized: "widget.event.guestCount")).font(.system(size: 9, weight: .bold))
+                                    Text(String(localized: "widget.event.guestCount")).font(DesignSystem.Typography.widgetTiny)
                                         .foregroundStyle(inkSub)
-                                    Text("\(g)").font(.system(size: 18, weight: .heavy)).kerning(-0.6).foregroundStyle(ink)
+                                    Text("\(g)").font(DesignSystem.Typography.caption).kerning(-0.6).foregroundStyle(ink)
                                 }
                             }
                             Spacer(minLength: 0)
                             HStack(spacing: 4) {
-                                Image(systemName: "plus").font(.system(size: 10, weight: .bold))
-                                Text(String(localized: "widget.event.register")).font(.system(size: 10, weight: .heavy))
+                                Image(systemName: "plus").font(DesignSystem.Typography.caption)
+                                Text(String(localized: "widget.event.register")).font(DesignSystem.Typography.caption)
                             }
                             .foregroundStyle(DesignSystem.Colors.primary)
                             .padding(.horizontal, 10).padding(.vertical, 6)
@@ -363,14 +363,14 @@ struct GalleryMediumStub: View {
             HStack(spacing: 6) {
                 GalleryMark(size: 14)
                 Text(String(localized: "widget.medium.financial.header"))
-                    .font(.system(size: 11, weight: .bold)).foregroundStyle(ink)
+                    .font(DesignSystem.Typography.caption).foregroundStyle(ink)
             }
             HStack(alignment: .firstTextBaseline, spacing: 2) {
                 Text(net >= 0 ? "+¥" : "-¥")
-                    .font(.system(size: 13, weight: .heavy))
+                    .font(DesignSystem.Typography.caption)
                     .foregroundStyle(ink)
                 Text(abs(net), format: .number.precision(.fractionLength(0)))
-                    .font(.system(size: 34, weight: .heavy)).kerning(-1.5)
+                    .font(DesignSystem.Typography.caption).kerning(-1.5)
                     .foregroundStyle(ink)
             }
             .padding(.top, 8)
@@ -388,7 +388,7 @@ struct GalleryMediumStub: View {
             }
             .padding(.top, 10)
             Rectangle()
-                .fill(cs == .dark ? Color.white.opacity(0.08) : Color(red: 0.47, green: 0.35, blue: 0.24).opacity(0.12))
+                .fill(cs == .dark ? DesignSystem.Colors.textOnPrimary.opacity(0.08) : DesignSystem.Colors.bgCard.opacity(0.12))
                 .frame(height: 0.5)
                 .padding(.top, 8)
             HStack(spacing: 10) {
@@ -422,17 +422,17 @@ struct GalleryMediumStub: View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
                 Text(label)
-                    .font(.system(size: 9.5, weight: .semibold))
+                    .font(DesignSystem.Typography.caption)
                     .foregroundStyle(inkSub)
                 Spacer(minLength: 0)
                 Text("¥\(value, format: .number.notation(.compactName).precision(.significantDigits(2)))")
-                    .font(.system(size: 11, weight: .heavy))
+                    .font(DesignSystem.Typography.caption)
                     .foregroundStyle(ink)
                     .kerning(-0.2)
             }
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
-                    Capsule().fill(cs == .dark ? Color.white.opacity(0.08) : Color(red: 0.47, green: 0.35, blue: 0.24).opacity(0.10))
+                    Capsule().fill(cs == .dark ? DesignSystem.Colors.textOnPrimary.opacity(0.08) : DesignSystem.Colors.bgCard.opacity(0.10))
                     Capsule().fill(color).frame(width: geo.size.width * ratio)
                 }
             }
@@ -443,9 +443,9 @@ struct GalleryMediumStub: View {
     private func galleryStatBadge(dot: Color, label: String, value: String, unit: String) -> some View {
         HStack(spacing: 4) {
             Circle().fill(dot).frame(width: 5, height: 5)
-            Text(label).font(.system(size: 9, weight: .semibold)).foregroundStyle(inkSub)
-            Text(value).font(.system(size: 11, weight: .heavy)).foregroundStyle(ink)
-                + Text(unit).font(.system(size: 8, weight: .semibold)).foregroundStyle(inkSub)
+            Text(label).font(DesignSystem.Typography.caption).foregroundStyle(inkSub)
+            Text(value).font(DesignSystem.Typography.caption).foregroundStyle(ink)
+                + Text(unit).font(DesignSystem.Typography.caption).foregroundStyle(inkSub)
         }
     }
 }
@@ -483,10 +483,10 @@ struct GalleryLargeStub: View {
                 HStack(spacing: 6) {
                     GalleryMark(size: 16)
                     Text(String(localized: "widget.displayName"))
-                        .font(.system(size: 12, weight: .bold)).foregroundStyle(ink)
+                        .font(DesignSystem.Typography.caption).foregroundStyle(ink)
                     Spacer()
                     Text(String(format: String(localized: "widget.reminderCount"), snapshot.reminderCount))
-                        .font(.system(size: 10, weight: .bold))
+                        .font(DesignSystem.Typography.caption)
                         .foregroundStyle(ink)
                 }
                 // Hero strip — matches LiShuLargeWidgetView.heroStrip
@@ -494,13 +494,13 @@ struct GalleryLargeStub: View {
                     HStack(alignment: .bottom) {
                         VStack(alignment: .leading, spacing: 1) {
                             Text("\(String(localized: "widget.netAmount")) · \(chineseYear(snapshot.currentYear))")
-                                .font(.system(size: 9, weight: .bold)).kerning(0.6)
+                                .font(DesignSystem.Typography.caption).kerning(0.6)
                                 .textCase(.uppercase).foregroundStyle(inkSub)
                             HStack(alignment: .firstTextBaseline, spacing: 2) {
                                 Text(net >= 0 ? "+¥" : "-¥")
-                                    .font(.system(size: 13, weight: .heavy)).foregroundStyle(ink)
+                                    .font(DesignSystem.Typography.caption).foregroundStyle(ink)
                                 Text(abs(net), format: .number.precision(.fractionLength(0)))
-                                    .font(.system(size: 30, weight: .heavy)).kerning(-1.2).foregroundStyle(ink)
+                                    .font(DesignSystem.Typography.caption).kerning(-1.2).foregroundStyle(ink)
                             }
                         }
                         Spacer(minLength: 0)
@@ -546,10 +546,10 @@ struct GalleryLargeStub: View {
                 // Section header
                 HStack {
                     Text(String(localized: "widget.reminders.sectionTitle"))
-                        .font(.system(size: 11, weight: .heavy)).foregroundStyle(ink)
+                        .font(DesignSystem.Typography.caption).foregroundStyle(ink)
                     Spacer()
                     Text(String(format: String(localized: "widget.reminderCount"), snapshot.reminderCount))
-                        .font(.system(size: 10, weight: .semibold)).foregroundStyle(inkSub)
+                        .font(DesignSystem.Typography.caption).foregroundStyle(inkSub)
                 }
                 .padding(.top, 12)
                 // Reminder rows
@@ -559,12 +559,12 @@ struct GalleryLargeStub: View {
                             Circle().fill(galleryKindColor(item.kind)).frame(width: 6, height: 6)
                             VStack(alignment: .leading, spacing: 0) {
                                 Text(item.title)
-                                    .font(.system(size: 12, weight: .semibold)).foregroundStyle(ink).lineLimit(1)
+                                    .font(DesignSystem.Typography.caption).foregroundStyle(ink).lineLimit(1)
                                 Text(item.subtitle)
-                                    .font(.system(size: 10)).foregroundStyle(inkSub).lineLimit(1)
+                                    .font(DesignSystem.Typography.caption).foregroundStyle(inkSub).lineLimit(1)
                             }
                             Spacer()
-                            Text(item.dateLabel).font(.system(size: 10)).foregroundStyle(galleryKindColor(item.kind))
+                            Text(item.dateLabel).font(DesignSystem.Typography.caption).foregroundStyle(galleryKindColor(item.kind))
                         }
                     }
                 }
@@ -572,11 +572,13 @@ struct GalleryLargeStub: View {
                 Spacer()
                 // CTA
                 Rectangle()
-                    .fill(cs == .dark ? Color.white.opacity(0.08) : Color(red: 0.47, green: 0.35, blue: 0.24).opacity(0.12))
+                    .fill(cs == .dark ? DesignSystem.Colors.textOnPrimary.opacity(0.08) : DesignSystem.Colors.bgCard.opacity(0.12))
                     .frame(height: 0.5).padding(.top, 10)
                 HStack(spacing: 6) {
-                    Image(systemName: "plus.circle.fill").font(.system(size: 15)).foregroundStyle(.white.opacity(0.85))
-                    Text(String(localized: "widget.quickAdd")).font(.system(size: 13, weight: .heavy)).foregroundStyle(.white)
+                    Image(systemName: "plus.circle.fill").font(DesignSystem.Typography.widgetMetaBold)
+                        .foregroundStyle(DesignSystem.Colors.textOnPrimary.opacity(0.85))
+                    Text(String(localized: "widget.quickAdd")).font(DesignSystem.Typography.widgetMetaBold)
+                        .foregroundStyle(DesignSystem.Colors.textOnPrimary)
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 10)
@@ -598,14 +600,14 @@ struct GalleryLargeStub: View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
                 Text(label)
-                    .font(.system(size: 9.5, weight: .semibold)).foregroundStyle(inkSub)
+                    .font(DesignSystem.Typography.caption).foregroundStyle(inkSub)
                 Spacer(minLength: 0)
                 Text("¥\(value, format: .number.precision(.fractionLength(0)))")
-                    .font(.system(size: 11, weight: .heavy)).foregroundStyle(ink).kerning(-0.2)
+                    .font(DesignSystem.Typography.caption).foregroundStyle(ink).kerning(-0.2)
             }
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
-                    Capsule().fill(cs == .dark ? Color.white.opacity(0.08) : Color(red: 0.47, green: 0.35, blue: 0.24).opacity(0.10))
+                    Capsule().fill(cs == .dark ? DesignSystem.Colors.textOnPrimary.opacity(0.08) : DesignSystem.Colors.bgCard.opacity(0.10))
                     Capsule().fill(color).frame(width: geo.size.width * ratio)
                 }
             }

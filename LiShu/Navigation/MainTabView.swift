@@ -49,6 +49,8 @@ struct MainTabView: View {
             h.combine(e.date.timeIntervalSince1970); h.combine(e.hostModeRaw)
             h.combine(e.name); h.combine(e.typeRaw); h.combine(e.location)
             h.combine(e.primaryContact?.persistentModelID.hashValue ?? 0)
+            h.combine(e.coverImage?.count ?? 0)
+            h.combine(e.coverImage?.hashValue ?? 0)
         }
         for c in allContacts {
             h.combine(c.birthday?.timeIntervalSince1970 ?? 0)

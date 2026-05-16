@@ -6,6 +6,21 @@
 - Last completed: widget view decomposition and preview coverage — Widget extension and in-app gallery split into focused files
 - Pending: `scripts/harness/verify.sh ui` has 12 pre-existing non-widget failures in ContactFlowTests/EventFlowTests/OCR/XLSX — unrelated to widget work
 
+### 2026-05-16 — Widget review fixes
+
+**Review issues fixed:**
+- `MainTabView.widgetDataSignature` now includes `Event.coverImage` count and data hash so editing/removing a hosting event cover image triggers `WidgetDataWriter.write(...)` while the app is active.
+- Added `WidgetDataWriterTests.nextHostingEventCoverImagePathIsWritten` to verify hosting event cover data is written to an App Group file path for widget rendering.
+- Replaced direct `Color(red:)`, `Color.white`/`Color.black`, and `.font(.system(...))` usage in main-app `WidgetGallery*.swift` files with existing `DesignSystem` color/typography tokens.
+- Localized Widget Gallery size/spec labels (`Small`, `Medium`, `systemSmall · 158×158`, etc.) via new `widget.gallery.size.*` and `widget.gallery.spec.*` keys.
+
+**Verification:**
+- `jq empty LiShu/Localizable.xcstrings` — passed.
+- `scripts/harness/verify.sh quick` — SwiftFormat 0, SwiftLint 0, TEST BUILD SUCCEEDED.
+- `xcodebuild -project LiShu.xcodeproj -scheme LiShu -destination 'platform=iOS Simulator,id=9A1B1ED8-40F1-4A44-BED4-6D3CAD8FF45B' -parallel-testing-enabled NO test-without-building -only-testing:LiShuTests/WidgetDataWriterTests` — passed, 49 Swift Testing tests.
+
+---
+
 ### 2026-05-15 — Widget view decomposition + preview coverage
 
 **Widget extension split:**
@@ -383,6 +398,18 @@
 ---
 
 ## Recent Changes
+
+### 2026-05-16 — Widget review follow-up fixes
+
+**Review findings fixed:**
+- `WidgetDataWriter.saveEventCoverImage` now writes cover data to `widget_event_cover_<stableID>` instead of one global App Group file, so refreshes/tests for different events no longer delete each other's cover artifact.
+- `WidgetDataWriterTests` is marked `@Suite(.serialized)` because it intentionally exercises App Group file side effects; `nextHostingEventCoverImagePathIsWritten` remains covered.
+- `WidgetGalleryCatalogSections` now uses a private `GalleryPreviewSize` enum for preview dimensions; localized size labels are display-only and no longer drive layout.
+- Added Widget Gallery-specific `DesignSystem` color/typography tokens and moved gallery preview backgrounds, hero/card hierarchy, lock stubs, and key home stubs off direct colors/fonts while preserving widget-preview scale.
+
+**Verification:**
+- `scripts/harness/verify.sh quick` — SwiftFormat 0, SwiftLint 0, TEST BUILD SUCCEEDED.
+- `xcodebuild ... test-without-building -only-testing:LiShuTests/WidgetDataWriterTests` — 49 Swift Testing tests passed.
 
 ### feat-widget — 完整实现 + review 修复
 
