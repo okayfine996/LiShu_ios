@@ -5,7 +5,6 @@ import WidgetKit
 
 struct LiShuMediumWidgetView: View {
     let snapshot: WidgetSnapshot
-    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -27,11 +26,7 @@ struct LiShuMediumWidgetView: View {
             }
             // Divider
             Rectangle()
-                .fill(
-                    colorScheme == .dark
-                        ? Color.white.opacity(0.08)
-                        : Color(red: 0.47, green: 0.35, blue: 0.24).opacity(0.12)
-                )
+                .fill(WidgetPalette.divider)
                 .frame(height: 0.5)
                 .padding(.top, 8)
             // Quick-add bar
@@ -53,17 +48,11 @@ struct LiShuMediumWidgetView: View {
                     }
                     Text(String(localized: "widget.quickAdd"))
                         .font(.system(size: 11, weight: .bold))
-                        .foregroundStyle(
-                            colorScheme == .dark ? WidgetPalette.parchment : WidgetPalette.ink
-                        )
+                        .foregroundStyle(WidgetPalette.textPrimary)
                     Spacer(minLength: 0)
                     Image(systemName: "chevron.right")
                         .font(.system(size: 10, weight: .semibold))
-                        .foregroundStyle(
-                            colorScheme == .dark
-                                ? WidgetPalette.parchment.opacity(0.45)
-                                : WidgetPalette.inkTertiary
-                        )
+                        .foregroundStyle(WidgetPalette.textTertiary)
                 }
                 .padding(.top, 6)
             }
@@ -78,7 +67,6 @@ struct LiShuMediumWidgetView: View {
 
 struct LiShuMediumEventWidgetView: View {
     let snapshot: WidgetSnapshot
-    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         if let event = snapshot.nextHostingEvent {
@@ -87,7 +75,7 @@ struct LiShuMediumEventWidgetView: View {
         } else {
             HStack(spacing: 14) {
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(WidgetPalette.accent.opacity(0.15))
+                    .fill(WidgetPalette.accentSubtle)
                     .frame(width: 100)
                 VStack(alignment: .leading, spacing: 0) {
                     WidgetHeader(count: 0, compact: true)
@@ -115,12 +103,12 @@ struct LiShuMediumEventWidgetView: View {
                     .padding(.top, 6)
                 Text(event.name)
                     .font(.system(size: 16, weight: .heavy))
-                    .foregroundStyle(colorScheme == .dark ? WidgetPalette.parchment : WidgetPalette.ink)
+                    .foregroundStyle(WidgetPalette.textPrimary)
                     .lineLimit(1)
                     .padding(.top, 1)
                 Text(event.dateLine)
                     .font(.system(size: 10, weight: .medium))
-                    .foregroundStyle(colorScheme == .dark ? WidgetPalette.parchment.opacity(0.55) : WidgetPalette.inkSecondary)
+                    .foregroundStyle(WidgetPalette.textSecondary)
                     .lineLimit(1)
                     .padding(.top, 2)
                 Spacer(minLength: 0)
@@ -211,31 +199,31 @@ struct LiShuMediumEventWidgetView: View {
                 VStack(alignment: .leading, spacing: 1) {
                     Text(String(localized: "widget.event.giftReceived"))
                         .font(.system(size: 9, weight: .bold))
-                        .foregroundStyle(colorScheme == .dark ? WidgetPalette.parchment.opacity(0.55) : WidgetPalette.inkSecondary)
+                        .foregroundStyle(WidgetPalette.textSecondary)
                     Text("¥\(total, format: .number.precision(.fractionLength(0)))")
                         .font(.system(size: 18, weight: .heavy))
-                        .foregroundStyle(colorScheme == .dark ? WidgetPalette.parchment : WidgetPalette.ink)
+                        .foregroundStyle(WidgetPalette.textPrimary)
                         .kerning(-0.6)
                 }
             }
             if let guests = event.guestCount, event.giftReceivedTotal != nil {
                 Rectangle()
-                    .fill(colorScheme == .dark ? Color.white.opacity(0.10) : Color(red: 0.47, green: 0.35, blue: 0.24).opacity(0.15))
+                    .fill(WidgetPalette.dividerStrong)
                     .frame(width: 0.5, height: 28)
                     .padding(.horizontal, 10)
                 VStack(alignment: .leading, spacing: 1) {
                     Text(String(localized: "widget.event.guestCount"))
                         .font(.system(size: 9, weight: .bold))
-                        .foregroundStyle(colorScheme == .dark ? WidgetPalette.parchment.opacity(0.55) : WidgetPalette.inkSecondary)
+                        .foregroundStyle(WidgetPalette.textSecondary)
                     Text("\(guests)")
                         .font(.system(size: 18, weight: .heavy))
-                        .foregroundStyle(colorScheme == .dark ? WidgetPalette.parchment : WidgetPalette.ink)
+                        .foregroundStyle(WidgetPalette.textPrimary)
                         .kerning(-0.6)
                 }
             } else if event.giftReceivedTotal == nil {
                 Text(event.dateLine)
                     .font(.system(size: 10, weight: .medium))
-                    .foregroundStyle(colorScheme == .dark ? WidgetPalette.parchment.opacity(0.55) : WidgetPalette.inkSecondary)
+                    .foregroundStyle(WidgetPalette.textSecondary)
             }
             Spacer(minLength: 0)
             Link(destination: event.addRecordURL ?? event.deepLinkURL) {
@@ -251,7 +239,7 @@ struct LiShuMediumEventWidgetView: View {
                 .padding(.vertical, 6)
                 .background(
                     RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(colorScheme == .dark ? WidgetPalette.accent.opacity(0.15) : WidgetPalette.accent.opacity(0.10))
+                        .fill(WidgetPalette.accentSubtle)
                         .overlay(
                             RoundedRectangle(cornerRadius: 10, style: .continuous)
                                 .strokeBorder(WidgetPalette.accent.opacity(0.30), lineWidth: 0.5)
@@ -266,7 +254,6 @@ struct LiShuMediumEventWidgetView: View {
 
 struct LiShuMediumFinancialWidgetView: View {
     let snapshot: WidgetSnapshot
-    @Environment(\.colorScheme) private var colorScheme
 
     private var netAmount: Double {
         snapshot.yearlyIncome - snapshot.yearlyExpense
@@ -291,7 +278,7 @@ struct LiShuMediumFinancialWidgetView: View {
                     LiShuMark(size: 14)
                     Text(String(localized: "widget.medium.financial.header"))
                         .font(.system(size: 11, weight: .bold))
-                        .foregroundStyle(colorScheme == .dark ? WidgetPalette.parchment.opacity(0.92) : WidgetPalette.ink)
+                        .foregroundStyle(WidgetPalette.textPrimary)
                     Spacer(minLength: 0)
                 }
 
@@ -301,14 +288,14 @@ struct LiShuMediumFinancialWidgetView: View {
                             .font(.system(size: 9, weight: .bold))
                             .kerning(0.6)
                             .textCase(.uppercase)
-                            .foregroundStyle(colorScheme == .dark ? WidgetPalette.parchment.opacity(0.55) : WidgetPalette.inkSecondary)
+                            .foregroundStyle(WidgetPalette.textSecondary)
                         HStack(alignment: .firstTextBaseline, spacing: 2) {
                             Text(netAmount >= 0 ? "+¥" : "-¥")
                                 .font(.system(size: 13, weight: .heavy))
-                                .foregroundStyle(colorScheme == .dark ? WidgetPalette.parchment : WidgetPalette.ink)
+                                .foregroundStyle(WidgetPalette.textPrimary)
                             Text(abs(netAmount), format: .number.precision(.fractionLength(0)))
                                 .font(.system(size: 34, weight: .heavy))
-                                .foregroundStyle(colorScheme == .dark ? WidgetPalette.parchment : WidgetPalette.ink)
+                                .foregroundStyle(WidgetPalette.textPrimary)
                                 .kerning(-1.5)
                         }
                     }
@@ -335,7 +322,7 @@ struct LiShuMediumFinancialWidgetView: View {
                 .padding(.top, 10)
 
                 Rectangle()
-                    .fill(colorScheme == .dark ? Color.white.opacity(0.08) : Color(red: 0.47, green: 0.35, blue: 0.24).opacity(0.12))
+                    .fill(WidgetPalette.divider)
                     .frame(height: 0.5)
                     .padding(.top, 8)
 
@@ -372,17 +359,16 @@ struct LiShuMediumFinancialWidgetView: View {
             HStack {
                 Text(label)
                     .font(.system(size: 9.5, weight: .semibold))
-                    .foregroundStyle(colorScheme == .dark ? WidgetPalette.parchment.opacity(0.6) : WidgetPalette.inkSecondary)
+                    .foregroundStyle(WidgetPalette.textSecondary)
                 Spacer(minLength: 0)
                 Text("¥\(value, format: .number.notation(.compactName).precision(.significantDigits(2)))")
                     .font(.system(size: 11, weight: .heavy))
-                    .foregroundStyle(colorScheme == .dark ? WidgetPalette.parchment : WidgetPalette.ink)
+                    .foregroundStyle(WidgetPalette.textPrimary)
                     .kerning(-0.2)
             }
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
-                    Capsule()
-                        .fill(colorScheme == .dark ? Color.white.opacity(0.08) : Color(red: 0.47, green: 0.35, blue: 0.24).opacity(0.10))
+                    Capsule().fill(WidgetPalette.barTrack)
                     Capsule().fill(color).frame(width: geo.size.width * ratio)
                 }
             }
@@ -395,14 +381,14 @@ struct LiShuMediumFinancialWidgetView: View {
             Circle().fill(dot).frame(width: 5, height: 5)
             Text(label)
                 .font(.system(size: 10, weight: .semibold))
-                .foregroundStyle(colorScheme == .dark ? WidgetPalette.parchment.opacity(0.6) : WidgetPalette.inkSecondary)
+                .foregroundStyle(WidgetPalette.textSecondary)
             Text(value)
                 .font(.system(size: 12, weight: .heavy))
-                .foregroundStyle(colorScheme == .dark ? WidgetPalette.parchment : WidgetPalette.ink)
+                .foregroundStyle(WidgetPalette.textPrimary)
                 .kerning(-0.2)
                 + Text(unit)
                 .font(.system(size: 9, weight: .semibold))
-                .foregroundStyle(colorScheme == .dark ? WidgetPalette.parchment.opacity(0.55) : WidgetPalette.inkSecondary)
+                .foregroundStyle(WidgetPalette.textSecondary)
         }
     }
 }

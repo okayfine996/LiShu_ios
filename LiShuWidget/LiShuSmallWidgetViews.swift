@@ -5,7 +5,6 @@ import WidgetKit
 
 struct LiShuSmallWidgetView: View {
     let snapshot: WidgetSnapshot
-    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         Link(destination: snapshot.reminders.first?.deepLinkURL ?? .liShuHome) {
@@ -24,19 +23,13 @@ struct LiShuSmallWidgetView: View {
                     // Title
                     Text(first.title)
                         .font(.system(size: 17, weight: .heavy))
-                        .foregroundStyle(
-                            colorScheme == .dark ? WidgetPalette.parchment : WidgetPalette.ink
-                        )
+                        .foregroundStyle(WidgetPalette.textPrimary)
                         .lineLimit(2)
                     // Date + subtitle line
                     if let eventDate = first.eventDateLabel {
                         Text("\(eventDate) · \(first.subtitle)")
                             .font(.system(size: 10, weight: .medium))
-                            .foregroundStyle(
-                                colorScheme == .dark
-                                    ? WidgetPalette.parchment.opacity(0.55)
-                                    : WidgetPalette.inkSecondary
-                            )
+                            .foregroundStyle(WidgetPalette.textSecondary)
                             .lineLimit(1)
                             .padding(.top, 2)
                     }
@@ -59,11 +52,7 @@ struct LiShuSmallWidgetView: View {
                         if snapshot.reminderCount > 1 {
                             Text(String(format: String(localized: "widget.more.items"), snapshot.reminderCount - 1))
                                 .font(.system(size: 10, weight: .semibold))
-                                .foregroundStyle(
-                                    colorScheme == .dark
-                                        ? WidgetPalette.parchment.opacity(0.55)
-                                        : WidgetPalette.inkSecondary
-                                )
+                                .foregroundStyle(WidgetPalette.textSecondary)
                         }
                     }
                     .padding(.top, 10)
@@ -80,7 +69,6 @@ struct LiShuSmallWidgetView: View {
 
 struct LiShuSmallCountdownWidgetView: View {
     let snapshot: WidgetSnapshot
-    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         if let event = snapshot.nextHostingEvent {
@@ -107,19 +95,17 @@ struct LiShuSmallCountdownWidgetView: View {
             // Event name
             Text(event.name)
                 .font(.system(size: 16, weight: .heavy))
-                .foregroundStyle(
-                    colorScheme == .dark ? WidgetPalette.parchment : WidgetPalette.ink
-                )
+                .foregroundStyle(WidgetPalette.textPrimary)
                 .lineLimit(1)
             // D-7 large countdown
             HStack(alignment: .firstTextBaseline, spacing: 0) {
                 Text("D–")
                     .font(.system(size: 13, weight: .heavy))
-                    .foregroundStyle(colorScheme == .dark ? WidgetPalette.parchment : WidgetPalette.ink)
+                    .foregroundStyle(WidgetPalette.textPrimary)
                     .padding(.bottom, 2)
                 Text("\(event.daysUntil)")
                     .font(.system(size: 42, weight: .heavy))
-                    .foregroundStyle(colorScheme == .dark ? WidgetPalette.parchment : WidgetPalette.ink)
+                    .foregroundStyle(WidgetPalette.textPrimary)
                     .kerning(-2.5)
                     .lineLimit(1)
             }
@@ -127,11 +113,7 @@ struct LiShuSmallCountdownWidgetView: View {
             // Date line
             Text(event.dateLine)
                 .font(.system(size: 10, weight: .medium))
-                .foregroundStyle(
-                    colorScheme == .dark
-                        ? WidgetPalette.parchment.opacity(0.6)
-                        : WidgetPalette.inkSecondary
-                )
+                .foregroundStyle(WidgetPalette.textSecondary)
                 .lineLimit(1)
         }
         .padding(14)
@@ -153,7 +135,6 @@ struct LiShuSmallCountdownWidgetView: View {
 
 struct LiShuSmallFinancialWidgetView: View {
     let snapshot: WidgetSnapshot
-    @Environment(\.colorScheme) private var colorScheme
 
     private var netAmount: Double {
         snapshot.yearlyIncome - snapshot.yearlyExpense
@@ -180,20 +161,20 @@ struct LiShuSmallFinancialWidgetView: View {
                 Text("\(String(localized: "widget.netAmount")) · \(chineseYear(snapshot.currentYear))")
                     .font(.system(size: 9, weight: .bold))
                     .kerning(0.8)
-                    .foregroundStyle(colorScheme == .dark ? WidgetPalette.parchment.opacity(0.55) : WidgetPalette.inkSecondary)
+                    .foregroundStyle(WidgetPalette.textSecondary)
                     .textCase(.uppercase)
                     .padding(.bottom, 2)
                 // Net amount
                 HStack(alignment: .firstTextBaseline, spacing: 2) {
                     Text(netAmount >= 0 ? "+¥" : "-¥")
                         .font(.system(size: 11, weight: .heavy))
-                        .foregroundStyle(colorScheme == .dark ? WidgetPalette.parchment : WidgetPalette.ink)
+                        .foregroundStyle(WidgetPalette.textPrimary)
                     Text(
                         abs(netAmount),
                         format: .number.precision(.fractionLength(0))
                     )
                     .font(.system(size: 26, weight: .heavy))
-                    .foregroundStyle(colorScheme == .dark ? WidgetPalette.parchment : WidgetPalette.ink)
+                    .foregroundStyle(WidgetPalette.textPrimary)
                     .kerning(-1.2)
                 }
                 // Income / expense bars
@@ -217,9 +198,7 @@ struct LiShuSmallFinancialWidgetView: View {
                 // Footer stats
                 Text(String(format: String(localized: "widget.stats.footer"), snapshot.yearlyRecordCount, snapshot.yearlyContactCount))
                     .font(.system(size: 10, weight: .semibold))
-                    .foregroundStyle(
-                        colorScheme == .dark ? WidgetPalette.parchment.opacity(0.55) : WidgetPalette.inkSecondary
-                    )
+                    .foregroundStyle(WidgetPalette.textSecondary)
                     .padding(.top, 8)
             }
             .padding(14)
@@ -231,24 +210,15 @@ struct LiShuSmallFinancialWidgetView: View {
             HStack {
                 Text(label)
                     .font(.system(size: 9, weight: .semibold))
-                    .foregroundStyle(
-                        colorScheme == .dark ? WidgetPalette.parchment.opacity(0.6) : WidgetPalette.inkSecondary
-                    )
+                    .foregroundStyle(WidgetPalette.textSecondary)
                 Spacer(minLength: 0)
                 Text("¥\(value, format: .number.notation(.compactName).precision(.significantDigits(2)))")
                     .font(.system(size: 9, weight: .semibold))
-                    .foregroundStyle(
-                        colorScheme == .dark ? WidgetPalette.parchment.opacity(0.6) : WidgetPalette.inkSecondary
-                    )
+                    .foregroundStyle(WidgetPalette.textSecondary)
             }
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
-                    Capsule()
-                        .fill(
-                            colorScheme == .dark
-                                ? Color.white.opacity(0.08)
-                                : Color(red: 0.47, green: 0.35, blue: 0.24).opacity(0.10)
-                        )
+                    Capsule().fill(WidgetPalette.barTrack)
                     Capsule()
                         .fill(color)
                         .frame(width: geo.size.width * ratio)

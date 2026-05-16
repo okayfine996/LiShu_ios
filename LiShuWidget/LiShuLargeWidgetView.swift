@@ -5,7 +5,6 @@ import WidgetKit
 
 struct LiShuLargeWidgetView: View {
     let snapshot: WidgetSnapshot
-    @Environment(\.colorScheme) private var colorScheme
 
     private var netAmount: Double {
         snapshot.yearlyIncome - snapshot.yearlyExpense
@@ -35,17 +34,11 @@ struct LiShuLargeWidgetView: View {
             HStack {
                 Text(String(localized: "widget.reminders.sectionTitle"))
                     .font(.system(size: 11, weight: .heavy))
-                    .foregroundStyle(
-                        colorScheme == .dark
-                            ? WidgetPalette.parchment.opacity(0.85)
-                            : WidgetPalette.ink
-                    )
+                    .foregroundStyle(WidgetPalette.textPrimary)
                 Spacer(minLength: 0)
                 Text(String(format: String(localized: "widget.reminderCount"), snapshot.reminderCount))
                     .font(.system(size: 10, weight: .semibold))
-                    .foregroundStyle(
-                        colorScheme == .dark ? WidgetPalette.parchment.opacity(0.55) : WidgetPalette.inkSecondary
-                    )
+                    .foregroundStyle(WidgetPalette.textSecondary)
             }
             .padding(.top, 12)
 
@@ -66,11 +59,7 @@ struct LiShuLargeWidgetView: View {
 
             // Divider + CTA
             Rectangle()
-                .fill(
-                    colorScheme == .dark
-                        ? Color.white.opacity(0.08)
-                        : Color(red: 0.47, green: 0.35, blue: 0.24).opacity(0.12)
-                )
+                .fill(WidgetPalette.divider)
                 .frame(height: 0.5)
                 .padding(.top, 10)
 
@@ -110,21 +99,17 @@ struct LiShuLargeWidgetView: View {
                         .font(.system(size: 9, weight: .bold))
                         .kerning(0.6)
                         .textCase(.uppercase)
-                        .foregroundStyle(
-                            colorScheme == .dark
-                                ? WidgetPalette.parchment.opacity(0.65)
-                                : WidgetPalette.inkSecondary
-                        )
+                        .foregroundStyle(WidgetPalette.textSecondary)
                     HStack(alignment: .firstTextBaseline, spacing: 2) {
                         Text(netAmount >= 0 ? "+¥" : "-¥")
                             .font(.system(size: 13, weight: .heavy))
-                            .foregroundStyle(colorScheme == .dark ? WidgetPalette.parchment : WidgetPalette.ink)
+                            .foregroundStyle(WidgetPalette.textPrimary)
                         Text(
                             abs(netAmount),
                             format: .number.precision(.fractionLength(0))
                         )
                         .font(.system(size: 30, weight: .heavy))
-                        .foregroundStyle(colorScheme == .dark ? WidgetPalette.parchment : WidgetPalette.ink)
+                        .foregroundStyle(WidgetPalette.textPrimary)
                         .kerning(-1.2)
                     }
                 }
@@ -156,23 +141,11 @@ struct LiShuLargeWidgetView: View {
         .background(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .fill(
-                    colorScheme == .dark
-                        ? LinearGradient(
-                            colors: [
-                                WidgetPalette.accent.opacity(0.22),
-                                WidgetPalette.gold.opacity(0.16),
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                        : LinearGradient(
-                            colors: [
-                                WidgetPalette.accent.opacity(0.10),
-                                WidgetPalette.gold.opacity(0.10),
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
+                    LinearGradient(
+                        colors: [WidgetPalette.heroAccentFill, WidgetPalette.heroGoldFill],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 14, style: .continuous)
@@ -186,23 +159,16 @@ struct LiShuLargeWidgetView: View {
             HStack {
                 Text(label)
                     .font(.system(size: 9.5, weight: .semibold))
-                    .foregroundStyle(
-                        colorScheme == .dark ? WidgetPalette.parchment.opacity(0.6) : WidgetPalette.inkSecondary
-                    )
+                    .foregroundStyle(WidgetPalette.textSecondary)
                 Spacer(minLength: 0)
                 Text("¥\(value, format: .number.precision(.fractionLength(0)))")
                     .font(.system(size: 11, weight: .heavy))
-                    .foregroundStyle(colorScheme == .dark ? WidgetPalette.parchment : WidgetPalette.ink)
+                    .foregroundStyle(WidgetPalette.textPrimary)
                     .kerning(-0.2)
             }
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
-                    Capsule()
-                        .fill(
-                            colorScheme == .dark
-                                ? Color.white.opacity(0.08)
-                                : Color(red: 0.47, green: 0.35, blue: 0.24).opacity(0.10)
-                        )
+                    Capsule().fill(WidgetPalette.barTrack)
                     Capsule()
                         .fill(color)
                         .frame(width: geo.size.width * ratio)
