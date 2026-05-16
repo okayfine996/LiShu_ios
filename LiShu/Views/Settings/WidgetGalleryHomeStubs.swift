@@ -6,11 +6,11 @@ struct GallerySmallStub: View {
     @Environment(\.colorScheme) private var cs
 
     private var ink: Color {
-        cs == .dark ? Color(red: 0.961, green: 0.937, blue: 0.902) : Color(red: 0.173, green: 0.173, blue: 0.173)
+        DesignSystem.Colors.textPrimary
     }
 
     private var inkSub: Color {
-        cs == .dark ? Color.white.opacity(0.6) : Color(red: 0.478, green: 0.455, blue: 0.431)
+        DesignSystem.Colors.textSecondary
     }
 
     var body: some View {
@@ -25,8 +25,8 @@ struct GallerySmallStub: View {
                         Text(String(format: String(localized: "widget.reminderCount"), snapshot.reminderCount))
                             .font(.system(size: 10, weight: .bold))
                             .padding(.horizontal, 7).padding(.vertical, 2)
-                            .background(Capsule().fill(Color(red: 0.718, green: 0.431, blue: 0.353).opacity(cs == .dark ? 0.28 : 0.14)))
-                            .foregroundStyle(Color(red: 0.718, green: 0.431, blue: 0.353))
+                            .background(Capsule().fill(DesignSystem.Colors.primary.opacity(cs == .dark ? 0.28 : 0.14)))
+                            .foregroundStyle(ink)
                     }
                 }
                 Spacer()
@@ -76,7 +76,7 @@ struct GallerySmallStub: View {
         if let ev = snapshot.nextHostingEvent {
             Text(String(format: String(localized: "widget.hosting.status"), ev.typeName))
                 .font(.system(size: 9, weight: .bold)).kerning(0.8)
-                .foregroundStyle(Color(red: 0.773, green: 0.627, blue: 0.396))
+                .foregroundStyle(DesignSystem.Colors.accentGold)
                 .textCase(.uppercase)
                 .lineLimit(1)
                 .padding(.bottom, 4)
@@ -84,11 +84,11 @@ struct GallerySmallStub: View {
             HStack(alignment: .firstTextBaseline, spacing: 0) {
                 Text("D–")
                     .font(.system(size: 13, weight: .heavy))
-                    .foregroundStyle(Color(red: 0.718, green: 0.431, blue: 0.353))
+                    .foregroundStyle(ink)
                     .padding(.bottom, 2)
                 Text("\(ev.daysUntil)")
                     .font(.system(size: 42, weight: .heavy)).kerning(-2.5)
-                    .foregroundStyle(Color(red: 0.718, green: 0.431, blue: 0.353))
+                    .foregroundStyle(ink)
                     .lineLimit(1)
             }
             .padding(.top, 4)
@@ -99,23 +99,23 @@ struct GallerySmallStub: View {
     @ViewBuilder private var financialContent: some View {
         let net = snapshot.yearlyIncome - snapshot.yearlyExpense
         let total = snapshot.yearlyIncome + snapshot.yearlyExpense
-        let accent = Color(red: 0.718, green: 0.431, blue: 0.353)
-        let gold = Color(red: 0.773, green: 0.627, blue: 0.396)
+        let accent = DesignSystem.Colors.primary
+        let gold = DesignSystem.Colors.accentGold
         let incomeRatio = total > 0 ? CGFloat(snapshot.yearlyIncome / total) : 0
         let expenseRatio = total > 0 ? CGFloat(snapshot.yearlyExpense / total) : 0
 
         Text("\(String(localized: "widget.netAmount")) · \(chineseYear(snapshot.currentYear))")
             .font(.system(size: 9, weight: .bold)).kerning(0.8)
-            .foregroundStyle(accent)
+            .foregroundStyle(inkSub)
             .textCase(.uppercase)
             .padding(.bottom, 2)
         HStack(alignment: .firstTextBaseline, spacing: 2) {
             Text(net >= 0 ? "+¥" : "-¥")
                 .font(.system(size: 11, weight: .heavy))
-                .foregroundStyle(accent)
+                .foregroundStyle(ink)
             Text(abs(net), format: .number.precision(.fractionLength(0)))
                 .font(.system(size: 26, weight: .heavy)).kerning(-1.2)
-                .foregroundStyle(accent)
+                .foregroundStyle(ink)
         }
         VStack(alignment: .leading, spacing: 6) {
             smallFinancialBar(
@@ -162,11 +162,11 @@ struct GalleryMediumStub: View {
     @Environment(\.colorScheme) private var cs
 
     private var ink: Color {
-        cs == .dark ? Color(red: 0.961, green: 0.937, blue: 0.902) : Color(red: 0.173, green: 0.173, blue: 0.173)
+        DesignSystem.Colors.textPrimary
     }
 
     private var inkSub: Color {
-        cs == .dark ? Color.white.opacity(0.6) : Color(red: 0.478, green: 0.455, blue: 0.431)
+        DesignSystem.Colors.textSecondary
     }
 
     private var incomeRatio: CGFloat {
@@ -201,10 +201,9 @@ struct GalleryMediumStub: View {
                     .font(.system(size: 10, weight: .bold))
                     .padding(.horizontal, 7).padding(.vertical, 2)
                     .background(
-                        Capsule().fill(Color(red: 0.718, green: 0.431, blue: 0.353)
-                            .opacity(cs == .dark ? 0.28 : 0.14))
+                        Capsule().fill(DesignSystem.Colors.primary.opacity(cs == .dark ? 0.28 : 0.14))
                     )
-                    .foregroundStyle(Color(red: 0.718, green: 0.431, blue: 0.353))
+                    .foregroundStyle(ink)
             }
             VStack(alignment: .leading, spacing: 6) {
                 ForEach(Array(snapshot.reminders.prefix(3).enumerated()), id: \.offset) { _, item in
@@ -235,13 +234,11 @@ struct GalleryMediumStub: View {
                     .frame(width: 22, height: 22)
                     .background(RoundedRectangle(cornerRadius: 7).fill(
                         LinearGradient(
-                            colors: [Color(red: 0.718, green: 0.431, blue: 0.353), Color(red: 0.624, green: 0.353, blue: 0.278)],
+                            colors: [DesignSystem.Colors.primary, DesignSystem.Colors.primaryDark],
                             startPoint: .topLeading, endPoint: .bottomTrailing
                         )
                     ))
                 Text(String(localized: "widget.quickAdd")).font(.system(size: 11, weight: .bold)).foregroundStyle(ink)
-                Text(String(localized: "widget.quickAdd.subtitle"))
-                    .font(.system(size: 10, weight: .medium)).foregroundStyle(inkSub).lineLimit(1)
                 Spacer(minLength: 0)
             }
             .padding(.top, 6)
@@ -256,7 +253,7 @@ struct GalleryMediumStub: View {
                     colors: [
                         Color(red: 0.961, green: 0.773, blue: 0.690),
                         Color(red: 0.910, green: 0.604, blue: 0.522),
-                        Color(red: 0.718, green: 0.431, blue: 0.353),
+                        DesignSystem.Colors.primary,
                     ],
                     startPoint: .top, endPoint: .bottom
                 )
@@ -314,7 +311,7 @@ struct GalleryMediumStub: View {
                 if let ev = snapshot.nextHostingEvent {
                     Text(String(format: String(localized: "widget.hosting.status"), ev.typeName))
                         .font(.system(size: 9.5, weight: .bold)).kerning(0.8)
-                        .foregroundStyle(Color(red: 0.773, green: 0.627, blue: 0.396))
+                        .foregroundStyle(DesignSystem.Colors.accentGold)
                         .textCase(.uppercase).padding(.top, 6)
                     Text(ev.name).font(.system(size: 16, weight: .heavy)).foregroundStyle(ink).lineLimit(1).padding(.top, 1)
                     Text(ev.dateLine).font(.system(size: 10, weight: .medium)).foregroundStyle(inkSub).lineLimit(1).padding(.top, 2)
@@ -326,7 +323,7 @@ struct GalleryMediumStub: View {
                                     .foregroundStyle(inkSub)
                                 Text("¥\(total, format: .number.precision(.fractionLength(0)))")
                                     .font(.system(size: 18, weight: .heavy)).kerning(-0.6)
-                                    .foregroundStyle(Color(red: 0.718, green: 0.431, blue: 0.353))
+                                    .foregroundStyle(ink)
                             }
                             if let g = ev.guestCount {
                                 Rectangle().fill(inkSub.opacity(0.20)).frame(width: 0.5, height: 28).padding(.horizontal, 10)
@@ -341,13 +338,13 @@ struct GalleryMediumStub: View {
                                 Image(systemName: "plus").font(.system(size: 10, weight: .bold))
                                 Text(String(localized: "widget.event.register")).font(.system(size: 10, weight: .heavy))
                             }
-                            .foregroundStyle(Color(red: 0.718, green: 0.431, blue: 0.353))
+                            .foregroundStyle(DesignSystem.Colors.primary)
                             .padding(.horizontal, 10).padding(.vertical, 6)
                             .background(
                                 RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                    .fill(Color(red: 0.718, green: 0.431, blue: 0.353).opacity(cs == .dark ? 0.15 : 0.10))
+                                    .fill(DesignSystem.Colors.primary.opacity(cs == .dark ? 0.15 : 0.10))
                                     .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                        .strokeBorder(Color(red: 0.718, green: 0.431, blue: 0.353).opacity(0.30), lineWidth: 0.5))
+                                        .strokeBorder(DesignSystem.Colors.primary.opacity(0.30), lineWidth: 0.5))
                             )
                         }
                     }
@@ -360,8 +357,8 @@ struct GalleryMediumStub: View {
 
     private var financialLayout: some View {
         let net = snapshot.yearlyIncome - snapshot.yearlyExpense
-        let accent = Color(red: 0.718, green: 0.431, blue: 0.353)
-        let gold = Color(red: 0.773, green: 0.627, blue: 0.396)
+        let accent = DesignSystem.Colors.primary
+        let gold = DesignSystem.Colors.accentGold
         return VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 6) {
                 GalleryMark(size: 14)
@@ -371,10 +368,10 @@ struct GalleryMediumStub: View {
             HStack(alignment: .firstTextBaseline, spacing: 2) {
                 Text(net >= 0 ? "+¥" : "-¥")
                     .font(.system(size: 13, weight: .heavy))
-                    .foregroundStyle(accent)
+                    .foregroundStyle(ink)
                 Text(abs(net), format: .number.precision(.fractionLength(0)))
                     .font(.system(size: 34, weight: .heavy)).kerning(-1.5)
-                    .foregroundStyle(accent)
+                    .foregroundStyle(ink)
             }
             .padding(.top, 8)
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
@@ -396,20 +393,20 @@ struct GalleryMediumStub: View {
                 .padding(.top, 8)
             HStack(spacing: 10) {
                 galleryStatBadge(
-                    dot: Color(red: 0.718, green: 0.431, blue: 0.353),
+                    dot: DesignSystem.Colors.primary,
                     label: String(localized: "widget.stat.interactions"),
                     value: "\(snapshot.yearlyRecordCount)",
                     unit: String(localized: "widget.stat.unit.records")
                 )
                 galleryStatBadge(
-                    dot: Color(red: 0.773, green: 0.627, blue: 0.396),
+                    dot: DesignSystem.Colors.accentGold,
                     label: String(localized: "widget.stat.contacts"),
                     value: "\(snapshot.yearlyContactCount)",
                     unit: String(localized: "widget.stat.unit.contacts")
                 )
                 if snapshot.pendingReturnCount > 0 {
                     galleryStatBadge(
-                        dot: Color(red: 0.353, green: 0.541, blue: 0.718),
+                        dot: DesignSystem.Colors.primaryDark,
                         label: String(localized: "widget.stat.pendingReturn"),
                         value: "\(snapshot.pendingReturnCount)",
                         unit: String(localized: "widget.stat.unit.records")
@@ -430,7 +427,7 @@ struct GalleryMediumStub: View {
                 Spacer(minLength: 0)
                 Text("¥\(value, format: .number.notation(.compactName).precision(.significantDigits(2)))")
                     .font(.system(size: 11, weight: .heavy))
-                    .foregroundStyle(color)
+                    .foregroundStyle(ink)
                     .kerning(-0.2)
             }
             GeometryReader { geo in
@@ -458,11 +455,11 @@ struct GalleryLargeStub: View {
     @Environment(\.colorScheme) private var cs
 
     private var ink: Color {
-        cs == .dark ? Color(red: 0.961, green: 0.937, blue: 0.902) : Color(red: 0.173, green: 0.173, blue: 0.173)
+        DesignSystem.Colors.textPrimary
     }
 
     private var inkSub: Color {
-        cs == .dark ? Color.white.opacity(0.6) : Color(red: 0.478, green: 0.455, blue: 0.431)
+        DesignSystem.Colors.textSecondary
     }
 
     private var incomeRatio: CGFloat {
@@ -477,8 +474,8 @@ struct GalleryLargeStub: View {
 
     var body: some View {
         let net = snapshot.yearlyIncome - snapshot.yearlyExpense
-        let accent = Color(red: 0.718, green: 0.431, blue: 0.353)
-        let gold = Color(red: 0.773, green: 0.627, blue: 0.396)
+        let accent = DesignSystem.Colors.primary
+        let gold = DesignSystem.Colors.accentGold
         return ZStack {
             GalleryWidgetBg()
             VStack(alignment: .leading, spacing: 0) {
@@ -490,7 +487,7 @@ struct GalleryLargeStub: View {
                     Spacer()
                     Text(String(format: String(localized: "widget.reminderCount"), snapshot.reminderCount))
                         .font(.system(size: 10, weight: .bold))
-                        .foregroundStyle(accent)
+                        .foregroundStyle(ink)
                 }
                 // Hero strip — matches LiShuLargeWidgetView.heroStrip
                 VStack(alignment: .leading, spacing: 0) {
@@ -501,9 +498,9 @@ struct GalleryLargeStub: View {
                                 .textCase(.uppercase).foregroundStyle(inkSub)
                             HStack(alignment: .firstTextBaseline, spacing: 2) {
                                 Text(net >= 0 ? "+¥" : "-¥")
-                                    .font(.system(size: 13, weight: .heavy)).foregroundStyle(accent)
+                                    .font(.system(size: 13, weight: .heavy)).foregroundStyle(ink)
                                 Text(abs(net), format: .number.precision(.fractionLength(0)))
-                                    .font(.system(size: 30, weight: .heavy)).kerning(-1.2).foregroundStyle(accent)
+                                    .font(.system(size: 30, weight: .heavy)).kerning(-1.2).foregroundStyle(ink)
                             }
                         }
                         Spacer(minLength: 0)
@@ -586,7 +583,7 @@ struct GalleryLargeStub: View {
                 .background(
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
                         .fill(LinearGradient(
-                            colors: [accent, Color(red: 0.624, green: 0.353, blue: 0.278)],
+                            colors: [accent, DesignSystem.Colors.primaryDark],
                             startPoint: .topLeading, endPoint: .bottomTrailing
                         ))
                 )
@@ -604,7 +601,7 @@ struct GalleryLargeStub: View {
                     .font(.system(size: 9.5, weight: .semibold)).foregroundStyle(inkSub)
                 Spacer(minLength: 0)
                 Text("¥\(value, format: .number.precision(.fractionLength(0)))")
-                    .font(.system(size: 11, weight: .heavy)).foregroundStyle(color).kerning(-0.2)
+                    .font(.system(size: 11, weight: .heavy)).foregroundStyle(ink).kerning(-0.2)
             }
             GeometryReader { geo in
                 ZStack(alignment: .leading) {

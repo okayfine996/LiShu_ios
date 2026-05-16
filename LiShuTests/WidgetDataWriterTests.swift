@@ -399,9 +399,9 @@ struct WidgetDataWriterTests {
         #expect(snapshot.nextHostingEvent == nil)
     }
 
-    /// 26. pendingReturnCount counts guest events this year with no given records
+    /// 26. pendingReturnCount counts future/today guest events with no given records
     @MainActor
-    @Test func pendingReturnCountForGuestEventsThisYear() throws {
+    @Test func pendingReturnCountForFutureGuestEvents() throws {
         let db = try TestDB()
         let contact = SampleData.contact(name: "林悦")
         let guestNoGift = Event(name: "林悦婚礼", type: .wedding, hostMode: .guest, date: Self.jan1)
@@ -417,15 +417,17 @@ struct WidgetDataWriterTests {
         let events = try db.context.fetch(FetchDescriptor<Event>())
         let records = try db.context.fetch(FetchDescriptor<Record>())
         let snapshot = WidgetDataWriter.buildSnapshot(records: records, events: events, contacts: [], now: Self.jan1)
-        // Only guestNoGift qualifies: guest + this year + no given record
+        // Only guestNoGift qualifies: guest + today/future + no given record
         #expect(snapshot.pendingReturnCount == 1)
     }
 
-    /// 27. pendingReturnCount excludes guest events from a different year
-    @Test func pendingReturnCountExcludesPriorYear() throws {
+    /// 27. pendingReturnCount excludes past guest events (even if in the current year)
+    @Test func pendingReturnCountExcludesPastEvents() throws {
+        let yesterday = try #require(Calendar.current.date(byAdding: .day, value: -1, to: Self.jan1))
         let lastYear = try #require(Calendar.current.date(byAdding: .year, value: -1, to: Self.jan1))
-        let oldGuest = Event(name: "去年婚礼", type: .wedding, hostMode: .guest, date: lastYear)
-        let snapshot = WidgetDataWriter.buildSnapshot(records: [], events: [oldGuest], contacts: [], now: Self.jan1)
+        let pastThisYear = Event(name: "昨天婚礼", type: .wedding, hostMode: .guest, date: yesterday)
+        let pastLastYear = Event(name: "去年婚礼", type: .wedding, hostMode: .guest, date: lastYear)
+        let snapshot = WidgetDataWriter.buildSnapshot(records: [], events: [pastThisYear, pastLastYear], contacts: [], now: Self.jan1)
         #expect(snapshot.pendingReturnCount == 0)
     }
 

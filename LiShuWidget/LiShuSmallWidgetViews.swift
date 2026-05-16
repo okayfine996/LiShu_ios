@@ -115,11 +115,11 @@ struct LiShuSmallCountdownWidgetView: View {
             HStack(alignment: .firstTextBaseline, spacing: 0) {
                 Text("D–")
                     .font(.system(size: 13, weight: .heavy))
-                    .foregroundStyle(WidgetPalette.accent)
+                    .foregroundStyle(colorScheme == .dark ? WidgetPalette.parchment : WidgetPalette.ink)
                     .padding(.bottom, 2)
                 Text("\(event.daysUntil)")
                     .font(.system(size: 42, weight: .heavy))
-                    .foregroundStyle(WidgetPalette.accent)
+                    .foregroundStyle(colorScheme == .dark ? WidgetPalette.parchment : WidgetPalette.ink)
                     .kerning(-2.5)
                     .lineLimit(1)
             }
@@ -180,20 +180,20 @@ struct LiShuSmallFinancialWidgetView: View {
                 Text("\(String(localized: "widget.netAmount")) · \(chineseYear(snapshot.currentYear))")
                     .font(.system(size: 9, weight: .bold))
                     .kerning(0.8)
-                    .foregroundStyle(WidgetPalette.accent)
+                    .foregroundStyle(colorScheme == .dark ? WidgetPalette.parchment.opacity(0.55) : WidgetPalette.inkSecondary)
                     .textCase(.uppercase)
                     .padding(.bottom, 2)
                 // Net amount
                 HStack(alignment: .firstTextBaseline, spacing: 2) {
                     Text(netAmount >= 0 ? "+¥" : "-¥")
                         .font(.system(size: 11, weight: .heavy))
-                        .foregroundStyle(WidgetPalette.accent)
+                        .foregroundStyle(colorScheme == .dark ? WidgetPalette.parchment : WidgetPalette.ink)
                     Text(
                         abs(netAmount),
                         format: .number.precision(.fractionLength(0))
                     )
                     .font(.system(size: 26, weight: .heavy))
-                    .foregroundStyle(WidgetPalette.accent)
+                    .foregroundStyle(colorScheme == .dark ? WidgetPalette.parchment : WidgetPalette.ink)
                     .kerning(-1.2)
                 }
                 // Income / expense bars

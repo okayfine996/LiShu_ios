@@ -108,17 +108,21 @@ struct WidgetHostingEventItem: Codable {
     var guestCount: Int?
     var eventDate: Date?
     var addRecordURL: URL?
+    /// Path to cover image saved in the App Group container; nil if no image is set.
+    var coverImagePath: String?
 
     init(
         name: String, typeName: String, daysUntil: Int,
         dateLine: String, deepLinkURL: URL,
         giftReceivedTotal: Double? = nil, guestCount: Int? = nil,
-        eventDate: Date? = nil, addRecordURL: URL? = nil
+        eventDate: Date? = nil, addRecordURL: URL? = nil,
+        coverImagePath: String? = nil
     ) {
         self.name = name; self.typeName = typeName; self.daysUntil = daysUntil
         self.dateLine = dateLine; self.deepLinkURL = deepLinkURL
         self.giftReceivedTotal = giftReceivedTotal; self.guestCount = guestCount
         self.eventDate = eventDate; self.addRecordURL = addRecordURL
+        self.coverImagePath = coverImagePath
     }
 }
 
@@ -164,7 +168,8 @@ extension WidgetSnapshot {
                 deepLinkURL: event.deepLinkURL,
                 giftReceivedTotal: event.giftReceivedTotal,
                 guestCount: event.guestCount, eventDate: event.eventDate,
-                addRecordURL: event.addRecordURL
+                addRecordURL: event.addRecordURL,
+                coverImagePath: event.coverImagePath
             )
         }
 

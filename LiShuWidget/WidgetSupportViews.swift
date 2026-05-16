@@ -16,11 +16,12 @@ extension URL {
 
 // MARK: - Palette
 
+// Widget extension cannot access the main app's DesignSystem, so color values are
+// defined here as a self-contained palette that mirrors DesignSystem.Colors.
 enum WidgetPalette {
-    static let accent = Color(red: 0.718, green: 0.431, blue: 0.353) // #B76E5A
-    static let accentDark = Color(red: 0.624, green: 0.353, blue: 0.278) // #9F5A47
-    static let gold = Color(red: 0.773, green: 0.627, blue: 0.396) // #C5A065
-    static let sage = Color(red: 0.478, green: 0.620, blue: 0.541) // #7A9E8A
+    static let accent = Color(red: 0.718, green: 0.431, blue: 0.353) // #B76E5A = DesignSystem.Colors.primary
+    static let accentDark = Color(red: 0.624, green: 0.353, blue: 0.278) // #9F5A47 = DesignSystem.Colors.primaryDark
+    static let gold = Color(red: 0.773, green: 0.627, blue: 0.396) // #C5A065 = DesignSystem.Colors.accentGold
     static let parchment = Color(red: 0.961, green: 0.937, blue: 0.902) // #F5EFE6
     static let ink = Color(red: 0.173, green: 0.173, blue: 0.173) // #2C2C2C
     static let inkSecondary = Color(red: 0.478, green: 0.455, blue: 0.431) // #7A746E
@@ -31,7 +32,7 @@ func kindColor(_ kind: ReminderKind) -> Color {
     switch kind {
     case .event: WidgetPalette.accent
     case .birthday: WidgetPalette.gold
-    case .pendingReturn: WidgetPalette.sage
+    case .pendingReturn: WidgetPalette.accentDark
     }
 }
 
@@ -128,8 +129,8 @@ struct WidgetHeader: View {
                     )
                     .foregroundStyle(
                         colorScheme == .dark
-                            ? Color(red: 0.910, green: 0.710, blue: 0.635)
-                            : WidgetPalette.accent
+                            ? WidgetPalette.parchment
+                            : WidgetPalette.ink
                     )
             }
         }

@@ -4,10 +4,8 @@ struct WidgetGalleryHeroView: View {
     let snapshot: WidgetSnapshot
     @Environment(\.colorScheme) private var colorScheme
 
-    @ViewBuilder
     private var heroHeadline: some View {
-        let ink = colorScheme == .dark ? Color(red: 0.961, green: 0.937, blue: 0.902) : Color(red: 0.173, green: 0.173, blue: 0.173)
-        (Text(String(localized: "widget.gallery.hero.headline")).foregroundColor(ink)
+        (Text(String(localized: "widget.gallery.hero.headline")).foregroundColor(DesignSystem.Colors.textPrimary)
             + Text(String(localized: "widget.gallery.hero.emphasis")).foregroundColor(DesignSystem.Colors.primary))
             .font(.system(size: 22, weight: .heavy))
             .kerning(-0.5)
@@ -41,7 +39,7 @@ struct WidgetGalleryHeroView: View {
                     .frame(width: 200)
                     .offset(x: 80, y: -40)
                 Circle()
-                    .fill(Color(red: 0.773, green: 0.627, blue: 0.396))
+                    .fill(DesignSystem.Colors.accentGold)
                     .opacity(0.40)
                     .blur(radius: 40)
                     .frame(width: 180)
@@ -72,11 +70,7 @@ struct WidgetGalleryHeroView: View {
 
                         Text(String(localized: "widget.gallery.hero.subtitle"))
                             .font(.system(size: 12.5))
-                            .foregroundStyle(colorScheme == .dark ? Color(red: 0.961, green: 0.937, blue: 0.902).opacity(0.65) : Color(
-                                red: 0.478,
-                                green: 0.455,
-                                blue: 0.431
-                            ))
+                            .foregroundStyle(DesignSystem.Colors.textSecondary)
                             .lineSpacing(4)
                             .padding(.top, 8)
                     }
@@ -99,7 +93,7 @@ struct WidgetGalleryHeroView: View {
                         lineWidth: 0.5
                     )
             )
-            .shadow(color: Color(red: 0.718, green: 0.431, blue: 0.353).opacity(0.20), radius: 28, x: 0, y: 12)
+            .shadow(color: DesignSystem.Colors.primary.opacity(0.20), radius: 28, x: 0, y: 12)
         }
         .padding(.horizontal, 16)
         .padding(.top, 18)

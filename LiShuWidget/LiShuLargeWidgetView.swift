@@ -118,13 +118,13 @@ struct LiShuLargeWidgetView: View {
                     HStack(alignment: .firstTextBaseline, spacing: 2) {
                         Text(netAmount >= 0 ? "+¥" : "-¥")
                             .font(.system(size: 13, weight: .heavy))
-                            .foregroundStyle(WidgetPalette.accent)
+                            .foregroundStyle(colorScheme == .dark ? WidgetPalette.parchment : WidgetPalette.ink)
                         Text(
                             abs(netAmount),
                             format: .number.precision(.fractionLength(0))
                         )
                         .font(.system(size: 30, weight: .heavy))
-                        .foregroundStyle(WidgetPalette.accent)
+                        .foregroundStyle(colorScheme == .dark ? WidgetPalette.parchment : WidgetPalette.ink)
                         .kerning(-1.2)
                     }
                 }
@@ -192,7 +192,7 @@ struct LiShuLargeWidgetView: View {
                 Spacer(minLength: 0)
                 Text("¥\(value, format: .number.precision(.fractionLength(0)))")
                     .font(.system(size: 11, weight: .heavy))
-                    .foregroundStyle(color)
+                    .foregroundStyle(colorScheme == .dark ? WidgetPalette.parchment : WidgetPalette.ink)
                     .kerning(-0.2)
             }
             GeometryReader { geo in

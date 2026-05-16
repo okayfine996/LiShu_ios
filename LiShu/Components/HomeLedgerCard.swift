@@ -112,7 +112,7 @@ struct HomeLedgerCard: View {
         HStack(alignment: .firstTextBaseline, spacing: DesignSystem.Spacing.inlineTight) {
             Text("¥" + formatAmount(totalReceived))
                 .font(DesignSystem.Typography.display)
-                .foregroundStyle(DesignSystem.Colors.primary)
+                .foregroundStyle(DesignSystem.Colors.textPrimary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.72)
 
@@ -165,12 +165,12 @@ struct HomeLedgerCard: View {
                     icon: "lightbulb.min",
                     title: String(localized: "giftReceiving.nav.title")
                 )
-                .foregroundStyle(DesignSystem.Colors.textPrimary)
-                .background(DesignSystem.Colors.bgPage)
+                .foregroundStyle(DesignSystem.Colors.primary)
+                .background(DesignSystem.Colors.primary.opacity(0.07))
                 .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Radius.smallCard))
                 .overlay(
                     RoundedRectangle(cornerRadius: DesignSystem.Radius.smallCard)
-                        .stroke(DesignSystem.Colors.border, lineWidth: 1)
+                        .stroke(DesignSystem.Colors.primary.opacity(0.2), lineWidth: 1)
                 )
             }
             .buttonStyle(LedgerActionButtonStyle())
@@ -195,7 +195,7 @@ struct HomeLedgerCard: View {
 
             Text(value)
                 .font(DesignSystem.Typography.title3)
-                .foregroundStyle(DesignSystem.Colors.primary)
+                .foregroundStyle(DesignSystem.Colors.textPrimary)
         }
         .padding(.horizontal, DesignSystem.Spacing.cardPaddingSmall)
         .padding(.vertical, 14)

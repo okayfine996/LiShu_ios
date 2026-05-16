@@ -130,7 +130,8 @@ enum WidgetDataWriter {
                     giftReceivedTotal: giftTotal > 0 ? giftTotal : nil,
                     guestCount: guests > 0 ? guests : nil,
                     eventDate: event.date,
-                    addRecordURL: addRecordDeepLink(eventStableID: sid)
+                    addRecordURL: addRecordDeepLink(eventStableID: sid),
+                    coverImagePath: saveEventCoverImage(event.coverImage)
                 )
             }
 
@@ -141,7 +142,7 @@ enum WidgetDataWriter {
 
         let pendingReturnCount = events.filter { event in
             guard event.hostMode == .guest else { return false }
-            guard cal.component(.year, from: event.date) == currentYear else { return false }
+            guard cal.startOfDay(for: event.date) >= todayStart else { return false }
             return !(event.records ?? []).contains { $0.direction == .given }
         }.count
 
@@ -160,6 +161,26 @@ enum WidgetDataWriter {
     }
 
     // MARK: - Helpers
+
+    /// Saves cover image data to the App Group container so the widget extension can read it.
+    /// Returns the file path, or nil if no data or container is unavailable.
+    /// When data is nil, removes any previously saved file so stale images don't persist.
+    private static func saveEventCoverImage(_ data: Data?) -> String? {
+        guard let container = FileManager.default.containerURL(
+            forSecurityApplicationGroupIdentifier: WidgetSnapshotStore.appGroupID
+        ) else { return nil }
+        let url = container.appendingPathComponent("widget_event_cover")
+        guard let data else {
+            try? FileManager.default.removeItem(at: url)
+            return nil
+        }
+        do {
+            try data.write(to: url, options: .atomic)
+            return url.path
+        } catch {
+            return nil
+        }
+    }
 
     private static func nextGregorianOccurrence(of birthday: Date, after start: Date) -> Date? {
         let cal = Calendar.current

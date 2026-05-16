@@ -7,9 +7,9 @@ enum GalleryMediumVariant { case reminder, event, financial }
 
 func galleryKindColor(_ kind: ReminderKind) -> Color {
     switch kind {
-    case .event: Color(red: 0.718, green: 0.431, blue: 0.353)
-    case .birthday: Color(red: 0.773, green: 0.627, blue: 0.396)
-    case .pendingReturn: Color(red: 0.353, green: 0.541, blue: 0.718)
+    case .event: DesignSystem.Colors.primary
+    case .birthday: DesignSystem.Colors.accentGold
+    case .pendingReturn: DesignSystem.Colors.primaryDark
     }
 }
 
@@ -32,7 +32,7 @@ struct GalleryMark: View {
     var body: some View {
         ZStack {
             LinearGradient(
-                colors: [Color(red: 0.718, green: 0.431, blue: 0.353), Color(red: 0.624, green: 0.353, blue: 0.278)],
+                colors: [DesignSystem.Colors.primary, DesignSystem.Colors.primaryDark],
                 startPoint: .topLeading, endPoint: .bottomTrailing
             )
             Text("礼").font(.system(size: size * 0.62, weight: .heavy)).foregroundStyle(.white)

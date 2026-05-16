@@ -11661,16 +11661,6 @@
         }
       }
     },
-    "widget.quickAdd.subtitle" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "· OCR 扫红包 · 智能回礼"
-          }
-        }
-      }
-    },
     "widget.reminder.birthday" : {
       "localizations" : {
         "zh-Hans" : {

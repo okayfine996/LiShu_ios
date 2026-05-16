@@ -32,20 +32,10 @@ struct WidgetGallerySegmentedControl: View {
             HStack(spacing: 4) {
                 Text(label)
                     .font(.system(size: 13, weight: active ? .bold : .semibold))
-                    .foregroundStyle(active
-                        ? (colorScheme == .dark ? Color(red: 0.961, green: 0.937, blue: 0.902) : Color(
-                            red: 0.173,
-                            green: 0.173,
-                            blue: 0.173
-                        ))
-                        : (colorScheme == .dark ? Color.white.opacity(0.6) : Color(red: 0.478, green: 0.455, blue: 0.431)))
+                    .foregroundStyle(active ? DesignSystem.Colors.textPrimary : DesignSystem.Colors.textSecondary)
                 Text(count)
                     .font(.system(size: 11, weight: .bold))
-                    .foregroundStyle(active ? DesignSystem.Colors.primary : (colorScheme == .dark ? Color.white.opacity(0.4) : Color(
-                        red: 0.671,
-                        green: 0.647,
-                        blue: 0.624
-                    )))
+                    .foregroundStyle(active ? DesignSystem.Colors.primary : DesignSystem.Colors.textTertiary)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 8)
@@ -81,7 +71,7 @@ struct WidgetGalleryHomeWidgets: View {
                 desc: String(localized: "widget.gallery.small.reminder.desc"),
                 scenarios: [
                     (String(localized: "widget.gallery.scenario.dailyManager"), DesignSystem.Colors.primary),
-                    (String(localized: "widget.gallery.scenario.birthdayAlert"), Color(red: 0.773, green: 0.627, blue: 0.396)),
+                    (String(localized: "widget.gallery.scenario.birthdayAlert"), DesignSystem.Colors.accentGold),
                 ]
             ) {
                 GallerySmallStub(snapshot: snapshot, variant: .reminder)
@@ -92,7 +82,7 @@ struct WidgetGalleryHomeWidgets: View {
                 desc: String(localized: "widget.gallery.small.countdown.desc"),
                 scenarios: [
                     (String(localized: "widget.gallery.scenario.weddingWeek"), DesignSystem.Colors.primary),
-                    (String(localized: "widget.gallery.scenario.birthdayBanquet"), Color(red: 0.773, green: 0.627, blue: 0.396)),
+                    (String(localized: "widget.gallery.scenario.birthdayBanquet"), DesignSystem.Colors.accentGold),
                 ]
             ) {
                 GallerySmallStub(snapshot: snapshot, variant: .countdown)
@@ -102,10 +92,10 @@ struct WidgetGalleryHomeWidgets: View {
                 name: String(localized: "widget.financial.displayName"),
                 desc: String(localized: "widget.gallery.small.financial.desc"),
                 scenarios: [
-                    (String(localized: "widget.gallery.scenario.yearEndReview"), Color(red: 0.773, green: 0.627, blue: 0.396)),
+                    (String(localized: "widget.gallery.scenario.yearEndReview"), DesignSystem.Colors.accentGold),
                     (String(localized: "widget.gallery.scenario.financeOverview"), DesignSystem.Colors.primary),
                 ],
-                dotColor: Color(red: 0.773, green: 0.627, blue: 0.396)
+                dotColor: DesignSystem.Colors.accentGold
             ) {
                 GallerySmallStub(snapshot: snapshot, variant: .financial)
             }
@@ -117,7 +107,7 @@ struct WidgetGalleryHomeWidgets: View {
                 desc: String(localized: "widget.gallery.medium.reminder.desc"),
                 scenarios: [
                     (String(localized: "widget.gallery.scenario.frequentEntry"), DesignSystem.Colors.primary),
-                    (String(localized: "widget.gallery.scenario.weddingWeek"), Color(red: 0.773, green: 0.627, blue: 0.396)),
+                    (String(localized: "widget.gallery.scenario.weddingWeek"), DesignSystem.Colors.accentGold),
                 ]
             ) {
                 GalleryMediumStub(snapshot: snapshot, variant: .reminder)
@@ -128,7 +118,7 @@ struct WidgetGalleryHomeWidgets: View {
                 desc: String(localized: "widget.mediumEvent.description"),
                 scenarios: [
                     (String(localized: "widget.gallery.scenario.weddingHost"), DesignSystem.Colors.primary),
-                    (String(localized: "widget.gallery.scenario.houseMoving"), Color(red: 0.353, green: 0.541, blue: 0.718)),
+                    (String(localized: "widget.gallery.scenario.houseMoving"), DesignSystem.Colors.primaryDark),
                 ]
             ) {
                 GalleryMediumStub(snapshot: snapshot, variant: .event)
@@ -138,10 +128,10 @@ struct WidgetGalleryHomeWidgets: View {
                 name: String(localized: "widget.mediumFinancial.displayName"),
                 desc: String(localized: "widget.mediumFinancial.description"),
                 scenarios: [
-                    (String(localized: "widget.gallery.scenario.yearEndReview"), Color(red: 0.773, green: 0.627, blue: 0.396)),
+                    (String(localized: "widget.gallery.scenario.yearEndReview"), DesignSystem.Colors.accentGold),
                     (String(localized: "widget.gallery.scenario.financeOverview"), DesignSystem.Colors.primary),
                 ],
-                dotColor: Color(red: 0.773, green: 0.627, blue: 0.396)
+                dotColor: DesignSystem.Colors.accentGold
             ) {
                 GalleryMediumStub(snapshot: snapshot, variant: .financial)
             }
@@ -153,7 +143,7 @@ struct WidgetGalleryHomeWidgets: View {
                 desc: String(localized: "widget.gallery.large.desc"),
                 scenarios: [
                     (String(localized: "widget.gallery.scenario.recommended"), DesignSystem.Colors.primary),
-                    (String(localized: "widget.gallery.scenario.adaptive"), Color(red: 0.353, green: 0.541, blue: 0.718)),
+                    (String(localized: "widget.gallery.scenario.adaptive"), DesignSystem.Colors.primaryDark),
                 ]
             ) {
                 GalleryLargeStub(snapshot: snapshot)
@@ -203,10 +193,10 @@ struct WidgetGalleryLockWidgets: View {
                 name: String(localized: "widget.gallery.circular.name"),
                 desc: String(localized: "widget.gallery.circular.desc"),
                 scenarios: [
-                    (String(localized: "widget.gallery.scenario.defaultUse"), Color(red: 0.353, green: 0.541, blue: 0.718)),
-                    (String(localized: "widget.gallery.scenario.lowFrequency"), Color(red: 0.773, green: 0.627, blue: 0.396)),
+                    (String(localized: "widget.gallery.scenario.defaultUse"), DesignSystem.Colors.primaryDark),
+                    (String(localized: "widget.gallery.scenario.lowFrequency"), DesignSystem.Colors.accentGold),
                 ],
-                dotColor: Color(red: 0.353, green: 0.541, blue: 0.718)
+                dotColor: DesignSystem.Colors.primaryDark
             ) {
                 GalleryCircularStub(count: snapshot.reminderCount)
             }
@@ -217,7 +207,7 @@ struct WidgetGalleryLockWidgets: View {
                 desc: String(localized: "widget.countdownRing.description"),
                 scenarios: [
                     (String(localized: "widget.gallery.scenario.weddingWeek"), DesignSystem.Colors.primary),
-                    (String(localized: "widget.gallery.scenario.birthdayBanquet"), Color(red: 0.773, green: 0.627, blue: 0.396)),
+                    (String(localized: "widget.gallery.scenario.birthdayBanquet"), DesignSystem.Colors.accentGold),
                 ]
             ) {
                 GalleryCircularCountdownStub(daysUntil: snapshot.nextHostingEvent?.daysUntil ?? 7)
@@ -231,7 +221,7 @@ struct WidgetGalleryLockWidgets: View {
                 desc: String(localized: "widget.gallery.rectangular.desc"),
                 scenarios: [
                     (String(localized: "widget.gallery.scenario.recommends"), DesignSystem.Colors.primary),
-                    (String(localized: "widget.gallery.scenario.homeTravel"), Color(red: 0.353, green: 0.541, blue: 0.718)),
+                    (String(localized: "widget.gallery.scenario.homeTravel"), DesignSystem.Colors.primaryDark),
                 ]
             ) {
                 GalleryRectangularStub(snapshot: snapshot)
@@ -243,8 +233,8 @@ struct WidgetGalleryLockWidgets: View {
                 size: "Inline",
                 name: String(localized: "widget.gallery.inline.name"),
                 desc: String(localized: "widget.gallery.inline.desc"),
-                scenarios: [(String(localized: "widget.gallery.scenario.minimalist"), Color(red: 0.773, green: 0.627, blue: 0.396))],
-                dotColor: Color(red: 0.773, green: 0.627, blue: 0.396)
+                scenarios: [(String(localized: "widget.gallery.scenario.minimalist"), DesignSystem.Colors.accentGold)],
+                dotColor: DesignSystem.Colors.accentGold
             ) {
                 GalleryInlineStub(snapshot: snapshot)
             }
@@ -277,5 +267,5 @@ private struct WidgetGallerySegmentedControlPreview: View {
         WidgetGalleryHomeWidgets(snapshot: .galleryPreview)
         WidgetGalleryLockWidgets(snapshot: .galleryPreview)
     }
-    .background(Color(red: 0.961, green: 0.937, blue: 0.902))
+    .background(DesignSystem.Colors.bgPage)
 }

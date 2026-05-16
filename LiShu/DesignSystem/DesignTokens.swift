@@ -6,6 +6,7 @@ public nonisolated enum DesignSystem {
     public nonisolated enum Colors {
         // Accent Color
         public static let primary = Color(hexLight: "#B76E5A", hexDark: "#B76E5A")
+        public static let primaryDark = Color(hexLight: "#9F5A47", hexDark: "#9F5A47")
         public static let accentGold = Color(hexLight: "#C5A065", hexDark: "#C5A065")
 
         // Backgrounds
@@ -33,6 +34,7 @@ public nonisolated enum DesignSystem {
         // Semantic
         public static let income = accentGold
         public static let destructive = Color(hexLight: "#E53935", hexDark: "#EF5350")
+        public static let info = Color(hexLight: "#5A8AB7", hexDark: "#ABCCE8")
         /// 全屏遮罩背景（如图片查看器）
         public static let overlayDark = Color(hexLight: "#000000", hexDark: "#000000")
     }

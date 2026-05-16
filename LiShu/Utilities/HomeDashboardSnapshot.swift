@@ -122,7 +122,7 @@ struct HomeDashboardSnapshot {
 
         let pendingReturnCount = events
             .filter { event in
-                event.date >= startOfYear && event.date < endOfYear &&
+                event.date >= today &&
                     event.hostMode == .guest &&
                     !(event.records ?? []).contains { $0.direction == .given }
             }

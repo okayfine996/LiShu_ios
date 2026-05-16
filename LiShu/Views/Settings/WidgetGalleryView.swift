@@ -33,7 +33,7 @@ struct WidgetGalleryView: View {
                 .padding(.bottom, 32)
             }
         }
-        .background(colorScheme == .dark ? Color(red: 0.110, green: 0.106, blue: 0.098) : Color(red: 0.961, green: 0.937, blue: 0.902))
+        .background(DesignSystem.Colors.bgPage)
         .navigationTitle(String(localized: "settings.widgetGallery"))
         .navigationBarTitleDisplayMode(.inline)
         .trackScreen("settings.widgetGallery")

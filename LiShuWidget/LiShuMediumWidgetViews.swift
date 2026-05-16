@@ -56,14 +56,6 @@ struct LiShuMediumWidgetView: View {
                         .foregroundStyle(
                             colorScheme == .dark ? WidgetPalette.parchment : WidgetPalette.ink
                         )
-                    Text(String(localized: "widget.quickAdd.subtitle"))
-                        .font(.system(size: 10, weight: .medium))
-                        .foregroundStyle(
-                            colorScheme == .dark
-                                ? WidgetPalette.parchment.opacity(0.50)
-                                : WidgetPalette.inkSecondary
-                        )
-                        .lineLimit(1)
                     Spacer(minLength: 0)
                     Image(systemName: "chevron.right")
                         .font(.system(size: 10, weight: .semibold))
@@ -140,6 +132,36 @@ struct LiShuMediumEventWidgetView: View {
 
     private func sceneSwatch(event: WidgetHostingEventItem) -> some View {
         ZStack(alignment: .topLeading) {
+            coverOrPlaceholder(path: event.coverImagePath)
+            Text("D–\(event.daysUntil)")
+                .font(.system(size: 10, weight: .heavy))
+                .foregroundStyle(.white)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 3)
+                .background(
+                    Capsule().fill(Color.black.opacity(0.30))
+                        .overlay(Capsule().strokeBorder(Color.white.opacity(0.35), lineWidth: 0.5))
+                )
+                .padding(8)
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+    }
+
+    @ViewBuilder
+    private func coverOrPlaceholder(path: String?) -> some View {
+        if let path, let uiImage = UIImage(contentsOfFile: path) {
+            Image(uiImage: uiImage)
+                .resizable()
+                .scaledToFill()
+                .frame(width: 100)
+                .clipped()
+        } else {
+            placeholderSwatch
+        }
+    }
+
+    private var placeholderSwatch: some View {
+        ZStack {
             LinearGradient(
                 colors: [
                     Color(red: 0.961, green: 0.773, blue: 0.690),
@@ -180,18 +202,7 @@ struct LiShuMediumEventWidgetView: View {
                 }
                 .fill(Color(red: 0.361, green: 0.180, blue: 0.157).opacity(0.65))
             }
-            Text("D–\(event.daysUntil)")
-                .font(.system(size: 10, weight: .heavy))
-                .foregroundStyle(.white)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 3)
-                .background(
-                    Capsule().fill(Color.black.opacity(0.30))
-                        .overlay(Capsule().strokeBorder(Color.white.opacity(0.35), lineWidth: 0.5))
-                )
-                .padding(8)
         }
-        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
     private func statsRow(event: WidgetHostingEventItem) -> some View {
@@ -203,7 +214,7 @@ struct LiShuMediumEventWidgetView: View {
                         .foregroundStyle(colorScheme == .dark ? WidgetPalette.parchment.opacity(0.55) : WidgetPalette.inkSecondary)
                     Text("¥\(total, format: .number.precision(.fractionLength(0)))")
                         .font(.system(size: 18, weight: .heavy))
-                        .foregroundStyle(WidgetPalette.accent)
+                        .foregroundStyle(colorScheme == .dark ? WidgetPalette.parchment : WidgetPalette.ink)
                         .kerning(-0.6)
                 }
             }
@@ -294,10 +305,10 @@ struct LiShuMediumFinancialWidgetView: View {
                         HStack(alignment: .firstTextBaseline, spacing: 2) {
                             Text(netAmount >= 0 ? "+¥" : "-¥")
                                 .font(.system(size: 13, weight: .heavy))
-                                .foregroundStyle(WidgetPalette.accent)
+                                .foregroundStyle(colorScheme == .dark ? WidgetPalette.parchment : WidgetPalette.ink)
                             Text(abs(netAmount), format: .number.precision(.fractionLength(0)))
                                 .font(.system(size: 34, weight: .heavy))
-                                .foregroundStyle(WidgetPalette.accent)
+                                .foregroundStyle(colorScheme == .dark ? WidgetPalette.parchment : WidgetPalette.ink)
                                 .kerning(-1.5)
                         }
                     }
@@ -343,7 +354,7 @@ struct LiShuMediumFinancialWidgetView: View {
                     )
                     if snapshot.pendingReturnCount > 0 {
                         statItem(
-                            dot: WidgetPalette.sage,
+                            dot: WidgetPalette.accentDark,
                             label: String(localized: "widget.stat.pendingReturn"),
                             value: "\(snapshot.pendingReturnCount)",
                             unit: String(localized: "widget.stat.unit.records")
@@ -365,7 +376,7 @@ struct LiShuMediumFinancialWidgetView: View {
                 Spacer(minLength: 0)
                 Text("¥\(value, format: .number.notation(.compactName).precision(.significantDigits(2)))")
                     .font(.system(size: 11, weight: .heavy))
-                    .foregroundStyle(color)
+                    .foregroundStyle(colorScheme == .dark ? WidgetPalette.parchment : WidgetPalette.ink)
                     .kerning(-0.2)
             }
             GeometryReader { geo in
