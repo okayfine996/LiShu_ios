@@ -6,22 +6,6 @@ import WidgetKit
 struct LiShuLargeWidgetView: View {
     let snapshot: WidgetSnapshot
 
-    private var netAmount: Double {
-        snapshot.yearlyIncome - snapshot.yearlyExpense
-    }
-
-    private var total: Double {
-        snapshot.yearlyIncome + snapshot.yearlyExpense
-    }
-
-    private var incomeRatio: CGFloat {
-        total > 0 ? CGFloat(snapshot.yearlyIncome / total) : 0
-    }
-
-    private var expenseRatio: CGFloat {
-        total > 0 ? CGFloat(snapshot.yearlyExpense / total) : 0
-    }
-
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             WidgetHeader(count: snapshot.reminderCount)
@@ -58,10 +42,7 @@ struct LiShuLargeWidgetView: View {
             Spacer(minLength: 0)
 
             // Divider + CTA
-            Rectangle()
-                .fill(WidgetPalette.divider)
-                .frame(height: 0.5)
-                .padding(.top, 10)
+            WidgetDivider(topPadding: 10)
 
             Link(destination: .liShuAddRecord) {
                 HStack(spacing: 6) {
@@ -100,38 +81,17 @@ struct LiShuLargeWidgetView: View {
                         .kerning(0.6)
                         .textCase(.uppercase)
                         .foregroundStyle(WidgetPalette.textSecondary)
-                    HStack(alignment: .firstTextBaseline, spacing: 2) {
-                        Text(netAmount >= 0 ? "+¥" : "-¥")
-                            .font(.system(size: 13, weight: .heavy))
-                            .foregroundStyle(WidgetPalette.textPrimary)
-                        Text(
-                            abs(netAmount),
-                            format: .number.precision(.fractionLength(0))
-                        )
-                        .font(.system(size: 30, weight: .heavy))
-                        .foregroundStyle(WidgetPalette.textPrimary)
-                        .kerning(-1.2)
-                    }
+                    WidgetNetAmountDisplay(amount: snapshot.netAmount, amountFontSize: 30, kerning: -1.2)
                 }
                 Spacer(minLength: 0)
             }
-            if total > 0 {
+            if snapshot.financialTotal > 0 {
                 LazyVGrid(
                     columns: [GridItem(.flexible()), GridItem(.flexible())],
                     spacing: 10
                 ) {
-                    barItem(
-                        label: String(localized: "widget.income"),
-                        value: snapshot.yearlyIncome,
-                        ratio: incomeRatio,
-                        color: WidgetPalette.gold
-                    )
-                    barItem(
-                        label: String(localized: "widget.expense"),
-                        value: snapshot.yearlyExpense,
-                        ratio: expenseRatio,
-                        color: WidgetPalette.accent
-                    )
+                    WidgetFinancialBar(label: String(localized: "widget.income"), value: snapshot.yearlyIncome, ratio: snapshot.incomeRatio, color: WidgetPalette.gold, fullAmount: true)
+                    WidgetFinancialBar(label: String(localized: "widget.expense"), value: snapshot.yearlyExpense, ratio: snapshot.expenseRatio, color: WidgetPalette.accent, fullAmount: true)
                 }
                 .padding(.top, 8)
             }
@@ -154,29 +114,6 @@ struct LiShuLargeWidgetView: View {
         )
     }
 
-    private func barItem(label: String, value: Double, ratio: CGFloat, color: Color) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Text(label)
-                    .font(.system(size: 9.5, weight: .semibold))
-                    .foregroundStyle(WidgetPalette.textSecondary)
-                Spacer(minLength: 0)
-                Text("¥\(value, format: .number.precision(.fractionLength(0)))")
-                    .font(.system(size: 11, weight: .heavy))
-                    .foregroundStyle(WidgetPalette.textPrimary)
-                    .kerning(-0.2)
-            }
-            GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    Capsule().fill(WidgetPalette.barTrack)
-                    Capsule()
-                        .fill(color)
-                        .frame(width: geo.size.width * ratio)
-                }
-            }
-            .frame(height: 4)
-        }
-    }
 }
 
 #Preview("Large") {

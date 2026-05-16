@@ -136,22 +136,6 @@ struct LiShuSmallCountdownWidgetView: View {
 struct LiShuSmallFinancialWidgetView: View {
     let snapshot: WidgetSnapshot
 
-    private var netAmount: Double {
-        snapshot.yearlyIncome - snapshot.yearlyExpense
-    }
-
-    private var total: Double {
-        snapshot.yearlyIncome + snapshot.yearlyExpense
-    }
-
-    private var incomeRatio: CGFloat {
-        total > 0 ? CGFloat(snapshot.yearlyIncome / total) : 0
-    }
-
-    private var expenseRatio: CGFloat {
-        total > 0 ? CGFloat(snapshot.yearlyExpense / total) : 0
-    }
-
     var body: some View {
         Link(destination: .liShuHome) {
             VStack(alignment: .leading, spacing: 0) {
@@ -164,67 +148,20 @@ struct LiShuSmallFinancialWidgetView: View {
                     .foregroundStyle(WidgetPalette.textSecondary)
                     .textCase(.uppercase)
                     .padding(.bottom, 2)
-                // Net amount
-                HStack(alignment: .firstTextBaseline, spacing: 2) {
-                    Text(netAmount >= 0 ? "+¥" : "-¥")
-                        .font(.system(size: 11, weight: .heavy))
-                        .foregroundStyle(WidgetPalette.textPrimary)
-                    Text(
-                        abs(netAmount),
-                        format: .number.precision(.fractionLength(0))
-                    )
-                    .font(.system(size: 26, weight: .heavy))
-                    .foregroundStyle(WidgetPalette.textPrimary)
-                    .kerning(-1.2)
-                }
-                // Income / expense bars
-                if total > 0 {
+                WidgetNetAmountDisplay(amount: snapshot.netAmount, prefixFontSize: 11, amountFontSize: 26, kerning: -1.2)
+                if snapshot.financialTotal > 0 {
                     VStack(alignment: .leading, spacing: 6) {
-                        incomeExpenseBar(
-                            label: String(localized: "widget.income"),
-                            value: snapshot.yearlyIncome,
-                            ratio: incomeRatio,
-                            color: WidgetPalette.gold
-                        )
-                        incomeExpenseBar(
-                            label: String(localized: "widget.expense"),
-                            value: snapshot.yearlyExpense,
-                            ratio: expenseRatio,
-                            color: WidgetPalette.accent
-                        )
+                        WidgetFinancialBar(label: String(localized: "widget.income"), value: snapshot.yearlyIncome, ratio: snapshot.incomeRatio, color: WidgetPalette.gold, compact: true)
+                        WidgetFinancialBar(label: String(localized: "widget.expense"), value: snapshot.yearlyExpense, ratio: snapshot.expenseRatio, color: WidgetPalette.accent, compact: true)
                     }
                     .padding(.top, 12)
                 }
-                // Footer stats
                 Text(String(format: String(localized: "widget.stats.footer"), snapshot.yearlyRecordCount, snapshot.yearlyContactCount))
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundStyle(WidgetPalette.textSecondary)
                     .padding(.top, 8)
             }
             .padding(14)
-        }
-    }
-
-    private func incomeExpenseBar(label: String, value: Double, ratio: CGFloat, color: Color) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
-            HStack {
-                Text(label)
-                    .font(.system(size: 9, weight: .semibold))
-                    .foregroundStyle(WidgetPalette.textSecondary)
-                Spacer(minLength: 0)
-                Text("¥\(value, format: .number.notation(.compactName).precision(.significantDigits(2)))")
-                    .font(.system(size: 9, weight: .semibold))
-                    .foregroundStyle(WidgetPalette.textSecondary)
-            }
-            GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    Capsule().fill(WidgetPalette.barTrack)
-                    Capsule()
-                        .fill(color)
-                        .frame(width: geo.size.width * ratio)
-                }
-            }
-            .frame(height: 4)
         }
     }
 }

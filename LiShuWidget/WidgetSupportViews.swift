@@ -208,6 +208,116 @@ struct WidgetEmptyState: View {
     }
 }
 
+// MARK: - WidgetSnapshot convenience
+
+extension WidgetSnapshot {
+    var netAmount: Double { yearlyIncome - yearlyExpense }
+    var financialTotal: Double { yearlyIncome + yearlyExpense }
+    var incomeRatio: CGFloat { financialTotal > 0 ? CGFloat(yearlyIncome / financialTotal) : 0 }
+    var expenseRatio: CGFloat { financialTotal > 0 ? CGFloat(yearlyExpense / financialTotal) : 0 }
+}
+
+// MARK: - Shared financial sub-components
+
+struct WidgetDivider: View {
+    var topPadding: CGFloat = 8
+
+    var body: some View {
+        Rectangle()
+            .fill(WidgetPalette.divider)
+            .frame(height: 0.5)
+            .padding(.top, topPadding)
+    }
+}
+
+struct WidgetFinancialBar: View {
+    let label: String
+    let value: Double
+    let ratio: CGFloat
+    let color: Color
+    var compact: Bool = false
+    var fullAmount: Bool = false
+
+    @ViewBuilder private var valueText: some View {
+        if compact {
+            Text("¥\(value, format: .number.notation(.compactName).precision(.significantDigits(2)))")
+                .font(.system(size: 9, weight: .semibold))
+                .foregroundStyle(WidgetPalette.textSecondary)
+        } else if fullAmount {
+            Text("¥\(value, format: .number.precision(.fractionLength(0)))")
+                .font(.system(size: 11, weight: .heavy))
+                .foregroundStyle(WidgetPalette.textPrimary)
+                .kerning(-0.2)
+        } else {
+            Text("¥\(value, format: .number.notation(.compactName).precision(.significantDigits(2)))")
+                .font(.system(size: 11, weight: .heavy))
+                .foregroundStyle(WidgetPalette.textPrimary)
+                .kerning(-0.2)
+        }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: compact ? 2 : 4) {
+            HStack {
+                Text(label)
+                    .font(.system(size: compact ? 9 : 9.5, weight: .semibold))
+                    .foregroundStyle(WidgetPalette.textSecondary)
+                Spacer(minLength: 0)
+                valueText
+            }
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(WidgetPalette.barTrack)
+                    Capsule().fill(color).frame(width: geo.size.width * ratio)
+                }
+            }
+            .frame(height: 4)
+        }
+    }
+}
+
+struct WidgetNetAmountDisplay: View {
+    let amount: Double
+    var prefixFontSize: CGFloat = 13
+    var amountFontSize: CGFloat = 34
+    var kerning: CGFloat = -1.5
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 2) {
+            Text(amount >= 0 ? "+¥" : "-¥")
+                .font(.system(size: prefixFontSize, weight: .heavy))
+                .foregroundStyle(WidgetPalette.textPrimary)
+            Text(abs(amount), format: .number.precision(.fractionLength(0)))
+                .font(.system(size: amountFontSize, weight: .heavy))
+                .foregroundStyle(WidgetPalette.textPrimary)
+                .kerning(kerning)
+        }
+    }
+}
+
+struct WidgetStatItem: View {
+    let dot: Color
+    let label: String
+    let value: String
+    let unit: String
+
+    var body: some View {
+        HStack(spacing: 5) {
+            Circle().fill(dot).frame(width: 5, height: 5)
+            Text(label)
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(WidgetPalette.textSecondary)
+            Text(value)
+                .font(.system(size: 12, weight: .heavy))
+                .foregroundStyle(WidgetPalette.textPrimary)
+                .kerning(-0.2)
+                + Text(unit)
+                .font(.system(size: 9, weight: .semibold))
+                .foregroundStyle(WidgetPalette.textSecondary)
+        }
+    }
+}
+
 #Preview("Widget Support") {
     VStack(alignment: .leading, spacing: 16) {
         WidgetHeader(count: 3)
