@@ -136,6 +136,18 @@ struct EventDetailView: View {
                 EventDetailLoadingOverlay()
             }
         }
+        .overlay(alignment: .topLeading) {
+            Group {
+                if CommandLine.arguments.contains("--uitesting") {
+                    if let event = viewModel.event {
+                        Color.clear
+                            .frame(width: 0, height: 0)
+                            .accessibilityIdentifier("event.detail.stableID.\(WidgetDataWriter.stableID(for: event.persistentModelID))")
+                            .accessibilityHidden(false)
+                    }
+                }
+            }
+        }
         .fileImporter(
             isPresented: $showLedgerXLSXImporter,
             allowedContentTypes: [.xlsx],

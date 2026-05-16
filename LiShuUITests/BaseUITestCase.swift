@@ -231,4 +231,64 @@ class BaseUITestCase: XCTestCase {
 
         return false
     }
+
+    @MainActor
+    func navigateToEventDetail(name: String) {
+        app.tabBars.buttons[TabLabels.events].tap()
+        sleep(1)
+        let row = app.staticTexts[name].firstMatch
+        XCTAssertTrue(row.waitForExistence(timeout: 5), "Event row '\(name)' should exist")
+        row.tap()
+        sleep(1)
+    }
+
+    @MainActor
+    func navigateToContactDetail(name: String) {
+        app.tabBars.buttons[TabLabels.contacts].tap()
+        sleep(1)
+        let row = app.staticTexts[name].firstMatch
+        XCTAssertTrue(row.waitForExistence(timeout: 5), "Contact row '\(name)' should exist")
+        row.tap()
+        sleep(1)
+    }
+
+    @MainActor
+    func readStableID(prefix: String, timeout: TimeInterval = 8) -> String? {
+        let predicate = NSPredicate(format: "identifier BEGINSWITH %@", prefix)
+        // Search all element types — Color.clear probe may appear as any type
+        let el = app.descendants(matching: .any).matching(predicate).firstMatch
+        guard el.waitForExistence(timeout: timeout) else { return nil }
+        let id = el.identifier
+        return id.hasPrefix(prefix) ? String(id.dropFirst(prefix.count)) : nil
+    }
+
+    /// Reads the stableID for an entity by name from MainTabView's debug probes.
+    /// prefix is e.g. "debug.event.sid." — the returned value is "{stableID}.{name}",
+    /// so we strip the name suffix to get just the stableID.
+    @MainActor
+    func readStableIDFromMainView(entityPrefix: String, name: String, timeout: TimeInterval = 5) -> String? {
+        // Probe format: "debug.event.sid.{stableID}.{name}"
+        // We search for a prefix that ends with the name.
+        let fullSuffix = ".\(name)"
+        let predicate = NSPredicate(
+            format: "identifier BEGINSWITH %@ AND identifier ENDSWITH %@",
+            entityPrefix, fullSuffix
+        )
+        let el = app.descendants(matching: .any).matching(predicate).firstMatch
+        guard el.waitForExistence(timeout: timeout) else { return nil }
+        let id = el.identifier
+        guard id.hasPrefix(entityPrefix) else { return nil }
+        let withoutPrefix = String(id.dropFirst(entityPrefix.count))
+        guard withoutPrefix.hasSuffix(fullSuffix) else { return nil }
+        return String(withoutPrefix.dropLast(fullSuffix.count))
+    }
+
+    @MainActor
+    func terminateAndRelaunchWithURL(_ urlString: String) {
+        app.terminate()
+        app.launchArguments = defaultLaunchArguments + ["--open-url=\(urlString)"]
+        app.launch()
+        // Allow: splash(1.5s) + task.sleep(2.5s) + navigation animation + SwiftData load
+        sleep(7)
+    }
 }

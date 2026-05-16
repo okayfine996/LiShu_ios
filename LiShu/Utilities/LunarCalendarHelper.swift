@@ -88,10 +88,28 @@ enum LunarCalendarHelper {
 
     /// 计算下一次农历月日对应的公历 Date
     static func nextGregorianDate(lunarMonth: Int, lunarDay: Int) -> Date? {
+        nextGregorianDate(lunarMonth: lunarMonth, lunarDay: lunarDay, after: Date(), includingStartDay: false)
+    }
+
+    /// 计算指定起点之后的下一次农历月日对应的公历 Date。
+    static func nextGregorianDate(
+        lunarMonth: Int,
+        lunarDay: Int,
+        after start: Date,
+        includingStartDay: Bool = true
+    ) -> Date? {
+        let startOfDay = Calendar.current.startOfDay(for: start)
+        if includingStartDay {
+            let today = chineseCal.dateComponents([.month, .day], from: startOfDay)
+            if today.month == lunarMonth, today.day == lunarDay {
+                return startOfDay
+            }
+        }
         var comps = DateComponents()
         comps.month = lunarMonth
         comps.day = lunarDay
-        return chineseCal.nextDate(after: Date(), matching: comps, matchingPolicy: .nextTime)
+        let searchStart = includingStartDay ? startOfDay : start
+        return chineseCal.nextDate(after: searchStart, matching: comps, matchingPolicy: .nextTime)
     }
 
     // MARK: - Extraction helpers

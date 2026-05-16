@@ -185,6 +185,63 @@
       "notes": "Wire-format changes require explicit compatibility tests."
     },
     {
+      "id": "feat-widget",
+      "name": "iOS Home Screen and Lock Screen Widgets",
+      "module": "Widget",
+      "priority": "P1",
+      "status": "done",
+      "dependencies": ["core-contacts", "core-records", "core-events"],
+      "scope": [
+        "WidgetSnapshot shared data model (App Group UserDefaults)",
+        "WidgetDataWriter in main app: birthday/event/pendingReturn reminders",
+        "DeepLinkRouter: lishu:// URL scheme parsing",
+        "DeepLinkCoordinator: @Observable bridge for widget taps",
+        "11 widget view types across 6 Widget definitions: systemSmall/Medium/Large + accessoryCircular/Rectangular/Inline + 3 specialised small/medium/circular variants",
+        "In-app Widget Gallery (WidgetGalleryView.swift) wired into Settings",
+        "Wiring into LiShuApp.swift and MainTabView.swift",
+        "47 localization keys"
+      ],
+      "acceptance": [
+        "Widget shows reminders within 3 days: birthdays, events, pending return gifts",
+        "All widget families render without crash",
+        "Widget taps deep-link into correct app screen",
+        "Data refreshes on app foreground and data change",
+        "WidgetDataWriterTests and WidgetSnapshotStoreTests pass"
+      ],
+      "verification": {
+        "required_level": "full",
+        "last_run": "quick passed 2026-05-16; WidgetDataWriterTests passed 2026-05-16",
+        "evidence": "Both LiShu and LiShuWidget targets build. Deep review rounds 1–6 on 2026-05-15 fixed: stale date labels (refreshed(at:)), dead-zone tappability, hosting-event '登记' button destination (addRecordURL), cold-launch deep link race (onAppear check), reminderCount badge accuracy (removed prefix(5) cap), pendingReturn→give-gift direct link (giveGiftForEvent deep link + direction:given), preview URL accuracy, DateFormatter static promotion, redundant inner Link removal, currentYear label/data mismatch on year boundary (refreshed(at:) now preserves currentYear). Follow-up review fixes on 2026-05-15: WidgetDataWriter now persists future birthday/event/pendingReturn reminders beyond the 3-day display window so WidgetSnapshot.refreshed(at:) can reveal them while the app is closed; LiShuMediumWidgetView, LiShuLargeWidgetView, and LiShuMediumEventWidgetView use root widgetURL instead of outer Links around nested Link actions; MainTabView preview injects DeepLinkCoordinator. All 30 widget localization keys confirmed present. WidgetSnapshot.swift copies in sync. 2026-05-15 session: WidgetPalette.blue (#5A8AB7) replaced with WidgetPalette.sage (#7A9E8A, warm sage green) in WidgetSupportViews.swift and LiShuMediumWidgetViews.swift; WidgetDataWriter.stableID(for:) bug fixed (iOS 26 Mirror reflection failure collapsed all event stableIDs to same hash — replaced with JSONEncoder on Codable PersistentIdentifier); regression test stableIDIsUniquePerEvent added. Verification: scripts/harness/verify.sh full — SwiftFormat 0, SwiftLint 0, BUILD SUCCEEDED, 430 tests in 42 suites 0 failures. 2026-05-16 review follow-up: widget cover files are scoped by event stableID and WidgetDataWriterTests are serialized; Widget Gallery preview sizing is enum-driven instead of localized-label-driven; Gallery preview typography/backgrounds use DesignSystem widget-gallery tokens to preserve visual hierarchy. Verification: scripts/harness/verify.sh quick passed; targeted WidgetDataWriterTests passed 49 tests. UI test suite remains documented separately with 12 pre-existing non-widget failures in ContactFlowTests/EventFlowTests/OCR/XLSX; widget UI suites previously passed."
+      },
+      "notes": "Widget Extension target was set up manually in Xcode (App Group group.com.finefine.LiShu on both targets; File Inspector membership for DesignTokens.swift, Localizable.xcstrings, WidgetSnapshot.swift)."
+    },
+    {
+      "id": "feat-widget-view-refactor",
+      "name": "Widget view file decomposition and preview coverage",
+      "module": "Widget",
+      "priority": "P1",
+      "status": "done",
+      "dependencies": ["feat-widget"],
+      "scope": [
+        "Split large widget extension view file into smaller reusable SwiftUI files",
+        "Split large in-app widget gallery file into smaller reusable SwiftUI files",
+        "Preserve existing widget/galleries visual behavior and deep-link behavior",
+        "Ensure every new View file includes #Preview coverage"
+      ],
+      "acceptance": [
+        "LiShuWidget/LiShuWidgetViews.swift and LiShu/Views/Settings/WidgetGalleryView.swift are reduced to smaller focused files",
+        "Shared widget/generic gallery components are reused instead of duplicated inside page views",
+        "Every newly created View file has representative #Preview blocks",
+        "Quick verification passes after refactor"
+      ],
+      "verification": {
+        "required_level": "quick",
+        "last_run": "quick passed 2026-05-15; WidgetGalleryUITests passed 2026-05-15",
+        "evidence": "Refactor-only split completed. LiShuWidget/LiShuWidgetViews.swift was decomposed into WidgetSupportViews.swift, LiShuSmallWidgetViews.swift, LiShuMediumWidgetViews.swift, LiShuLargeWidgetView.swift, LiShuLockWidgetViews.swift, and WidgetPreviewData.swift. LiShu/Views/Settings/WidgetGalleryView.swift was reduced to a 49-line page shell with separate WidgetGalleryHeroView.swift, WidgetGalleryCatalogSections.swift, WidgetGalleryComponents.swift, WidgetGalleryStubSupport.swift, WidgetGalleryHomeStubs.swift, WidgetGalleryLockStubs.swift, and WidgetGalleryPreviewData.swift. All newly created View files include #Preview; SettingsSections.swift now has a preview for the widget-gallery entry row. Verification: scripts/harness/verify.sh quick passed (SwiftFormat 0, SwiftLint 0, TEST BUILD SUCCEEDED). Targeted UI verification passed: xcodebuild ... test-without-building -only-testing:LiShuUITests/WidgetGalleryUITests executed 3 tests, 0 failures."
+      },
+      "notes": "Refactor-only follow-up requested after feat-widget implementation; avoid business, schema, localization-key, and route identity changes."
+    },
+    {
       "id": "settings-pro-diagnostics",
       "name": "Settings, Pro, notifications, and diagnostics",
       "module": "Settings",

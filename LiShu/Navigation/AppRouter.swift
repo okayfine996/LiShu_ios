@@ -32,6 +32,7 @@ enum AppRoute: Hashable {
     case about
     case termsOfService
     case privacyPolicy
+    case widgetGallery
 
     var logName: String {
         switch self {
@@ -59,6 +60,7 @@ enum AppRoute: Hashable {
         case .about: "settings.about"
         case .termsOfService: "settings.terms"
         case .privacyPolicy: "settings.privacy"
+        case .widgetGallery: "settings.widgetGallery"
         }
     }
 }

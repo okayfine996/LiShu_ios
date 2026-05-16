@@ -195,7 +195,7 @@ struct HomeRecentRecordCard: View {
                     Text(HomeDashboardFormatters.recordAmount(record))
                         .font(DesignSystem.Typography.title3)
                         .fontWeight(.semibold)
-                        .foregroundStyle(DesignSystem.Colors.primary)
+                        .foregroundStyle(DesignSystem.Colors.textPrimary)
                 } else {
                     HStack(spacing: DesignSystem.Spacing.dense) {
                         Text(record.recordType.iconEmoji)

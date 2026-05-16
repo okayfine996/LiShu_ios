@@ -29,7 +29,7 @@ struct HomeUnifiedSummaryCard: View {
             HStack(alignment: .center, spacing: 10) {
                 Text(HomeDashboardFormatters.monetaryNet(snapshot))
                     .font(DesignSystem.Typography.display)
-                    .foregroundStyle(DesignSystem.Colors.primary)
+                    .foregroundStyle(DesignSystem.Colors.textPrimary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
 
@@ -38,7 +38,7 @@ struct HomeUnifiedSummaryCard: View {
                 if let yearOverYearChange = HomeDashboardFormatters.yearOverYearChange(snapshot) {
                     Text(yearOverYearChange)
                         .font(DesignSystem.Typography.caption)
-                        .foregroundStyle(DesignSystem.Colors.primary)
+                        .foregroundStyle(DesignSystem.Colors.textSecondary)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 8)
                         .background(DesignSystem.Colors.bgInput)
@@ -103,7 +103,7 @@ private struct HomeBottomStat: View {
             HStack(alignment: .firstTextBaseline, spacing: 2) {
                 Text(value)
                     .font(DesignSystem.Typography.title1)
-                    .foregroundStyle(DesignSystem.Colors.primary)
+                    .foregroundStyle(DesignSystem.Colors.textPrimary)
 
                 Text(unit)
                     .font(DesignSystem.Typography.caption)
@@ -127,7 +127,8 @@ private struct HomeFinancialDetailMetric: View {
 
             Text(amount)
                 .font(DesignSystem.Typography.title1)
-                .foregroundStyle(title == String(localized: "home.income") ? DesignSystem.Colors.accentGold : DesignSystem.Colors.primary)
+                .foregroundStyle(title == String(localized: "home.income") ? DesignSystem.Colors.accentGold : DesignSystem.Colors
+                    .textPrimary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.85)
 

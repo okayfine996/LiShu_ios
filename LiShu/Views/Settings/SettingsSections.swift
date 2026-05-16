@@ -38,6 +38,12 @@ struct SettingsContentView: View {
                         route: .notificationSettings,
                         onNavigate: onOpenNotifications
                     ),
+                    .navigation(
+                        icon: "rectangle.3.group.fill",
+                        title: String(localized: "settings.widgetGallery"),
+                        route: .widgetGallery,
+                        onNavigate: {}
+                    ),
                 ]
             )
 
@@ -301,4 +307,27 @@ private enum SettingsRow {
     case navigation(icon: String, title: String, detail: String? = nil, route: AppRoute, onNavigate: () -> Void)
     case button(icon: String, title: String, action: () -> Void)
     case toggle(icon: String, title: String, isOn: Binding<Bool>, badge: String? = nil)
+}
+
+#Preview {
+    NavigationStack {
+        ScrollView {
+            SettingsContentView(
+                effectiveProAccessEnabled: false,
+                hasActiveEntitlement: false,
+                currentSubscriptionName: nil,
+                appVersion: "1.1.16",
+                icloudSyncEnabled: .constant(true),
+                onOpenProMembership: {},
+                onOpenAppearance: {},
+                onOpenNotifications: {},
+                onOpenDataManagement: {},
+                onOpenAbout: {},
+                onRateApp: {},
+                onRestartGuideTour: {}
+            )
+            .padding()
+        }
+        .background(DesignSystem.Colors.bgPage)
+    }
 }

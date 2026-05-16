@@ -30,7 +30,7 @@ private struct HomeSummarySection: View {
 
                 Text(HomeDashboardFormatters.lunarYearLabel)
                     .font(DesignSystem.Typography.title3)
-                    .foregroundStyle(DesignSystem.Colors.primary)
+                    .foregroundStyle(DesignSystem.Colors.textSecondary)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 8)
             }
