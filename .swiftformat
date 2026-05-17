@@ -4,3 +4,6 @@
 --tabwidth 4
 --smarttabs disabled
 --maxwidth 140
+--header ignore
+--linebreaks lf
+--ranges no-space

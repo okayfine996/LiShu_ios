@@ -84,7 +84,7 @@ struct CarouselView<Content: View>: View {
     var body: some View {
         ZStack(alignment: indicatorPosition.alignment) {
             TabView(selection: currentPageBinding) {
-                ForEach(0 ..< pageCount, id: \.self) { index in
+                ForEach(0..<pageCount, id: \.self) { index in
                     content(index)
                         .padding(contentInsets)
                         .tag(index)
@@ -123,7 +123,7 @@ struct CarouselView<Content: View>: View {
 
     private func pageIndicator(current: Int) -> some View {
         HStack(spacing: 6) {
-            ForEach(0 ..< pageCount, id: \.self) { index in
+            ForEach(0..<pageCount, id: \.self) { index in
                 Circle()
                     .fill(index == current ? DesignSystem.Colors.primary : DesignSystem.Colors.border)
                     .frame(width: 6, height: 6)

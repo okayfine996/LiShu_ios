@@ -18,7 +18,7 @@ struct WeekStripDatePicker: View {
     }
 
     private var weekDays: [Date] {
-        (0 ..< 7).compactMap { calendar.date(byAdding: .day, value: $0, to: currentWeekStart) }
+        (0..<7).compactMap { calendar.date(byAdding: .day, value: $0, to: currentWeekStart) }
     }
 
     private var monthYearTitle: String {
@@ -224,7 +224,7 @@ struct WeekStripDatePicker: View {
             days.append(nil)
         }
 
-        return stride(from: 0, to: days.count, by: 7).map { Array(days[$0 ..< min($0 + 7, days.count)]) }
+        return stride(from: 0, to: days.count, by: 7).map { Array(days[$0..<min($0 + 7, days.count)]) }
     }
 
     private func shortWeekdaySymbols() -> [String] {

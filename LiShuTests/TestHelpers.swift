@@ -143,7 +143,7 @@ struct SampleData {
     }
 
     static func batchRecords(count: Int, contact: Contact, event: Event, baseAmount: Double = 100) -> [Record] {
-        (0 ..< count).map { i in
+        (0..<count).map { i in
             typedRecord(
                 contact: contact,
                 event: event,

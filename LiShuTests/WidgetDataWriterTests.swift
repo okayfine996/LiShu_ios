@@ -136,7 +136,7 @@ struct WidgetDataWriterTests {
     /// 7. 10 qualifying items → all stored (no cap), reminderCount == stored count
     @Test func allRemindersStoredUnderNewPolicy() {
         var events: [Event] = []
-        for i in 0 ..< 10 {
+        for i in 0..<10 {
             events.append(makeEvent(name: "事件\(i)", daysFromNow: i % 4))
         }
         let snapshot = WidgetDataWriter.buildSnapshot(records: [], events: events, contacts: [], now: Self.jan1)

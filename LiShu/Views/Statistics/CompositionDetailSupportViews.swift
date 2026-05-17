@@ -10,7 +10,7 @@ struct CompositionMiniBarChart: View {
         let maxCount = max(distribution.max() ?? 1, 1)
 
         HStack(alignment: .bottom, spacing: 6) {
-            ForEach(0 ..< 12, id: \.self) { index in
+            ForEach(0..<12, id: \.self) { index in
                 let count = distribution[index]
 
                 VStack(spacing: 4) {

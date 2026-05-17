@@ -368,9 +368,9 @@ enum SmartReturnGiftEngine {
         let years = yearsBetween(date, and: Date())
         switch years {
         case 0: return 1.0
-        case 1 ... 2: return 1.05
-        case 3 ... 4: return 1.10
-        case 5 ... 7: return 1.15
+        case 1...2: return 1.05
+        case 3...4: return 1.10
+        case 5...7: return 1.15
         default: return 1.20
         }
     }

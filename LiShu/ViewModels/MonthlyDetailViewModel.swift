@@ -25,10 +25,10 @@ enum StatsPeriod: Hashable {
     var monthRange: ClosedRange<Int> {
         switch self {
         case let .month(_, m):
-            return m ... m
+            return m...m
         case let .quarter(_, q):
             let start = (q - 1) * 3 + 1
-            return start ... (start + 2)
+            return start...(start + 2)
         }
     }
 

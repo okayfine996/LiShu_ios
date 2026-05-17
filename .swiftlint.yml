@@ -15,6 +15,10 @@ only_rules:
   - empty_count
   - prefer_self_type_over_type_of_self
   - redundant_type_annotation
+  - implicit_return
+  - first_where
+  - contains_over_filter_count
+  - sorted_imports
 
 line_length:
   warning: 140

@@ -204,7 +204,7 @@ class StatisticsViewModel {
             calendar.component(.year, from: $0.date) == selectedYear && $0.recordType == .monetary
         }
         var monthly: [(month: Int, income: Double, expense: Double)] = []
-        for month in 1 ... 12 {
+        for month in 1...12 {
             let monthRecords = yearRecords.filter {
                 calendar.component(.month, from: $0.date) == month
             }

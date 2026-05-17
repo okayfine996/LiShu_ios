@@ -22,7 +22,7 @@ final class PulseDiagnosticsUITests: BaseUITestCase {
         let versionLabel = app.staticTexts["about.versionLabel"]
         XCTAssertTrue(versionLabel.waitForExistence(timeout: 3))
 
-        for _ in 0 ..< 7 {
+        for _ in 0..<7 {
             versionLabel.tap()
         }
 

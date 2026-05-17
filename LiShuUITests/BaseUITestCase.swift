@@ -176,7 +176,7 @@ class BaseUITestCase: XCTestCase {
         fallbackLabel: String,
         maxSwipes: Int = 8
     ) -> Bool {
-        for _ in 0 ... maxSwipes {
+        for _ in 0...maxSwipes {
             let button = selector.buttons[buttonIdentifier].firstMatch
             if button.exists, button.isHittable {
                 button.tap()
@@ -200,7 +200,7 @@ class BaseUITestCase: XCTestCase {
     private func tapEventSelectorItem(eventName: String) -> Bool {
         let buttonIdentifier = "record.add.event.\(eventName)"
 
-        for _ in 0 ..< 4 {
+        for _ in 0..<4 {
             let selector = app.otherElements["record.add.eventSelector"].firstMatch
             if selector.exists,
                tapHorizontalSelectorItem(

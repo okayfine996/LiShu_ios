@@ -18,7 +18,7 @@ struct LunarCalendarHelperTests {
     }
 
     @Test func lunarMonthNameAllMonthsNonEmpty() {
-        for month in 1 ... 12 {
+        for month in 1...12 {
             let name = LunarCalendarHelper.lunarMonthName(month: month)
             #expect(!name.isEmpty)
         }
@@ -144,8 +144,8 @@ struct LunarCalendarHelperTests {
         let result = LunarCalendarHelper.gregorianToLunar(month: 9, day: 17)
         #expect(result != nil)
         if let result {
-            #expect((1 ... 12).contains(result.month))
-            #expect((1 ... 30).contains(result.day))
+            #expect((1...12).contains(result.month))
+            #expect((1...30).contains(result.day))
         }
     }
 
@@ -153,8 +153,8 @@ struct LunarCalendarHelperTests {
         let result = LunarCalendarHelper.gregorianToLunar(month: 6, day: 15)
         #expect(result != nil)
         if let result {
-            #expect((1 ... 12).contains(result.month))
-            #expect((1 ... 30).contains(result.day))
+            #expect((1...12).contains(result.month))
+            #expect((1...30).contains(result.day))
         }
     }
 
@@ -172,8 +172,8 @@ struct LunarCalendarHelperTests {
         let result = LunarCalendarHelper.lunarToGregorian(month: 8, day: 15)
         #expect(result != nil)
         if let result {
-            #expect((1 ... 12).contains(result.month))
-            #expect((1 ... 31).contains(result.day))
+            #expect((1...12).contains(result.month))
+            #expect((1...31).contains(result.day))
         }
     }
 

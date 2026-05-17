@@ -96,7 +96,7 @@ struct HomeDashboardSnapshotTests {
         db.context.insert(contact)
         db.context.insert(event)
 
-        for i in 0 ..< 10 {
+        for i in 0..<10 {
             let record = SampleData.record(contact: contact, event: event)
             record.date = Calendar.current.date(byAdding: .day, value: -i, to: Date()) ?? Date()
             db.context.insert(record)

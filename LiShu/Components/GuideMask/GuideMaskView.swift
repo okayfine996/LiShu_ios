@@ -74,7 +74,7 @@ struct GuideCalloutView: View {
 
     private var progressDots: some View {
         HStack(spacing: 6) {
-            ForEach(0 ..< totalSteps, id: \.self) { i in
+            ForEach(0..<totalSteps, id: \.self) { i in
                 Capsule()
                     .fill(i == stepIndex ? DesignSystem.Colors.primary : DesignSystem.Colors.border)
                     .frame(width: i == stepIndex ? 20 : 6, height: 6)

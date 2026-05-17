@@ -124,7 +124,7 @@ extension ExportService {
             let category = field(row: row, column: "关系分类")
             if !category.isEmpty { payload.category = category }
             let circleStr = field(row: row, column: "亲密圈层")
-            if let circle = Int(circleStr), (1 ... 4).contains(circle) { payload.circle = circle }
+            if let circle = Int(circleStr), (1...4).contains(circle) { payload.circle = circle }
             let birthdayStr = field(row: row, column: "生日")
             if !birthdayStr.isEmpty { payload.birthday = dateFormatter.date(from: birthdayStr) }
             if !location.isEmpty { payload.location = location }

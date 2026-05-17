@@ -47,7 +47,7 @@ final class SettingsFlowTests: BaseUITestCase {
                 versionLabel.waitForExistence(timeout: 3),
                 "Version label should expose an accessibility identifier for diagnostics"
             )
-            for _ in 0 ..< 7 {
+            for _ in 0..<7 {
                 versionLabel.tap()
             }
 

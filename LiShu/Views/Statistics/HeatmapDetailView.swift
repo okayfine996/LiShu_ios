@@ -75,7 +75,7 @@ struct HeatmapDetailView: View {
             }
 
             LazyVGrid(columns: monthMatrixGridColumns, spacing: DesignSystem.Spacing.block) {
-                ForEach(0 ..< 12, id: \.self) { month in
+                ForEach(0..<12, id: \.self) { month in
                     monthMiniGrid(month: month)
                 }
             }
@@ -107,7 +107,7 @@ struct HeatmapDetailView: View {
                 .minimumScaleFactor(0.85)
 
             LazyVGrid(columns: monthMiniCellColumns, spacing: DesignSystem.Spacing.dense) {
-                ForEach(0 ..< 4, id: \.self) { week in
+                ForEach(0..<4, id: \.self) { week in
                     RoundedRectangle(cornerRadius: DesignSystem.Radius.chartBar)
                         .fill(
                             DesignSystem.Colors.primary.opacity(
@@ -231,7 +231,7 @@ private func makeHeatmapDetailPreviewContainer() -> ModelContainer? {
     }
 
     // 上一年：每月 1 笔，同比基数分散在 12 个月
-    for month in 1 ... 12 {
+    for month in 1...12 {
         records.append(
             Record.makeMonetaryRecord(
                 contact: contacts[month % contacts.count],
@@ -245,7 +245,7 @@ private func makeHeatmapDetailPreviewContainer() -> ModelContainer? {
     }
 
     // 当年：每月相同笔数，日期落在不同周，热力尽量铺满且各月接近
-    for month in 1 ... 12 {
+    for month in 1...12 {
         for (i, d) in daysSpreadInMonth(month).enumerated() {
             records.append(
                 Record.makeMonetaryRecord(

@@ -29,7 +29,7 @@ struct SubscriptionManagerTests {
         db.context.insert(contact)
         db.context.insert(event)
 
-        for _ in 0 ..< UsageLimits.freeRecordTotal {
+        for _ in 0..<UsageLimits.freeRecordTotal {
             let r = SampleData.record(contact: contact, event: event, amount: 100)
             db.context.insert(r)
         }
@@ -48,7 +48,7 @@ struct SubscriptionManagerTests {
         db.context.insert(contact)
         db.context.insert(event)
 
-        for _ in 0 ..< UsageLimits.freeRecordTotal {
+        for _ in 0..<UsageLimits.freeRecordTotal {
             db.context.insert(SampleData.record(contact: contact, event: event, amount: 100))
         }
         try db.context.save()
@@ -72,7 +72,7 @@ struct SubscriptionManagerTests {
     @Test("canAddContact returns false when contact count >= limit")
     func canAddContactAtLimit() throws {
         let db = try TestDB()
-        for i in 0 ..< UsageLimits.freeContactTotal {
+        for i in 0..<UsageLimits.freeContactTotal {
             let c = SampleData.contact(name: "联系人\(i)")
             db.context.insert(c)
         }
@@ -86,7 +86,7 @@ struct SubscriptionManagerTests {
     @Test("session override allows adding contacts beyond limit")
     func sessionOverrideAllowsAddContactAtLimit() throws {
         let db = try TestDB()
-        for i in 0 ..< UsageLimits.freeContactTotal {
+        for i in 0..<UsageLimits.freeContactTotal {
             db.context.insert(SampleData.contact(name: "联系人\(i)"))
         }
         try db.context.save()
@@ -101,7 +101,7 @@ struct SubscriptionManagerTests {
     @Test("canAddContacts blocks batch imports that exceed the free limit")
     func canAddContactsRejectsOverflowBatch() throws {
         let db = try TestDB()
-        for i in 0 ..< (UsageLimits.freeContactTotal - 1) {
+        for i in 0..<(UsageLimits.freeContactTotal - 1) {
             db.context.insert(SampleData.contact(name: "联系人\(i)"))
         }
         try db.context.save()
@@ -114,7 +114,7 @@ struct SubscriptionManagerTests {
     @Test("session override allows batch contact import beyond limit")
     func sessionOverrideAllowsBatchContactImportAtLimit() async throws {
         let db = try TestDB()
-        for i in 0 ..< UsageLimits.freeContactTotal {
+        for i in 0..<UsageLimits.freeContactTotal {
             db.context.insert(SampleData.contact(name: "联系人\(i)"))
         }
         try db.context.save()

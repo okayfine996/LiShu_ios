@@ -82,10 +82,10 @@ struct MonthlyDetailViewModelTests {
 
     @Test func statsPeriodMonthRange() {
         let month = StatsPeriod.month(year: 2026, month: 3)
-        #expect(month.monthRange == 3 ... 3)
+        #expect(month.monthRange == 3...3)
 
         let quarter = StatsPeriod.quarter(year: 2026, quarter: 2)
-        #expect(quarter.monthRange == 4 ... 6)
+        #expect(quarter.monthRange == 4...6)
     }
 
     @Test func statsPeriodPrevious() {
