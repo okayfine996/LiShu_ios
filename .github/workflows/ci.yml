@@ -12,15 +12,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install SwiftLint and SwiftFormat
-        run: brew install swiftlint swiftformat
+      - name: Install tools
+        run: brew install swiftlint swiftformat xcbeautify
+
+      - name: SwiftFormat lint
+        run: swiftformat LiShu LiShuTests LiShuUITests --lint --config .swiftformat
 
       - name: SwiftLint
         run: swiftlint lint --strict
 
-      - name: Build (iOS Simulator)
+      - name: Unit tests
         run: |
-          xcodebuild -project LiShu.xcodeproj -scheme LiShu -configuration Debug \
-            -sdk iphonesimulator \
-            -destination 'generic/platform=iOS Simulator' \
-            clean build
+          xcodebuild test \
+            -project LiShu.xcodeproj \
+            -scheme LiShu \
+            -destination 'platform=iOS Simulator,OS=latest,name=iPhone 16' \
+            -parallel-testing-enabled NO \
+            -skip-testing:LiShuUITests \
+            | xcbeautify --quiet

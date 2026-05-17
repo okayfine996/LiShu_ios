@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct GalleryCircularStub: View {
-    let count: Int
+    let badgeCount: Int
     var body: some View {
         Circle()
             .fill(DesignSystem.Colors.textOnPrimary.opacity(0.18))
@@ -9,8 +9,8 @@ struct GalleryCircularStub: View {
             .overlay(Image(systemName: "bell.fill").font(DesignSystem.Typography.widgetBodyBold)
                 .foregroundStyle(DesignSystem.Colors.textOnPrimary))
             .overlay(alignment: .topTrailing) {
-                if count > 0 {
-                    Text("\(count)")
+                if badgeCount > 0 {
+                    Text("\(badgeCount)")
                         .font(DesignSystem.Typography.widgetMetaBold).foregroundStyle(DesignSystem.Colors.overlayDark)
                         .frame(minWidth: 18, minHeight: 18)
                         .background(Circle().fill(DesignSystem.Colors.textOnPrimary))
@@ -102,7 +102,7 @@ struct GalleryInlineStub: View {
 
 #Preview("Widget Gallery Lock Stubs") {
     VStack(spacing: 18) {
-        GalleryCircularStub(count: WidgetSnapshot.galleryPreview.reminderCount)
+        GalleryCircularStub(badgeCount: WidgetSnapshot.galleryPreview.reminderCount)
         GalleryCircularCountdownStub(daysUntil: WidgetSnapshot.galleryPreview.nextHostingEvent?.daysUntil ?? 7)
         GalleryRectangularStub(snapshot: .galleryPreview)
         GalleryInlineStub(snapshot: .galleryPreview)

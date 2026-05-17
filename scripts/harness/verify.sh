@@ -27,6 +27,7 @@ resolve_destination() {
 }
 
 DESTINATION="$(resolve_destination)"
+COVERAGE_BUNDLE="/tmp/LiShu.xcresult"
 
 usage() {
   cat <<'USAGE'
@@ -62,11 +63,25 @@ run_swiftlint() {
 }
 
 run_build() {
-  xcodebuild -project "$PROJECT" -scheme "$SCHEME" -destination "$DESTINATION" build-for-testing
+  xcodebuild -project "$PROJECT" -scheme "$SCHEME" -destination "$DESTINATION" \
+    -enableCodeCoverage YES -resultBundlePath "$COVERAGE_BUNDLE" \
+    build-for-testing
 }
 
 run_unit_tests() {
-  xcodebuild -project "$PROJECT" -scheme "$SCHEME" -destination "$DESTINATION" -parallel-testing-enabled NO test-without-building -skip-testing:LiShuUITests
+  xcodebuild -project "$PROJECT" -scheme "$SCHEME" -destination "$DESTINATION" \
+    -parallel-testing-enabled NO \
+    -enableCodeCoverage YES -resultBundlePath "$COVERAGE_BUNDLE" \
+    test-without-building -skip-testing:LiShuUITests
+}
+
+run_coverage_report() {
+  if [[ -d "$COVERAGE_BUNDLE" ]]; then
+    echo ""
+    echo "── Coverage (LiShu target) ──────────────────────────"
+    xcrun xccov view --report "$COVERAGE_BUNDLE" --only-targets LiShu 2>/dev/null || true
+    echo "─────────────────────────────────────────────────────"
+  fi
 }
 
 run_ui_tests() {
@@ -87,6 +102,7 @@ run_quick() {
 run_full() {
   run_quick
   run_unit_tests
+  run_coverage_report
 }
 
 case "$MODE" in

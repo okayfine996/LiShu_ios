@@ -11,6 +11,10 @@ excluded:
 only_rules:
   - line_length
   - force_unwrapping
+  - unused_import
+  - empty_count
+  - prefer_self_type_over_type_of_self
+  - redundant_type_annotation
 
 line_length:
   warning: 140

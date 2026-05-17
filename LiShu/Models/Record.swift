@@ -22,7 +22,7 @@ final class Record {
     /// 备注
     var note: String = ""
     /// 记录日期
-    var date: Date = Date()
+    var date = Date()
     /// 记录类型原始值，通过 `recordType` 计算属性读写枚举
     var recordTypeRaw: String = "monetary"
     /// 情分分量原始值，通过 `relationshipWeight` 计算属性读写枚举
@@ -37,7 +37,7 @@ final class Record {
     @Relationship(deleteRule: .cascade, inverse: \RecordPhoto.record)
     var photos: [RecordPhoto]?
     /// 创建时间
-    var createdAt: Date = Date()
+    var createdAt = Date()
 
     /// 送出/收到方向
     var direction: RecordDirection {

@@ -34,7 +34,7 @@ final class Contact {
     @Relationship(deleteRule: .nullify, inverse: \Event.primaryContact)
     var hostedEvents: [Event]?
     /// 创建时间
-    var createdAt: Date = Date()
+    var createdAt = Date()
 
     init(
         name: String,

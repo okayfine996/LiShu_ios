@@ -211,7 +211,7 @@ struct WidgetGalleryLockWidgets: View {
                 ],
                 dotColor: DesignSystem.Colors.primaryDark
             ) {
-                GalleryCircularStub(count: snapshot.reminderCount)
+                GalleryCircularStub(badgeCount: snapshot.reminderCount)
             }
             lockWidgetCard(
                 bg: .dusk,

@@ -8,9 +8,9 @@ final class RecordPhoto {
     var record: Record?
     /// 图片数据，外部存储以支持 iCloud 同步
     @Attribute(.externalStorage)
-    var imageData: Data = Data()
+    var imageData = Data()
     /// 创建时间
-    var createdAt: Date = Date()
+    var createdAt = Date()
 
     init(record: Record, imageData: Data) {
         self.record = record

@@ -11,7 +11,7 @@ final class Event {
     /// 事件身份原始值，通过 `hostMode` 计算属性读写枚举
     var hostModeRaw: String = "guest"
     /// 事件日期
-    var date: Date = Date()
+    var date = Date()
     /// 事件地点
     var location: String = ""
     /// 备注
@@ -25,7 +25,7 @@ final class Event {
     /// 主联系人，用于智能回礼建议（仅宾客模式事件有意义）
     var primaryContact: Contact?
     /// 创建时间
-    var createdAt: Date = Date()
+    var createdAt = Date()
 
     /// 事件类型枚举
     var type: EventType {
