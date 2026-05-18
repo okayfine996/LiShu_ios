@@ -40,7 +40,7 @@ Modes:
   quick    SwiftFormat lint, SwiftLint, and xcodebuild build.
   full     quick plus all LiShuTests.
   ui       build-for-testing, then all LiShuUITests.
-  release  full plus ui and fastlane environment notes.
+  release  full plus ui, Periphery dead-code scan, and fastlane environment notes.
 USAGE
 }
 
@@ -118,6 +118,15 @@ case "$MODE" in
   release)
     run_full
     run_ui_tests
+    if command -v periphery >/dev/null 2>&1; then
+      echo ""
+      echo "── Periphery dead-code scan ─────────────────────────"
+      periphery scan --config .periphery.yml --quiet
+      echo "─────────────────────────────────────────────────────"
+    else
+      echo "periphery not installed; skipping dead-code scan."
+      echo "  brew install peripheryapp/periphery/periphery"
+    fi
     if command -v fastlane >/dev/null 2>&1; then
       echo "fastlane is available. Run screenshot or release lanes only when needed:"
       echo "  fastlane ios screenshots"

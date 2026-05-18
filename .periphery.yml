@@ -1,0 +1,15 @@
+project: LiShu.xcodeproj
+schemes:
+  - LiShu
+targets:
+  - LiShu
+  - LiShuWidget
+format: xcode
+# Retain @objc and dynamic members (used by SwiftData / UIKit bridges)
+retain_objc_accessible: true
+# Retain public declarations (may be used by extensions or test targets)
+retain_public: true
+# Skip generated files and SPM build artifacts
+report_exclude:
+  - "**/.build/**"
+  - "**/DerivedData/**"
