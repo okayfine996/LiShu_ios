@@ -38,9 +38,9 @@ Environment:
 
 Modes:
   quick    SwiftFormat lint, SwiftLint, and xcodebuild build.
-  full     quick plus all LiShuTests.
+  full     quick plus all LiShuTests, coverage report, and Periphery dead-code scan.
   ui       build-for-testing, then all LiShuUITests.
-  release  full plus ui, Periphery dead-code scan, and fastlane environment notes.
+  release  full plus ui and fastlane environment notes.
 USAGE
 }
 
@@ -99,10 +99,23 @@ run_quick() {
   run_build
 }
 
+run_periphery() {
+  if command -v periphery >/dev/null 2>&1; then
+    echo ""
+    echo "── Periphery dead-code scan ─────────────────────────"
+    periphery scan --config .periphery.yml --quiet
+    echo "─────────────────────────────────────────────────────"
+  else
+    echo "periphery not installed; skipping dead-code scan."
+    echo "  brew install peripheryapp/periphery/periphery"
+  fi
+}
+
 run_full() {
   run_quick
   run_unit_tests
   run_coverage_report
+  run_periphery
 }
 
 case "$MODE" in
@@ -118,15 +131,6 @@ case "$MODE" in
   release)
     run_full
     run_ui_tests
-    if command -v periphery >/dev/null 2>&1; then
-      echo ""
-      echo "── Periphery dead-code scan ─────────────────────────"
-      periphery scan --config .periphery.yml --quiet
-      echo "─────────────────────────────────────────────────────"
-    else
-      echo "periphery not installed; skipping dead-code scan."
-      echo "  brew install peripheryapp/periphery/periphery"
-    fi
     if command -v fastlane >/dev/null 2>&1; then
       echo "fastlane is available. Run screenshot or release lanes only when needed:"
       echo "  fastlane ios screenshots"
