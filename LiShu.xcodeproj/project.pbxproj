@@ -15,6 +15,7 @@
 		32C8B5712F822036002E6746 /* Logging in Frameworks */ = {isa = PBXBuildFile; productRef = 32C8B5812F822036002E6746 /* Logging */; };
 		32C8B5722F822036002E6746 /* PulseLogHandler in Frameworks */ = {isa = PBXBuildFile; productRef = 32C8B5822F822036002E6746 /* PulseLogHandler */; };
 		32C8B5732F822036002E6746 /* Logging in Frameworks */ = {isa = PBXBuildFile; productRef = 32C8B5832F822036002E6746 /* Logging */; };
+		32ED86572FBA201C002FC1C7 /* SnapshotTesting in Frameworks */ = {isa = PBXBuildFile; productRef = CAFE00022F54194E0063349A /* SnapshotTesting */; };
 		ABCD000D0000000000000001 /* LiShuWidget.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = ABCD00010000000000000001 /* LiShuWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		ABCD000F0000000000000001 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = ABCD000E0000000000000001 /* Localizable.xcstrings */; };
 /* End PBXBuildFile section */
@@ -130,6 +131,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				32ED86572FBA201C002FC1C7 /* SnapshotTesting in Frameworks */,
 				32C8B5732F822036002E6746 /* Logging in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -246,6 +248,7 @@
 			name = LiShuTests;
 			packageProductDependencies = (
 				32C8B5832F822036002E6746 /* Logging */,
+				CAFE00022F54194E0063349A /* SnapshotTesting */,
 			);
 			productName = LiShuTests;
 			productReference = 9A934EAB2F54194E0063349A /* LiShuTests.xctest */;
@@ -339,6 +342,7 @@
 				3218290F2FA4ACF8006BB5CE /* XCRemoteSwiftPackageReference "CoreXLSX" */,
 				321829122FA4AD7F006BB5CE /* XCRemoteSwiftPackageReference "xlsxwriter" */,
 				3218291C2FAB7546006BB5CE /* XCRemoteSwiftPackageReference "SwiftSDK" */,
+				CAFE00012F54194E0063349A /* XCRemoteSwiftPackageReference "swift-snapshot-testing" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 9A934E9B2F54194D0063349A /* Products */;
@@ -948,6 +952,14 @@
 				minimumVersion = 5.0.0;
 			};
 		};
+		CAFE00012F54194E0063349A /* XCRemoteSwiftPackageReference "swift-snapshot-testing" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/pointfreeco/swift-snapshot-testing";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.17.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -990,6 +1002,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 9A934ECA2F54194E0063349A /* XCRemoteSwiftPackageReference "Pulse" */;
 			productName = PulseUI;
+		};
+		CAFE00022F54194E0063349A /* SnapshotTesting */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = CAFE00012F54194E0063349A /* XCRemoteSwiftPackageReference "swift-snapshot-testing" */;
+			productName = SnapshotTesting;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
