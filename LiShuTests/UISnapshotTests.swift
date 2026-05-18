@@ -4,10 +4,16 @@ import SwiftUI
 import XCTest
 
 /// Snapshot tests for key UI surfaces.
+///
+/// Reference images are pinned to **iPhone 17 Pro / iOS 26.1**.
+/// Run via `scripts/harness/verify.sh full` — the script resolves the
+/// correct simulator automatically. Do NOT run these via the generic
+/// xcodebuild destination; font metrics differ across OS versions.
+///
 /// To regenerate reference images:
 ///   1. Set isRecording = true in setUp()
-///   2. Run the tests (they will "fail" but save new images to __Snapshots__/)
-///   3. Verify the images look correct, then set isRecording = false
+///   2. Run: scripts/harness/verify.sh full   (uses iPhone 17 Pro / iOS 26.1)
+///   3. Verify the PNGs in __Snapshots__/, then set isRecording = false
 @MainActor
 final class UISnapshotTests: XCTestCase {
     override func setUp() {

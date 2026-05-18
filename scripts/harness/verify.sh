@@ -29,6 +29,30 @@ resolve_destination() {
 DESTINATION="$(resolve_destination)"
 COVERAGE_BUNDLE="/tmp/LiShu.xcresult"
 
+# Snapshot tests must run on a pinned simulator so reference PNGs stay stable.
+# Override with LISHU_SNAPSHOT_DESTINATION if the default is unavailable.
+resolve_snapshot_destination() {
+  if [[ -n "${LISHU_SNAPSHOT_DESTINATION:-}" ]]; then
+    echo "$LISHU_SNAPSHOT_DESTINATION"
+    return
+  fi
+  # Prefer exact OS+device match used when reference images were recorded.
+  local preferred_name preferred_os id
+  preferred_os="26.1"
+  for preferred_name in "iPhone 17 Pro" "iPhone 17" "iPhone 17 Pro Max"; do
+    id="$(xcrun simctl list devices available 2>/dev/null | awk \
+      -v name="$preferred_name" \
+      'index($0, "    " name " (") == 1 { if (match($0, /\([A-F0-9-]+\)/)) { print substr($0, RSTART + 1, RLENGTH - 2); exit } }')"
+    if [[ -n "$id" ]]; then
+      echo "platform=iOS Simulator,OS=${preferred_os},id=$id"
+      return
+    fi
+  done
+  echo ""   # empty → caller will skip snapshot tests
+}
+
+SNAPSHOT_DESTINATION="$(resolve_snapshot_destination)"
+
 usage() {
   cat <<'USAGE'
 Usage: scripts/harness/verify.sh [quick|full|ui|release]
@@ -73,7 +97,19 @@ run_unit_tests() {
   xcodebuild -project "$PROJECT" -scheme "$SCHEME" -destination "$DESTINATION" \
     -parallel-testing-enabled NO \
     -enableCodeCoverage YES -resultBundlePath "$COVERAGE_BUNDLE" \
-    test-without-building -skip-testing:LiShuUITests
+    test-without-building -skip-testing:LiShuUITests/UISnapshotTests -skip-testing:LiShuUITests
+}
+
+run_snapshot_tests() {
+  if [[ -z "$SNAPSHOT_DESTINATION" ]]; then
+    echo "⚠️  Snapshot destination unavailable (iOS 26.1 / iPhone 17 Pro not found)."
+    echo "   Set LISHU_SNAPSHOT_DESTINATION to override, or download the iOS 26.1 runtime."
+    return 0
+  fi
+  echo "── Snapshot tests (${SNAPSHOT_DESTINATION}) ──"
+  xcodebuild -project "$PROJECT" -scheme "$SCHEME" -destination "$SNAPSHOT_DESTINATION" \
+    -parallel-testing-enabled NO \
+    test-without-building -only-testing:LiShuTests/UISnapshotTests
 }
 
 run_coverage_report() {
@@ -115,6 +151,7 @@ run_periphery() {
 run_full() {
   run_quick
   run_unit_tests
+  run_snapshot_tests
   run_coverage_report
   run_periphery
 }
