@@ -16,9 +16,10 @@ import XCTest
 ///   3. Verify the PNGs in __Snapshots__/, then set isRecording = false
 @MainActor
 final class UISnapshotTests: XCTestCase {
-    override func setUp() {
-        super.setUp()
-        isRecording = false
+    override func invokeTest() {
+        withSnapshotTesting(record: .never) {
+            super.invokeTest()
+        }
     }
 
     // MARK: - Widget Gallery
