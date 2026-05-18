@@ -63,8 +63,9 @@ run_swiftlint() {
 }
 
 run_build() {
+  rm -rf "$COVERAGE_BUNDLE"
   xcodebuild -project "$PROJECT" -scheme "$SCHEME" -destination "$DESTINATION" \
-    -enableCodeCoverage YES -resultBundlePath "$COVERAGE_BUNDLE" \
+    -enableCodeCoverage YES \
     build-for-testing
 }
 
