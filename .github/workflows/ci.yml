@@ -5,54 +5,21 @@ on:
     branches: [main]
   pull_request:
 
-# Snapshot reference images were recorded on iOS 26.1 / iPhone 17 Pro.
-# When the runner gains that runtime, add a "Snapshot tests" step below
-# that mirrors run_snapshot_tests() in scripts/harness/verify.sh.
-env:
-  SNAPSHOT_DEVICE: iPhone 17 Pro
-  SNAPSHOT_OS: "26.1"
+# Build, test, and TestFlight distribution are handled by Xcode Cloud.
+# This workflow runs only fast lint checks for quick PR feedback (< 2 min).
 
 jobs:
-  ios-ci:
+  lint:
     runs-on: macos-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Install tools
-        run: brew install swiftlint swiftformat xcbeautify
+        run: brew install swiftlint swiftformat
 
       - name: SwiftFormat lint
         run: swiftformat LiShu LiShuTests LiShuUITests --lint --config .swiftformat
 
       - name: SwiftLint
         run: swiftlint lint --strict
-
-      - name: Unit tests (excluding snapshots)
-        run: |
-          xcodebuild test \
-            -project LiShu.xcodeproj \
-            -scheme LiShu \
-            -destination 'platform=iOS Simulator,OS=latest,name=iPhone 16' \
-            -parallel-testing-enabled NO \
-            -skip-testing:LiShuUITests \
-            -skip-testing:LiShuTests/UISnapshotTests \
-            | xcbeautify --renderer github-actions
-
-      - name: Snapshot tests
-        # Runs only when the pinned runtime is available on this runner.
-        run: |
-          SIM_ID=$(xcrun simctl list devices available 2>/dev/null \
-            | awk -v name="    ${{ env.SNAPSHOT_DEVICE }} (" \
-              'index($0, name)==1 { match($0, /\([A-F0-9-]+\)/); print substr($0, RSTART+1, RLENGTH-2); exit }')
-          if [ -z "$SIM_ID" ]; then
-            echo "⚠️  ${{ env.SNAPSHOT_DEVICE }} / iOS ${{ env.SNAPSHOT_OS }} not available on this runner — skipping snapshot tests."
-            exit 0
-          fi
-          xcodebuild test \
-            -project LiShu.xcodeproj \
-            -scheme LiShu \
-            -destination "platform=iOS Simulator,OS=${{ env.SNAPSHOT_OS }},id=$SIM_ID" \
-            -parallel-testing-enabled NO \
-            -only-testing:LiShuTests/UISnapshotTests \
-            | xcbeautify --renderer github-actions

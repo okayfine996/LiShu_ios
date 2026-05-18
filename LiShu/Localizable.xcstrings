@@ -11448,66 +11448,6 @@
         }
       }
     },
-    "widget.gallery.small.countdown.desc" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "自己主办婚礼 / 寿宴 / 满月时切换。巨大 D-day 数字 + 暖色光晕，提示离活动还剩多久。"
-          }
-        }
-      }
-    },
-    "widget.gallery.small.financial.desc" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "一眼看到全年礼金净额 + 收/支双条 + 互动笔数。年终盘点最直观。"
-          }
-        }
-      }
-    },
-    "widget.gallery.small.reminder.desc" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "默认配置。展示下一项提醒（事件 / 生日 / 回礼），主页/锁屏 都能放。"
-          }
-        }
-      }
-    },
-    "widget.gallery.small.reminder.name" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "近期提醒"
-          }
-        }
-      }
-    },
-    "widget.gallery.tab.home" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "桌面 widget"
-          }
-        }
-      }
-    },
-    "widget.gallery.tab.lock" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "锁屏 widget"
-          }
-        }
-      }
-    },
     "widget.gallery.size.circular" : {
       "localizations" : {
         "zh-Hans" : {
@@ -11568,6 +11508,46 @@
         }
       }
     },
+    "widget.gallery.small.countdown.desc" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自己主办婚礼 / 寿宴 / 满月时切换。巨大 D-day 数字 + 暖色光晕，提示离活动还剩多久。"
+          }
+        }
+      }
+    },
+    "widget.gallery.small.financial.desc" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一眼看到全年礼金净额 + 收/支双条 + 互动笔数。年终盘点最直观。"
+          }
+        }
+      }
+    },
+    "widget.gallery.small.reminder.desc" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "默认配置。展示下一项提醒（事件 / 生日 / 回礼），主页/锁屏 都能放。"
+          }
+        }
+      }
+    },
+    "widget.gallery.small.reminder.name" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "近期提醒"
+          }
+        }
+      }
+    },
     "widget.gallery.spec.accessoryCircular" : {
       "localizations" : {
         "zh-Hans" : {
@@ -11624,6 +11604,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "systemSmall · 158×158"
+          }
+        }
+      }
+    },
+    "widget.gallery.tab.home" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "桌面 widget"
+          }
+        }
+      }
+    },
+    "widget.gallery.tab.lock" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "锁屏 widget"
           }
         }
       }
